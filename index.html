@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Attendance System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#1a1a2e}
+.screen{display:none;width:100%;max-width:460px}.screen.active{display:block}
+#adminScreen{max-width:980px}
+.card{background:#fff;border-radius:20px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.logo{text-align:center;margin-bottom:24px}
+.logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:10px}
+.logo h1{font-size:19px;font-weight:700}.logo p{font-size:13px;color:#6b7280;margin-top:2px}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;margin-top:16px}
+input[type=text],input[type=password],input[type=date],select{width:100%;padding:11px 13px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;background:#fafafa;color:#1a1a2e}
+input:focus,select:focus{border-color:#4f46e5;background:#fff}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:18px;transition:opacity .2s,transform .1s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
+.btn-green{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+.btn-blue{background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff}
+.btn-outline{background:#fff;color:#4f46e5;border:2px solid #4f46e5;margin-top:10px}
+.btn-sm{display:inline-block;width:auto;padding:6px 14px;font-size:13px;margin-top:0;border-radius:8px}
+.btn-danger{background:#ef4444;color:#fff}
+.msg{border-radius:8px;padding:9px 13px;font-size:13px;margin-top:12px;display:none}
+.msg.show{display:block}
+.msg-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+.msg-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#059669}
+.msg-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+.msg-warn{background:#fff7ed;border:1px solid #fde68a;color:#92400e}
+/* mode indicator */
+.storage-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;margin-top:6px}
+.badge-sheets{background:#d1fae5;color:#065f46}.badge-local{background:#fef3c7;color:#92400e}
+/* loading overlay */
+#loadOverlay{position:fixed;inset:0;background:rgba(255,255,255,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px}
+#loadOverlay.on{display:flex}
+.load-spin{width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* camera */
+#cameraBox{position:relative;width:100%;aspect-ratio:1;background:#111;border-radius:16px;overflow:hidden;margin:14px 0}
+#cameraBox video,#cameraBox canvas{width:100%;height:100%;object-fit:cover;border-radius:16px}
+#cameraBox canvas{display:none;position:absolute;top:0;left:0}
+.cam-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;border:3px solid rgba(255,255,255,.6);border-radius:50%;pointer-events:none}
+.punch-bar{border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.bar-in{background:#f0fdf4;color:#059669;border:1.5px solid #bbf7d0}
+.bar-out{background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe}
+.loc-bar{display:flex;align-items:center;gap:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:7px 11px;font-size:12px;color:#0369a1;margin-top:8px}
+.spin-sm{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+/* emp badge */
+.emp-badge{display:flex;align-items:center;gap:11px;background:#f5f3ff;border-radius:12px;padding:11px 15px;margin-bottom:12px}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700;flex-shrink:0}
+/* state boxes */
+.state-box{text-align:center;padding:24px;border-radius:16px;margin:10px 0}
+.state-box .icon{font-size:46px;margin-bottom:8px}
+.state-box h3{font-size:17px;font-weight:700}
+.state-box p{font-size:13px;margin-top:5px}
+.box-done{background:#f5f3ff;border:1.5px solid #ddd6fe;color:#5b21b6}
+.box-holiday{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:2px solid #fde68a;color:#92400e}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.time-card{background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.time-card .tl{font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase}
+.time-card .tv{font-size:16px;font-weight:700;margin-top:3px}
+/* admin */
+.admin-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.admin-hdr h2{font-size:19px;font-weight:700}
+.tab-bar{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+.tab-btn{padding:8px 16px;border:2px solid #e5e7eb;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;transition:all .2s}
+.tab-btn.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat .n{font-size:22px;font-weight:800}.stat .l{font-size:11px;color:#6b7280;margin-top:2px}
+.c-purple{color:#7c3aed}.c-green{color:#059669}.c-red{color:#ef4444}.c-blue{color:#2563eb}.c-amber{color:#d97706}
+.hol-banner{background:#fff7ed;border:1px solid #fde68a;border-radius:10px;padding:10px 15px;font-size:13px;color:#92400e;margin-bottom:14px;display:none}
+.hol-banner.show{display:block}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-row input,.filter-row select{flex:1;min-width:120px;margin-top:0;padding:8px 11px;font-size:13px}
+.filter-row button{padding:8px 14px;font-size:13px;background:#4f46e5;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:13px}
+thead th{background:#f9fafb;padding:10px 11px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e7eb}
+tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody td{padding:10px 11px}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-present{background:#d1fae5;color:#065f46}.b-partial{background:#dbeafe;color:#1e40af}.b-absent{background:#fee2e2;color:#991b1b}
+.map-link{display:inline-flex;align-items:center;gap:3px;color:#4f46e5;font-size:11px;text-decoration:none;padding:2px 7px;background:#eef2ff;border-radius:5px}
+.map-link:hover{background:#e0e7ff}
+.empty{text-align:center;padding:36px;color:#9ca3af;font-size:13px}
+.empty .icon{font-size:32px;margin-bottom:6px}
+/* monthly */
+.month-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.rep-note{background:#fff7ed;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:13px;color:#92400e;margin-bottom:16px;display:none}
+.rep-note.show{display:block}
+/* employees */
+.add-form{background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:16px}
+.add-form h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.add-fields{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-top:8px}
+.add-fields input{margin-top:0;padding:9px 11px;font-size:13px}
+.add-fields button{padding:9px 14px;background:#4f46e5;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px}
+.emp-item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fff;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:7px}
+.del-btn{background:none;border:none;cursor:pointer;color:#ef4444;font-size:18px;padding:0 4px}
+/* holidays */
+.hol-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#fff;border-radius:9px;border:1px solid #e5e7eb;margin-bottom:6px;font-size:13px}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600;margin-left:5px}
+.tag-nat{background:#e0e7ff;color:#4f46e5}.tag-cust{background:#fef3c7;color:#92400e}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999}
+.modal-bg.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;padding:22px;max-width:320px;width:90%;text-align:center}
+.modal-box h3{font-size:15px;font-weight:700}.modal-box p{font-size:12px;color:#6b7280;margin-top:3px}
+.modal-close{margin-top:12px;padding:8px 22px;background:#4f46e5;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600}
+@media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr)}.add-fields{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadOverlay">
+  <div class="load-spin"></div>
+  <div style="font-size:14px;color:#6b7280;font-weight:600" id="loadMsg">Loading…</div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen" class="screen">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🔧</div>
+      <h1>First Time Setup</h1>
+      <p>Create your admin account</p>
+      <div id="storeBadge" class="storage-badge badge-local">💾 Using Local Storage</div>
+    </div>
+    <label>Admin Username</label>
+    <input type="text" id="setupUser" placeholder="e.g. admin">
+    <label>Admin Password</label>
+    <input type="password" id="setupPass" placeholder="Min 6 characters">
+    <label>Confirm Password</label>
+    <input type="password" id="setupConfirm" placeholder="Repeat password">
+    <div class="msg msg-error" id="setupError"></div>
+    <button class="btn btn-primary" onclick="completeSetup()">Complete Setup →</button>
+    <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">Passwords are stored as secure SHA-256 hashes. Never visible in source code.</p>
+  </div>
+</div>
+
+<!-- EMPLOYEE LOGIN -->
+<div id="loginScreen" class="screen">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">👤</div>
+      <h1>Staff Attendance</h1>
+      <p>Sign in to mark your attendance</p>
+      <div id="storeBadge2" class="storage-badge badge-local">💾 Local Storage</div>
+    </div>
+    <label>Employee ID</label>
+    <input type="text" id="loginId" placeholder="e.g. EMP001" autocomplete="off">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="Your password">
+    <div class="msg msg-error" id="loginError">Incorrect Employee ID or password.</div>
+    <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
+    <button class="btn btn-outline" onclick="showScreen('adminLoginScreen')">Admin Login</button>
+  </div>
+</div>
+
+<!-- CAMERA (Punch In / Out) -->
+<div id="cameraScreen" class="screen">
+  <div class="card">
+    <div class="emp-badge">
+      <div class="avatar" id="empAvatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:15px" id="empName">—</div>
+        <div style="font-size:12px;color:#6b7280" id="empIdLbl">—</div>
+      </div>
+    </div>
+    <!-- State: holiday -->
+    <div id="stHoliday" style="display:none">
+      <div class="state-box box-holiday">
+        <div class="icon" id="holIcon">🎉</div>
+        <h3 id="holTitle">Holiday</h3>
+        <p id="holName" style="font-weight:600;margin-top:4px"></p>
+        <p>No attendance required today!</p>
+      </div>
+      <button class="btn btn-outline" onclick="logout()">Logout</button>
+    </div>
+    <!-- State: both punches done -->
+    <div id="stDone" style="display:none">
+      <div class="state-box box-done">
+        <div class="icon">✅</div>
+        <h3>Attendance complete for today!</h3>
+      </div>
+      <div class="time-row">
+        <div class="time-card"><div class="tl">🟢 Punch In</div><div class="tv" id="doneIn">—</div></div>
+        <div class="time-card"><div class="tl">🔵 Punch Out</div><div class="tv" id="doneOut">—</div></div>
+      </div>
+      <div style="text-align:center;font-size:14px;color:#6b7280;margin-bottom:4px">Hours worked: <strong id="doneHrs">—</strong></div>
+      <button class="btn btn-outline" onclick="logout()">Logout</button>
+    </div>
+    <!-- State: camera active -->
+    <div id="stCamera" style="display:none">
+      <div class="punch-bar" id="punchBar"><span id="punchTxt">—</span></div>
+      <div id="cameraBox">
+        <video id="videoFeed" autoplay playsinline muted></video>
+        <canvas id="snapCanvas"></canvas>
+        <div class="cam-ring"></div>
+      </div>
+      <div class="loc-bar" id="locBar">
+        <div class="spin-sm" id="locSpin"></div>
+        <span id="locTxt">Getting location…</span>
+      </div>
+      <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
+      <button class="btn btn-outline" onclick="logout()">Logout</button>
+      <div class="msg msg-error" id="camErr"></div>
+      <div class="msg msg-success" id="camOk"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLoginScreen" class="screen">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🔐</div>
+      <h1>Admin Access</h1>
+      <p>Private admin panel</p>
+    </div>
+    <label>Username</label>
+    <input type="text" id="adminUser" placeholder="Admin username" autocomplete="off">
+    <label>Password</label>
+    <input type="password" id="adminPass" placeholder="Admin password">
+    <div class="msg msg-error" id="adminErr">Incorrect admin credentials.</div>
+    <button class="btn btn-primary" onclick="handleAdminLogin()">Access Panel →</button>
+    <button class="btn btn-outline" onclick="showScreen('loginScreen')">← Back</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminScreen" class="screen">
+  <div class="card">
+    <div class="admin-hdr">
+      <div>
+        <h2>📋 Admin Dashboard</h2>
+        <div style="font-size:12px;color:#6b7280;margin-top:2px" id="adminDate"></div>
+        <div id="storeBadge3" class="storage-badge badge-local" style="margin-top:4px">💾 Local Storage</div>
+      </div>
+      <button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:600;padding:7px 14px;border-radius:8px" onclick="adminLogout()">Logout</button>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
+      <button class="tab-btn" onclick="switchTab('monthly')">📊 Monthly</button>
+      <button class="tab-btn" onclick="switchTab('employees')">👥 Employees</button>
+      <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
+    </div>
+
+    <!-- TAB: ATTENDANCE -->
+    <div id="tabAttendance" class="tab-pane active">
+      <div class="stats-row">
+        <div class="stat"><div class="n c-purple" id="sTotal">0</div><div class="l">Total Staff</div></div>
+        <div class="stat"><div class="n c-green"  id="sPresent">0</div><div class="l">Present</div></div>
+        <div class="stat"><div class="n c-blue"   id="sPartial">0</div><div class="l">In Progress</div></div>
+        <div class="stat"><div class="n c-red"    id="sAbsent">0</div><div class="l">Absent</div></div>
+      </div>
+      <div class="hol-banner" id="holBanner"></div>
+      <div class="filter-row">
+        <input type="date" id="filterDate" onchange="loadAttTab()">
+        <input type="text" id="filterName" placeholder="Search name…">
+        <button onclick="loadAttTab()">Search</button>
+        <button onclick="exportCSV()" style="background:#059669">⬇ CSV</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Punch In</th><th>Punch Out</th><th>Hours</th><th>Location</th></tr></thead>
+          <tbody id="attBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="attEmpty" style="display:none"><div class="icon">📭</div>No records found.</div>
+    </div>
+
+    <!-- TAB: MONTHLY -->
+    <div id="tabMonthly" class="tab-pane">
+      <div class="rep-note" id="repNote"><strong id="repNoteText"></strong></div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
+        <div>
+          <label style="margin-top:0">Month</label>
+          <select id="repMonth">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div><label style="margin-top:0">Year</label><input type="text" id="repYear" style="width:88px" placeholder="2026"></div>
+        <button onclick="generateReport()" style="padding:9px 16px;background:#4f46e5;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px">Generate</button>
+        <button onclick="exportMonthlyCSV()" style="padding:9px 14px;background:#059669;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px">⬇ CSV</button>
+      </div>
+      <div class="month-sum" id="monthSum" style="display:none">
+        <div class="stat"><div class="n c-blue" id="mDays">0</div><div class="l">Working Days</div></div>
+        <div class="stat"><div class="n c-amber" id="mHols">0</div><div class="l">Holidays/Sundays</div></div>
+        <div class="stat"><div class="n c-purple" id="mEmp">0</div><div class="l">Employees</div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="monthTable" style="display:none">
+          <thead><tr><th>Employee</th><th>ID</th><th>Working Days</th><th>Present</th><th>Absent</th><th>Attendance %</th><th>Avg Hours/Day</th></tr></thead>
+          <tbody id="monthBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="monthEmpty"><div class="icon">📊</div>Select month &amp; year, then click Generate.</div>
+    </div>
+
+    <!-- TAB: EMPLOYEES -->
+    <div id="tabEmployees" class="tab-pane">
+      <div class="add-form">
+        <h3>➕ Add New Employee</h3>
+        <p style="font-size:12px;color:#6b7280;margin-top:2px">Default password = Employee ID (e.g. EMP021). Employee can change it later.</p>
+        <div class="add-fields">
+          <div><label style="margin-top:8px">Employee ID</label><input type="text" id="nEmpId" placeholder="EMP021"></div>
+          <div><label style="margin-top:8px">Full Name</label><input type="text" id="nEmpName" placeholder="Full Name"></div>
+          <div><label style="margin-top:8px">Password (optional)</label><input type="password" id="nEmpPass" placeholder="Default = ID"></div>
+          <div style="padding-top:26px"><button onclick="addEmployee()">Add</button></div>
+        </div>
+        <div class="msg msg-error" id="empErr"></div>
+        <div class="msg msg-success" id="empOk"></div>
+      </div>
+      <div id="empList"></div>
+    </div>
+
+    <!-- TAB: HOLIDAYS -->
+    <div id="tabHolidays" class="tab-pane">
+      <div class="add-form" style="margin-bottom:16px">
+        <h3>➕ Add Custom Holiday</h3>
+        <p style="font-size:12px;color:#6b7280;margin-top:2px">Add state holidays, company off-days etc.</p>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <input type="date" id="hDate" style="flex:1;min-width:130px;margin-top:0;padding:8px 11px;font-size:13px">
+          <input type="text" id="hName" placeholder="Holiday name" style="flex:2;min-width:160px;margin-top:0;padding:8px 11px;font-size:13px">
+          <button onclick="addHoliday()" style="padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px">Add</button>
+        </div>
+      </div>
+      <div id="holList" style="max-height:400px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Photo Modal (no photos in Sheets mode) -->
+<div class="modal-bg" id="photoModal" onclick="document.getElementById('photoModal').classList.remove('open')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <img id="modalImg" src="" alt="" style="width:200px;height:200px;object-fit:cover;border-radius:12px;margin-bottom:10px">
+    <h3 id="modalName"></h3><p id="modalInfo"></p>
+    <div id="modalLoc" style="margin-top:8px"></div>
+    <button class="modal-close" onclick="document.getElementById('photoModal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   ⚙️  CONFIG — FILL THESE IN AFTER DEPLOYING APPS SCRIPT
+   ════════════════════════════════════════════════════════════════
+   1. Paste your Apps Script Web App URL below (SCRIPT_URL)
+   2. Paste the same SECRET_KEY from your Apps Script (API_SECRET)
+   3. Save the file — data will now go to Google Sheets!
+   ════════════════════════════════════════════════════════════════ */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEcKIAQLQbth1VyXiq5lpZMiJWJrvQC1hRQGTaeFCXO7DgWUIhB0eMnnKSNf1VZdFp/exec';  
+// ← e.g. 'https://script.google.com/macros/s/ABC.../exec'
+const API_SECRET = 'Amitek2026';          // ← Must match SECRET_KEY in attendance-backend.gs
+
+const USE_SHEETS = SCRIPT_URL.length > 0;
+
+/* ════════════════════════════════════════════════════════════════
+   API LAYER
+════════════════════════════════════════════════════════════════ */
+async function api(action, params = {}) {
+  const res = await fetch(SCRIPT_URL, {
+    method : 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body   : JSON.stringify({ action, secret: API_SECRET, ...params })
+  });
+  if (!res.ok) throw new Error('Network error ' + res.status);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'API error');
+  return json.data;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DATA FUNCTIONS — work with both Sheets and localStorage
+════════════════════════════════════════════════════════════════ */
+const LS = { emp:'att_emp', att:'att_rec', admin:'att_admin', hols:'att_hols' };
+
+async function getEmployees() {
+  if (USE_SHEETS) return (await api('getEmployees')) || [];
+  return JSON.parse(localStorage.getItem(LS.emp) || '[]');
+}
+async function addEmployeeStore(emp) {
+  if (USE_SHEETS) return api('addEmployee', { emp });
+  const list = await getEmployees(); list.push(emp);
+  localStorage.setItem(LS.emp, JSON.stringify(list));
+}
+async function removeEmployeeStore(id) {
+  if (USE_SHEETS) return api('removeEmployee', { id });
+  localStorage.setItem(LS.emp, JSON.stringify((await getEmployees()).filter(e=>e.id!==id)));
+}
+
+async function getAttendanceRange(start, end) {
+  if (USE_SHEETS) return (await api('getAttendance', { startDate:start, endDate:end })) || [];
+  const all = JSON.parse(localStorage.getItem(LS.att) || '[]');
+  return all.filter(r => (!start||r.date>=start) && (!end||r.date<=end));
+}
+async function getRecordToday(empId) {
+  if (USE_SHEETS) {
+    const recs = await api('getAttendance', { startDate:todayStr(), endDate:todayStr() });
+    return (recs||[]).find(r=>r.empId===empId) || null;
+  }
+  return (JSON.parse(localStorage.getItem(LS.att)||'[]')).find(r=>r.empId===empId&&r.date===todayStr())||null;
+}
+async function storePunchIn(empId, name, date, punch) {
+  if (USE_SHEETS) return api('savePunchIn', { empId, name, date, time:punch.time, lat:punch.lat, lng:punch.lng });
+  const all = JSON.parse(localStorage.getItem(LS.att)||'[]');
+  const idx = all.findIndex(r=>r.empId===empId&&r.date===date);
+  if (idx!==-1) all[idx].punchIn=punch; else all.push({empId,name,date,punchIn:punch,punchOut:null});
+  localStorage.setItem(LS.att, JSON.stringify(all));
+}
+async function storePunchOut(empId, date, punch) {
+  if (USE_SHEETS) return api('savePunchOut', { empId, date, time:punch.time, lat:punch.lat, lng:punch.lng });
+  const all = JSON.parse(localStorage.getItem(LS.att)||'[]');
+  const idx = all.findIndex(r=>r.empId===empId&&r.date===date);
+  if (idx!==-1) { all[idx].punchOut=punch; localStorage.setItem(LS.att, JSON.stringify(all)); }
+}
+
+async function getAdminStore() {
+  if (USE_SHEETS) return api('getAdmin');
+  return JSON.parse(localStorage.getItem(LS.admin)||'null');
+}
+async function saveAdminStore(creds) {
+  if (USE_SHEETS) return api('saveAdmin', { creds });
+  localStorage.setItem(LS.admin, JSON.stringify(creds));
+}
+
+async function getCustomHols() {
+  if (USE_SHEETS) return (await api('getHolidays')) || {};
+  return JSON.parse(localStorage.getItem(LS.hols)||'{}');
+}
+async function addHolStore(date, name) {
+  if (USE_SHEETS) return api('addHoliday', { date, name });
+  const c = await getCustomHols(); c[date]=name;
+  localStorage.setItem(LS.hols, JSON.stringify(c));
+}
+async function removeHolStore(date) {
+  if (USE_SHEETS) return api('removeHoliday', { date });
+  const c = await getCustomHols(); delete c[date];
+  localStorage.setItem(LS.hols, JSON.stringify(c));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CRYPTO
+════════════════════════════════════════════════════════════════ */
+const SALT = 'att##sys77!';
+async function hashPass(p) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT+p));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function verifyPass(p, hash) { return (await hashPass(p)) === hash; }
+
+/* ════════════════════════════════════════════════════════════════
+   HOLIDAYS
+════════════════════════════════════════════════════════════════ */
+const NATIONAL = {
+  '2025-01-26':'Republic Day','2025-02-26':'Maha Shivratri','2025-03-17':'Holi',
+  '2025-03-31':'Eid ul-Fitr','2025-04-14':'Dr. Ambedkar Jayanti','2025-04-18':'Good Friday',
+  '2025-08-15':'Independence Day','2025-08-16':'Janmashtami','2025-10-02':'Gandhi Jayanti',
+  '2025-10-20':'Diwali','2025-11-05':'Guru Nanak Jayanti','2025-12-25':'Christmas',
+  '2026-01-26':'Republic Day','2026-03-06':'Holi','2026-03-20':'Eid ul-Fitr',
+  '2026-04-03':'Good Friday','2026-04-14':'Dr. Ambedkar Jayanti','2026-08-15':'Independence Day',
+  '2026-10-02':'Gandhi Jayanti','2026-11-14':'Diwali','2026-12-25':'Christmas',
+};
+let _customHols = {};
+
+async function reloadHols() { _customHols = await getCustomHols(); }
+function allHols() { return Object.assign({}, NATIONAL, _customHols); }
+function checkDayOff(ds) {
+  const d = new Date(ds+'T12:00:00');
+  if (d.getDay()===0) return { type:'Sunday', name:'Sunday – Office Closed', icon:'😴' };
+  const h = allHols()[ds];
+  if (h) return { type:'Holiday', name:h, icon:'🎉' };
+  return null;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════════ */
+let currentEmp=null, punchMode='in', videoStream=null, locWatcher=null, capLat=null, capLng=null;
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function nowTime()  { return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function initials(n){ return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function mapsUrl(a,b){ return 'https://www.google.com/maps?q='+a+','+b; }
+function loading(on, msg='Loading…'){ document.getElementById('loadOverlay').classList.toggle('on',on); document.getElementById('loadMsg').textContent=msg; }
+
+function updateStorageBadges() {
+  const cls = USE_SHEETS ? 'storage-badge badge-sheets' : 'storage-badge badge-local';
+  const txt = USE_SHEETS ? '✅ Google Sheets' : '💾 Local Storage';
+  ['storeBadge','storeBadge2','storeBadge3'].forEach(id=>{ const el=document.getElementById(id); if(el){el.className=cls;el.textContent=txt;} });
+}
+
+function calcHrs(tin,tout) {
+  if(!tin||!tout) return null;
+  const [h1,m1,s1]=tin.split(':').map(Number), [h2,m2,s2]=tout.split(':').map(Number);
+  const mins=(h2*60+m2+s2/60)-(h1*60+m1+s1/60);
+  if(mins<=0) return null;
+  return { label:Math.floor(mins/60)+'h '+Math.round(mins%60)+'m', dec:(mins/60).toFixed(2) };
+}
+
+const DEFAULT_EMP_NAMES=[
+  ['EMP001','Aarav Sharma'],['EMP002','Priya Patel'],['EMP003','Ravi Kumar'],['EMP004','Sneha Singh'],
+  ['EMP005','Mohan Yadav'],['EMP006','Kavita Joshi'],['EMP007','Vijay Mehta'],['EMP008','Ananya Gupta'],
+  ['EMP009','Suresh Verma'],['EMP010','Deepa Reddy'],['EMP011','Arjun Tiwari'],['EMP012','Pooja Mishra'],
+  ['EMP013','Rahul Sinha'],['EMP014','Meena Kaur'],['EMP015','Karan Malhotra'],['EMP016','Sona Bose'],
+  ['EMP017','Tushar Nair'],['EMP018','Rekha Pillai'],['EMP019','Anil Pandey'],['EMP020','Divya Saxena'],
+];
+
+/* ════════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════════ */
+async function init() {
+  updateStorageBadges();
+  loading(true, 'Starting up…');
+  try {
+    // Seed default employees (localStorage mode only)
+    if (!USE_SHEETS) {
+      const existing = await getEmployees();
+      if (existing.length === 0) {
+        for (const [id,name] of DEFAULT_EMP_NAMES) {
+          const list = JSON.parse(localStorage.getItem(LS.emp)||'[]');
+          list.push({ id, name, passHash: await hashPass(id) });
+          localStorage.setItem(LS.emp, JSON.stringify(list));
+        }
+      }
+    }
+    await reloadHols();
+    const creds = await getAdminStore();
+    loading(false);
+    if (!creds) showScreen('setupScreen');
+    else showScreen('loginScreen');
+  } catch(err) {
+    loading(false);
+    alert('Connection error: ' + err.message + '\n\nCheck your SCRIPT_URL in the config section.');
+    showScreen('setupScreen');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SETUP
+════════════════════════════════════════════════════════════════ */
+async function completeSetup() {
+  const u=document.getElementById('setupUser').value.trim();
+  const p=document.getElementById('setupPass').value;
+  const c=document.getElementById('setupConfirm').value;
+  const e=document.getElementById('setupError');
+  if(!u){e.textContent='Username required.';e.classList.add('show');return;}
+  if(p.length<6){e.textContent='Password must be at least 6 characters.';e.classList.add('show');return;}
+  if(p!==c){e.textContent='Passwords do not match.';e.classList.add('show');return;}
+  loading(true,'Saving admin account…');
+  try {
+    // In Sheets mode, seed employees too
+    if (USE_SHEETS) {
+      const existing = await getEmployees();
+      if (existing.length === 0) {
+        for (const [id,name] of DEFAULT_EMP_NAMES) {
+          await addEmployeeStore({ id, name, passHash: await hashPass(id) });
+        }
+      }
+    }
+    await saveAdminStore({ username:u, passHash: await hashPass(p) });
+    loading(false);
+    e.classList.remove('show');
+    showScreen('loginScreen');
+  } catch(err) {
+    loading(false);
+    e.textContent='Error: '+err.message; e.classList.add('show');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EMPLOYEE LOGIN
+════════════════════════════════════════════════════════════════ */
+async function handleLogin() {
+  const id  =document.getElementById('loginId').value.trim().toUpperCase();
+  const pass=document.getElementById('loginPass').value;
+  const err =document.getElementById('loginError');
+  loading(true,'Verifying…');
+  try {
+    const emps=await getEmployees();
+    const emp=emps.find(e=>String(e.id).toUpperCase()===id);
+    if(!emp||!(await verifyPass(pass,emp.passHash))){loading(false);err.classList.add('show');return;}
+    err.classList.remove('show'); currentEmp=emp;
+    loading(false); await loadCameraScreen();
+  } catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CAMERA SCREEN
+════════════════════════════════════════════════════════════════ */
+async function loadCameraScreen() {
+  showScreen('cameraScreen');
+  document.getElementById('empAvatar').textContent = initials(currentEmp.name);
+  document.getElementById('empName').textContent   = currentEmp.name;
+  document.getElementById('empIdLbl').textContent  = currentEmp.id;
+  ['stHoliday','stDone','stCamera'].forEach(id=>document.getElementById(id).style.display='none');
+
+  const dayOff = checkDayOff(todayStr());
+  if (dayOff) {
+    document.getElementById('holIcon').textContent  = dayOff.icon;
+    document.getElementById('holTitle').textContent = dayOff.type==='Sunday'?'Today is Sunday':'Public Holiday';
+    document.getElementById('holName').textContent  = dayOff.name;
+    document.getElementById('stHoliday').style.display='block'; return;
+  }
+
+  loading(true,"Checking today's record…");
+  let rec;
+  try { rec = await getRecordToday(currentEmp.id); } catch(e){ rec=null; }
+  loading(false);
+
+  if (rec && rec.punchIn && rec.punchOut) {
+    const h=calcHrs(rec.punchIn.time,rec.punchOut.time);
+    document.getElementById('doneIn').textContent  = rec.punchIn.time;
+    document.getElementById('doneOut').textContent = rec.punchOut.time;
+    document.getElementById('doneHrs').textContent = h?h.label:'—';
+    document.getElementById('stDone').style.display='block'; return;
+  }
+
+  punchMode=(rec&&rec.punchIn)?'out':'in';
+  const bar=document.getElementById('punchBar'), btn=document.getElementById('captureBtn');
+  if(punchMode==='in'){
+    bar.className='punch-bar bar-in';
+    document.getElementById('punchTxt').textContent='🟢 Punch In — Mark your arrival';
+    btn.className='btn btn-green'; btn.textContent='📸 Punch In';
+  } else {
+    bar.className='punch-bar bar-out';
+    document.getElementById('punchTxt').textContent='🔵 Punch Out — Punched in at '+rec.punchIn.time;
+    btn.className='btn btn-blue'; btn.textContent='📸 Punch Out';
+  }
+  btn.disabled=false;
+  document.getElementById('camErr').classList.remove('show');
+  document.getElementById('camOk').classList.remove('show');
+  document.getElementById('videoFeed').style.display='block';
+  document.getElementById('snapCanvas').style.display='none';
+  document.getElementById('locSpin').style.display='block';
+  document.getElementById('stCamera').style.display='block';
+  startCamera(); startLocWatch();
+}
+
+async function startCamera() {
+  try {
+    videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:640},audio:false});
+    document.getElementById('videoFeed').srcObject=videoStream;
+  } catch(e) {
+    const el=document.getElementById('camErr');
+    el.textContent='⚠ Camera access denied. Please allow camera permission.';
+    el.classList.add('show'); document.getElementById('captureBtn').disabled=true;
+  }
+}
+function stopCamera(){ if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} }
+function startLocWatch(){
+  capLat=null; capLng=null;
+  if(!navigator.geolocation){ document.getElementById('locTxt').textContent='⚠ GPS not supported'; document.getElementById('locSpin').style.display='none'; return; }
+  locWatcher=navigator.geolocation.watchPosition(pos=>{
+    capLat=pos.coords.latitude.toFixed(6); capLng=pos.coords.longitude.toFixed(6);
+    const lb=document.getElementById('locBar');
+    lb.style.background='#f0fdf4'; lb.style.borderColor='#bbf7d0'; lb.style.color='#059669';
+    document.getElementById('locSpin').style.display='none';
+    document.getElementById('locTxt').textContent='📍 Location ready · ±'+Math.round(pos.coords.accuracy)+'m';
+  }, ()=>{
+    const lb=document.getElementById('locBar');
+    lb.style.background='#fffbeb'; lb.style.borderColor='#fde68a'; lb.style.color='#92400e';
+    document.getElementById('locSpin').style.display='none';
+    document.getElementById('locTxt').textContent='⚠ No GPS — attendance saved without location';
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+function stopLocWatch(){ if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;} }
+
+async function captureAndMark() {
+  const video=document.getElementById('videoFeed'), canvas=document.getElementById('snapCanvas'), btn=document.getElementById('captureBtn');
+  if(!video.srcObject){document.getElementById('camErr').textContent='Camera not ready.';document.getElementById('camErr').classList.add('show');return;}
+  btn.disabled=true; btn.textContent='⏳ Saving…';
+  canvas.width=video.videoWidth||320; canvas.height=video.videoHeight||320;
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+  const punch={ time:nowTime(), lat:capLat, lng:capLng };
+  stopCamera(); stopLocWatch();
+  document.getElementById('videoFeed').style.display='none'; canvas.style.display='block';
+  loading(true, 'Saving attendance…');
+  try {
+    if(punchMode==='in') await storePunchIn(currentEmp.id, currentEmp.name, todayStr(), punch);
+    else await storePunchOut(currentEmp.id, todayStr(), punch);
+    loading(false);
+    const locNote=capLat?'📍 Location saved':'⚠ No GPS';
+    const s=document.getElementById('camOk');
+    s.textContent=(punchMode==='in'?'✅ Punched In at ':'✅ Punched Out at ')+punch.time+' · '+locNote;
+    s.classList.add('show');
+    setTimeout(()=>loadCameraScreen(), 2500);
+  } catch(e){
+    loading(false);
+    const er=document.getElementById('camErr'); er.textContent='Error: '+e.message; er.classList.add('show');
+    btn.disabled=false; btn.textContent=punchMode==='in'?'📸 Punch In':'📸 Punch Out';
+  }
+}
+
+function logout(){ stopCamera(); stopLocWatch(); currentEmp=null; ['loginId','loginPass'].forEach(id=>document.getElementById(id).value=''); showScreen('loginScreen'); }
+
+/* ════════════════════════════════════════════════════════════════
+   ADMIN LOGIN
+════════════════════════════════════════════════════════════════ */
+async function handleAdminLogin() {
+  const u=document.getElementById('adminUser').value.trim();
+  const p=document.getElementById('adminPass').value;
+  const err=document.getElementById('adminErr');
+  loading(true,'Verifying admin…');
+  try {
+    const creds=await getAdminStore();
+    if(!creds||u!==creds.username||!(await verifyPass(p,creds.passHash))){loading(false);err.classList.add('show');return;}
+    err.classList.remove('show');
+    document.getElementById('adminDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('filterDate').value=todayStr();
+    loading(false);
+    switchTab('attendance'); showScreen('adminScreen');
+  } catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+function adminLogout(){ ['adminUser','adminPass'].forEach(id=>document.getElementById(id).value=''); showScreen('loginScreen'); }
+
+/* ════════════════════════════════════════════════════════════════
+   TABS
+════════════════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  const tabs=['attendance','monthly','employees','holidays'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  if(tab==='attendance') loadAttTab();
+  if(tab==='monthly')    initMonthly();
+  if(tab==='employees')  renderEmpList();
+  if(tab==='holidays')   renderHolList();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ATTENDANCE TAB
+════════════════════════════════════════════════════════════════ */
+async function loadAttTab() {
+  const fd=document.getElementById('filterDate').value||todayStr();
+  const fn=(document.getElementById('filterName').value||'').toLowerCase();
+  loading(true,'Loading attendance…');
+  try {
+    const [dayRecs, emps] = await Promise.all([
+      getAttendanceRange(fd, fd),
+      getEmployees()
+    ]);
+    loading(false);
+    const presIds=dayRecs.map(r=>r.empId);
+    let present=0, partial=0;
+    dayRecs.forEach(r=>{if(r.punchIn&&r.punchOut)present++;else if(r.punchIn)partial++;});
+    document.getElementById('sTotal').textContent   = emps.length;
+    document.getElementById('sPresent').textContent = present;
+    document.getElementById('sPartial').textContent = partial;
+    document.getElementById('sAbsent').textContent  = emps.length - dayRecs.length;
+    const dayOff=checkDayOff(fd);
+    const ban=document.getElementById('holBanner');
+    ban.innerHTML=dayOff?(dayOff.icon+' <strong>'+fd+'</strong> is a '+dayOff.type+': '+dayOff.name):'';
+    ban.classList.toggle('show',!!dayOff);
+
+    let rows=[];
+    dayRecs.forEach(r=>{if(!fn||r.name.toLowerCase().includes(fn))rows.push(r);});
+    emps.forEach(emp=>{ if(!presIds.includes(emp.id)&&(!fn||emp.name.toLowerCase().includes(fn))) rows.push({empId:emp.id,name:emp.name,date:fd,punchIn:null,punchOut:null}); });
+
+    const tbody=document.getElementById('attBody'), empty=document.getElementById('attEmpty');
+    if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    tbody.innerHTML=rows.map(r=>{
+      const hasPi=r.punchIn&&r.punchIn.time, hasPo=r.punchOut&&r.punchOut.time;
+      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi?'<span class="badge b-partial">In Progress</span>':'<span class="badge b-absent">Absent</span>';
+      const hrs=(hasPi&&hasPo)?(calcHrs(r.punchIn.time,r.punchOut.time)||{label:'—'}).label:'—';
+      const loc=(r.punchIn&&r.punchIn.lat)?'<a class="map-link" href="'+mapsUrl(r.punchIn.lat,r.punchIn.lng)+'" target="_blank">📍 Map</a>':(hasPi?'<span style="font-size:11px;color:#9ca3af">No GPS</span>':'—');
+      return '<tr><td style="font-weight:600">'+r.name+'</td><td style="color:#6b7280">'+r.empId+'</td><td>'+status+'</td><td>'+(hasPi?r.punchIn.time:'—')+'</td><td>'+(hasPo?r.punchOut.time:'—')+'</td><td>'+hrs+'</td><td>'+loc+'</td></tr>';
+    }).join('');
+    window._lastAttRecs=rows; window._lastAttEmps=emps;
+  } catch(e){ loading(false); alert('Error loading attendance: '+e.message); }
+}
+
+async function exportCSV() {
+  loading(true,'Preparing export…');
+  try {
+    const fd=document.getElementById('filterDate').value||todayStr();
+    const recs=await getAttendanceRange('2020-01-01', fd);
+    loading(false);
+    if(!recs.length){alert('No records to export.');return;}
+    const hdr=['ID','Name','Date','Punch In','Punch Out','Hours','Lat','Lng'];
+    const rows=recs.map(r=>{
+      const h=(r.punchIn&&r.punchOut)?calcHrs(r.punchIn.time,r.punchOut.time):null;
+      return [r.empId,r.name,r.date,r.punchIn?r.punchIn.time:'',r.punchOut?r.punchOut.time:'',h?h.label:'',r.punchIn?r.punchIn.lat||'':'',r.punchIn?r.punchIn.lng||'':''].join(',');
+    });
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'attendance-export.csv'});
+    a.click();
+  } catch(e){ loading(false); alert('Export error: '+e.message); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MONTHLY REPORT
+════════════════════════════════════════════════════════════════ */
+function initMonthly() {
+  const now=new Date(); let pm=now.getMonth(), py=now.getFullYear();
+  if(pm===0){pm=12;py--;}
+  document.getElementById('repMonth').value=pm; document.getElementById('repYear').value=py;
+  if(now.getDate()===2){
+    const mName=new Date(py,pm-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+    document.getElementById('repNoteText').textContent='📊 Monthly report for '+mName+' is ready! Click Generate.';
+    document.getElementById('repNote').classList.add('show');
+    generateReport();
+  } else {
+    document.getElementById('repNote').classList.remove('show');
+    document.getElementById('monthSum').style.display='none';
+    document.getElementById('monthTable').style.display='none';
+    document.getElementById('monthEmpty').style.display='block';
+  }
+}
+
+async function generateReport() {
+  const month=parseInt(document.getElementById('repMonth').value);
+  const year =parseInt(document.getElementById('repYear').value);
+  if(!month||!year||year<2020){alert('Enter a valid month and year.');return;}
+  const mStr=year+'-'+String(month).padStart(2,'0');
+  const dim  =new Date(year,month,0).getDate();
+  loading(true,'Generating report…');
+  try {
+    const [allRecs, emps]= await Promise.all([
+      getAttendanceRange(mStr+'-01', mStr+'-'+String(dim).padStart(2,'0')),
+      getEmployees()
+    ]);
+    loading(false);
+    let workDays=0, offDays=0; const dayType={};
+    for(let d=1;d<=dim;d++){
+      const ds=mStr+'-'+String(d).padStart(2,'0');
+      const off=checkDayOff(ds); dayType[ds]=off;
+      if(off) offDays++; else workDays++;
+    }
+    const stats=emps.map(emp=>{
+      let present=0, totalMins=0;
+      for(let d=1;d<=dim;d++){
+        const ds=mStr+'-'+String(d).padStart(2,'0');
+        if(dayType[ds]) continue;
+        const rec=allRecs.find(r=>r.empId===emp.id&&r.date===ds);
+        if(rec&&rec.punchIn){
+          present++;
+          if(rec.punchOut){
+            const [h1,m1,s1]=rec.punchIn.time.split(':').map(Number);
+            const [h2,m2,s2]=rec.punchOut.time.split(':').map(Number);
+            totalMins+=(h2*60+m2+s2/60)-(h1*60+m1+s1/60);
+          }
+        }
+      }
+      return { name:emp.name, id:emp.id, present, absent:workDays-present,
+               pct:workDays>0?Math.round(present/workDays*100):0,
+               avgH:present>0?(totalMins/60/present).toFixed(1):'0' };
+    });
+    document.getElementById('mDays').textContent=workDays;
+    document.getElementById('mHols').textContent=offDays;
+    document.getElementById('mEmp').textContent=emps.length;
+    document.getElementById('monthSum').style.display='';
+    document.getElementById('monthEmpty').style.display='none';
+    document.getElementById('monthTable').style.display='';
+    document.getElementById('monthBody').innerHTML=stats.map(e=>{
+      const col=e.pct>=90?'#059669':e.pct>=75?'#d97706':'#ef4444';
+      return '<tr><td style="font-weight:600">'+e.name+'</td><td style="color:#6b7280">'+e.id+'</td><td>'+workDays+'</td><td class="c-green">'+e.present+'</td><td class="c-red">'+e.absent+'</td><td><strong style="color:'+col+'">'+e.pct+'%</strong></td><td>'+e.avgH+'h</td></tr>';
+    }).join('');
+    window._lastReport={workDays,offDays,stats,month,year};
+  } catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+function exportMonthlyCSV(){
+  const r=window._lastReport;
+  if(!r){alert('Generate the report first.');return;}
+  const mName=new Date(r.year,r.month-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+  const hdr=['Name','ID','Working Days','Present','Absent','Attendance %','Avg Hours/Day'];
+  const rows=r.stats.map(e=>[e.name,e.id,r.workDays,e.present,e.absent,e.pct+'%',e.avgH+'h'].join(','));
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([['Month: '+mName,hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'monthly-'+r.year+'-'+String(r.month).padStart(2,'0')+'.csv'});
+  a.click();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EMPLOYEES TAB
+════════════════════════════════════════════════════════════════ */
+async function renderEmpList() {
+  loading(true,'Loading employees…');
+  try {
+    const emps=await getEmployees(); loading(false);
+    const list=document.getElementById('empList');
+    if(!emps.length){list.innerHTML='<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">No employees yet.</p>';return;}
+    list.innerHTML=emps.map(e=>`
+      <div class="emp-item">
+        <div>
+          <div style="font-weight:700;font-size:14px">${e.name}</div>
+          <div style="font-size:12px;color:#6b7280">${e.id} &nbsp;·&nbsp; Password: <em style="color:#9ca3af">hidden (hashed)</em></div>
+        </div>
+        <button class="del-btn" onclick="removeEmployee('${e.id}')" title="Remove employee">✕</button>
+      </div>`).join('');
+  } catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function addEmployee() {
+  const id  =document.getElementById('nEmpId').value.trim().toUpperCase();
+  const name=document.getElementById('nEmpName').value.trim();
+  const pass=document.getElementById('nEmpPass').value||id;
+  const err =document.getElementById('empErr'), ok=document.getElementById('empOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!id||!name){err.textContent='ID and name are required.';err.classList.add('show');return;}
+  if(!/^[A-Z0-9]+$/.test(id)){err.textContent='ID must be letters and numbers only.';err.classList.add('show');return;}
+  loading(true,'Adding employee…');
+  try {
+    const existing=await getEmployees();
+    if(existing.find(e=>e.id===id)){loading(false);err.textContent='Employee ID "'+id+'" already exists.';err.classList.add('show');return;}
+    await addEmployeeStore({ id, name, passHash: await hashPass(pass) });
+    ['nEmpId','nEmpName','nEmpPass'].forEach(i=>document.getElementById(i).value='');
+    loading(false);
+    ok.textContent='✅ '+name+' added. Default password: '+pass; ok.classList.add('show');
+    renderEmpList();
+  } catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+
+async function removeEmployee(id) {
+  if(!confirm('Remove employee '+id+'? Their attendance history is kept.')) return;
+  loading(true,'Removing…');
+  try { await removeEmployeeStore(id); loading(false); renderEmpList(); }
+  catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HOLIDAYS TAB
+════════════════════════════════════════════════════════════════ */
+async function renderHolList() {
+  loading(true,'Loading holidays…');
+  try {
+    const custom=await getCustomHols(); loading(false);
+    const all=Object.entries(Object.assign({},NATIONAL,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
+    const list=document.getElementById('holList');
+    list.innerHTML=all.map(([date,name])=>{
+      const isCust=!!custom[date];
+      const dl=new Date(date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+      return `<div class="hol-item">
+        <div>
+          <span style="font-weight:600">${name}</span>
+          <span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">${date} · ${dl}</div>
+        </div>
+        ${isCust?`<button class="del-btn" onclick="removeHoliday('${date}')">✕</button>`:''}
+      </div>`;
+    }).join('');
+  } catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function addHoliday() {
+  const date=document.getElementById('hDate').value, name=document.getElementById('hName').value.trim();
+  if(!date||!name){alert('Enter both date and holiday name.');return;}
+  loading(true,'Saving…');
+  try {
+    await addHolStore(date,name); _customHols=await getCustomHols();
+    document.getElementById('hDate').value=''; document.getElementById('hName').value='';
+    loading(false); renderHolList();
+  } catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function removeHoliday(date) {
+  loading(true,'Removing…');
+  try {
+    await removeHolStore(date); _customHols=await getCustomHols();
+    loading(false); renderHolList();
+  } catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ENTER KEYS
+════════════════════════════════════════════════════════════════ */
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
+document.getElementById('adminPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleAdminLogin();});
+document.getElementById('setupConfirm').addEventListener('keydown',e=>{if(e.key==='Enter')completeSetup();});
+
+/* ════════════════════════════════════════════════════════════════
+   START
+════════════════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>
