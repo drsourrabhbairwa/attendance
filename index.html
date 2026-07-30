@@ -324,7 +324,7 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Apps Script URL and secret here
    ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGBAdRTmb216vk5CPT8ai4AEgjgjFNWQO-ElzSftKP_RFwkuCNm5lRTOTFOz0TrwB6/exec';   // ← https://script.google.com/macros/s/.../exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkT6_r5KmDzlNLoDT9pRnoANs_lPh6I3SHdUIr3czQq0KH6Ed6ewcNPMN8uT7w0PCtKg/exec';   // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';   // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 
@@ -360,17 +360,29 @@ async function removeEmpStore(id){
 
 /* Get today's full record (with meetings array) — uses local cache as fallback */
 async function getRecordToday(empId){
-  const ck='pc_'+empId+'_'+todayStr();
-  const cached=JSON.parse(localStorage.getItem(ck)||'null');
+  const eid = String(empId).toUpperCase();
+  const ck  = 'pc_'+eid+'_'+todayStr();
+  // Always read local cache first — this is the source of truth for current session
+  const cached = JSON.parse(localStorage.getItem(ck)||'null');
   if(USE_SHEETS){
     try{
       const recs=await api('getAttendance',{startDate:todayStr(),endDate:todayStr()});
-      const rec=(recs||[]).find(r=>String(r.empId).toUpperCase()===String(empId).toUpperCase())||null;
-      if(rec){ localStorage.setItem(ck,JSON.stringify(rec)); return rec; }
-    }catch(e){}
-    return cached;
+      const rec=(recs||[]).find(r=>String(r.empId).toUpperCase()===eid)||null;
+      if(rec){
+        // Merge API data with local cache (local cache may have more recent meeting data)
+        const merged = rec;
+        if(cached && cached.meetings && cached.meetings.length > (rec.meetings||[]).length){
+          merged.meetings = cached.meetings;
+        }
+        localStorage.setItem(ck,JSON.stringify(merged));
+        return merged;
+      }
+    }catch(e){/* API failed — use local cache */}
+    return cached; // Return cache even if API failed
   }
-  return (JSON.parse(localStorage.getItem(LS.att)||'[]')).find(r=>r.empId===empId&&r.date===todayStr())||null;
+  // localStorage mode — case-insensitive match
+  const all = JSON.parse(localStorage.getItem(LS.att)||'[]');
+  return all.find(r=>String(r.empId).toUpperCase()===eid && r.date===todayStr())||cached||null;
 }
 async function getAttRange(start,end){
   if(USE_SHEETS) return (await api('getAttendance',{startDate:start,endDate:end}))||[];
@@ -678,7 +690,8 @@ function setCameraMode(mode){
   document.getElementById('camOk').classList.remove('show');
   document.getElementById('videoFeed').style.display='block';
   document.getElementById('snapCanvas').style.display='none';
-  btn.disabled=false;
+  // Button enabled only if GPS already locked (capLat set from previous startLocWatch call)
+  btn.disabled = !(capLat && capLng);
   if(mode==='in'){
     bar.className='punch-bar bar-green';
     document.getElementById('punchTxt').textContent='🟢 Mark Your Arrival';
@@ -702,8 +715,16 @@ function setCameraMode(mode){
 
 function switchToMeetingOut(){
   stopCamera();
+  // Don't restart location watch — GPS is already locked from punch-in session
   setCameraMode('meeting_out');
   startCamera();
+  // If GPS already locked, ensure button is enabled
+  if(capLat && capLng){
+    document.getElementById('captureBtn').disabled=false;
+    const lb=document.getElementById('locBar');
+    lb.style.background='#f0fdf4'; lb.style.borderColor='#bbf7d0'; lb.style.color='#059669';
+    document.getElementById('locTxt').textContent='📍 Location locked · '+capLat+', '+capLng;
+  }
 }
 
 async function startCamera(){
@@ -720,55 +741,119 @@ function stopCamera(){if(videoStream){videoStream.getTracks().forEach(t=>t.stop(
 function startLocWatch(){
   capLat=null; capLng=null;
   const lb=document.getElementById('locBar'), ltxt=document.getElementById('locTxt'), lsp=document.getElementById('locSpin');
+  const btn=document.getElementById('captureBtn');
+  // Disable button until GPS is locked — location is MANDATORY
+  btn.disabled=true;
   lb.style.background='#f0f9ff'; lb.style.borderColor='#bae6fd'; lb.style.color='#0369a1'; lsp.style.display='block';
-  ltxt.textContent='Getting location…';
-  if(!navigator.geolocation){ltxt.textContent='⚠ GPS not supported';lsp.style.display='none';return;}
+  ltxt.textContent='📍 Waiting for GPS… (Required to punch)';
+  if(!navigator.geolocation){
+    lsp.style.display='none';
+    lb.style.background='#fef2f2'; lb.style.borderColor='#fecaca'; lb.style.color='#dc2626';
+    ltxt.textContent='❌ GPS not supported on this device. Cannot punch without location.';
+    return; // button stays disabled
+  }
   locWatcher=navigator.geolocation.watchPosition(pos=>{
     capLat=pos.coords.latitude.toFixed(6); capLng=pos.coords.longitude.toFixed(6);
     lb.style.background='#f0fdf4'; lb.style.borderColor='#bbf7d0'; lb.style.color='#059669';
-    lsp.style.display='none'; ltxt.textContent='📍 Location ready · ±'+Math.round(pos.coords.accuracy)+'m';
-  },()=>{lb.style.background='#fffbeb';lb.style.borderColor='#fde68a';lb.style.color='#92400e';lsp.style.display='none';ltxt.textContent='⚠ No GPS';},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    lsp.style.display='none';
+    ltxt.textContent='📍 Location locked · ±'+Math.round(pos.coords.accuracy)+'m';
+    btn.disabled=false; // Enable button only after GPS is ready
+  },()=>{
+    lb.style.background='#fef2f2'; lb.style.borderColor='#fecaca'; lb.style.color='#dc2626';
+    lsp.style.display='none';
+    ltxt.textContent='❌ Location denied. Please enable GPS permission to punch.';
+    // Button stays disabled — cannot punch without location
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
 function stopLocWatch(){if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;}}
 
 async function captureAndMark(){
   const video=document.getElementById('videoFeed'), canvas=document.getElementById('snapCanvas'), btn=document.getElementById('captureBtn');
-  if(!video.srcObject){document.getElementById('camErr').textContent='Camera not ready.';document.getElementById('camErr').classList.add('show');return;}
+  const camErr=document.getElementById('camErr');
+
+  // Camera check
+  if(!video.srcObject){
+    camErr.textContent='Camera not ready. Please allow camera access.';
+    camErr.classList.add('show'); return;
+  }
+
+  // ── MANDATORY GPS CHECK ──
+  if(!capLat || !capLng){
+    camErr.textContent='📍 Location is required. Please wait for GPS to lock (green bar) before punching.';
+    camErr.classList.add('show'); return;
+  }
+
   btn.disabled=true; btn.textContent='⏳ Saving…';
+  camErr.classList.remove('show');
+
+  // Capture compressed photo
   const photo=compressPhoto(video);
-  const punch={time:nowTime(),photo,lat:capLat,lng:capLng};
+  const punch={time:nowTime(), photo, lat:capLat, lng:capLng};
+
   stopCamera(); stopLocWatch();
   document.getElementById('videoFeed').style.display='none';
   canvas.width=120; canvas.height=120;
   canvas.getContext('2d').drawImage(video,0,0,120,120);
   canvas.style.display='block';
-  loading(true,'Saving…');
+
+  loading(true,'Saving attendance…');
   try{
+    // Save to API / localStorage
     if(punchMode==='in'){
       await storePunchIn(currentEmp.id,currentEmp.name,todayStr(),punch);
     }else if(punchMode==='out'){
       await storePunchOut(currentEmp.id,todayStr(),punch);
     }else if(punchMode==='meeting_out'){
       const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch);
-      if(r&&r.seq) activeMeetingSeq=r.seq; else activeMeetingSeq=1;
+      if(r&&r.seq) activeMeetingSeq=r.seq;
     }else if(punchMode==='meeting_back'){
       await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch);
     }
 
-    // Update local cache
-    const ck='pc_'+currentEmp.id+'_'+todayStr();
-    const freshRec=await getRecordToday(currentEmp.id);
-    if(freshRec) localStorage.setItem(ck,JSON.stringify(freshRec));
+    // ── DIRECTLY UPDATE LOCAL CACHE ──
+    // This is the key fix: we update the cache immediately without waiting
+    // for an API fetch. This guarantees Punch Out shows on next login.
+    const ck='pc_'+String(currentEmp.id).toUpperCase()+'_'+todayStr();
+    let cachedRec = JSON.parse(localStorage.getItem(ck)||'null') || {
+      empId:currentEmp.id, name:currentEmp.name, date:todayStr(),
+      punchIn:null, punchOut:null, meetings:[]
+    };
+    if(!cachedRec.meetings) cachedRec.meetings=[];
+
+    if(punchMode==='in'){
+      cachedRec.punchIn=punch;
+    }else if(punchMode==='out'){
+      cachedRec.punchOut=punch;
+    }else if(punchMode==='meeting_out'){
+      activeMeetingSeq = cachedRec.meetings.length + 1;
+      cachedRec.meetings.push({
+        seq:activeMeetingSeq, outTime:punch.time, outPhoto:punch.photo,
+        outLat:punch.lat, outLng:punch.lng,
+        backTime:null, backPhoto:null, backLat:null, backLng:null
+      });
+    }else if(punchMode==='meeting_back'){
+      const seq=activeMeetingSeq||1;
+      const mi=cachedRec.meetings.findIndex(m=>m.seq===seq);
+      if(mi!==-1){
+        cachedRec.meetings[mi].backTime=punch.time;
+        cachedRec.meetings[mi].backPhoto=punch.photo;
+        cachedRec.meetings[mi].backLat=punch.lat;
+        cachedRec.meetings[mi].backLng=punch.lng;
+      }
+    }
+    localStorage.setItem(ck, JSON.stringify(cachedRec));
 
     loading(false);
-    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Departure recorded at ',meeting_back:'🔙 Return recorded at '};
+    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned from meeting at '};
     const s=document.getElementById('camOk');
-    s.textContent=(labels[punchMode]||'✅ Saved at ')+punch.time+(capLat?' · 📍 Location saved':' · ⚠ No GPS');
+    s.textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+capLat+', '+capLng;
     s.classList.add('show');
-    setTimeout(()=>loadCameraScreen(),2500);
+    setTimeout(()=>loadCameraScreen(), 2200);
+
   }catch(e){
     loading(false);
-    const er=document.getElementById('camErr'); er.textContent='Error saving: '+e.message; er.classList.add('show');
+    camErr.textContent='Error saving: '+e.message;
+    camErr.classList.add('show');
     btn.disabled=false;
   }
 }
