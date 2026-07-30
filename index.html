@@ -824,8 +824,9 @@ async function captureAndMark(){
       cachedRec.punchIn=punch;
     }else if(punchMode==='out'){
       cachedRec.punchOut=punch;
-    }else if(punchMode==='meeting_out'){
-      activeMeetingSeq = cachedRec.meetings.length + 1;
+}else if(punchMode==='meeting_out'){
+      // Use the backend's sequence number if it exists, otherwise fallback to local length
+      activeMeetingSeq = activeMeetingSeq || (cachedRec.meetings.length + 1);
       cachedRec.meetings.push({
         seq:activeMeetingSeq, outTime:punch.time, outPhoto:punch.photo,
         outLat:punch.lat, outLng:punch.lng,
