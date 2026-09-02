@@ -67,7 +67,7 @@ input:focus,select:focus{border-color:#4f46e5;background:#fff}
 .tl-item:last-child{border:none}
 .tl-icon{font-size:18px;width:24px;flex-shrink:0}
 .tl-label{font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.tl-{font-size:14px;font-weight:700;color:#1a1a2e;margin-top:1px}
+.tl-time{font-size:14px;font-weight:700;color:#1a1a2e;margin-top:1px}
 .tl-sub{font-size:11px;color:#9ca3af}
 .total-hrs{text-align:center;background:#f0fdf4;border-radius:8px;padding:9px;margin-top:10px;font-size:14px;color:#059669;font-weight:600}
 /* Admin */
@@ -324,7 +324,7 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Apps Script URL and secret here
    ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwY9FMayiP8bgd2RQiuVBoVJho2erpLWllGkx2ayQmAoRRY9etJKWFulm65aeoD3xmPzA/exec';   // ← https://script.google.com/macros/s/.../exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9tF4LDXVKfou5HGIyrLeO05Ct2dgrRSluCT_bArCU7M8X2ARwJ3aakmNxLmZCcHiHgA/exec';   // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';   // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 
@@ -482,16 +482,34 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 function mapsUrl(a,b){return'https://www.google.com/maps?q='+a+','+b;}
 function loading(on,msg='Loading…'){document.getElementById('loadOv').classList.toggle('on',on);document.getElementById('loadMsg').textContent=msg;}
 
-function calcMins(t1,t2){
- if(!t) return 0;
+// Parses BOTH 12-hour ("05:04:08 PM") and 24-hour ("17:04:08") time strings
+function parseTimeToMins(t){
+  if(!t) return 0;
   const s=String(t).trim();
   const isPM=/pm/i.test(s), isAM=/am/i.test(s);
-  const clean=s.replace(/\\s*(am|pm)\\s*/gi,'');
+  const clean=s.replace(/\s*(am|pm)\s*/gi,'');
   const parts=clean.split(':').map(Number);
   let h=parts[0]||0;
   if(isPM && h!==12) h+=12;
   if(isAM && h===12) h=0;
   return h*60+(parts[1]||0)+(parts[2]||0)/60;
+}
+// Works with mixed formats — safe even if punch-in is 24-hr and punch-out is 12-hr
+function calcMins(t1,t2){
+  if(!t1||!t2) return 0;
+  return Math.max(0, parseTimeToMins(t2)-parseTimeToMins(t1));
+}
+// Display helper: converts any time string to 12-hour "hh:mm:ss AM/PM" for UI
+function fmt12(t){
+  if(!t||t==='—') return t||'—';
+  try{
+    const s=String(t).trim();
+    if(/[aApP][mM]/.test(s)) return s; // already 12-hour, return as-is
+    const[h,m,sec]=(s+':0:0').split(':').map(Number);
+    const period=h>=12?'PM':'AM';
+    const h12=h%12||12;
+    return String(h12).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec||0).padStart(2,'0')+' '+period;
+  }catch(e){return t;}
 }
 function fmtMins(mins){const h=Math.floor(mins/60),m=Math.round(mins%60);return h+'h '+m+'m';}
 function calcHrs(t1,t2){const m=calcMins(t1,t2);return m>0?{label:fmtMins(m),dec:(m/60).toFixed(2)}:null;}
@@ -541,24 +559,24 @@ function buildTimeline(rec){
       ${rec.punchIn.photo?`<img src="${rec.punchIn.photo}" class="photo-lg" onclick="openFullPhoto(this.src,'${escH(rec.name)}','Punch In')">`:'<div class="photo-lg" style="background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>'}
       <div style="flex:1">
         <div class="tl-label">🟢 Punch In</div>
-        <div class=\"tl-time\">${fmt12(rec.punchIn.time)}</div>
+        <div class="tl-time">${fmt12(rec.punchIn.time)}</div>
         ${rec.punchIn.lat?`<div class="tl-sub"><a href="${mapsUrl(rec.punchIn.lat,rec.punchIn.lng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}
       </div></div>`;
   }
   (rec.meetings||[]).forEach((m,i)=>{
     if(m.outTime) html+=`<div class="tl-item">
       ${m.outPhoto?`<img src="${m.outPhoto}" class="photo-lg" onclick="openFullPhoto(this.src,'${escH(rec.name)}','Meeting Out')">`:'<div class="photo-lg" style="background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:22px">🚗</div>'}
-      <div style="flex:1"><div class="tl-label">🚗 Out for Meeting ${i+1}</div><div class=\"tl-time\">${fmt12(m.outTime)}</div>${m.outLat?`<div class="tl-sub"><a href="${mapsUrl(m.outLat,m.outLng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
+      <div style="flex:1"><div class="tl-label">🚗 Out for Meeting ${i+1}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outLat?`<div class="tl-sub"><a href="${mapsUrl(m.outLat,m.outLng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
     if(m.backTime){
       const dur=calcHrs(m.outTime,m.backTime);
       html+=`<div class="tl-item">
         ${m.backPhoto?`<img src="${m.backPhoto}" class="photo-lg" onclick="openFullPhoto(this.src,'${escH(rec.name)}','Meeting Back')">`:'<div class="photo-lg" style="background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:22px">🔙</div>'}
-        <div style=\"flex:1\"><div class=\"tl-label\">🔙 Back from Meeting ${i+1}</div><div class=\"tl-time\">${fmt12(m.backTime)}${dur?' · <span style="color:#9ca3af;font-weight:400;font-size:12px">Away: '+dur.label+'</span>':''}</div>${m.backLat?`<div class="tl-sub"><a href="${mapsUrl(m.backLat,m.backLng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
+        <div style="flex:1"><div class="tl-label">🔙 Back from Meeting ${i+1}</div><div class="tl-time">${fmt12(m.backTime)}${dur?' · <span style="color:#9ca3af;font-weight:400;font-size:12px">Away: '+dur.label+'</span>':''}</div>${m.backLat?`<div class="tl-sub"><a href="${mapsUrl(m.backLat,m.backLng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
     }
   });
   if(rec.punchOut) html+=`<div class="tl-item">
     ${rec.punchOut.photo?`<img src="${rec.punchOut.photo}" class="photo-lg" onclick="openFullPhoto(this.src,'${escH(rec.name)}','Punch Out')">`:'<div class="photo-lg" style="background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:22px">🔵</div>'}
-    <div style=\"flex:1\"><div class=\"tl-label\">🔵 Punch Out</div><div class=\"tl-time\">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.lat?`<div class="tl-sub"><a href="${mapsUrl(rec.punchOut.lat,rec.punchOut.lng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
+    <div style="flex:1"><div class="tl-label">🔵 Punch Out</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.lat?`<div class="tl-sub"><a href="${mapsUrl(rec.punchOut.lat,rec.punchOut.lng)}" target="_blank" style="color:#4f46e5">📍 Location</a></div>`:''}</div></div>`;
   html+='</div>';
   return html;
 }
@@ -830,8 +848,7 @@ async function captureAndMark(){
       cachedRec.punchIn=punch;
     }else if(punchMode==='out'){
       cachedRec.punchOut=punch;
-}else if(punchMode==='meeting_out'){
-      // Use the backend's sequence number if it exists, otherwise fallback to local length
+    }else if(punchMode==='meeting_out'){
       activeMeetingSeq = activeMeetingSeq || (cachedRec.meetings.length + 1);
       cachedRec.meetings.push({
         seq:activeMeetingSeq, outTime:punch.time, outPhoto:punch.photo,
@@ -961,7 +978,7 @@ async function loadAttTab(){
         <td style="font-weight:600">${r.name}${am?'<div class="out-now">Out Now</div>':''}</td>
         <td style="color:#6b7280">${r.empId}</td>
         <td>${statusBadge}</td>
-        <td>${hasPi?fmt12(r.punchIn.time):'—'}</td>\n
+        <td>${hasPi?fmt12(r.punchIn.time):'—'}</td>
         <td>${hasPo?fmt12(r.punchOut.time):'—'}</td>
         <td>${meetCell}</td>
         <td>${hrs}</td>
