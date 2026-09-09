@@ -191,6 +191,17 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
         <canvas id="snapCanvas"></canvas>
         <div class="cam-ring"></div>
       </div>
+      <!-- Meeting note box — visible only in meeting_out mode -->
+      <div id="meetNoteBox" style="display:none;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block">
+          📝 Meeting note <span style="font-weight:400;color:#9ca3af">(optional)</span>
+        </label>
+        <textarea id="meetNoteInput" rows="2"
+          style="width:100%;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;resize:none;outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='#f59e0b'"
+          onblur="this.style.borderColor='#e5e7eb'"
+          placeholder="e.g. Client visit – Acme Corp, Jodhpur…"></textarea>
+      </div>
       <div class="loc-bar" id="locBar">
         <div class="spin-sm" id="locSpin"></div><span id="locTxt">Getting location…</span>
       </div>
@@ -198,6 +209,7 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
       <!-- Meeting button — only shown in punch-out mode -->
       <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeetingOut()">🚗 Going Out for Meeting</button>
       <button class="btn btn-outline" onclick="logout()">Logout</button>
+      <button class="btn btn-outline" onclick="showLeavePanel()" id="leaveNavBtn" style="margin-top:8px;font-size:13px;color:#7c3aed;border-color:#ddd6fe">📋 Apply for Leave</button>
       <div class="msg msg-error" id="camErr"></div>
       <div class="msg msg-success" id="camOk"></div>
     </div>
@@ -228,6 +240,7 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
       <button class="tab-btn" onclick="switchTab('monthly')">📊 Monthly</button>
       <button class="tab-btn" onclick="switchTab('employees')">👥 Employees</button>
       <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
+      <button class="tab-btn" onclick="switchTab('leaves')">📋 Leaves</button>
     </div>
 
     <!-- TAB: ATTENDANCE -->
@@ -308,6 +321,65 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
       </div>
       <div id="holList" style="max-height:380px;overflow-y:auto"></div>
     </div>
+
+    <!-- TAB: LEAVES (admin) -->
+    <div id="tabLeaves" class="tab-pane">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="lvFilterStatus" onchange="loadLeavesTab()" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <option value="pending">Pending approval</option>
+          <option value="all">All requests</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button onclick="loadLeavesTab()" style="padding:7px 13px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Refresh</button>
+      </div>
+      <div id="lvAdminList"></div>
+
+      <!-- Quota management -->
+      <div style="margin-top:20px;background:#f9fafb;border-radius:12px;padding:16px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚙️ Leave Quotas (Days/Year)</div>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Set how many days each type of leave each employee gets.</p>
+        <div id="lvQuotaList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVE PANEL (shown over camera screen) -->
+<div id="leavePanel" style="display:none" class="screen">
+  <div class="card">
+    <div class="emp-badge">
+      <div class="avatar" id="lvAvatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:15px" id="lvName">—</div>
+        <div style="font-size:12px;color:#6b7280">Leave Management</div>
+      </div>
+    </div>
+
+    <!-- Balance -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="lvBalance"></div>
+
+    <!-- Request form -->
+    <div style="background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">➕ New Leave Request</div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Leave Type</label>
+      <select id="lvType" style="width:100%;padding:9px 11px;border:2px solid #e5e7eb;border-radius:9px;font-size:14px;margin-bottom:10px;outline:none">
+        <option value="CL">CL — Casual Leave</option>
+        <option value="VL">VL — Vacation Leave</option>
+        <option value="ML">ML — Medical Leave</option>
+      </select>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Reason</label>
+      <textarea id="lvReason" rows="3" style="width:100%;padding:9px 11px;border:2px solid #e5e7eb;border-radius:9px;font-size:14px;outline:none;resize:none;font-family:inherit" placeholder="Briefly explain the reason…"></textarea>
+      <button class="btn btn-primary" onclick="submitLeave()" style="margin-top:10px">Submit Request</button>
+      <div class="msg msg-error" id="lvErr"></div>
+      <div class="msg msg-success" id="lvOk"></div>
+    </div>
+
+    <!-- My requests -->
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px">My Requests</div>
+    <div id="lvHistory" style="max-height:220px;overflow-y:auto"></div>
+
+    <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
   </div>
 </div>
 
@@ -324,7 +396,7 @@ tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:last-child{border:none}tbody t
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Apps Script URL and secret here
    ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9tF4LDXVKfou5HGIyrLeO05Ct2dgrRSluCT_bArCU7M8X2ARwJ3aakmNxLmZCcHiHgA/exec';   // ← https://script.google.com/macros/s/.../exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjbMxgRQaAatBvPGmFvtbCsCB-ne4OBvInmelvBVb0Y3fRuTMF3dyoeRGSrq_XXzDQ/exec';   // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';   // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 
@@ -391,7 +463,7 @@ async function getAttRange(start,end){
 }
 
 async function storePunchIn(empId,name,date,punch){
-  if(USE_SHEETS) return api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng});
+  if(USE_SHEETS) return api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||''});
   const all=JSON.parse(localStorage.getItem(LS.att)||'[]');
   const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
   const rec={empId,name,date,punchIn:punch,punchOut:null,meetings:[]};
@@ -399,13 +471,13 @@ async function storePunchIn(empId,name,date,punch){
   localStorage.setItem(LS.att,JSON.stringify(all));
 }
 async function storePunchOut(empId,date,punch){
-  if(USE_SHEETS) return api('savePunchOut',{empId,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng});
+  if(USE_SHEETS) return api('savePunchOut',{empId,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||''});
   const all=JSON.parse(localStorage.getItem(LS.att)||'[]');
   const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
   if(idx!==-1){all[idx].punchOut=punch; localStorage.setItem(LS.att,JSON.stringify(all));}
 }
 async function storeMeetingOut(empId,name,date,punch){
-  if(USE_SHEETS) return api('saveMeetingOut',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng});
+  if(USE_SHEETS) return api('saveMeetingOut',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||'',note:punch.note||''});
   const all=JSON.parse(localStorage.getItem(LS.att)||'[]');
   const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
   if(idx!==-1){
@@ -417,7 +489,7 @@ async function storeMeetingOut(empId,name,date,punch){
   }
 }
 async function storeMeetingBack(empId,date,seq,punch){
-  if(USE_SHEETS) return api('saveMeetingBack',{empId,date,seq,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng});
+  if(USE_SHEETS) return api('saveMeetingBack',{empId,date,seq,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||''});
   const all=JSON.parse(localStorage.getItem(LS.att)||'[]');
   const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
   if(idx!==-1&&all[idx].meetings){
@@ -473,6 +545,7 @@ function checkDayOff(ds){
 
 /* ── UTILS ── */
 let currentEmp=null, punchMode='in', videoStream=null, locWatcher=null;
+let capArea=''; // Reverse-geocoded area name
 let capLat=null, capLng=null, todayRec=null, activeMeetingSeq=null, officeTimerInt=null;
 
 function todayStr(){return new Date().toISOString().slice(0,10);}
@@ -480,6 +553,27 @@ function nowTime(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',
 function initials(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function mapsUrl(a,b){return'https://www.google.com/maps?q='+a+','+b;}
+
+/* Reverse geocode using Nominatim (free, no API key needed) */
+async function reverseGeocode(lat,lng){
+  try{
+    const res=await fetch(
+      'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+lat+'&lon='+lng+'&zoom=16&addressdetails=1',
+      {headers:{'Accept-Language':'en','User-Agent':'AttendanceApp/1.0'}}
+    );
+    if(!res.ok) throw new Error();
+    const data=await res.json();
+    const a=data.address||{};
+    const local=a.suburb||a.neighbourhood||a.residential||a.village||a.town||a.city_district||'';
+    const city=a.city||a.county||'';
+    const state=a.state||'';
+    const parts=[local,city].filter(Boolean);
+    if(parts.length===0 && data.display_name) return data.display_name.split(',')[0].trim();
+    return parts.slice(0,2).join(', ')||'Unknown area';
+  }catch(e){
+    return lat+'°, '+lng+'°';
+  }
+}
 function loading(on,msg='Loading…'){document.getElementById('loadOv').classList.toggle('on',on);document.getElementById('loadMsg').textContent=msg;}
 
 // Parses BOTH 12-hour ("05:04:08 PM") and 24-hour ("17:04:08") time strings
@@ -710,11 +804,12 @@ function setCameraMode(mode){
   punchMode=mode;
   const bar=document.getElementById('punchBar'), btn=document.getElementById('captureBtn');
   document.getElementById('meetingBtn').style.display='none';
+  document.getElementById('meetNoteBox').style.display = (mode==='meeting_out') ? 'block' : 'none';
+  if(mode!=='meeting_out') document.getElementById('meetNoteInput').value='';
   document.getElementById('camErr').classList.remove('show');
   document.getElementById('camOk').classList.remove('show');
   document.getElementById('videoFeed').style.display='block';
   document.getElementById('snapCanvas').style.display='none';
-  // Button enabled only if GPS already locked (capLat set from previous startLocWatch call)
   btn.disabled = !(capLat && capLng);
   if(mode==='in'){
     bar.className='punch-bar bar-green';
@@ -776,12 +871,15 @@ function startLocWatch(){
     ltxt.textContent='❌ GPS not supported on this device. Cannot punch without location.';
     return; // button stays disabled
   }
-  locWatcher=navigator.geolocation.watchPosition(pos=>{
+  locWatcher=navigator.geolocation.watchPosition(async pos=>{
     capLat=pos.coords.latitude.toFixed(6); capLng=pos.coords.longitude.toFixed(6);
     lb.style.background='#f0fdf4'; lb.style.borderColor='#bbf7d0'; lb.style.color='#059669';
     lsp.style.display='none';
-    ltxt.textContent='📍 Location locked · ±'+Math.round(pos.coords.accuracy)+'m';
-    btn.disabled=false; // Enable button only after GPS is ready
+    ltxt.textContent='📍 Getting area name…';
+    btn.disabled=false; // Enable button — GPS is ready, area name loading in background
+    capArea = await reverseGeocode(capLat, capLng);
+    ltxt.textContent='📍 '+capArea+' · ±'+Math.round(pos.coords.accuracy)+'m';
+    // Update watchPosition so area refreshes if position changes much
   },()=>{
     lb.style.background='#fef2f2'; lb.style.borderColor='#fecaca'; lb.style.color='#dc2626';
     lsp.style.display='none';
@@ -812,7 +910,8 @@ async function captureAndMark(){
 
   // Capture compressed photo
   const photo=compressPhoto(video);
-  const punch={time:nowTime(), photo, lat:capLat, lng:capLng};
+  const note = punchMode==='meeting_out' ? (document.getElementById('meetNoteInput')?.value?.trim()||'') : '';
+  const punch={time:nowTime(), photo, lat:capLat, lng:capLng, area:capArea||''};
 
   stopCamera(); stopLocWatch();
   document.getElementById('videoFeed').style.display='none';
@@ -828,6 +927,7 @@ async function captureAndMark(){
     }else if(punchMode==='out'){
       await storePunchOut(currentEmp.id,todayStr(),punch);
     }else if(punchMode==='meeting_out'){
+      punch.note=note;
       const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch);
       if(r&&r.seq) activeMeetingSeq=r.seq;
     }else if(punchMode==='meeting_back'){
@@ -852,8 +952,8 @@ async function captureAndMark(){
       activeMeetingSeq = activeMeetingSeq || (cachedRec.meetings.length + 1);
       cachedRec.meetings.push({
         seq:activeMeetingSeq, outTime:punch.time, outPhoto:punch.photo,
-        outLat:punch.lat, outLng:punch.lng,
-        backTime:null, backPhoto:null, backLat:null, backLng:null
+        outLat:punch.lat, outLng:punch.lng, outArea:punch.area||'', note:note||'',
+        backTime:null, backPhoto:null, backLat:null, backLng:null, backArea:null
       });
     }else if(punchMode==='meeting_back'){
       const seq=activeMeetingSeq||1;
@@ -908,7 +1008,7 @@ function adminLogout(){['adminUser','adminPass'].forEach(id=>document.getElement
 
 /* ── ADMIN TABS ── */
 function switchTab(tab){
-  const tabs=['attendance','monthly','employees','holidays'];
+  const tabs=['attendance','monthly','employees','holidays','leaves'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
@@ -916,6 +1016,7 @@ function switchTab(tab){
   if(tab==='monthly')    initMonthly();
   if(tab==='employees')  renderEmpList();
   if(tab==='holidays')   renderHolList();
+  if(tab==='leaves')     loadLeavesTab();
 }
 
 /* ── ATTENDANCE TAB ── */
@@ -1145,6 +1246,197 @@ async function addHoliday(){
 async function removeHoliday(date){
   loading(true,'Removing…');
   try{await removeHolStore(date);_ch=await getCustomHols();loading(false);renderHolList();}catch(e){loading(false);alert('Error: '+e.message);}
+}
+
+/* ════════════════════════════════════════════════════════════
+   LEAVE MANAGEMENT
+════════════════════════════════════════════════════════════ */
+const LEAVE_TYPES = { CL:'Casual Leave', VL:'Vacation Leave', ML:'Medical Leave' };
+const DEFAULT_QUOTA = { CL:12, VL:15, ML:10 };
+const LEAVE_COLORS = { CL:'#7c3aed', VL:'#059669', ML:'#dc2626' };
+const LEAVE_BG = { CL:'#f5f3ff', VL:'#f0fdf4', ML:'#fef2f2' };
+
+async function getLeaves(empId=null){
+  if(USE_SHEETS) return (await api('getLeaves', empId?{empId}:{})) || [];
+  const all = JSON.parse(localStorage.getItem('att_leaves')||'[]');
+  return empId ? all.filter(l=>l.empId===empId) : all;
+}
+async function getQuotas(){
+  if(USE_SHEETS) return (await api('getQuotas')) || {};
+  return JSON.parse(localStorage.getItem('att_quotas')||'{}');
+}
+async function setQuotaStore(empId, quotas){
+  if(USE_SHEETS) return api('setQuota',{empId,...quotas});
+  const q=JSON.parse(localStorage.getItem('att_quotas')||'{}');
+  q[empId]=quotas; localStorage.setItem('att_quotas',JSON.stringify(q));
+}
+async function approvedCount(leaves, empId, type){
+  return leaves.filter(l=>l.empId===empId&&l.type===type&&l.status==='approved').length;
+}
+
+/* ── EMPLOYEE LEAVE PANEL ── */
+function showLeavePanel(){
+  if(!currentEmp) return;
+  document.getElementById('lvAvatar').textContent = initials(currentEmp.name);
+  document.getElementById('lvName').textContent = currentEmp.name;
+  document.getElementById('cameraScreen').classList.remove('active');
+  const lp = document.getElementById('leavePanel');
+  lp.style.display='block'; lp.classList.add('active');
+  loadLeaveBalance();
+  loadLeaveHistory();
+}
+function hideLeavePanel(){
+  document.getElementById('leavePanel').style.display='none';
+  document.getElementById('leavePanel').classList.remove('active');
+  document.getElementById('cameraScreen').classList.add('active');
+}
+
+async function loadLeaveBalance(){
+  loading(true,'Loading balance…');
+  try{
+    const [leaves, quotas] = await Promise.all([getLeaves(currentEmp.id), getQuotas()]);
+    const q = quotas[currentEmp.id.toUpperCase()] || DEFAULT_QUOTA;
+    loading(false);
+    const bal = document.getElementById('lvBalance');
+    bal.innerHTML = Object.keys(LEAVE_TYPES).map(type=>{
+      const used = leaves.filter(l=>l.type===type&&l.status==='approved').length;
+      const total = q[type]||DEFAULT_QUOTA[type]||12;
+      const rem = Math.max(0, total-used);
+      const pct = total>0 ? Math.min((used/total)*100,100) : 0;
+      return `<div style="background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb">
+        <div style="font-size:10px;font-weight:700;color:${LEAVE_COLORS[type]};text-transform:uppercase">${type}</div>
+        <div style="font-family:monospace;font-size:22px;font-weight:700;margin:4px 0;color:${LEAVE_COLORS[type]}">${rem}<span style="font-size:12px;color:#9ca3af">/${total}</span></div>
+        <div style="height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden">
+          <div style="height:100%;background:${LEAVE_COLORS[type]};width:${pct}%"></div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:3px">${used} used</div>
+      </div>`;
+    }).join('');
+  }catch(e){ loading(false); }
+}
+
+async function loadLeaveHistory(){
+  loading(true,'Loading requests…');
+  try{
+    const leaves = await getLeaves(currentEmp.id); loading(false);
+    const hist = document.getElementById('lvHistory');
+    const sorted = [...leaves].sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt));
+    if(!sorted.length){ hist.innerHTML='<div style="text-align:center;color:#9ca3af;padding:16px;font-size:13px">No requests yet.</div>'; return; }
+    const statusColor={pending:'#d97706',approved:'#059669',rejected:'#dc2626'};
+    const statusBg={pending:'#fff7ed',approved:'#f0fdf4',rejected:'#fef2f2'};
+    hist.innerHTML = sorted.map(l=>`
+      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:9px;margin-bottom:7px;background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:700;font-size:13px;color:${LEAVE_COLORS[l.type]}">${l.type} — ${LEAVE_TYPES[l.type]}</span>
+          <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${statusBg[l.status]};color:${statusColor[l.status]}">${l.status}</span>
+        </div>
+        <div style="font-size:12px;color:#6b7280">${new Date(l.requestedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <div style="font-size:13px;color:#374151;margin-top:3px">${l.reason}</div>
+      </div>`).join('');
+  }catch(e){ loading(false); }
+}
+
+async function submitLeave(){
+  const type   = document.getElementById('lvType').value;
+  const reason = document.getElementById('lvReason').value.trim();
+  const err = document.getElementById('lvErr'), ok = document.getElementById('lvOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!reason){ err.textContent='Please add a reason.'; err.classList.add('show'); return; }
+  loading(true,'Submitting…');
+  try{
+    const leave = {
+      id: 'lv-'+Date.now(),
+      empId: currentEmp.id, name: currentEmp.name,
+      type, reason, status:'pending',
+      requestedAt: new Date().toISOString(), decidedAt:''
+    };
+    if(USE_SHEETS){ await api('submitLeave', leave); }
+    else {
+      const all = JSON.parse(localStorage.getItem('att_leaves')||'[]');
+      all.push(leave); localStorage.setItem('att_leaves',JSON.stringify(all));
+    }
+    document.getElementById('lvReason').value='';
+    loading(false); ok.textContent='✅ Leave request submitted.'; ok.classList.add('show');
+    loadLeaveBalance(); loadLeaveHistory();
+  }catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+
+/* ── ADMIN LEAVE TAB ── */
+async function loadLeavesTab(){
+  const filterStatus = document.getElementById('lvFilterStatus')?.value || 'pending';
+  loading(true,'Loading leave requests…');
+  try{
+    let leaves = await getLeaves(null);
+    const [emps, quotas] = await Promise.all([getEmployees(), getQuotas()]);
+    loading(false);
+    if(filterStatus!=='all') leaves = leaves.filter(l=>l.status===filterStatus);
+    leaves.sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt));
+
+    const statusColor={pending:'#d97706',approved:'#059669',rejected:'#dc2626'};
+    const statusBg={pending:'#fff7ed',approved:'#f0fdf4',rejected:'#fef2f2'};
+    const list = document.getElementById('lvAdminList');
+
+    if(!leaves.length){
+      list.innerHTML='<div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px;background:#fff;border-radius:12px;border:1px solid #e5e7eb">No '+filterStatus+' leave requests.</div>';
+    } else {
+      list.innerHTML = leaves.map(l=>`
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <span style="font-weight:700;font-size:14px">${l.name}</span>
+            <span style="font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:${statusBg[l.status]};color:${statusColor[l.status]}">${l.status}</span>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:3px">${LEAVE_TYPES[l.type]||l.type} · ${new Date(l.requestedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+          <div style="font-size:13px;color:#374151;margin-top:6px">${l.reason}</div>
+          ${l.status==='pending'?`
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="decideLeave('${l.id}','approved')" style="flex:1;padding:8px;background:#059669;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">✅ Approve</button>
+            <button onclick="decideLeave('${l.id}','rejected')" style="flex:1;padding:8px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">❌ Reject</button>
+          </div>`:''}
+        </div>`).join('');
+    }
+
+    // Quota management
+    const quotaDiv = document.getElementById('lvQuotaList');
+    if(!emps.length){ quotaDiv.innerHTML='<div style="color:#9ca3af;font-size:13px">No employees yet.</div>'; return; }
+    quotaDiv.innerHTML = `
+      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:700;color:#6b7280">EMPLOYEE</div>
+        <div style="font-size:11px;font-weight:700;color:#7c3aed;text-align:center">CL</div>
+        <div style="font-size:11px;font-weight:700;color:#059669;text-align:center">VL</div>
+        <div style="font-size:11px;font-weight:700;color:#dc2626;text-align:center">ML</div>
+      </div>` +
+    emps.map(emp=>{
+      const q = quotas[emp.id.toUpperCase()] || DEFAULT_QUOTA;
+      return `<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:6px;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6">
+        <div style="font-size:13px;font-weight:600">${emp.name}</div>
+        ${['CL','VL','ML'].map(t=>`
+          <input type="number" min="0" max="365" value="${q[t]||DEFAULT_QUOTA[t]}"
+            style="width:100%;text-align:center;padding:6px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px"
+            onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}
+      </div>`;
+    }).join('');
+  }catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function decideLeave(id, status){
+  loading(true,'Updating…');
+  try{
+    const decidedAt = new Date().toISOString();
+    if(USE_SHEETS){ await api('updateLeaveStatus',{id,status,decidedAt}); }
+    else {
+      const all=JSON.parse(localStorage.getItem('att_leaves')||'[]');
+      const idx=all.findIndex(l=>l.id===id);
+      if(idx!==-1){all[idx].status=status;all[idx].decidedAt=decidedAt;localStorage.setItem('att_leaves',JSON.stringify(all));}
+    }
+    loading(false); loadLeavesTab();
+  }catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function updateQuota(empId, type, value){
+  const quotas = await getQuotas();
+  const q = quotas[empId.toUpperCase()] || {...DEFAULT_QUOTA};
+  q[type] = Math.max(0, parseInt(value)||0);
+  await setQuotaStore(empId, q);
 }
 
 /* ── ENTER KEYS ── */
