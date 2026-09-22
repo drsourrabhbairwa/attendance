@@ -235,6 +235,22 @@ tbody td{padding:10px 12px;vertical-align:middle}
   .tab-btn{font-size:11px;padding:7px 8px}
   #app{padding:12px}
 }
+
+  /* ── Leave management ── */
+  .leave-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:10px}
+  .leave-card-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+  .leave-emp-name{font-weight:700;font-size:14px;color:#1a1a2e}
+  .leave-type-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+  .leave-meta{font-size:12px;color:#6b7280;margin-top:2px}
+  .leave-reason{font-size:13px;color:#374151;margin-top:6px;font-style:italic}
+  .leave-actions{display:flex;gap:8px;margin-top:10px}
+  .btn-approve{flex:1;padding:8px;background:#059669;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit}
+  .btn-reject {flex:1;padding:8px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit}
+  .quota-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:6px;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6}
+  .quota-grid:first-child{border-top:none}
+  .quota-header{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase}
+  .quota-input{width:100%;text-align:center;padding:6px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit}
+  .lv-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -511,7 +527,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Apps Script URL and secret here
    ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxyX-09GFNLBDY4nNmS7xJpakNRmZgxtexThEFix1A_bqCn5Pk6Xx0tK5fQDiY5GYCm_Q/exec';   // ← https://script.google.com/macros/s/.../exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2K1D7ALNUwDGmHHXEQAzAyG4AUGSUAz4f5Nc-a6_BkVExR5QI0faTFAhynSiAyH0c/exec';   // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';   // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 
@@ -1541,100 +1557,115 @@ async function submitLeave(){
 
 /* ── ADMIN LEAVE TAB ── */
 async function loadLeavesTab(){
-  const filterEl = document.getElementById('lvFilterStatus');
-  const filterStatus = filterEl?.value || 'pending';
-  loading(true,'Loading leave requests…');
+  const filterEl    = document.getElementById('lvFilterStatus');
+  const filterStatus = filterEl ? filterEl.value : 'pending';
+  const list   = document.getElementById('lvAdminList');
+  const qSec   = document.getElementById('lvQuotaList');
+  if(!list || !qSec){ return; }
+
+  // Show loading state inline (not full overlay)
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px">⏳ Loading leave requests…</div>';
+
   try{
-    // Always fetch fresh from API when admin opens this tab
+    // Refresh leaves + quotas from API
     if(USE_SHEETS){
       try{
-        const [fl,fq] = await Promise.all([api('getLeaves',{}),api('getQuotas')]);
-        _D.leaves  = fl||_D.leaves||[];
-        _D.quotas  = fq||_D.quotas||{};
+        const [fl,fq] = await Promise.all([api('getLeaves',{}), api('getQuotas')]);
+        if(fl) _D.leaves = fl;
+        if(fq) _D.quotas = fq;
         saveCache();
-      }catch(e){}
+      }catch(e){
+        console.warn('Leave API error, using cache:', e.message);
+      }
     }
-    const allLeaves = _D.leaves||[];
-    const emps      = _D.employees||[];
-    const quotas    = _D.quotas||{};
-    loading(false);
 
-    // ── Stats row ──
+    const allLeaves = _D.leaves || [];
+    const emps      = _D.employees || [];
+    const quotas    = _D.quotas || {};
+
+    // ── Stats ──
     const pending  = allLeaves.filter(l=>l.status==='pending').length;
     const approved = allLeaves.filter(l=>l.status==='approved').length;
     const rejected = allLeaves.filter(l=>l.status==='rejected').length;
 
-    const list = document.getElementById('lvAdminList');
+    list.innerHTML = `<div class="lv-stat-row">
+      <div class="stat"><div class="n c-amber">${pending}</div><div class="l">Pending</div></div>
+      <div class="stat"><div class="n c-green">${approved}</div><div class="l">Approved</div></div>
+      <div class="stat"><div class="n c-red">${rejected}</div><div class="l">Rejected</div></div>
+    </div>`;
 
-    // ── Stats ──
-    list.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
-        <div class="stat"><div class="n c-amber">${pending}</div><div class="l">Pending</div></div>
-        <div class="stat"><div class="n c-green">${approved}</div><div class="l">Approved</div></div>
-        <div class="stat"><div class="n c-red">${rejected}</div><div class="l">Rejected</div></div>
-      </div>`;
-
-    // ── Filter leaves ──
+    // ── Filter ──
     let filtered = filterStatus==='all' ? allLeaves : allLeaves.filter(l=>l.status===filterStatus);
-    filtered = [...filtered].sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt));
+    filtered = [...filtered].sort((a,b)=>new Date(b.requestedAt||0)-new Date(a.requestedAt||0));
 
     if(!filtered.length){
       const msgs = {
-        pending: 'No pending leave requests. Employees can apply from their Leave panel.',
-        approved:'No approved leaves yet.',
-        rejected:'No rejected leaves yet.',
-        all:     'No leave requests submitted yet. Employees can apply from their attendance screen.'
+        pending: '📋 No pending leave requests.<br><small>Employees can apply from their attendance screen.</small>',
+        approved:'✅ No approved leaves yet.',
+        rejected:'❌ No rejected leaves yet.',
+        all:     '📋 No leave requests yet.<br><small>Employees can apply from their attendance screen.</small>'
       };
-      list.innerHTML += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:32px;text-align:center;color:var(--ink-soft);font-size:13px">
-        <div style="font-size:28px;margin-bottom:8px">📋</div>
-        ${msgs[filterStatus]||'No records found.'}
-      </div>`;
+      list.innerHTML += `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:32px;text-align:center;color:#9ca3af;font-size:13px;line-height:1.7">${msgs[filterStatus]||'No records found.'}</div>`;
     } else {
-      const typeColor={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)'};
-      const typeBg={CL:'var(--purple-soft)',VL:'var(--green-soft)',ML:'var(--red-soft)'};
-      const statusColor={pending:'var(--amber)',approved:'var(--green)',rejected:'var(--red)'};
-      const statusBg={pending:'var(--amber-soft)',approved:'var(--green-soft)',rejected:'var(--red-soft)'};
+      const typeColor={CL:'#7c3aed',VL:'#059669',ML:'#dc2626'};
+      const typeBg   ={CL:'#f5f3ff',VL:'#f0fdf4',ML:'#fef2f2'};
+      const stColor  ={pending:'#d97706',approved:'#059669',rejected:'#dc2626'};
+      const stBg     ={pending:'#fff7ed',approved:'#f0fdf4',rejected:'#fef2f2'};
 
-      list.innerHTML += filtered.map(l=>`
-        <div class="leave-card">
+      list.innerHTML += filtered.map(l=>{
+        // Safe date formatting — handle both ISO strings and partial formats
+        let reqDate = '—';
+        try{
+          const d = new Date(l.requestedAt||'');
+          if(!isNaN(d)) reqDate = d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+        }catch(e){}
+
+        return `<div class="leave-card">
           <div class="leave-card-top">
             <div>
-              <span class="leave-emp-name">${l.name||l.empId}</span>
-              <span class="leave-type-tag" style="background:${typeBg[l.type]||'var(--surface-2)'};color:${typeColor[l.type]||'var(--ink-soft)'};margin-left:8px">${l.type} — ${LEAVE_TYPES[l.type]||l.type}</span>
+              <span class="leave-emp-name">${l.name||l.empId||'Unknown'}</span>
+              <span class="leave-type-tag" style="background:${typeBg[l.type]||'#f3f4f6'};color:${typeColor[l.type]||'#6b7280'}">${l.type} — ${LEAVE_TYPES[l.type]||l.type}</span>
             </div>
-            <span class="badge" style="background:${statusBg[l.status]};color:${statusColor[l.status]}">${l.status}</span>
+            <span class="badge" style="background:${stBg[l.status]||'#f3f4f6'};color:${stColor[l.status]||'#6b7280'}">${l.status}</span>
           </div>
-          <div class="leave-meta">Employee ID: ${l.empId} &nbsp;·&nbsp; Requested: ${new Date(l.requestedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
-          <div class="leave-reason">"${l.reason}"</div>
-          ${l.status==='pending'?`
-          <div class="leave-actions">
+          <div class="leave-meta">ID: ${l.empId||'—'} &nbsp;·&nbsp; ${reqDate}</div>
+          <div class="leave-reason">"${l.reason||'No reason provided'}"</div>
+          ${l.status==='pending'?`<div class="leave-actions">
             <button class="btn-approve" onclick="decideLeave('${l.id}','approved')">✅ Approve</button>
             <button class="btn-reject"  onclick="decideLeave('${l.id}','rejected')">❌ Reject</button>
           </div>`:''}
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
 
     // ── Quota management ──
-    const qSection = document.getElementById('lvQuotaList');
     if(!emps.length){
-      qSection.innerHTML='<p style="color:var(--ink-soft);font-size:13px">No employees added yet.</p>';
+      qSec.innerHTML='<p style="color:#9ca3af;font-size:13px">No employees added yet.</p>';
       return;
     }
-    qSection.innerHTML = `
-      <div class="quota-grid">
+    qSec.innerHTML =
+      `<div class="quota-grid" style="border-top:none">
         <div class="quota-header">Employee</div>
-        <div class="quota-header" style="text-align:center;color:var(--purple)">CL</div>
-        <div class="quota-header" style="text-align:center;color:var(--green)">VL</div>
-        <div class="quota-header" style="text-align:center;color:var(--red)">ML</div>
+        <div class="quota-header" style="text-align:center;color:#7c3aed">CL</div>
+        <div class="quota-header" style="text-align:center;color:#059669">VL</div>
+        <div class="quota-header" style="text-align:center;color:#dc2626">ML</div>
       </div>` +
       emps.map(emp=>{
         const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
-        return `<div class="quota-grid quota-row">
-          <div style="font-size:13px;font-weight:600;padding:4px 0">${emp.name}</div>
-          ${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="0" max="365" value="${q[t]||DEFAULT_QUOTA[t]}" onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}
+        return `<div class="quota-grid">
+          <div style="font-size:13px;font-weight:600">${emp.name}</div>
+          ${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="0" max="365"
+            value="${q[t]||DEFAULT_QUOTA[t]}"
+            onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}
         </div>`;
       }).join('');
-  }catch(e){ loading(false); alert('Error loading leaves: '+e.message); }
+
+  }catch(e){
+    list.innerHTML = `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#dc2626;font-size:13px">
+      ⚠️ Error loading leaves: ${e.message}<br>
+      <button onclick="loadLeavesTab()" style="margin-top:10px;padding:6px 14px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px">Retry</button>
+    </div>`;
+  }
 }
 
 async function decideLeave(id, status){
