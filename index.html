@@ -437,7 +437,19 @@ tbody td{padding:10px 12px;vertical-align:middle}
       </div>
       <div id="empList"></div>
     </div>
-
+<!-- TAB: LEAVES (admin) -->
+    <div id="tabLeaves" class="tab-pane">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="lvFilterStatus" onchange="loadLeavesTab()" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <option value="pending">Pending approval</option>
+          <option value="all">All requests</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button onclick="loadLeavesTab()" style="padding:7px 13px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Refresh</button>
+      </div>
+      <div id="lvAdminList"></div>
+      
     <!-- TAB: HOLIDAYS -->
     <div id="tabHolidays" class="tab-pane">
       <div class="add-form" style="margin-bottom:14px">
@@ -491,18 +503,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
     <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
   </div>
 
-    <!-- TAB: LEAVES (admin) -->
-    <div id="tabLeaves" class="tab-pane">
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <select id="lvFilterStatus" onchange="loadLeavesTab()" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
-          <option value="pending">Pending approval</option>
-          <option value="all">All requests</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <button onclick="loadLeavesTab()" style="padding:7px 13px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Refresh</button>
-      </div>
-      <div id="lvAdminList"></div>
+    
 
       <!-- Quota management -->
       <div style="margin-top:20px;background:#f9fafb;border-radius:12px;padding:16px">
