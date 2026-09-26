@@ -251,6 +251,31 @@ tbody td{padding:10px 12px;vertical-align:middle}
   .quota-header{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase}
   .quota-input{width:100%;text-align:center;padding:6px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit}
   .lv-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+
+  /* ── Site Work ── */
+  .site-bar{background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:12px;padding:12px 14px;margin-bottom:8px;color:#fff}
+  .site-bar-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px}
+  .site-bar-info{font-size:12px;margin-top:4px;opacity:.9}
+  .site-bar-ping{font-size:12px;margin-top:3px;opacity:.85}
+  .site-btn-row{display:flex;gap:8px;margin-top:10px}
+  .site-btn{flex:1;padding:8px;background:rgba(0,0,0,.2);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit}
+  .site-btn:hover{background:rgba(0,0,0,.35)}
+  .ping-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:4px}
+  .ping-ok{background:#4ade80}.ping-warn{background:#ef4444}
+  /* ── Site Monitor table ── */
+  .site-row{display:grid;grid-template-columns:1.4fr .9fr .9fr 1fr .7fr auto;gap:6px;align-items:center;padding:10px 12px;border-bottom:1px solid #f3f4f6;font-size:13px}
+  .site-row.head{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;background:#f9fafb;border-radius:10px 10px 0 0;border-bottom:1px solid #e5e7eb}
+  .site-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:12px}
+  .status-on{color:#d97706;font-weight:600}.status-done{color:#059669;font-weight:600}.status-none{color:#9ca3af}
+  .viol-badge{background:#fee2e2;color:#dc2626;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:600}
+  /* ── Supervisor ── */
+  .sup-card{background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .sup-name{font-weight:700;font-size:14px}
+  .sup-emp-count{font-size:12px;color:#6b7280;margin-top:2px}
+  .role-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
+  .rp-sup{background:#fef3c7;color:#92400e}
+  .live-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
@@ -371,6 +396,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
       <button class="tab-btn" onclick="switchTab('employees')">👥 Employees</button>
       <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
       <button class="tab-btn" onclick="switchTab('leaves')">📋 Leaves</button>
+      <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
     </div>
 
     <!-- TAB: ATTENDANCE -->
@@ -437,19 +463,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
       </div>
       <div id="empList"></div>
     </div>
-<!-- TAB: LEAVES (admin) -->
-    <div id="tabLeaves" class="tab-pane">
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <select id="lvFilterStatus" onchange="loadLeavesTab()" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
-          <option value="pending">Pending approval</option>
-          <option value="all">All requests</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <button onclick="loadLeavesTab()" style="padding:7px 13px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Refresh</button>
-      </div>
-      <div id="lvAdminList"></div>
-      
+
     <!-- TAB: HOLIDAYS -->
     <div id="tabHolidays" class="tab-pane">
       <div class="add-form" style="margin-bottom:14px">
@@ -462,6 +476,37 @@ tbody td{padding:10px 12px;vertical-align:middle}
         </div>
       </div>
       <div id="holList" style="max-height:380px;overflow-y:auto"></div>
+    </div>
+    <!-- TAB: SITE MONITOR -->
+    <div id="tabSite" class="tab-pane">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:15px">Live Site Monitor</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px"><span class="live-dot"></span> Updates when you refresh</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="date" id="siteFilterDate" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <button onclick="refreshSiteMonitor('admin')" style="padding:7px 14px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">🔄 Refresh</button>
+        </div>
+      </div>
+      <div id="siteMonitorContent"><div class="empty"><div class="icon">🗺️</div>Click Refresh to load site status.</div></div>
+
+      <!-- Supervisor Management -->
+      <div style="margin-top:24px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:12px">👷 Supervisors</div>
+        <div class="add-form">
+          <h3>➕ Add Supervisor</h3>
+          <p style="font-size:11px;color:#6b7280;margin-top:2px">Supervisors can log in and monitor site employees assigned to them.</p>
+          <div class="add-fields" style="grid-template-columns:1fr 1fr auto">
+            <div><label style="margin-top:7px">Name</label><input type="text" id="newSupName" placeholder="Supervisor name"></div>
+            <div><label style="margin-top:7px">Password</label><input type="password" id="newSupPass" placeholder="Set a password"></div>
+            <div style="padding-top:24px"><button onclick="addSupervisor()">Add</button></div>
+          </div>
+          <div class="msg msg-error" id="supErr"></div>
+          <div class="msg msg-success" id="supOk"></div>
+        </div>
+        <div id="supList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -502,16 +547,26 @@ tbody td{padding:10px 12px;vertical-align:middle}
 
     <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
   </div>
+  </div>
+</div>
 
-    
 
-      <!-- Quota management -->
-      <div style="margin-top:20px;background:#f9fafb;border-radius:12px;padding:16px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚙️ Leave Quotas (Days/Year)</div>
-        <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Set how many days each type of leave each employee gets.</p>
-        <div id="lvQuotaList"></div>
+<!-- SUPERVISOR DASHBOARD -->
+<div id="supervisorScreen" class="screen" style="max-width:860px">
+  <div class="card">
+    <div class="admin-hdr">
+      <div>
+        <h2>🗺️ Site Monitor</h2>
+        <div style="font-size:12px;color:#6b7280;margin-top:2px" id="supDate"></div>
+        <span class="role-pill rp-sup" style="display:inline-block;margin-top:4px">SUPERVISOR</span>
+        &nbsp;<span style="font-size:13px;font-weight:600;color:#1a1a2e" id="supNameLabel"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="refreshSiteMonitor('sup')" style="padding:6px 12px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 Refresh</button>
+        <button onclick="supervisorLogout()" style="padding:6px 12px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">Logout</button>
       </div>
     </div>
+    <div id="supSiteContent"><div class="empty"><div class="icon">⏳</div>Loading site status…</div></div>
   </div>
 </div>
 
@@ -528,7 +583,7 @@ tbody td{padding:10px 12px;vertical-align:middle}
 /* ══════════════════════════════════════════════════════════════
    ⚙️  CONFIG — paste your Apps Script URL and secret here
    ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2K1D7ALNUwDGmHHXEQAzAyG4AUGSUAz4f5Nc-a6_BkVExR5QI0faTFAhynSiAyH0c/exec';   // ← https://script.google.com/macros/s/.../exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';   // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';   // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 
@@ -778,6 +833,7 @@ function updateBadges(){
 /* Live office timer */
 function startOfficeTimer(punchInTime){
   clearInterval(officeTimerInt);
+  stopHourlyTracking();
   function update(){
     const mins=calcMins(punchInTime,nowTime());
     document.getElementById('officeTimer').textContent=fmtMins(mins);
@@ -923,6 +979,7 @@ async function loadCameraScreen(){
   ['stHoliday','stDone','stCamera'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('loginTimeBar').classList.remove('show');
   clearInterval(officeTimerInt);
+  stopHourlyTracking();
 
   const dayOff=checkDayOff(todayStr());
   if(dayOff){
@@ -981,6 +1038,7 @@ function setCameraMode(mode){
   const bar=document.getElementById('punchBar'), btn=document.getElementById('captureBtn');
   document.getElementById('meetingBtn').style.display='none';
   document.getElementById('meetNoteBox').style.display = (mode==='meeting_out') ? 'block' : 'none';
+  checkAndRestoreSiteWork();
   if(mode!=='meeting_out') document.getElementById('meetNoteInput').value='';
   document.getElementById('camErr').classList.remove('show');
   document.getElementById('camOk').classList.remove('show');
@@ -1163,7 +1221,7 @@ async function captureAndMark(){
 }
 
 function logout(){
-  stopCamera(); stopLocWatch(); clearInterval(officeTimerInt);
+  stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); stopHourlyTracking();
   currentEmp=null; todayRec=null; activeMeetingSeq=null;
   ['loginId','loginPass'].forEach(id=>document.getElementById(id).value='');
   showScreen('loginScreen');
@@ -1188,7 +1246,7 @@ function adminLogout(){['adminUser','adminPass'].forEach(id=>document.getElement
 
 /* ── ADMIN TABS ── */
 function switchTab(tab){
-  const tabs=['attendance','monthly','employees','holidays','leaves'];
+  const tabs=['attendance','monthly','employees','holidays','leaves','site'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
@@ -1197,6 +1255,7 @@ function switchTab(tab){
   if(tab==='employees')  renderEmpList();
   if(tab==='holidays')   renderHolList();
   if(tab==='leaves')     loadLeavesTab();
+  if(tab==='site'){     document.getElementById('siteFilterDate').value=todayStr(); refreshSiteMonitor('admin'); renderSupList(); }
 }
 
 /* ── ATTENDANCE TAB ── */
@@ -1686,6 +1745,365 @@ async function updateQuota(empId, type, value){
   q[type] = Math.max(0, parseInt(value)||0);
   await setQuotaStore(empId, q);
 }
+
+
+/* ════════════════════════════════════════════════════════════
+   SITE WORK TRACKING
+════════════════════════════════════════════════════════════ */
+const SITE_RADIUS_M  = 50;     // Max allowed distance from site (meters)
+const PING_INTERVAL  = 60;     // Minutes between location pings
+
+let siteInterval     = null;   // setInterval for hourly pings
+let pingCountdown    = PING_INTERVAL; // minutes remaining
+let countdownTick    = null;   // setInterval for countdown display
+let activeSiteWork   = null;   // { sessionId, startTime, siteLat, siteLng, startArea }
+
+/* Haversine distance in meters */
+function distMeters(lat1,lng1,lat2,lng2){
+  const R=6371000,p=Math.PI/180;
+  const a=0.5-Math.cos((lat2-lat1)*p)/2+Math.cos(lat1*p)*Math.cos(lat2*p)*(1-Math.cos((lng2-lng1)*p))/2;
+  return R*2*Math.asin(Math.sqrt(a));
+}
+
+/* Unique ID for pings */
+function pingId(){ return 'ping-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); }
+
+/* ── Restore site work from localStorage on login ── */
+function restoreSiteWork(empId){
+  const saved=JSON.parse(localStorage.getItem('sw_'+empId)||'null');
+  if(!saved||saved.date!==todayStr()) return null;
+  return saved;
+}
+function saveSiteWorkLocally(data){
+  localStorage.setItem('sw_'+currentEmp.id, JSON.stringify({...data,date:todayStr()}));
+}
+function clearSiteWorkLocally(){
+  if(currentEmp) localStorage.removeItem('sw_'+currentEmp.id);
+}
+
+/* ── Update site work bar UI ── */
+function updateSiteBar(){
+  const bar      = document.getElementById('siteWorkBar');
+  const startBtn = document.getElementById('startSiteBtn');
+  if(!bar||!startBtn) return;
+  if(!activeSiteWork){
+    bar.style.display='none'; startBtn.style.display='block'; return;
+  }
+  bar.style.display='block'; startBtn.style.display='none';
+  document.getElementById('swBarInfo').textContent=
+    '📍 '+activeSiteWork.startArea+' · Started '+fmt12(activeSiteWork.startTime);
+  document.getElementById('swBarPing').textContent=
+    '⏱ Next location check in '+pingCountdown+' min';
+  const mapLink=document.getElementById('swMapLink');
+  if(mapLink) mapLink.href=mapsUrl(activeSiteWork.siteLat,activeSiteWork.siteLng);
+}
+
+/* ── Begin site work — open camera, capture location ── */
+async function beginSiteWork(){
+  if(!currentEmp){ alert('Please log in first.'); return; }
+  if(!capLat||!capLng){ alert('Please wait for GPS to lock (green bar) before starting site work.'); return; }
+
+  const btn=document.getElementById('startSiteBtn');
+  btn.disabled=true; btn.textContent='⏳ Starting…';
+
+  try{
+    const sessionId='sw-'+Date.now();
+    const area=capArea||await reverseGeocode(capLat,capLng);
+    const startTime=nowTime();
+
+    activeSiteWork={sessionId,startTime,siteLat:parseFloat(capLat),siteLng:parseFloat(capLng),startArea:area};
+    saveSiteWorkLocally(activeSiteWork);
+
+    // Save to Sheets
+    if(USE_SHEETS){
+      await api('startSiteWork',{
+        id:sessionId, empId:currentEmp.id, name:currentEmp.name,
+        date:todayStr(), startTime, lat:capLat, lng:capLng, area
+      });
+    }
+
+    startHourlyTracking();
+    updateSiteBar();
+    document.getElementById('camOk').textContent='🏗️ Site work started at '+area+' · '+startTime;
+    document.getElementById('camOk').classList.add('show');
+    btn.disabled=false;
+    // Immediate first ping
+    await doSitePing();
+  }catch(e){
+    btn.disabled=false; btn.textContent='🏗️ Start Site Work';
+    document.getElementById('camErr').textContent='Error: '+e.message;
+    document.getElementById('camErr').classList.add('show');
+  }
+}
+
+/* ── Do one location ping ── */
+async function doSitePing(){
+  if(!activeSiteWork||!currentEmp) return;
+  try{
+    const pos=await new Promise((res,rej)=>{
+      navigator.geolocation.getCurrentPosition(
+        p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),
+        e=>rej(e),{enableHighAccuracy:true,timeout:12000}
+      );
+    });
+    const area=await reverseGeocode(pos.lat.toFixed(6),pos.lng.toFixed(6));
+    const dist=distMeters(activeSiteWork.siteLat,activeSiteWork.siteLng,pos.lat,pos.lng);
+    const withinBound=dist<=SITE_RADIUS_M;
+
+    if(USE_SHEETS){
+      await api('logSitePing',{
+        id:pingId(), empId:currentEmp.id, name:currentEmp.name,
+        date:todayStr(), time:nowTime(), lat:pos.lat.toFixed(6), lng:pos.lng.toFixed(6),
+        area, distMeters:Math.round(dist), withinBound,
+        siteLat:activeSiteWork.siteLat, siteLng:activeSiteWork.siteLng
+      });
+    }
+
+    // Show out-of-bounds warning to employee
+    if(!withinBound){
+      const warn=document.getElementById('camErr');
+      warn.textContent='⚠️ You are '+Math.round(dist)+'m from the site (limit: '+SITE_RADIUS_M+'m). Please return to your work area.';
+      warn.style.background='#fff7ed'; warn.style.color='#d97706';
+      warn.classList.add('show');
+    } else {
+      document.getElementById('camErr').classList.remove('show');
+    }
+
+    pingCountdown=PING_INTERVAL;
+    updateSiteBar();
+  }catch(e){ console.warn('Site ping failed:',e.message); }
+}
+
+/* ── Start hourly tracking interval ── */
+function startHourlyTracking(){
+  stopHourlyTracking();
+  pingCountdown=PING_INTERVAL;
+  // Countdown display — updates every minute
+  countdownTick=setInterval(()=>{
+    pingCountdown=Math.max(0,pingCountdown-1);
+    updateSiteBar();
+    if(pingCountdown===0){ doSitePing(); pingCountdown=PING_INTERVAL; }
+  },60000);
+  // Actual ping every PING_INTERVAL minutes
+  siteInterval=setInterval(doSitePing, PING_INTERVAL*60000);
+}
+function stopHourlyTracking(){
+  if(siteInterval)   { clearInterval(siteInterval);   siteInterval=null;   }
+  if(countdownTick)  { clearInterval(countdownTick);  countdownTick=null;  }
+}
+
+/* ── Stop site work ── */
+function confirmStopSiteWork(){
+  if(!confirm('Stop site work for today? This will end location tracking.')) return;
+  stopSiteWorkNow();
+}
+async function stopSiteWorkNow(){
+  if(!activeSiteWork) return;
+  stopHourlyTracking();
+  const stopTime=nowTime();
+  try{
+    if(USE_SHEETS){
+      await api('stopSiteWork',{
+        empId:currentEmp.id, date:todayStr(),
+        stopTime, lat:capLat||'', lng:capLng||'', area:capArea||''
+      });
+    }
+  }catch(e){ console.warn('Stop site work error:',e.message); }
+  clearSiteWorkLocally();
+  activeSiteWork=null;
+  updateSiteBar();
+  document.getElementById('camOk').textContent='✅ Site work stopped at '+stopTime;
+  document.getElementById('camOk').classList.add('show');
+}
+
+/* ── Called from loadCameraScreen — check active site work ── */
+function checkAndRestoreSiteWork(){
+  if(!currentEmp) return;
+  const saved=restoreSiteWork(currentEmp.id);
+  if(saved){ activeSiteWork=saved; startHourlyTracking(); }
+  updateSiteBar();
+}
+
+/* ════════════════════════════════════════════════════════════
+   SITE MONITOR (Admin + Supervisor view)
+════════════════════════════════════════════════════════════ */
+async function refreshSiteMonitor(role){
+  const contentId = role==='sup' ? 'supSiteContent' : 'siteMonitorContent';
+  const el=document.getElementById(contentId);
+  if(!el) return;
+  el.innerHTML='<div class="empty"><div class="icon">⏳</div>Loading…</div>';
+  const date=document.getElementById('siteFilterDate')?.value||todayStr();
+  try{
+    let data;
+    if(USE_SHEETS){ data=(await api('getSiteStatus',{date}))||[]; }
+    else{ data=[]; } // localStorage mode — no site data
+
+    // For supervisor, filter to assigned employees only
+    if(role==='sup'&&currentSupervisor){
+      const assigned=(currentSupervisor.assignedEmp||'').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+      if(assigned.length) data=data.filter(r=>assigned.includes(String(r.empId).toUpperCase()));
+    }
+
+    const emps=_D.employees||[];
+    // Build summary stats
+    const onSite   =data.filter(r=>r.status==='working').length;
+    const done     =data.filter(r=>r.status==='done').length;
+    const violations=data.reduce((s,r)=>s+(parseInt(r.violations)||0),0);
+
+    let html=`<div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+      <div class="stat"><div class="n" style="color:#d97706">${onSite}</div><div class="l">On Site Now</div></div>
+      <div class="stat"><div class="n c-green">${done}</div><div class="l">Finished Today</div></div>
+      <div class="stat"><div class="n c-purple">${data.length}</div><div class="l">Total Records</div></div>
+      <div class="stat"><div class="n c-red">${violations}</div><div class="l">⚠️ Violations</div></div>
+    </div>`;
+
+    if(!data.length){
+      html+='<div class="empty"><div class="icon">🏗️</div>No site work records for '+date+'.</div>';
+    } else {
+      html+=`<div class="site-card">
+        <div class="site-row head">
+          <div>Employee</div><div>Status</div><div>Started</div>
+          <div>Last Ping</div><div>Distance</div><div>Map</div>
+        </div>`;
+      data.forEach(r=>{
+        const statusEl=r.status==='working'
+          ?'<span class="status-on">🟡 On Site</span>'
+          :r.status==='done'?'<span class="status-done">✅ Done</span>'
+          :'<span class="status-none">—</span>';
+        const lp=r.latestPing;
+        const dist=lp?(parseInt(lp.distMeters||0)):'—';
+        const distEl=lp
+          ?(dist<=SITE_RADIUS_M
+            ?'<span style="color:#059669;font-weight:600">✅ '+dist+'m</span>'
+            :'<span style="color:#dc2626;font-weight:600">⚠️ '+dist+'m</span>')
+          :'<span style="color:#9ca3af">No ping</span>';
+        const pingInfo=lp?fmt12(lp.time)+' · '+lp.area:'—';
+        const mapEl=lp&&lp.lat
+          ?`<a class="map-link" href="${mapsUrl(lp.lat,lp.lng)}" target="_blank">📍</a>`
+          :'—';
+        const violEl=parseInt(r.violations||0)>0
+          ?`<span class="viol-badge">⚠️ ${r.violations}</span> `:'' ;
+        html+=`<div class="site-row">
+          <div style="font-weight:600">${r.name} ${violEl}</div>
+          <div>${statusEl}</div>
+          <div style="font-size:12px;color:#6b7280">${r.startTime?fmt12(r.startTime):'—'}</div>
+          <div style="font-size:11px;color:#6b7280">${pingInfo}</div>
+          <div>${distEl}</div>
+          <div>${mapEl}</div>
+        </div>`;
+      });
+      html+='</div>';
+    }
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#dc2626;font-size:13px">⚠️ Error: ${e.message}<br><button onclick="refreshSiteMonitor('${role}')" style="margin-top:8px;padding:6px 14px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px">Retry</button></div>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SUPERVISORS (admin management)
+════════════════════════════════════════════════════════════ */
+async function addSupervisor(){
+  const name=document.getElementById('newSupName').value.trim();
+  const pass=document.getElementById('newSupPass').value;
+  const err=document.getElementById('supErr'), ok=document.getElementById('supOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!name||!pass){ err.textContent='Name and password are required.'; err.classList.add('show'); return; }
+  loading(true,'Adding supervisor…');
+  try{
+    const id='sup-'+Date.now();
+    const ph=await hashPass(pass);
+    if(USE_SHEETS){ await api('addSupervisor',{id,name,passHash:ph,assignedEmp:''}); }
+    if(!_D.supervisors) _D.supervisors=[];
+    _D.supervisors.push({id,name,passHash:ph,assignedEmp:''});
+    saveCache();
+    document.getElementById('newSupName').value='';
+    document.getElementById('newSupPass').value='';
+    loading(false); ok.textContent='✅ '+name+' added as supervisor.'; ok.classList.add('show');
+    renderSupList();
+  }catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+
+async function removeSupervisor(id){
+  if(!confirm('Remove this supervisor?')) return;
+  loading(true,'Removing…');
+  try{
+    if(USE_SHEETS) await api('removeSupervisor',{id});
+    if(_D.supervisors) _D.supervisors=_D.supervisors.filter(s=>s.id!==id);
+    saveCache(); loading(false); renderSupList();
+  }catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function updateSupAssigned(id, empId, checked){
+  const sup=(_D.supervisors||[]).find(s=>s.id===id);
+  if(!sup) return;
+  let list=(sup.assignedEmp||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(checked) { if(!list.includes(empId)) list.push(empId); }
+  else         { list=list.filter(e=>e!==empId); }
+  sup.assignedEmp=list.join(',');
+  saveCache();
+  if(USE_SHEETS) await api('updateSupAssigned',{id,assignedEmp:sup.assignedEmp});
+}
+
+function renderSupList(){
+  const el=document.getElementById('supList');
+  if(!el) return;
+  const sups=_D.supervisors||[];
+  const emps=_D.employees||[];
+  if(!sups.length){ el.innerHTML='<div style="text-align:center;color:#9ca3af;padding:16px;font-size:13px">No supervisors yet.</div>'; return; }
+  el.innerHTML=sups.map(s=>{
+    const assigned=(s.assignedEmp||'').split(',').map(e=>e.trim()).filter(Boolean);
+    const empCheckboxes=emps.map(emp=>`
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0">
+        <input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${s.id}','${emp.id}',this.checked)" style="width:15px;height:15px;cursor:pointer">
+        ${emp.name} <span style="font-size:11px;color:#9ca3af">${emp.id}</span>
+      </label>`).join('');
+    return `<div class="sup-card" style="flex-direction:column;align-items:flex-start;gap:0">
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;margin-bottom:8px">
+        <div>
+          <div class="sup-name">👷 ${s.name}</div>
+          <div class="sup-emp-count">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div>
+        </div>
+        <button class="del-btn" onclick="removeSupervisor('${s.id}')">✕</button>
+      </div>
+      <details style="width:100%">
+        <summary style="font-size:12px;font-weight:600;color:#4f46e5;cursor:pointer;list-style:none">▼ Assign Employees</summary>
+        <div style="margin-top:8px;max-height:180px;overflow-y:auto;padding:4px 0">${empCheckboxes||'<div style="color:#9ca3af;font-size:12px">No employees added yet.</div>'}</div>
+      </details>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   SUPERVISOR LOGIN
+════════════════════════════════════════════════════════════ */
+let currentSupervisor = null;
+
+async function handleSupervisorLogin(){
+  const name=document.getElementById('supLoginName')?.value?.trim();
+  const pass=document.getElementById('supLoginPass')?.value;
+  const err=document.getElementById('supLoginErr');
+  if(!name||!pass){ err.textContent='Enter name and password.'; err.classList.add('show'); return; }
+  loading(true,'Verifying…');
+  try{
+    // Refresh supervisors list
+    if(USE_SHEETS&&(!_D.supervisors||!_D.supervisors.length)){
+      const fresh=await api('getSupervisors');
+      _D.supervisors=fresh||[];
+    }
+    const sup=(_D.supervisors||[]).find(s=>s.name===name);
+    if(!sup||!(await verifyPass(pass,sup.passHash))){
+      loading(false); err.textContent='Incorrect supervisor credentials.'; err.classList.add('show'); return;
+    }
+    err.classList.remove('show'); currentSupervisor=sup; loading(false);
+    document.getElementById('supNameLabel').textContent=sup.name;
+    document.getElementById('supDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('siteFilterDate').value=todayStr();
+    showScreen('supervisorScreen');
+    refreshSiteMonitor('sup');
+  }catch(e){ loading(false); err.textContent='Error: '+e.message; err.classList.add('show'); }
+}
+function supervisorLogout(){ currentSupervisor=null; showScreen('loginScreen'); }
 
 /* ── ENTER KEYS ── */
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
