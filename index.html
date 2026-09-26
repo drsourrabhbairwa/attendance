@@ -534,7 +534,18 @@ tbody td{padding:10px 12px;vertical-align:middle}
         </div>
       </div>
       <div id="siteMonitorContent"><div class="empty"><div class="icon">🗺️</div>Click Refresh to load site status.</div></div>
-
+<!-- TAB: LEAVES (admin) -->
+    <div id="tabLeaves" class="tab-pane">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="lvFilterStatus" onchange="loadLeavesTab()" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <option value="pending">Pending approval</option>
+          <option value="all">All requests</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button onclick="loadLeavesTab()" style="padding:7px 13px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Refresh</button>
+      </div>
+      <div id="lvAdminList"></div>
       <!-- Supervisor Management -->
       <div style="margin-top:24px">
         <div style="font-weight:700;font-size:15px;margin-bottom:12px">👷 Supervisors</div>
@@ -1795,7 +1806,7 @@ async function updateQuota(empId, type, value){
    SITE WORK TRACKING
 ════════════════════════════════════════════════════════════ */
 const SITE_RADIUS_M  = 50;     // Max allowed distance from site (meters)
-const PING_INTERVAL  = 60;     // Minutes between location pings
+const PING_INTERVAL  = 10;     // Minutes between location pings
 
 let siteInterval     = null;   // setInterval for hourly pings
 let pingCountdown    = PING_INTERVAL; // minutes remaining
