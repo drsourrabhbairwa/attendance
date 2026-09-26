@@ -301,8 +301,35 @@ tbody td{padding:10px 12px;vertical-align:middle}
     <label>Employee ID</label><input type="text" id="loginId" placeholder="e.g. EMP001" autocomplete="off">
     <label>Password</label><input type="password" id="loginPass" placeholder="Your password">
     <div class="msg msg-error" id="loginErr">Incorrect Employee ID or password.</div>
-    <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
-    <button class="btn btn-outline" onclick="showScreen('adminLoginScreen')">Admin Login</button>
+    <!-- Role switcher: Employee / Supervisor / Admin -->
+    <div style="display:flex;gap:4px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:4px;margin-top:14px">
+      <button onclick="setLoginRole('employee')" id="roleEmp"
+        style="flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;background:var(--accent);color:#fff">Employee</button>
+      <button onclick="setLoginRole('supervisor')" id="roleSup"
+        style="flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;background:transparent;color:var(--ink-soft)">Supervisor</button>
+      <button onclick="setLoginRole('admin')" id="roleAdm"
+        style="flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;background:transparent;color:var(--ink-soft)">Admin</button>
+    </div>
+
+    <!-- Employee login (default shown) -->
+    <div id="roleBodyEmployee" style="margin-top:4px">
+      <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
+    </div>
+
+    <!-- Supervisor login -->
+    <div id="roleBodySupervisor" style="display:none;margin-top:4px">
+      <label>Supervisor Name</label>
+      <input type="text" id="supLoginName" placeholder="Your name" autocomplete="off">
+      <label>Password</label>
+      <input type="password" id="supLoginPass" placeholder="Your password">
+      <div class="msg msg-error" id="supLoginErr"></div>
+      <button class="btn btn-primary" onclick="handleSupervisorLogin()">Sign In as Supervisor →</button>
+    </div>
+
+    <!-- Admin login -->
+    <div id="roleBodyAdmin" style="display:none;margin-top:4px">
+      <button class="btn btn-outline" onclick="showScreen('adminLoginScreen')" style="margin-top:0">Admin Login →</button>
+    </div>
   </div>
 </div>
 
@@ -363,6 +390,23 @@ tbody td{padding:10px 12px;vertical-align:middle}
       <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
       <!-- Meeting button — only shown in punch-out mode -->
       <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeetingOut()">🚗 Going Out for Meeting</button>
+      <!-- 🏗️ Site Work bar — visible when employee is on active site work -->
+      <div id="siteWorkBar" style="display:none;margin-top:6px">
+        <div class="site-bar">
+          <div class="site-bar-title"><span class="live-dot"></span> On Site · Working</div>
+          <div class="site-bar-info" id="swBarInfo">Started at —</div>
+          <div class="site-bar-ping" id="swBarPing">⏱ Next check in —</div>
+          <div class="site-btn-row">
+            <button class="site-btn" onclick="confirmStopSiteWork()">⏹️ Stop Site Work</button>
+            <a id="swMapLink" href="#" target="_blank" class="site-btn" style="text-align:center;text-decoration:none">📍 Last Location</a>
+          </div>
+        </div>
+      </div>
+      <!-- Start Site Work button — shows when NOT currently on site -->
+      <button class="btn" id="startSiteBtn" onclick="beginSiteWork()"
+        style="display:none;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;margin-top:6px">
+        🏗️ Start Site Work
+      </button>
       <button class="btn btn-outline" onclick="logout()" style="color:var(--red);border-color:var(--red-soft)">Logout</button>
       <button class="btn btn-outline" onclick="showLeavePanel()" id="leaveNavBtn" style="color:var(--purple);border-color:var(--purple-soft)">📋 Apply for Leave</button>
       <div class="msg msg-error" id="camErr"></div>
@@ -2105,8 +2149,28 @@ async function handleSupervisorLogin(){
 }
 function supervisorLogout(){ currentSupervisor=null; showScreen('loginScreen'); }
 
+/* ── ROLE SWITCHER ── */
+function setLoginRole(role){
+  ['employee','supervisor','admin'].forEach(r=>{
+    const btn=document.getElementById('role'+r.charAt(0).toUpperCase()+r.slice(1).slice(0,2).toUpperCase()+r.slice(3));
+    const body=document.getElementById('roleBody'+r.charAt(0).toUpperCase()+r.slice(1));
+    // fix IDs
+  });
+  const ids={employee:'roleEmp',supervisor:'roleSup',admin:'roleAdm'};
+  const bodies={employee:'roleBodyEmployee',supervisor:'roleBodySupervisor',admin:'roleBodyAdmin'};
+  Object.keys(ids).forEach(r=>{
+    const btn=document.getElementById(ids[r]);
+    const body=document.getElementById(bodies[r]);
+    if(btn) btn.style.cssText=r===role
+      ?'flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;background:var(--accent);color:#fff'
+      :'flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;background:transparent;color:var(--ink-soft)';
+    if(body) body.style.display=r===role?'block':'none';
+  });
+}
+
 /* ── ENTER KEYS ── */
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const sl=document.getElementById('supLoginPass'); if(document.activeElement===sl) handleSupervisorLogin(); } });
 document.getElementById('adminPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleAdminLogin();});
 document.getElementById('setupConfirm').addEventListener('keydown',e=>{if(e.key==='Enter')completeSetup();});
 
