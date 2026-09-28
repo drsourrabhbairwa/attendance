@@ -109,6 +109,25 @@ textarea{min-height:72px;resize:vertical}
 .site-bar-sub{font-size:12px;margin-top:3px;opacity:.88}
 .site-btns{display:flex;gap:8px;margin-top:10px}
 .site-btn{flex:1;padding:8px;background:rgba(0,0,0,.18);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.site-alert{margin-top:8px;background:#fff;color:var(--red);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;line-height:1.4}
+.site-alert a{color:var(--red);margin-left:6px;white-space:nowrap;text-decoration:underline}
+.help-link{display:block;text-align:center;font-size:12px;color:var(--blue);margin-top:14px;text-decoration:none;font-weight:600}
+.site-row.clickable{cursor:pointer}
+.site-row.clickable:hover{background:var(--surface2)}
+.sd-block{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.45}
+.sd-block img,.sd-noimg{width:84px;height:84px;border-radius:8px;object-fit:cover;flex-shrink:0}
+.sd-noimg{background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:26px}
+.sd-sum{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.sd-sum div{background:var(--surface2);border-radius:8px;padding:7px 9px;font-size:11px;color:var(--soft)}
+.sd-sum b{display:block;font-size:15px;color:var(--ink)}
+.sd-check{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.help h4{font-size:13px;margin:14px 0 6px}
+.help ol{padding-left:18px;font-size:12.5px;line-height:1.5}
+.help li{margin-bottom:5px}
+.help details{border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:8px}
+.help summary{font-weight:700;font-size:13px;cursor:pointer}
+.help details ol{margin-top:8px}
+.help-status>div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--border)}
 .live-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 /* Admin tabs */
@@ -226,6 +245,7 @@ textarea{min-height:72px;resize:vertical}
 <div id="loginScreen" class="screen">
 <div class="logo"><div class="logo-icon">👤</div><h1>Staff Attendance</h1><p>Sign in to mark your attendance</p><div id="sb1" class="sbadge sb-local">💾 Local Storage</div></div>
 <div class="card">
+  <div class="msg" id="siteRunBanner" style="display:none;background:var(--orangeBg);color:var(--orange);border:1px solid #f0c898;margin:0 0 12px;font-weight:600"></div>
   <div class="role-row">
     <button class="role-btn active" id="roleEmp" onclick="setRole('employee')">Employee</button>
     <button class="role-btn" id="roleSup" onclick="setRole('supervisor')">Supervisor</button>
@@ -237,6 +257,8 @@ textarea{min-height:72px;resize:vertical}
     <label>Password</label><input type="password" id="loginPass" placeholder="Your password">
     <div class="msg msg-error" id="loginErr">Incorrect Employee ID or password.</div>
     <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
+    <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
+    <a href="#" class="help-link" id="apkLink" style="display:none">📲 Download the Android app</a>
   </div>
   <!-- Supervisor login -->
   <div id="loginSupervisor" style="display:none">
@@ -289,7 +311,8 @@ textarea{min-height:72px;resize:vertical}
       <div class="site-bar">
         <div class="site-bar-title"><span class="live-dot"></span> On Site · Working</div>
         <div class="site-bar-sub" id="swInfo">Started at —</div>
-        <div class="site-bar-sub" id="swPing">⏱ Next check in —</div>
+        <div class="site-bar-sub" id="swKeep">📱 Keep this page open while you are on site.</div>
+        <div class="site-alert" id="swAlert" style="display:none"><span id="swAlertTxt"></span><a href="#" onclick="openPhoneHelp();return false">How to fix</a></div>
         <div class="site-btns">
           <button class="site-btn" onclick="confirmStopSite()">⏹ Stop Site Work</button>
           <a class="site-btn" id="swMapLink" href="#" target="_blank">📍 Map</a>
@@ -298,9 +321,10 @@ textarea{min-height:72px;resize:vertical}
     </div>
     <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
-    <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">🏗️ Start Site Work</button>
+    <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
     <button class="btn btn-outline" onclick="logout()">Logout</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
+    <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <div class="msg msg-error" id="camErr"></div>
     <div class="msg msg-success" id="camOk"></div>
   </div>
@@ -472,6 +496,16 @@ textarea{min-height:72px;resize:vertical}
     </div>
     <div id="siteContent"><div class="empty"><div class="eicon">🗺️</div>Click Refresh to load site status.</div></div>
     <div style="margin-top:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div><div style="font-weight:700;font-size:14px">📊 Site work — month summary</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Time on site and how often each person was really there</div></div>
+        <div style="display:flex;gap:7px">
+          <input type="month" id="siteMonth" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit">
+          <button onclick="loadSiteSummary()" style="padding:7px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">Show</button>
+        </div>
+      </div>
+      <div id="siteSummary"></div>
+    </div>
+    <div style="margin-top:22px">
       <div style="font-weight:700;font-size:14px;margin-bottom:10px">👷 Supervisors</div>
       <div class="add-form">
         <h3>➕ Add Supervisor</h3>
@@ -523,13 +557,14 @@ textarea{min-height:72px;resize:vertical}
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';  // ← https://script.google.com/macros/s/.../exec
 const API_SECRET = 'CHANGE_THIS_SECRET';  // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
+const APK_URL = 'https://drsourrabhbairwa.github.io/attendance/';     // ← optional: download link of the Android app (shown on the sign-in page)
 
 /* ══════════════════════════════════════════════════════════════
    DATA CACHE  (_D = single source of truth for all app data)
 ══════════════════════════════════════════════════════════════ */
 const _D = {
   admin:null, employees:[], attendance:[], leaves:[],
-  quotas:{}, customHolidays:{}, supervisors:[], loadedAt:null
+  quotas:{}, customHolidays:{}, supervisors:[], siteActive:[], loadedAt:null
 };
 const CACHE_KEY = 'att_v2';
 function saveCache(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
@@ -819,6 +854,8 @@ async function init(){
   updateBadges();
   const hasCached=loadCache();
   pruneLocal();
+  if(swAll().length){ swAll().forEach(s=>{ if(!nativeRunning(s)) nativeStart(s); }); startSiteTimer(); siteTick(); }   // site work on this phone is checked even before anyone signs in
+  const apk=document.getElementById('apkLink'); if(apk&&APK_URL&&!NATIVE){ apk.href=APK_URL; apk.style.display='block'; }
   if(hasCached&&_D.admin) showScreen('loginScreen');
   else loading(true,'Starting up…');
   if(!USE_SHEETS&&!(_D.employees&&_D.employees.length)){
@@ -910,53 +947,141 @@ async function handleLogin(){
 /* ══════════════════════════════════════════════════════════════
    LOCATION + AREA NAME
 ══════════════════════════════════════════════════════════════ */
-let videoStream=null,locWatcher=null,capLat=null,capLng=null,capArea='';
+let videoStream=null,locWatcher=null,locWanted=false,locHintT=null,fixWaiters=[],fixListeners=[];
+let capLat=null,capLng=null,capArea='',capAcc=null,capAt=0;
+const geoCache=[]; let geoPending=null, geoFailAt=0;
 
+/* Area name for a spot: remembered for 10 min within 100 m, never waits more than 6 s */
 async function reverseGeocode(lat,lng){
-  try{
-    const res=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+lat+'&lon='+lng+'&zoom=16&addressdetails=1',{headers:{'Accept-Language':'en','User-Agent':'AttendanceApp/1.0'}});
-    if(!res.ok) throw new Error();
-    const data=await res.json();
-    const a=data.address||{};
-    const local=a.suburb||a.neighbourhood||a.village||a.town||a.city_district||'';
-    const city=a.city||a.county||'';
-    const parts=[local,city].filter(Boolean);
-    return parts.slice(0,2).join(', ')||data.display_name?.split(',')[0]||'Unknown area';
-  }catch(e){return String(lat).slice(0,8)+'°, '+String(lng).slice(0,8)+'°';}
+  lat=+lat; lng=+lng;
+  const near=g=>distMeters(g.lat,g.lng,lat,lng)<100;
+  const fallback=lat.toFixed(5)+'°, '+lng.toFixed(5)+'°';
+  const hit=geoCache.find(g=>Date.now()-g.t<600000&&near(g));
+  if(hit) return hit.area;
+  if(geoPending&&near(geoPending)) return geoPending.p;
+  if(Date.now()-geoFailAt<60000) return fallback;
+  const p=(async()=>{
+    const ctl=typeof AbortController==='function'?new AbortController():null;
+    const timer=ctl?setTimeout(()=>ctl.abort(),6000):null;
+    try{
+      const res=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&addressdetails=1&accept-language=en&lat='+lat+'&lon='+lng,ctl?{signal:ctl.signal}:{});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data=await res.json(), a=data.address||{};
+      const local=a.suburb||a.neighbourhood||a.village||a.town||a.city_district||'';
+      const city=a.city||a.county||'';
+      const area=[...new Set([local,city].filter(Boolean))].join(', ')||String(data.display_name||'').split(',')[0]||fallback;
+      geoCache.unshift({lat,lng,area,t:Date.now()}); geoCache.length=Math.min(geoCache.length,20);
+      return area;
+    }catch(e){ geoFailAt=Date.now(); return fallback; }
+    finally{ if(timer) clearTimeout(timer); }
+  })();
+  geoPending={lat,lng,p};
+  try{ return await p; }finally{ if(geoPending&&geoPending.p===p) geoPending=null; }
 }
 
+function locBar(kind,msg,spin){
+  const lb=document.getElementById('locBar'); if(!lb) return;
+  const c={blue:['var(--blueBg)','#b0c8f0','var(--blue)'],green:['var(--greenBg)','#a7d9b8','var(--green)'],
+    amber:['var(--amberBg)','#e0c080','var(--amber)'],red:['var(--redBg)','var(--red)','var(--red)']}[kind];
+  lb.style.cssText='display:flex;align-items:center;gap:7px;background:'+c[0]+';border:1px solid '+c[1]+';border-radius:var(--rs);padding:7px 11px;font-size:12px;color:'+c[2]+';margin-top:6px';
+  const sp=document.getElementById('locSpin'); if(sp) sp.style.display=spin?'block':'none';
+  const tx=document.getElementById('locTxt'); if(tx) tx.textContent=msg;
+}
+/* Plain-words reason + what to do, for a failed location request */
+function gpsHelp(e){
+  const c=e&&e.code;
+  if(c===1) return {why:'Location permission is blocked',tip:'Allow location for this site in your browser settings.'};
+  if(c===0) return {why:'This phone has no GPS',tip:'Use a phone with GPS.'};
+  return {why:'GPS is off or has no signal',tip:'Turn on Location (GPS) and step into the open.'};
+}
+
+/* Live location on the camera screen. No time limit: a slow first fix is not an error */
 function startLocWatch(){
-  capLat=null; capLng=null; capArea='';
-  const lb=document.getElementById('locBar');
-  const ltxt=document.getElementById('locTxt');
-  const lsp=document.getElementById('locSpin');
-  const btn=document.getElementById('captureBtn');
-  if(!lb) return;
-  lb.style.cssText='display:flex;align-items:center;gap:7px;background:var(--blueBg);border:1px solid #b0c8f0;border-radius:var(--rs);padding:7px 11px;font-size:12px;color:var(--blue);margin-top:6px';
-  lsp.style.display='block'; ltxt.textContent='📍 Getting location… (required)';
-  if(btn) btn.disabled=true;
-  if(!navigator.geolocation){
-    lsp.style.display='none'; ltxt.textContent='❌ GPS not supported on this device.';
-    lb.style.cssText=lb.style.cssText.replace('var(--blueBg)','var(--redBg)').replace('#b0c8f0','var(--red)').replace('var(--blue)','var(--red)');
-    return;
+  stopLocWatch();
+  capLat=null; capLng=null; capArea=''; capAcc=null; capAt=0;
+  const btn=document.getElementById('captureBtn'); if(btn) btn.disabled=true;
+  const sb=document.getElementById('startSiteBtn'); if(sb) sb.style.display='none';
+  if(!navigator.geolocation){ locBar('red','❌ GPS not supported on this device.'); return; }
+  locWanted=true;
+  locBar('blue','📍 Getting location… (required)',true);
+  watchLoc();
+}
+function watchLoc(){
+  if(!navigator.geolocation||locWatcher!==null) return;
+  clearTimeout(locHintT);
+  locHintT=setTimeout(()=>{ if(!capLat&&locWanted) locBar('blue','📍 Still looking for GPS… step near a window or into the open.',true); },20000);
+  locWatcher=navigator.geolocation.watchPosition(onFix,onFixError,{enableHighAccuracy:true,maximumAge:0});
+}
+function stopLocWatch(){ locWanted=false; clearTimeout(locHintT); if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;} }
+async function onFix(pos){
+  capLat=pos.coords.latitude.toFixed(6); capLng=pos.coords.longitude.toFixed(6);
+  capAcc=Math.round(pos.coords.accuracy||0); capAt=Date.now(); clearTimeout(locHintT);
+  const fix={lat:+capLat,lng:+capLng,acc:capAcc};
+  fixWaiters.slice().forEach(w=>w(fix));
+  fixListeners.slice().forEach(l=>l(fix));
+  const btn=document.getElementById('captureBtn'); if(btn&&locWanted) btn.disabled=false;
+  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display='block';
+  if(!capArea) locBar('green','📍 Getting area name…');
+  const area=await reverseGeocode(fix.lat,fix.lng);
+  if(!capLat||distMeters(fix.lat,fix.lng,+capLat,+capLng)>100) return;   // moved on meanwhile
+  capArea=area; locBar('green','📍 '+capArea+' · ±'+capAcc+'m');
+}
+function onFixError(e){
+  capAt=0; clearTimeout(locHintT);
+  if(e&&e.code===1){
+    if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;}
+    capLat=null; capLng=null; capArea='';
+    const btn=document.getElementById('captureBtn'); if(btn) btn.disabled=true;
+    locBar('red','❌ Location permission is blocked. Allow location for this site in your browser settings, then reload the page.');
+  }else if(capLat){
+    locBar('amber','📍 Weak GPS signal — using your last position'+(capArea?' ('+capArea+')':'')+'.');
+  }else{
+    locBar('blue','📍 Still looking for GPS… turn on Location and step into the open.',true);
   }
-  locWatcher=navigator.geolocation.watchPosition(async pos=>{
-    capLat=pos.coords.latitude.toFixed(6); capLng=pos.coords.longitude.toFixed(6);
-    lb.style.cssText='display:flex;align-items:center;gap:7px;background:var(--greenBg);border:1px solid #a7d9b8;border-radius:var(--rs);padding:7px 11px;font-size:12px;color:var(--green);margin-top:6px';
-    lsp.style.display='none'; ltxt.textContent='📍 Getting area name…';
-    if(btn) btn.disabled=false;
-    const sBtn=document.getElementById('startSiteBtn');
-    if(sBtn&&!activeSiteWork) sBtn.style.display='block';
-    capArea=await reverseGeocode(capLat,capLng);
-    ltxt.textContent='📍 '+capArea+' · ±'+Math.round(pos.coords.accuracy)+'m';
-  },()=>{
-    lsp.style.display='none';
-    lb.style.cssText='display:flex;align-items:center;gap:7px;background:var(--redBg);border:1px solid var(--red);border-radius:var(--rs);padding:7px 11px;font-size:12px;color:var(--red);margin-top:6px';
-    ltxt.textContent='❌ Location denied. Please allow GPS permission and reload the page.';
-  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+/* One up-to-date position for a site check. While a watch is running the browser holds back
+   a brand-new reading until the phone moves (that is how the old hourly check timed out
+   every time), so live location is paused while we ask, and restarted afterwards. */
+function freshFix(){
+  if(capLat&&capAt&&Date.now()-capAt<60000) return Promise.resolve({lat:+capLat,lng:+capLng,acc:capAcc});
+  if(!navigator.geolocation) return Promise.reject({code:0});
+  if(locWatcher!==null){ navigator.geolocation.clearWatch(locWatcher); locWatcher=null; }
+  return new Promise((resolve,reject)=>{
+    let done=false;
+    const finish=(ok,v,fromWatch)=>{
+      if(done) return; done=true;
+      fixWaiters=fixWaiters.filter(w=>w!==waiter);
+      if(ok){
+        resolve(v);
+        // the new reading also refreshes the camera screen: a watch restarted right after
+        // this request gets nothing from the browser until the phone moves
+        if(locWanted&&!fromWatch) onFix({coords:{latitude:v.lat,longitude:v.lng,accuracy:v.acc}});
+      }else reject(v);
+      setTimeout(()=>{ if(locWanted&&locWatcher===null) watchLoc(); },0);
+    };
+    const waiter=f=>finish(true,f,true);   // a live-location reading that arrives first also counts
+    fixWaiters.push(waiter);
+    const ask=(o,onErr)=>navigator.geolocation.getCurrentPosition(
+      p=>finish(true,{lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy||0)}),onErr,o);
+    ask({enableHighAccuracy:true,timeout:20000,maximumAge:0},e=>{
+      if(done) return;
+      if(e&&e.code===1) return finish(false,e);
+      ask({enableHighAccuracy:false,timeout:20000,maximumAge:0},e2=>finish(false,e2));   // weak GPS: Wi-Fi/mobile-network position
+    });
+  });
 }
 
-function stopLocWatch(){ if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;} }
+/* Best live reading within maxMs, returning early once it is accurate to goodAcc metres.
+   Phones often give a rough network position first and the real GPS fix a few seconds later. */
+function preciseFix(goodAcc,maxMs){
+  return new Promise(resolve=>{
+    let best=capLat?{lat:+capLat,lng:+capLng,acc:capAcc===null?9999:capAcc}:null, t=null;
+    const done=()=>{ clearTimeout(t); fixListeners=fixListeners.filter(x=>x!==l); resolve(best); };
+    const l=f=>{ if(!best||f.acc<best.acc) best=f; if(f.acc<=goodAcc) done(); };
+    if(best&&best.acc<=goodAcc) return resolve(best);
+    fixListeners.push(l); t=setTimeout(done,maxMs);
+  });
+}
 
 async function startCamera(){
   try{
@@ -1014,7 +1139,7 @@ async function loadCameraScreen(){
     if(th){tDiv.textContent='⏱ Total in office: '+th;tDiv.style.display='block';}
     else tDiv.style.display='none';
     document.getElementById('stDone').style.display='block';
-    checkSiteWork(); return;
+    checkSiteWork(true); return;
   }
 
   const activeMeet=getActiveMeeting(rec);
@@ -1078,7 +1203,9 @@ async function captureAndMark(){
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
   const photo=compressPhoto(video);
   const note=punchMode==='meeting_out'?(document.getElementById('meetNote')?.value?.trim()||''):'';
-  const punch={time:nowTime(),photo,lat:capLat,lng:capLng,area:capArea||''};
+  const lat=capLat, lng=capLng, time=nowTime();
+  const punch={time,photo,lat,lng,area:capArea||await reverseGeocode(lat,lng)};
+  let extra='';
   stopCamera(); stopLocWatch();
   document.getElementById('videoFeed').style.display='none';
   canvas.width=120;canvas.height=120;canvas.getContext('2d').drawImage(video,0,0,120,120);
@@ -1086,12 +1213,12 @@ async function captureAndMark(){
   loading(true,'Saving attendance…');
   try{
     if(punchMode==='in') await storePunchIn(currentEmp.id,currentEmp.name,todayStr(),punch);
-    else if(punchMode==='out') await storePunchOut(currentEmp.id,todayStr(),punch);
+    else if(punchMode==='out'){ await storePunchOut(currentEmp.id,todayStr(),punch); if(mySite()&&await stopSiteWork(true,photo)) extra=' · 🏗️ Site work stopped'; }
     else if(punchMode==='meeting_out'){ punch.note=note; const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch); updateMeetingCache(currentEmp.id,todayStr(),'out',punch,(r&&r.seq)?r.seq:null); }
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
     loading(false);
     const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at '};
-    document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+capArea;
+    document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+punch.area+extra;
     document.getElementById('camOk').classList.add('show');
     setTimeout(()=>loadCameraScreen(),2200);
   }catch(e){
@@ -1100,7 +1227,8 @@ async function captureAndMark(){
   }
 }
 
-function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);stopSiteTracking();currentEmp=null;['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+/* Logout does not stop site work: its checks go on while this page is open */
+function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);currentEmp=null;['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -1131,83 +1259,258 @@ function openModal(name,label,src,lat,lng,area){
 
 /* ══════════════════════════════════════════════════════════════
    SITE WORK TRACKING
+   A site session belongs to this phone until it is stopped. Location is
+   checked when it starts, then at random 45–75 minute gaps, and straight
+   away whenever the app is opened or the phone unlocked with a check due,
+   even after Logout. Employees are not shown when checks happen or their
+   result, only problems they must fix (GPS off, permission blocked).
 ══════════════════════════════════════════════════════════════ */
-const SITE_RADIUS=50, PING_MINS=10;
-let activeSiteWork=null, siteInterval=null, pingCountdown=PING_MINS, pingTick=null;
+const SITE_RADIUS=50, CHECK_MIN=45, CHECK_MAX=75, RETRY_MINS=5, GAP_MINS=90;
+let siteTimer=null, pingBusy=false;
+const swLive={};   // today's site sessions on this phone, by employee ID (also kept in localStorage)
 
-function checkSiteWork(){
+function swKey(id){ return String(id===undefined||id===null?'':id).toUpperCase(); }
+function swGet(empId){
+  const k=swKey(empId);
+  if(!swLive[k]){ const s=lsGet('sw_'+empId)||lsGet('sw_'+k); if(s&&s.id) swLive[k]=Object.assign(s,{empId:s.empId||empId}); }
+  const s=swLive[k];
+  return s&&s.date===todayStr()?s:null;
+}
+function swPut(sw){ swLive[swKey(sw.empId)]=sw; lsSet('sw_'+sw.empId,sw); }
+function swDel(empId){ delete swLive[swKey(empId)]; lsDel('sw_'+empId); lsDel('sw_'+swKey(empId)); }
+function swAll(){
+  const t=todayStr();
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i); if(!/^sw_/.test(key)) continue;
+      const v=lsGet(key), k=swKey(key.slice(3));
+      if(v&&v.id&&v.date===t&&!swLive[k]) swLive[k]=Object.assign(v,{empId:v.empId||key.slice(3)});
+    }
+  }catch(e){}
+  return Object.values(swLive).filter(s=>s.date===t);
+}
+function mySite(){ return currentEmp?swGet(currentEmp.id):null; }
+function empNameOf(id){ const e=(_D.employees||[]).find(x=>swKey(x.id)===swKey(id)); return e?e.name:String(id); }
+function siteFromServer(s){
+  const lat=parseFloat(s.startLat), lng=parseFloat(s.startLng);
+  if(!isFinite(lat)||!isFinite(lng)) return null;
+  return {id:s.id,empId:s.empId,empName:s.name||empNameOf(s.empId),startTime:s.startTime,siteLat:lat,siteLng:lng,startArea:s.startArea||'',date:s.date,nextCheckAt:0};
+}
+function checkSiteWork(dayOver){
   if(!currentEmp) return;
-  const saved=lsGet('sw_'+currentEmp.id);
-  if(saved&&saved.date===todayStr()){ activeSiteWork=saved; startSiteTracking(); }
+  let sw=swGet(currentEmp.id);
+  if(!sw){
+    // Started on another phone/browser, or this browser's data was cleared: pick it up from the server
+    const fresh=Date.now()-(+_D.loadedAt||0)<10*60000, t=todayStr(), eid=swKey(currentEmp.id);
+    const s=fresh&&(_D.siteActive||[]).find(x=>swKey(x.empId)===eid&&x.date===t&&x.status==='working');
+    sw=s?siteFromServer(s):null;
+    if(sw) swPut(sw);
+  }
+  if(sw&&dayOver){ stopSiteWork(true); return; }   // punched out: the site day is over
+  if(sw&&!nativeRunning(sw)) nativeStart(sw);   // e.g. picked up from another phone
+  if(swAll().length){ startSiteTimer(); siteTick(); }
   updateSiteBar();
 }
 function updateSiteBar(){
-  const bar=document.getElementById('siteWorkBar');
-  const startBtn=document.getElementById('startSiteBtn');
-  if(!bar||!startBtn) return;
-  if(!activeSiteWork){
-    bar.style.display='none';
-    startBtn.style.display=(capLat&&capLng)?'block':'none'; return;
+  const bar=document.getElementById('siteWorkBar'), startBtn=document.getElementById('startSiteBtn');
+  if(bar&&startBtn){
+    const sw=mySite();
+    if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng)?'block':'none'; }
+    else{
+      bar.style.display='block'; startBtn.style.display='none';
+      document.getElementById('swInfo').textContent='📍 '+(sw.startArea||'Site')+' · Started '+String(fmt12(sw.startTime)).toUpperCase();
+      const al=document.getElementById('swAlert'), at=document.getElementById('swAlertTxt');
+      if(al&&at){ at.textContent=sw.alert||''; al.style.display=sw.alert?'block':'none'; }
+      const ml=document.getElementById('swMapLink'); if(ml) ml.href=mapsUrl(sw.siteLat,sw.siteLng);
+      const kp=document.getElementById('swKeep'); if(kp) kp.textContent=nativeRunning(sw)?'📱 Tracking runs in the background — you can lock the phone.':'📱 Keep this page open while you are on site.';
+    }
   }
-  bar.style.display='block'; startBtn.style.display='none';
-  document.getElementById('swInfo').textContent='📍 '+activeSiteWork.startArea+' · Started '+fmt12(activeSiteWork.startTime);
-  document.getElementById('swPing').textContent='⏱ Next location check in '+pingCountdown+' min';
-  const ml=document.getElementById('swMapLink');
-  if(ml) ml.href=mapsUrl(activeSiteWork.siteLat,activeSiteWork.siteLng);
+  const bn=document.getElementById('siteRunBanner');
+  if(bn){
+    const list=swAll();
+    bn.style.display=list.length?'block':'none';
+    if(list.length) bn.textContent='🏗️ Site work is running for '+list.map(s=>s.empName||empNameOf(s.empId)).join(', ')+(NATIVE?'. Sign in to stop it.':'. Keep this page open; sign in to stop it.');
+  }
 }
 async function beginSiteWork(){
-  if(!capLat||!capLng){alert('Wait for GPS to lock (green bar) before starting site work.');return;}
-  const btn=document.getElementById('startSiteBtn');
-  btn.disabled=true; btn.textContent='⏳ Starting…';
+  if(!currentEmp) return;
+  const video=document.getElementById('videoFeed'), btn=document.getElementById('startSiteBtn');
+  if(!capLat||!capLng){ alert('Wait for GPS to lock (green bar) before starting site work.'); return; }
+  if(!video||!video.srcObject){ alert('Camera not ready. Allow the camera for this site, then try again.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Getting exact location…';
   try{
-    const area=capArea||await reverseGeocode(capLat,capLng);
+    const photo=compressPhoto(video);   // taken the moment Start is tapped
+    const startTime=nowTime(), date=todayStr();
+    const fix=await preciseFix(100,15000);   // wait up to 15 s for a reading accurate to 100 m
+    if(!fix) throw new Error('no GPS location');
+    btn.textContent='⏳ Starting…';
+    const area=await reverseGeocode(fix.lat,fix.lng);
     const id='sw-'+Date.now();
-    const startTime=nowTime();
-    activeSiteWork={id,startTime,siteLat:parseFloat(capLat),siteLng:parseFloat(capLng),startArea:area,date:todayStr()};
-    lsSet('sw_'+currentEmp.id,activeSiteWork);
-    if(USE_SHEETS) await api('startSiteWork',{id,empId:currentEmp.id,name:currentEmp.name,date:todayStr(),startTime,lat:capLat,lng:capLng,area});
-    startSiteTracking(); updateSiteBar();
-    const ok=document.getElementById('camOk');
-    ok.textContent='🏗️ Site work started at '+area+' · '+startTime; ok.classList.add('show');
-    btn.disabled=false; btn.textContent='🏗️ Start Site Work';
-    await doSitePing();
-  }catch(e){ btn.disabled=false; btn.textContent='🏗️ Start Site Work'; alert('Error: '+e.message); }
+    let sw={id,empId:currentEmp.id,empName:currentEmp.name,startTime,siteLat:fix.lat,siteLng:fix.lng,startArea:area,startAcc:fix.acc,date,nextCheckAt:0};
+    let msg='🏗️ Site work started at '+area+' · '+String(fmt12(startTime)).toUpperCase();
+    if(USE_SHEETS){
+      const r=await api('startSiteWork',{id,empId:currentEmp.id,name:currentEmp.name,date,startTime,lat:fix.lat.toFixed(6),lng:fix.lng.toFixed(6),area,accuracy:fix.acc,photo});
+      const s=r&&r.already&&r.session?siteFromServer(r.session):null;
+      if(s){ sw=s; msg='🏗️ Site work was already running since '+String(fmt12(s.startTime)).toUpperCase()+' — continuing it'; }
+    }
+    swPut(sw); nativeStart(sw);
+    const ok=document.getElementById('camOk'); ok.textContent=msg; ok.classList.add('show');
+    startSiteTimer(); siteTick();   // first check right away
+  }catch(e){ alert('Could not start site work: '+e.message); }
+  finally{ btn.disabled=false; btn.textContent='📸 Start Site Work'; updateSiteBar(); }
 }
-async function doSitePing(){
-  if(!activeSiteWork||!currentEmp) return;
+/* ── Inside the Android app the phone's background tracker does the checks (works with the phone locked) ── */
+const NATIVE=(()=>{ try{ return typeof window.AndroidTracker!=='undefined'&&window.AndroidTracker.available(); }catch(e){ return false; } })();
+function nativeRunning(sw){ try{ return NATIVE&&!!sw&&window.AndroidTracker.running(String(sw.id)); }catch(e){ return false; } }
+function nativeStart(sw){
+  if(!NATIVE||!USE_SHEETS||!sw) return false;
   try{
-    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),e=>rej(e),{enableHighAccuracy:true,timeout:12000}));
-    const area=await reverseGeocode(pos.lat.toFixed(6),pos.lng.toFixed(6));
-    const dist=distMeters(activeSiteWork.siteLat,activeSiteWork.siteLng,pos.lat,pos.lng);
-    const within=dist<=SITE_RADIUS;
-    if(USE_SHEETS) await api('logSitePing',{id:'ping-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,date:todayStr(),time:nowTime(),lat:pos.lat.toFixed(6),lng:pos.lng.toFixed(6),area,distMeters:Math.round(dist),withinBound:within,siteLat:activeSiteWork.siteLat,siteLng:activeSiteWork.siteLng});
-    if(!within){
-      const er=document.getElementById('camErr');
-      er.textContent='⚠️ You are '+Math.round(dist)+'m from the site (limit: '+SITE_RADIUS+'m). Please return!';
-      er.style.background='var(--amberBg)'; er.style.color='var(--amber)'; er.classList.add('show');
-    } else { document.getElementById('camErr').classList.remove('show'); }
-    pingCountdown=PING_MINS; updateSiteBar();
-  }catch(e){ console.warn('Site ping failed:',e.message); }
+    return window.AndroidTracker.start(JSON.stringify({scriptUrl:SCRIPT_URL,secret:API_SECRET,siteId:String(sw.id),empId:sw.empId,
+      name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:SITE_RADIUS,minGap:CHECK_MIN,maxGap:CHECK_MAX,retry:RETRY_MINS}));
+  }catch(e){ return false; }
 }
-function startSiteTracking(){
-  stopSiteTracking(); pingCountdown=PING_MINS;
-  pingTick=setInterval(()=>{ pingCountdown=Math.max(0,pingCountdown-1); updateSiteBar(); if(pingCountdown===0){doSitePing();pingCountdown=PING_MINS;} },60000);
-  siteInterval=setInterval(doSitePing,PING_MINS*60000);
+function nativeStop(id){ try{ if(NATIVE) window.AndroidTracker.stop(String(id||'')); }catch(e){} }
+function nativeInfo(){ try{ return NATIVE?JSON.parse(window.AndroidTracker.info()||'{}'):null; }catch(e){ return null; } }
+function nextGapMs(){ return Math.round((CHECK_MIN+Math.random()*(CHECK_MAX-CHECK_MIN))*60000); }
+async function doSiteChecks(){
+  if(pingBusy) return;
+  const startedAt=Date.now();   // the next check is timed from when this one began
+  const due=swAll().filter(s=>!nativeRunning(s)&&startedAt>=(s.nextCheckAt||0)-30000);   // due within 30 s counts as due; the app tracker does its own
+  if(!due.length) return;
+  pingBusy=true;
+  try{
+    let pos=null, help=null;
+    try{ pos=await freshFix(); }catch(e){ help=gpsHelp(e); }
+    const area=pos?await reverseGeocode(pos.lat,pos.lng):'';
+    for(const sw of due){
+      const cur=swGet(sw.empId); if(!cur||cur.id!==sw.id) continue;   // stopped meanwhile
+      const base={id:'ping-'+Date.now()+'-'+swKey(sw.empId),siteId:sw.id,empId:sw.empId,name:sw.empName||empNameOf(sw.empId),date:sw.date,time:nowTime(),siteLat:sw.siteLat,siteLng:sw.siteLng};
+      try{
+        if(pos){
+          const dist=Math.round(distMeters(sw.siteLat,sw.siteLng,pos.lat,pos.lng));
+          // "outside" only when even the GPS error margin can't put the reading inside the radius
+          const status=dist<=SITE_RADIUS?'YES':dist-(pos.acc||0)>SITE_RADIUS?'NO':'ROUGH';
+          if(USE_SHEETS) await api('logSitePing',Object.assign(base,{lat:pos.lat.toFixed(6),lng:pos.lng.toFixed(6),area,distMeters:dist,status,withinBound:status==='YES',accuracy:pos.acc}));
+          Object.assign(sw,{failAt:0,alert:'',nextCheckAt:startedAt+nextGapMs()});
+        }else{
+          // no location: the office is told (at most once an hour) and the phone retries every few minutes
+          if(USE_SHEETS&&(!sw.failAt||Date.now()-sw.failAt>=60*60000)){ await api('logSitePing',Object.assign(base,{gps:false,area:help.why})); sw.failAt=Date.now(); }
+          Object.assign(sw,{nextCheckAt:startedAt+RETRY_MINS*60000,alert:'📍 '+help.why+'. '+help.tip});
+        }
+      }catch(e){
+        Object.assign(sw,{nextCheckAt:startedAt+RETRY_MINS*60000,alert:'⚠️ Site location could not be sent. Check your internet; it will retry by itself.'});
+      }
+      const now=swGet(sw.empId); if(now&&now.id===sw.id) swPut(sw);
+    }
+  }finally{ pingBusy=false; updateSiteBar(); }
 }
-function stopSiteTracking(){ if(siteInterval){clearInterval(siteInterval);siteInterval=null;} if(pingTick){clearInterval(pingTick);pingTick=null;} }
+function siteTick(){
+  const list=swAll();
+  if(!list.length){ if(siteTimer){ clearInterval(siteTimer); siteTimer=null; } updateSiteBar(); return; }
+  if(!pingBusy&&list.some(s=>!nativeRunning(s)&&Date.now()>=(s.nextCheckAt||0)-30000)) doSiteChecks(); else updateSiteBar();
+}
+function startSiteTimer(){ if(!siteTimer) siteTimer=setInterval(siteTick,60000); }
+/* Phone unlocked / app brought back: resume live location and run any check that is due */
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible') return;
+  if(locWanted&&locWatcher===null) watchLoc();
+  siteTick();
+});
 function confirmStopSite(){ if(confirm('Stop site work for today? This will end location tracking.')) stopSiteWork(); }
-async function stopSiteWork(){
-  if(!activeSiteWork) return;
-  stopSiteTracking();
+async function stopSiteWork(quiet,photo){
+  const sw=mySite(), emp=currentEmp;
+  if(!sw||!emp) return false;
+  if(!photo&&!quiet){ const v=document.getElementById('videoFeed'); if(v&&v.srcObject) photo=compressPhoto(v); }
   const stopTime=nowTime();
   try{
-    if(USE_SHEETS) await api('stopSiteWork',{empId:currentEmp.id,date:todayStr(),stopTime,lat:capLat||'',lng:capLng||'',area:capArea||''});
-  }catch(e){ console.warn('Stop site work error:',e.message); }
-  lsDel('sw_'+currentEmp.id);
-  activeSiteWork=null; updateSiteBar();
-  const ok=document.getElementById('camOk');
-  ok.textContent='✅ Site work stopped at '+stopTime; ok.classList.add('show');
-  setTimeout(()=>loadCameraScreen(),1500);
+    if(USE_SHEETS) await api('stopSiteWork',{id:sw.id,empId:emp.id,date:sw.date||todayStr(),stopTime,lat:capLat||'',lng:capLng||'',area:capArea||'',accuracy:capAcc===null?'':capAcc,photo:photo||''});
+  }catch(e){
+    if(!/no active site work/i.test(e.message||'')){   // "already stopped" counts as stopped
+      if(!quiet){ const er=document.getElementById('camErr'); er.textContent='⚠️ Could not stop site work ('+e.message+'). Check your internet and try again.'; er.classList.add('show'); }
+      return false;
+    }
+  }
+  swDel(emp.id); nativeStop(sw.id);
+  const eid=swKey(emp.id);
+  _D.siteActive=(_D.siteActive||[]).filter(x=>!(swKey(x.empId)===eid&&x.date===sw.date)); saveCache();
+  updateSiteBar();
+  if(!quiet){
+    const ok=document.getElementById('camOk'); ok.textContent='✅ Site work stopped at '+String(fmt12(stopTime)).toUpperCase(); ok.classList.add('show');
+    setTimeout(()=>loadCameraScreen(),1500);
+  }
+  return true;
+}
+
+/* ── Phone settings help (with a live check of this phone) ── */
+function phoneKind(){
+  const ua=navigator.userAgent||'';
+  const ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(ios) return /CriOS/.test(ua)?'ios-chrome':'ios-safari';
+  return /Android/.test(ua)?'android':'other';
+}
+const PHONE_HELP={
+  'app':['Android app',[
+    'When the app asks for location, choose <b>While using the app</b>, then for site work choose <b>Allow all the time</b>, and keep <b>Use precise location</b> on.',
+    'Allow <b>Camera</b> and <b>Notifications</b>. The “Site work running” notification must stay while you are on site.',
+    'Battery: allow the app to run in the background (<b>Unrestricted</b> / “Don’t optimise”).',
+    'Xiaomi / Redmi / POCO: App info → <b>Autostart</b> on, Battery saver → <b>No restrictions</b>. Oppo / Vivo / Realme: App info → Battery → <b>Allow background activity</b>.',
+    'Don’t swipe-kill the app from “Force stop”, and keep Location switched on.']],
+  'android':['Android phone (Chrome)',[
+    'Swipe down from the top of the screen and turn <b>Location</b> on.',
+    'Settings → Location → Location services → turn on <b>Google Location Accuracy</b> (some phones call it “Improve accuracy”).',
+    'Touch and hold the Chrome icon → App info → Permissions → <b>Location</b> → “Allow only while using the app”, and turn on <b>Use precise location</b>. Set <b>Camera</b> to Allow as well.',
+    'Open this page in Chrome, tap the icon left of the web address → Permissions → <b>Location: Allow</b> and <b>Camera: Allow</b>. If Chrome offers “Approximate” location, choose <b>Precise</b>.',
+    'Chrome App info → Battery → <b>Unrestricted</b>. Keep Battery Saver off while on site.',
+    'Use a normal tab, not Incognito. Tip: Chrome menu ⋮ → <b>Add to Home screen</b> to open this app in one tap.']],
+  'ios-safari':['iPhone (Safari)',[
+    'Settings → Privacy &amp; Security → <b>Location Services</b> → On.',
+    'On the same screen tap <b>Safari Websites</b> → “While Using the App”, and turn on <b>Precise Location</b>.',
+    'Settings → Apps → Safari → <b>Location</b> → Allow, and <b>Camera</b> → Allow. (Or in Safari: page menu next to the address → Website Settings.)',
+    'Keep <b>Low Power Mode</b> off while on site, and don’t use Private browsing.',
+    'Tip: Share button → <b>Add to Home Screen</b> to open this app in one tap.']],
+  'ios-chrome':['iPhone (Chrome)',[
+    'Settings → Privacy &amp; Security → Location Services → On → <b>Chrome</b> → “While Using the App”, and turn on <b>Precise Location</b>.',
+    'Settings → Apps → Chrome → <b>Camera</b> → On.',
+    'When this page asks for your location or camera, tap <b>Allow</b>.',
+    'Keep Low Power Mode off while on site, and don’t use Incognito.']],
+};
+async function openPhoneHelp(){
+  const kind=NATIVE?'app':phoneKind(), all=NATIVE?['app']:['android','ios-safari','ios-chrome'];
+  const order=kind==='other'?all:[kind].concat(all.filter(k=>k!==kind));
+  const sec=(k,open)=>`<details${open?' open':''}><summary>${PHONE_HELP[k][0]}</summary><ol>${PHONE_HELP[k][1].map(s=>'<li>'+s+'</li>').join('')}</ol></details>`;
+  document.getElementById('modalTitle').textContent='📱 Phone settings';
+  document.getElementById('modalBody').innerHTML=`<div class="help">
+    <div class="help-status" id="helpStatus"><div><span>Checking this phone…</span></div></div>
+    <button class="btn btn-outline" id="helpTestBtn" onclick="testMyLocation()" style="margin-top:8px">📍 Test my location</button>
+    <h4>Turn these on once</h4>${order.map((k,i)=>sec(k,i===0&&kind!=='other')).join('')}
+    <h4>While on site</h4><ol><li>Keep this page open in the browser. Location can only be checked while the page is open; when it is closed, the office sees a gap.</li><li>Keep mobile data or Wi-Fi on.</li></ol></div>`;
+  document.getElementById('detailModal').classList.add('open');
+  const q=async n=>{ try{ return navigator.permissions&&navigator.permissions.query?(await navigator.permissions.query({name:n})).state:''; }catch(e){ return ''; } };
+  const loc=await q('geolocation'), cam=await q('camera');
+  const rows=[
+    ['Location permission', loc==='granted'||(!loc&&capLat)?'✅ Allowed':loc==='denied'?'❌ Blocked':loc==='prompt'?'⚠️ Not yet — tap Allow when asked':'—'],
+    ['Location accuracy', capLat&&capAcc!==null?(capAcc<=100?'✅ Precise (±'+capAcc+' m)':'⚠️ Rough (±'+capAcc+' m) — turn on Precise location'):'— tap Test my location'],
+    ['Camera', videoStream||cam==='granted'?'✅ Allowed':cam==='denied'?'❌ Blocked':'—'],
+  ];
+  const ni=nativeInfo();
+  if(ni){ rows.push(['Location “All the time”', ni.background?'✅ Allowed':'⚠️ Not yet — needed after a restart']); rows.push(['Background (battery)', ni.battery?'✅ Unrestricted':'⚠️ Restricted — allow it']); }
+  const hs=document.getElementById('helpStatus');
+  if(hs) hs.innerHTML=rows.map((r,i)=>`<div><span>${r[0]}</span><b id="helpRow${i}">${r[1]}</b></div>`).join('')
+    +(ni?'<button class="btn btn-outline" onclick="window.AndroidTracker.openSettings()" style="margin-top:8px">⚙️ Open app settings</button>':'');
+}
+async function testMyLocation(){
+  const b=document.getElementById('helpTestBtn'), row=()=>document.getElementById('helpRow1'), perm=()=>document.getElementById('helpRow0');
+  if(b){ b.disabled=true; b.textContent='⏳ Testing…'; }
+  try{
+    const f=await freshFix();
+    if(perm()) perm().textContent='✅ Allowed';
+    if(row()) row().textContent=f.acc<=100?'✅ Precise (±'+f.acc+' m)':'⚠️ Rough (±'+f.acc+' m) — turn on Precise location';
+  }catch(e){
+    const h=gpsHelp(e);
+    if(row()) row().textContent='❌ '+h.why;
+    if(e&&e.code===1&&perm()) perm().textContent='❌ Blocked';
+  }
+  if(b){ b.disabled=false; b.textContent='📍 Test my location'; }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1263,7 +1566,7 @@ function switchTab(tab){
   if(tab==='leaves')     loadLeavesTab();
   if(tab==='employees')  renderEmpList();
   if(tab==='holidays')   renderHolList();
-  if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();refreshSiteMonitor('admin');renderSupList();}
+  if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();const sm=document.getElementById('siteMonth');if(sm&&!sm.value)sm.value=todayStr().slice(0,7);refreshSiteMonitor('admin');renderSupList();}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1614,11 +1917,22 @@ async function removeHoliday(date){
 /* ══════════════════════════════════════════════════════════════
    SITE MONITOR TAB
 ══════════════════════════════════════════════════════════════ */
+/* Result of one check: inside, outside, unclear (weak GPS) or no GPS */
+function siteResult(p,showAcc){
+  if(!p) return '<span style="color:var(--soft)">No checks</span>';
+  const st=String(p.withinBound||'').toUpperCase(), d=parseInt(p.distMeters||0,10);
+  const acc=showAcc&&p.accuracy!==''&&p.accuracy!==undefined&&p.accuracy!==null?'<div style="color:var(--soft);font-size:11px">GPS ±'+p.accuracy+'m</div>':'';
+  if(st==='NO GPS') return '<span class="viol-badge">📵 No GPS</span>';
+  if(st==='FAKE GPS') return '<span class="viol-badge">🚫 Fake GPS app</span>'+(d?'<div style="color:var(--soft);font-size:11px">shows '+d+'m</div>':'');
+  if(st==='YES'||st==='TRUE') return '<span style="color:var(--green);font-weight:700">✅ '+d+'m</span>'+acc;
+  if(st==='ROUGH') return '<span style="color:var(--amber);font-weight:700">≈ '+d+'m</span><div style="color:var(--soft);font-size:11px">weak GPS'+(p.accuracy?' ±'+p.accuracy+'m':'')+'</div>';
+  return '<span class="viol-badge">⚠️ '+d+'m</span>'+acc;
+}
 async function refreshSiteMonitor(role){
   const elId=role==='sup'?'supContent':'siteContent';
   const el=document.getElementById(elId);
   if(!el) return;
-  const date=document.getElementById('siteDate')?.value||todayStr();
+  const date=role==='sup'?todayStr():(document.getElementById('siteDate')?.value||todayStr());
   el.innerHTML='<div class="empty"><div class="eicon">⏳</div>Loading…</div>';
   try{
     let data=USE_SHEETS?(await api('getSiteStatus',{date})||[]):[];
@@ -1626,25 +1940,99 @@ async function refreshSiteMonitor(role){
       const assigned=(currentSupervisor.assignedEmp||'').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
       if(assigned.length) data=data.filter(r=>assigned.includes(String(r.empId).toUpperCase()));
     }
-    const onSite=data.filter(r=>r.status==='working').length;
+    const today=date===todayStr();
+    const onSite=data.filter(r=>r.status==='working'&&today).length;
     const done=data.filter(r=>r.status==='done').length;
     const viols=data.reduce((s,r)=>s+(parseInt(r.violations)||0),0);
     let html=`<div class="stats-grid"><div class="stat"><div class="n c-orange">${onSite}</div><div class="l">On Site</div></div><div class="stat"><div class="n c-green">${done}</div><div class="l">Finished</div></div><div class="stat"><div class="n c-purple">${data.length}</div><div class="l">Total</div></div><div class="stat"><div class="n c-red">${viols}</div><div class="l">⚠️ Violations</div></div></div>`;
     if(!data.length){html+='<div class="empty"><div class="eicon">🏗️</div>No site work records for '+date+'.</div>';}
     else{
-      html+=`<div class="site-wrap"><div class="site-row site-head"><div>Employee</div><div>Status</div><div>Started</div><div>Last Ping</div><div>Distance</div><div>Map</div></div>`;
+      html+=`<div class="site-wrap"><div class="site-row site-head"><div>Employee</div><div>Status</div><div>Started</div><div>Last Check</div><div>Distance</div><div>Map</div></div>`;
       data.forEach(r=>{
-        const stEl=r.status==='working'?'<span style="color:var(--orange);font-weight:700">🟡 On Site</span>':r.status==='done'?'<span style="color:var(--green);font-weight:700">✅ Done</span>':'—';
-        const lp=r.latestPing;
-        const dist=lp?(parseInt(lp.distMeters||0)):'—';
-        const distEl=lp?(dist<=SITE_RADIUS?'<span style="color:var(--green);font-weight:700">✅ '+dist+'m</span>':'<span class="viol-badge">⚠️ '+dist+'m</span>'):'<span style="color:var(--soft)">No ping</span>';
-        const mapEl=lp&&lp.lat?`<a class="map-link" href="${mapsUrl(lp.lat,lp.lng)}" target="_blank">📍</a>`:'—';
-        html+=`<div class="site-row"><div style="font-weight:600">${r.name}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}</div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+(lp.area||''):'—'}</div><div>${distEl}</div><div>${mapEl}</div></div>`;
+        const stEl=r.status==='working'?(today?'<span style="color:var(--orange);font-weight:700">🟡 On Site</span>':'<span class="viol-badge">⚠️ Never stopped</span>')
+          :r.status==='done'?'<span style="color:var(--green);font-weight:700">✅ Done</span>':'—';
+        const lp=r.latestPing, fx=r.lastFix||(lp&&lp.lat?lp:null), n=parseInt(r.pingCount||0,10);
+        // still on site today but nothing heard for a long time: phone locked, app closed or offline
+        let gap='';
+        if(r.status==='working'&&today){
+          const now=new Date(), mins=now.getHours()*60+now.getMinutes()-parseTimeMins(lp?lp.time:r.startTime);
+          if(mins>GAP_MINS) gap='<div style="margin-top:3px"><span class="viol-badge" style="display:inline-block;line-height:1.35">⚠️ No check for '+fmtMins(mins)+'</span></div>';
+        }
+        const mapEl=fx?`<a class="map-link" href="${mapsUrl(fx.lat,fx.lng)}" target="_blank" onclick="event.stopPropagation()">📍</a>`:'—';
+        html+=`<div class="site-row clickable" onclick="openSiteDetail('${esc(r.id)}')"><div style="font-weight:600">${r.name}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}<div>${n} check${n===1?'':'s'}</div></div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+(lp.area||''):'—'}${gap}</div><div>${siteResult(lp)}</div><div>${mapEl}</div></div>`;
       });
-      html+='</div>';
+      html+='</div><div style="font-size:11px;color:var(--soft);margin:-4px 0 8px">Tap a row to see every check, the start and stop photos, and time on site.</div>';
     }
     el.innerHTML=html;
   }catch(e){el.innerHTML=`<div class="msg msg-error show">⚠️ ${e.message}<br><button onclick="refreshSiteMonitor('${role}')" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
+}
+/* One site session: start/stop photos and places, every check, time on site, longest silence */
+async function openSiteDetail(id){
+  const m=document.getElementById('detailModal'), body=document.getElementById('modalBody');
+  document.getElementById('modalTitle').textContent='🏗️ Site work details';
+  body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open');
+  try{
+    const d=await api('getSiteSession',{id})||{};
+    const s=d.session||{}, checks=d.checks||[];
+    const running=s.status==='working', isToday=s.date===todayStr();
+    const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+    const startM=parseTimeMins(s.startTime), endM=s.stopTime?parseTimeMins(s.stopTime):(running&&isToday?nowM:null);
+    const marks=[startM].concat(checks.map(c=>parseTimeMins(c.time)));
+    if(endM!==null) marks.push(endM);
+    let longest=0; for(let i=1;i<marks.length;i++) longest=Math.max(longest,marks[i]-marks[i-1]);
+    const cnt=k=>checks.filter(c=>String(c.withinBound).toUpperCase()===k).length;
+    const img=src=>src?`<img src="${src}" alt="">`:'<div class="sd-noimg">👤</div>';
+    const acc=a=>a!==''&&a!==undefined&&a!==null?' · GPS ±'+a+'m':'';
+    const mapA=(a,b)=>a?` <a class="map-link" href="${mapsUrl(a,b)}" target="_blank">📍 Map</a>`:'';
+    const stopHtml=s.stopTime?`<b>⏹ Stopped ${fmt12(s.stopTime)}</b><div>📍 ${s.stopArea||'—'}${acc(s.stopAcc)}</div><div>${mapA(s.stopLat,s.stopLng)}</div>`
+      :running?(isToday?'<b style="color:var(--orange)">🟡 Still on site</b>':'<b style="color:var(--red)">⚠️ Never stopped</b>'):'—';
+    body.innerHTML=`<div style="font-weight:700;font-size:14px">${s.name||''} <span style="font-weight:400;color:var(--soft)">· ${s.date||''}</span></div>
+      <div class="sd-block">${img(s.startPhoto)}<div><b>▶ Started ${fmt12(s.startTime)}</b><div>📍 ${s.startArea||'—'}${acc(s.startAcc)}</div><div>${mapA(s.startLat,s.startLng)}</div></div></div>
+      <div class="sd-block">${img(s.stopPhoto)}<div>${stopHtml}</div></div>
+      <div class="sd-sum">
+        <div><b>${endM!==null?fmtMins(Math.max(0,endM-startM)):'—'}</b>Time on site</div>
+        <div><b>${checks.length}</b>Location checks</div>
+        <div><b style="color:var(--green)">${cnt('YES')+cnt('TRUE')}</b>Inside ${SITE_RADIUS} m</div>
+        <div><b style="color:var(--red)">${cnt('NO')+cnt('FALSE')}</b>Outside the site</div>
+        <div><b style="color:var(--amber)">${cnt('ROUGH')}</b>Unclear (weak GPS)</div>
+        <div><b style="color:var(--red)">${cnt('NO GPS')}</b>GPS off / blocked</div>
+        <div style="grid-column:1/-1"><b style="color:${cnt('FAKE GPS')?'var(--red)':'var(--ink)'}">${cnt('FAKE GPS')}</b>Fake GPS app detected</div>
+        <div style="grid-column:1/-1"><b style="color:${longest>GAP_MINS?'var(--red)':'var(--ink)'}">${fmtMins(longest)}</b>Longest time with no check</div>
+      </div>
+      <div style="font-weight:700;font-size:13px;margin-top:4px">All checks</div>
+      ${checks.length?checks.map(c=>`<div class="sd-check"><div><b>${fmt12(c.time)}</b>${c.source==='app'?' <span style="font-size:10px;color:var(--soft)">📱 app</span>':''}<div style="color:var(--soft)">${c.area||''}</div></div><div style="text-align:right">${siteResult(c,true)}${c.lat?`<div style="margin-top:3px">${mapA(c.lat,c.lng)}</div>`:''}</div></div>`).join('')
+        :'<div class="empty" style="padding:14px">No location checks were received for this site work.</div>'}`;
+  }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+/* Month summary per employee: days and hours on site, share of checks inside the site, problems */
+async function loadSiteSummary(){
+  const el=document.getElementById('siteSummary'); if(!el) return;
+  const mv=(document.getElementById('siteMonth')?.value||todayStr().slice(0,7)).trim();
+  const mm=mv.match(/^(\d{4})-(\d{1,2})$/);
+  if(!mm){ el.innerHTML='<div class="msg msg-error show">Pick a month.</div>'; return; }
+  const y=+mm[1], mo=+mm[2], last=new Date(y,mo,0).getDate(), p2=n=>String(n).padStart(2,'0');
+  const start=y+'-'+p2(mo)+'-01', end=y+'-'+p2(mo)+'-'+p2(last);
+  el.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{
+    const list=USE_SHEETS?(await api('siteReport',{start,end})||[]):[];
+    if(!list.length){ el.innerHTML='<div class="empty"><div class="eicon">🏗️</div>No site work in this month.</div>'; return; }
+    const by={};
+    list.forEach(s=>{
+      const k=String(s.empId).toUpperCase();
+      const e=by[k]||(by[k]={name:s.name,id:s.empId,days:new Set(),sessions:0,mins:0,checks:0,inside:0,outside:0,rough:0,noGps:0,open:0,gap:0});
+      e.days.add(s.date); e.sessions++; e.mins+=s.minutes||0; e.checks+=s.checks||0; e.inside+=s.inside||0; e.outside+=s.outside||0;
+      e.rough+=s.rough||0; e.noGps+=s.noGps||0; e.gap=Math.max(e.gap,s.longestGap||0);
+      if(s.status==='working'&&s.date<todayStr()) e.open++;
+    });
+    const rowsH=Object.values(by).sort((a,b)=>a.name<b.name?-1:1).map(e=>{
+      const pct=e.checks?Math.round(e.inside*100/e.checks):null;
+      const col=pct===null?'var(--soft)':pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
+      const bad=v=>v?`<span style="color:var(--red);font-weight:700">${v}</span>`:'0';
+      return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days.size}</td><td>${e.sessions}</td><td>${fmtMins(e.mins)}</td><td>${e.checks}</td><td style="color:${col};font-weight:700">${pct===null?'—':pct+'%'}</td><td>${bad(e.outside)}</td><td>${bad(e.noGps)}</td><td>${bad(e.open)}</td><td style="${e.gap>GAP_MINS?'color:var(--red);font-weight:700':''}">${fmtMins(e.gap)}</td></tr>`;
+    }).join('');
+    el.innerHTML=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Sessions</th><th>Time on site</th><th>Checks</th><th>Inside site</th><th>Outside</th><th>GPS off</th><th>Never stopped</th><th>Longest silence</th></tr></thead><tbody>${rowsH}</tbody></table></div>
+      <div style="font-size:11px;color:var(--soft);margin-top:6px">“Inside site” = checks within ${SITE_RADIUS} m of where site work was started. Time on site counts sessions that were stopped.</div>`;
+  }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
 
 /* ══════════════════════════════════════════════════════════════
