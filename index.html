@@ -128,6 +128,15 @@ textarea{min-height:72px;resize:vertical}
 .help summary{font-weight:700;font-size:13px;cursor:pointer}
 .help details ol{margin-top:8px}
 .help-status>div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--border)}
+.bar-teal{background:#D4EEEA;color:#1F6F66;border:1.5px solid #9fd3cb}
+.btn-teal{background:#1F6F66;color:#fff}
+.rt-stop{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.4}
+.rt-num{width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rt-stop img{width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0}
+#routeMap{height:230px;border-radius:8px;margin:8px 0;background:var(--surface2)}
+.score{display:inline-block;min-width:38px;text-align:center;border-radius:20px;padding:2px 8px;font-weight:700;font-size:12px}
+.set-row{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:8px;align-items:end}
+@media(max-width:600px){.set-row{grid-template-columns:1fr 1fr}}
 .live-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 /* Admin tabs */
@@ -304,6 +313,13 @@ textarea{min-height:72px;resize:vertical}
       <label style="margin:0 0 5px;font-size:12px">📝 Meeting Note <span style="font-weight:400;color:var(--soft)">(optional)</span></label>
       <textarea id="meetNote" rows="2" placeholder="e.g. Client visit – Acme Corp, Jodhpur…"></textarea>
     </div>
+    <!-- Customer visit details (only in visit mode) -->
+    <div class="note-box" id="visitBox">
+      <label style="margin:0 0 5px;font-size:12px">🏢 Customer / company name</label>
+      <input type="text" id="visitCustomer" placeholder="e.g. Sharma Builders, Mansarovar" autocomplete="off">
+      <label style="margin:10px 0 5px;font-size:12px">📝 Note <span style="font-weight:400;color:var(--soft)">(what happened)</span></label>
+      <textarea id="visitNote" rows="2" placeholder="e.g. Showed samples, quotation needed for 2,000 sq ft"></textarea>
+    </div>
     <div id="cameraBox"><video id="videoFeed" autoplay playsinline muted></video><canvas id="snapCanvas"></canvas><div class="cam-ring"></div></div>
     <div class="loc-bar" id="locBar"><div class="spin-sm" id="locSpin"></div><span id="locTxt">Getting location…</span></div>
     <!-- Site work bar (visible when on active site work) -->
@@ -321,6 +337,8 @@ textarea{min-height:72px;resize:vertical}
     </div>
     <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
+    <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
+    <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="loadCameraScreen()">✖ Cancel</button>
     <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
     <button class="btn btn-outline" onclick="logout()">Logout</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
@@ -381,6 +399,7 @@ textarea{min-height:72px;resize:vertical}
     <button class="tab-btn" onclick="switchTab('employees')">👥 Staff</button>
     <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
     <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
+    <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
   </div>
 
   <!-- ATTENDANCE TAB -->
@@ -400,7 +419,7 @@ textarea{min-height:72px;resize:vertical}
     </div>
     <div style="overflow-x:auto">
       <table class="tbl">
-        <thead><tr><th>Photo</th><th>Name</th><th>ID</th><th>Status</th><th>Punch In</th><th>Punch Out</th><th>Meetings</th><th>Hours</th><th>Location</th></tr></thead>
+        <thead><tr><th>Photo</th><th>Name</th><th>ID</th><th>Status</th><th>Punch In</th><th>Punch Out</th><th>Meetings</th><th>Hours</th><th>Location</th><th>Day route</th></tr></thead>
         <tbody id="attBody"></tbody>
       </table>
     </div>
@@ -485,6 +504,29 @@ textarea{min-height:72px;resize:vertical}
     <div id="holList" style="max-height:380px;overflow-y:auto"></div>
   </div>
 
+  <!-- REPORTS TAB -->
+  <div id="tabReports" class="tab-pane">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <div><div style="font-weight:700;font-size:15px">Monthly report</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Attendance trend, visits, travel and honesty score per employee</div></div>
+      <div style="display:flex;gap:7px">
+        <input type="month" id="rptMonth" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit">
+        <button onclick="loadReports()" style="padding:7px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">Show</button>
+        <button onclick="exportReportCSV()" style="padding:7px 13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">⬇ CSV</button>
+      </div>
+    </div>
+    <div id="repContent"><div class="empty"><div class="eicon">📈</div>Pick a month and tap Show.</div></div>
+    <div class="add-form" style="margin-top:18px">
+      <h3>⚙️ Report settings</h3>
+      <div class="set-row" style="margin-top:9px">
+        <div><label style="margin:0 0 4px">Office start</label><input type="text" id="setStart" placeholder="09:30 AM"></div>
+        <div><label style="margin:0 0 4px">Late after (min)</label><input type="number" id="setGrace" min="0" placeholder="10"></div>
+        <div><label style="margin:0 0 4px">Travel ₹ per km</label><input type="number" id="setRate" min="0" step="0.5" placeholder="0"></div>
+        <div><button onclick="saveReportSettings()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save</button></div>
+      </div>
+      <div class="msg msg-success" id="setOk"></div>
+    </div>
+  </div>
+
   <!-- SITE MONITOR TAB -->
   <div id="tabSite" class="tab-pane">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -564,7 +606,7 @@ const APK_URL = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/
 ══════════════════════════════════════════════════════════════ */
 const _D = {
   admin:null, employees:[], attendance:[], leaves:[],
-  quotas:{}, customHolidays:{}, supervisors:[], siteActive:[], loadedAt:null
+  quotas:{}, customHolidays:{}, supervisors:[], siteActive:[], settings:{}, loadedAt:null
 };
 const CACHE_KEY = 'att_v2';
 function saveCache(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
@@ -687,6 +729,12 @@ async function storeMeetingOut(empId,name,date,punch){
     }
   }
   return null;
+}
+/* A customer visit: one photo + place + customer name + note */
+async function storeVisit(v){
+  const row={id:'vs-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,date:todayStr(),time:v.time,customer:v.customer,note:v.note||'',photo:v.photo,lat:v.lat,lng:v.lng,area:v.area||'',accuracy:v.accuracy===null||v.accuracy===undefined?'':v.accuracy};
+  if(USE_SHEETS) await api('saveVisit',row);
+  else{ const l=lsGet('att_visits')||[]; l.push(row); lsSet('att_visits',l); }
 }
 async function storeMeetingBack(empId,date,seq,punch){
   if(USE_SHEETS) return api('saveMeetingBack',{empId,date,seq,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||''});
@@ -1173,7 +1221,12 @@ function setCamMode(mode){
   const bar=document.getElementById('punchBar'),btn=document.getElementById('captureBtn');
   const meetBtn=document.getElementById('meetingBtn');
   const noteBox=document.getElementById('meetNoteBox');
+  const visitBtn=document.getElementById('visitBtn'), visitBox=document.getElementById('visitBox'), cancelBtn=document.getElementById('cancelModeBtn');
   if(meetBtn) meetBtn.style.display='none';
+  if(visitBtn) visitBtn.style.display=mode==='out'?'block':'none';
+  if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out')?'block':'none';
+  if(visitBox) visitBox.classList.toggle('show',mode==='visit');
+  if(mode==='visit'){ const vc=document.getElementById('visitCustomer'), vn=document.getElementById('visitNote'); if(vc) vc.value=''; if(vn) vn.value=''; }
   if(noteBox) noteBox.classList.toggle('show',mode==='meeting_out');
   if(mode==='meeting_out'&&document.getElementById('meetNote')) document.getElementById('meetNote').value='';
   btn.disabled=!(capLat&&capLng);
@@ -1190,8 +1243,12 @@ function setCamMode(mode){
   } else if(mode==='meeting_back'){
     bar.className='punch-bar bar-purple'; document.getElementById('punchTxt').textContent='🔙 Back from Meeting';
     btn.className='btn btn-purple'; btn.textContent='📸 Confirm Return';
+  } else if(mode==='visit'){
+    bar.className='punch-bar bar-teal'; document.getElementById('punchTxt').textContent='🤝 Customer Visit — photo at the customer';
+    btn.className='btn btn-teal'; btn.textContent='📸 Save Visit';
   }
 }
+function switchToVisit(){ setCamMode('visit'); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; const vc=document.getElementById('visitCustomer'); if(vc) vc.focus(); }
 
 function switchToMeeting(){ stopCamera(); setCamMode('meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
 
@@ -1200,6 +1257,8 @@ async function captureAndMark(){
   const camErr=document.getElementById('camErr');
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
   if(!video.srcObject){camErr.textContent='Camera not ready.';camErr.classList.add('show');return;}
+  const customer=(document.getElementById('visitCustomer')?.value||'').trim(), vnote=(document.getElementById('visitNote')?.value||'').trim();
+  if(punchMode==='visit'&&!customer){camErr.textContent='Enter the customer or company name.';camErr.classList.add('show');document.getElementById('visitCustomer').focus();return;}
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
   const photo=compressPhoto(video);
   const note=punchMode==='meeting_out'?(document.getElementById('meetNote')?.value?.trim()||''):'';
@@ -1216,8 +1275,9 @@ async function captureAndMark(){
     else if(punchMode==='out'){ await storePunchOut(currentEmp.id,todayStr(),punch); if(mySite()&&await stopSiteWork(true,photo)) extra=' · 🏗️ Site work stopped'; }
     else if(punchMode==='meeting_out'){ punch.note=note; const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch); updateMeetingCache(currentEmp.id,todayStr(),'out',punch,(r&&r.seq)?r.seq:null); }
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
+    else if(punchMode==='visit'){ await storeVisit(Object.assign({},punch,{customer,note:vnote,accuracy:capAcc})); extra=' · '+customer; }
     loading(false);
-    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at '};
+    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',visit:'🤝 Visit saved at '};
     document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+punch.area+extra;
     document.getElementById('camOk').classList.add('show');
     setTimeout(()=>loadCameraScreen(),2200);
@@ -1556,7 +1616,7 @@ function supLogout(){ currentSupervisor=null; showScreen('loginScreen'); }
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','employees','holidays','site'];
+  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
@@ -1566,6 +1626,7 @@ function switchTab(tab){
   if(tab==='leaves')     loadLeavesTab();
   if(tab==='employees')  renderEmpList();
   if(tab==='holidays')   renderHolList();
+  if(tab==='reports') initReports();
   if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();const sm=document.getElementById('siteMonth');if(sm&&!sm.value)sm.value=todayStr().slice(0,7);refreshSiteMonitor('admin');renderSupList();}
 }
 
@@ -1605,7 +1666,8 @@ async function loadAttTab(){
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">🚗 ${mCnt}</button>`:'—';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${r.name}</td><td style="color:var(--soft)">${r.empId}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time):'—'}</td><td>${hasPo?fmt12(r.punchOut.time):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td></tr>`;
+      const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${r.date}')">🗺️ Route</button>`:'—';
+      return`<tr><td>${photo}</td><td style="font-weight:600">${r.name}</td><td style="color:var(--soft)">${r.empId}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time):'—'}</td><td>${hasPo?fmt12(r.punchOut.time):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
@@ -1912,6 +1974,195 @@ async function addHoliday(){
 async function removeHoliday(date){
   loading(true,'Removing…');
   try{await removeHolStore(date);loading(false);renderHolList();}catch(e){loading(false);alert('Error: '+e.message);}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DAY ROUTE, TRAVEL AND REPORTS
+══════════════════════════════════════════════════════════════ */
+const ROUTE_COLORS={in:'#2D7A48',out:'#2048A0',meet:'#B86018',back:'#6040B0',visit:'#1F6F66',site:'#8A8F86'};
+function settingsNow(){ const s=_D.settings||{}; return {start:s.officeStart||'09:30 AM',grace:s.graceMins===''||s.graceMins===undefined?10:+s.graceMins,rate:+s.taRate||0}; }
+/* Every place the employee was recorded that day, in time order */
+function routeStops(att,visits,checks){
+  const s=[], add=(kind,time,lat,lng,label,area,photo)=>{ if(time) s.push({kind,time,t:parseTimeMins(time),lat:parseFloat(lat),lng:parseFloat(lng),label,area:area||'',photo:photo||''}); };
+  if(att){
+    if(att.punchIn) add('in',att.punchIn.time,att.punchIn.lat,att.punchIn.lng,'Punch in',att.punchIn.area,att.punchIn.photo);
+    (att.meetings||[]).forEach((m,i)=>{
+      add('meet',m.outTime,m.outLat,m.outLng,'Left for meeting '+(i+1)+(m.note?' — '+m.note:''),m.outArea,m.outPhoto);
+      add('back',m.backTime,m.backLat,m.backLng,'Back from meeting '+(i+1),m.backArea,m.backPhoto);
+    });
+    if(att.punchOut) add('out',att.punchOut.time,att.punchOut.lat,att.punchOut.lng,'Punch out',att.punchOut.area,att.punchOut.photo);
+  }
+  (visits||[]).forEach(v=>add('visit',v.time,v.lat,v.lng,'Visit: '+(v.customer||'customer')+(v.note?' — '+v.note:''),v.area,v.photo));
+  (checks||[]).forEach(c=>{ if(c.lat!==''&&c.lat!==undefined) add('site',c.time,c.lat,c.lng,'Site location check',c.area); });
+  return s.sort((a,b)=>a.t-b.t);
+}
+/* Straight-line distance between the recorded places; steps under 50 m are GPS jitter */
+function routeKm(stops){
+  let m=0, prev=null;
+  stops.forEach(p=>{ if(!isFinite(p.lat)||!isFinite(p.lng)) return; if(prev){ const d=distMeters(prev.lat,prev.lng,p.lat,p.lng); if(d>=50){ m+=d; prev=p; } } else prev=p; });
+  return m/1000;
+}
+function gmapsDir(stops){
+  let pts=stops.filter(p=>isFinite(p.lat)&&isFinite(p.lng));
+  if(pts.length>10){ const k=[]; for(let i=0;i<10;i++) k.push(pts[Math.round(i*(pts.length-1)/9)]); pts=k; }
+  return pts.length>1?'https://www.google.com/maps/dir/'+pts.map(p=>p.lat+','+p.lng).join('/'):'';
+}
+let leafletP=null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve(window.L);
+  if(leafletP) return leafletP;
+  leafletP=new Promise((res,rej)=>{
+    const css=document.createElement('link'); css.rel='stylesheet'; css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+    const js=document.createElement('script'); js.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    js.onload=()=>window.L?res(window.L):rej(new Error('map')); js.onerror=()=>{ leafletP=null; rej(new Error('map')); };
+    document.head.appendChild(js);
+  });
+  return leafletP;
+}
+async function openRoute(empId,name,date){
+  const m=document.getElementById('detailModal'), body=document.getElementById('modalBody');
+  document.getElementById('modalTitle').textContent='🗺️ '+name+' · '+date;
+  body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open');
+  try{
+    const d=USE_SHEETS?(await api('getDayRoute',{empId,date})||{}):{att:(await getAttRange(date,date)).find(r=>String(r.empId).toUpperCase()===String(empId).toUpperCase()),visits:(lsGet('att_visits')||[]).filter(v=>v.empId===empId&&v.date===date),checks:[]};
+    const stops=routeStops(d.att,d.visits,d.checks), km=routeKm(stops), set=settingsNow();
+    const nV=(d.visits||[]).length, url=gmapsDir(stops);
+    body.innerHTML=`<div class="sd-sum">
+        <div><b>${km.toFixed(1)} km</b>Travelled (straight line)</div>
+        <div><b>${set.rate?'₹'+Math.round(km*set.rate):'—'}</b>Travel allowance${set.rate?' @ ₹'+set.rate+'/km':''}</div>
+        <div><b>${nV}</b>Customer visits</div>
+        <div><b>${stops.length}</b>Places recorded</div>
+      </div>
+      <div id="routeMap"></div>
+      ${url?`<a class="map-link" href="${url}" target="_blank" style="margin-bottom:6px">🧭 Open route in Google Maps (road distance)</a>`:''}
+      ${stops.length?stops.map((p,i)=>`<div class="rt-stop"><div class="rt-num" style="background:${ROUTE_COLORS[p.kind]}">${i+1}</div>${p.photo?`<img src="${p.photo}" alt="">`:''}<div style="flex:1"><b>${fmt12(p.time)}</b> · ${p.label}<div style="color:var(--soft)">📍 ${p.area||'—'}${isFinite(p.lat)?` · <a href="${mapsUrl(p.lat,p.lng)}" target="_blank">map</a>`:''}</div></div></div>`).join('')
+        :'<div class="empty">Nothing recorded for this day.</div>'}
+      <div style="font-size:11px;color:var(--soft);margin-top:8px">Distance joins the recorded places with straight lines, so the road distance is usually 20–40% more. Use the Google Maps link to see it.</div>`;
+    const pts=stops.filter(p=>isFinite(p.lat)&&isFinite(p.lng));
+    const box=document.getElementById('routeMap');
+    if(!pts.length){ if(box) box.style.display='none'; return; }
+    try{
+      const L=await loadLeaflet();
+      if(!document.body.contains(box)) return;
+      const map=L.map(box,{zoomControl:true,attributionControl:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+      const ll=pts.map(p=>[p.lat,p.lng]);
+      L.polyline(ll,{color:'#3D6B50',weight:3,opacity:.8}).addTo(map);
+      pts.forEach(p=>L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',weight:2,fillColor:ROUTE_COLORS[p.kind],fillOpacity:1}).addTo(map).bindPopup(fmt12(p.time)+' · '+p.label));
+      if(ll.length===1) map.setView(ll[0],16); else map.fitBounds(ll,{padding:[20,20]});
+      setTimeout(()=>map.invalidateSize(),200);
+    }catch(e){ if(box) box.style.display='none'; }
+  }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+
+/* ── Reports tab ── */
+function initReports(){
+  const rm=document.getElementById('rptMonth'); if(rm&&!rm.value) rm.value=todayStr().slice(0,7);
+  const s=settingsNow();
+  document.getElementById('setStart').value=s.start; document.getElementById('setGrace').value=s.grace; document.getElementById('setRate').value=s.rate||'';
+}
+async function saveReportSettings(){
+  const ok=document.getElementById('setOk');
+  const st=String(document.getElementById('setStart').value||'').trim();
+  if(st&&!/^\d{1,2}:\d{2}(\s*[AaPp][Mm])?$/.test(st)){ alert('Office start like 09:30 AM'); return; }
+  const settings={officeStart:st?(/[ap]m/i.test(st)?st.toUpperCase().replace(/\s*([AP]M)/,' $1'):fmt12(st+':00')):'',graceMins:document.getElementById('setGrace').value,taRate:document.getElementById('setRate').value};
+  loading(true,'Saving…');
+  try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); ok.textContent='✅ Saved.'; ok.classList.add('show'); setTimeout(()=>ok.classList.remove('show'),2500); }
+  catch(e){ loading(false); alert('Error: '+e.message); }
+}
+/* Honesty score: starts at 100; points off only for things that hide where someone really was */
+const HONESTY_RULES=[['outside','Site check outside the site',5],['noGps','GPS off / blocked at a check',5],['fake','Fake GPS app detected',25],['open','Site work never stopped',10],['silent','Site work with no check for over 90 min',5],['noOut','Day with no punch out',5]];
+function honesty(e){ let s=100; HONESTY_RULES.forEach(([k,,p])=>s-=p*(e[k]||0)); return Math.max(0,s); }
+let _lastReport=null;
+async function loadReports(){
+  const el=document.getElementById('repContent');
+  const mv=(document.getElementById('rptMonth').value||todayStr().slice(0,7)).trim(), mm=mv.match(/^(\d{4})-(\d{1,2})$/);
+  if(!mm){ el.innerHTML='<div class="msg msg-error show">Pick a month.</div>'; return; }
+  if(!USE_SHEETS){ el.innerHTML='<div class="msg msg-error show">Reports need the Google Sheet connection.</div>'; return; }
+  const y=+mm[1], mo=+mm[2], last=new Date(y,mo,0).getDate(), p2=n=>String(n).padStart(2,'0');
+  const start=y+'-'+p2(mo)+'-01', end=y+'-'+p2(mo)+'-'+p2(last), today=todayStr();
+  el.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{
+    const d=await api('monthReport',{start,end})||{};
+    const set=settingsNow(), startM=parseTimeMins(set.start)+set.grace;
+    const emps=await getEmployees(), key=id=>String(id).toUpperCase();
+    const by={};
+    emps.forEach(e=>by[key(e.id)]={id:e.id,name:e.name,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0});
+    const get=(id,name)=>by[key(id)]||(by[key(id)]={id,name:name||id,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0});
+    // daily trend: people punched in, and late, per day
+    const perDay={}; for(let i=1;i<=last;i++) perDay[y+'-'+p2(mo)+'-'+p2(i)]={present:0,late:0};
+    (d.attendance||[]).forEach(r=>{
+      const e=get(r.empId,r.name); if(!r.punchIn) return;
+      e.days++; if(perDay[r.date]) perDay[r.date].present++;
+      if(parseTimeMins(r.punchIn.time)>startM){ e.late++; if(perDay[r.date]) perDay[r.date].late++; }
+      if(r.punchOut){ e.full++; e.mins+=officeMins(r); } else if(r.date<today) e.noOut++;
+    });
+    (d.visits||[]).forEach(v=>get(v.empId,v.name).visits++);
+    (d.sites||[]).forEach(s=>{
+      const e=get(s.empId,s.name); e.siteMins+=s.minutes||0; e.checks+=s.checks||0; e.inside+=s.inside||0;
+      e.outside+=(s.outside||0)-(s.fake||0); e.noGps+=s.noGps||0; e.fake+=s.fake||0;
+      if(s.status==='working'&&s.date<today) e.open++;
+      if((s.longestGap||0)>GAP_MINS) e.silent++;
+    });
+    // travel: route of every employee-day
+    const dayKey=(id,dt)=>key(id)+'|'+dt, days={};
+    (d.attendance||[]).forEach(r=>{ (days[dayKey(r.empId,r.date)]=days[dayKey(r.empId,r.date)]||{id:r.empId,att:null,visits:[],checks:[]}).att=r; });
+    (d.visits||[]).forEach(v=>(days[dayKey(v.empId,v.date)]=days[dayKey(v.empId,v.date)]||{id:v.empId,att:null,visits:[],checks:[]}).visits.push(v));
+    (d.checks||[]).forEach(c=>(days[dayKey(c.empId,c.date)]=days[dayKey(c.empId,c.date)]||{id:c.empId,att:null,visits:[],checks:[]}).checks.push(c));
+    Object.values(days).forEach(x=>get(x.id).km+=routeKm(routeStops(x.att,x.visits,x.checks)));
+    const list=Object.values(by).sort((a,b)=>a.name<b.name?-1:1);
+    _lastReport={month:mv,list,set};
+    // working days = days that are not Sunday/holiday, up to today
+    const wd=Object.keys(perDay).filter(dt=>dt<=today&&!checkDayOff(dt)).length;
+    const totVisits=list.reduce((s,e)=>s+e.visits,0), totKm=list.reduce((s,e)=>s+e.km,0);
+    const active=list.filter(e=>e.days||e.checks||e.visits), avgScore=active.length?Math.round(active.reduce((s,e)=>s+honesty(e),0)/active.length):null;
+    const attPct=wd&&list.length?Math.round(100*list.reduce((s,e)=>s+e.days,0)/(wd*list.length)):null;
+    let html=`<div class="stats-grid">
+      <div class="stat"><div class="n c-green">${attPct===null?'—':attPct+'%'}</div><div class="l">Attendance (${wd} working days)</div></div>
+      <div class="stat"><div class="n c-purple">${totVisits}</div><div class="l">Customer visits</div></div>
+      <div class="stat"><div class="n c-blue">${Math.round(totKm)} km</div><div class="l">Travelled${set.rate?' · ₹'+Math.round(totKm*set.rate):''}</div></div>
+      <div class="stat"><div class="n c-orange">${avgScore===null?'—':avgScore}</div><div class="l">Avg honesty score</div></div></div>`;
+    html+=trendSvg(perDay,list.length,today);
+    const sc=v=>{ const c=v>=85?['var(--greenBg)','var(--green)']:v>=60?['var(--amberBg)','var(--amber)']:['var(--redBg)','var(--red)']; return `<span class="score" style="background:${c[0]};color:${c[1]}">${v}</span>`; };
+    html+=`<div style="overflow-x:auto;margin-top:14px"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Late</th><th>Avg hrs</th><th>Visits</th><th>Km</th><th>Travel ₹</th><th>Site hrs</th><th>Inside site</th><th>Honesty</th></tr></thead><tbody>${
+      list.map((e,i)=>{ const pct=e.checks?Math.round(100*e.inside/e.checks)+'%':'—', has=e.days||e.checks||e.visits;
+        return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days}${e.noOut?` <span style="color:var(--red);font-size:11px">(${e.noOut} no out)</span>`:''}</td><td>${e.late?`<span style="color:var(--amber);font-weight:700">${e.late}</span>`:0}</td><td>${e.full?fmtMins(e.mins/e.full):'—'}</td><td>${e.visits}</td><td>${e.km.toFixed(1)}</td><td>${set.rate?'₹'+Math.round(e.km*set.rate):'—'}</td><td>${e.siteMins?fmtMins(e.siteMins):'—'}</td><td>${pct}</td><td>${has?`<button onclick="showHonesty(${i})" style="border:none;background:none;cursor:pointer;padding:0">${sc(honesty(e))}</button>`:'—'}</td></tr>`; }).join('')
+    }</tbody></table></div>
+    <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after ${set.start} + ${set.grace} min. Km = straight line between recorded places. Tap a score to see how it was worked out.</div>`;
+    el.innerHTML=html;
+  }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+function showHonesty(i){
+  const e=_lastReport&&_lastReport.list[i]; if(!e) return;
+  document.getElementById('modalTitle').textContent='Honesty score · '+e.name;
+  const rows=HONESTY_RULES.filter(([k])=>e[k]).map(([k,label,p])=>`<div class="sd-check"><div>${label} × ${e[k]}</div><b style="color:var(--red)">−${p*e[k]}</b></div>`).join('');
+  document.getElementById('modalBody').innerHTML=`<div class="sd-check"><div>Starting score</div><b>100</b></div>${rows||'<div class="sd-check"><div>No problems found this month</div><b style="color:var(--green)">0</b></div>'}
+    <div class="sd-check" style="font-size:14px"><div><b>Score</b></div><b>${honesty(e)}</b></div>
+    <div style="font-size:11px;color:var(--soft);margin-top:8px">Late arrivals are shown separately and do not lower this score. It only counts things that hide where someone really was.</div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
+/* Daily trend: bars = people who punched in, dark part = came late */
+function trendSvg(perDay,staff,today){
+  const days=Object.keys(perDay), W=640, H=170, pad=26, bw=(W-pad-6)/days.length, max=Math.max(1,staff,...days.map(d=>perDay[d].present));
+  const y=v=>H-20-(H-34)*v/max;
+  let bars='';
+  days.forEach((d,i)=>{
+    const x=pad+i*bw+1.5, p=perDay[d], off=!!checkDayOff(d), fut=d>today;
+    if(off||fut) bars+=`<rect x="${x}" y="${y(max)}" width="${bw-3}" height="${H-20-y(max)}" fill="#E3E4DA"/>`;
+    if(p.present) bars+=`<rect x="${x}" y="${y(p.present)}" width="${bw-3}" height="${H-20-y(p.present)}" fill="#7FAE8F" rx="2"><title>${d}: ${p.present} present, ${p.late} late</title></rect>`;
+    if(p.late) bars+=`<rect x="${x}" y="${y(p.late)}" width="${bw-3}" height="${H-20-y(p.late)}" fill="#A87020" rx="2"/>`;
+    if(i%5===0||i===days.length-1) bars+=`<text x="${x+bw/2-1.5}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--soft)">${+d.slice(8)}</text>`;
+  });
+  const grid=[0,Math.round(max/2),max].map(v=>`<text x="${pad-5}" y="${y(v)+3}" font-size="10" text-anchor="end" fill="var(--soft)">${v}</text><line x1="${pad}" x2="${W-4}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)"/>`).join('');
+  return `<div class="add-form" style="padding:12px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">Daily attendance <span style="font-weight:400;color:var(--soft);font-size:12px">· <span style="color:#5f9a73">■</span> present <span style="color:#A87020">■</span> late · grey = Sunday/holiday</span></div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Daily attendance chart">${grid}${bars}</svg></div>`;
+}
+function exportReportCSV(){
+  const r=_lastReport; if(!r){ alert('Tap Show first.'); return; }
+  const hdr=['ID','Name','Days present','No punch out','Late days','Avg hours','Visits','Km (straight line)','Travel Rs','Site hours','Site checks','Inside site %','Honesty score'];
+  const rows=r.list.map(e=>[e.id,'"'+String(e.name).replace(/"/g,'""')+'"',e.days,e.noOut,e.late,e.full?(e.mins/e.full/60).toFixed(2):'',e.visits,e.km.toFixed(1),r.set.rate?Math.round(e.km*r.set.rate):'',(e.siteMins/60).toFixed(2),e.checks,e.checks?Math.round(100*e.inside/e.checks):'',(e.days||e.checks||e.visits)?honesty(e):''].join(','));
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'report-'+r.month+'.csv'});
+  a.click();
 }
 
 /* ══════════════════════════════════════════════════════════════
