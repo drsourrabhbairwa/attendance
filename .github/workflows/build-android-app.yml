@@ -264,9 +264,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "app-v${{ github.run_number }}" amitek-attendance.apk \
+          gh release create "app-v${{ github.run_number }}.${{ github.run_attempt }}" amitek-attendance.apk \
             --repo "${{ github.repository }}" --latest \
-            --title "Amitek Attendance app (build ${{ github.run_number }})" \
+            --title "Amitek Attendance app (build ${{ github.run_number }}.${{ github.run_attempt }})" \
             --notes "Download amitek-attendance.apk on the Android phone and install it."
           echo "### Download link for employees" >> "$GITHUB_STEP_SUMMARY"
           echo "https://github.com/${{ github.repository }}/releases/latest/download/amitek-attendance.apk" >> "$GITHUB_STEP_SUMMARY"
