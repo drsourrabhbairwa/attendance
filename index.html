@@ -246,6 +246,46 @@ textarea{min-height:72px;resize:vertical}
   .modal-box{max-width:520px}
 }
   
+
+/* ── Employee home dashboard ── */
+.hm-hero{background:linear-gradient(135deg,#2B5038 0%,#3D6B50 55%,#5F9A73 100%);color:#fff;border-radius:20px;padding:18px 18px 48px;position:relative;overflow:hidden}
+.hm-hero::after{content:'';position:absolute;right:-46px;top:-46px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.09)}
+.hm-hero::before{content:'';position:absolute;right:40px;bottom:-60px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hm-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.hm-av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.hm-hi{font-size:12px;opacity:.8}.hm-nm{font-size:19px;font-weight:700;line-height:1.2}
+.hm-out{margin-left:auto;background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.hm-date{margin-top:14px;font-size:13px;opacity:.85;position:relative;z-index:1}
+.hm-today{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:-32px 10px 14px;box-shadow:0 10px 26px rgba(24,32,28,.12);position:relative;z-index:2}
+.hm-trow{display:flex;align-items:center;gap:12px}
+.hm-ic{width:46px;height:46px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;overflow:hidden}
+.hm-ic img{width:100%;height:100%;object-fit:cover}
+.hm-tt{font-size:16px;font-weight:700}.hm-ts{font-size:12px;color:var(--soft);margin-top:2px}
+.hm-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.hm-big{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:12px;color:var(--accent2)}
+.hm-cap{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.hm-site{display:flex;align-items:center;gap:9px;background:var(--orangeBg);color:var(--orange);border:1px solid #f0c898;border-radius:12px;padding:10px 13px;margin:0 0 14px;font-size:13px;font-weight:600;cursor:pointer}
+.hm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.hm-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 12px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink)}
+.hm-tile:active{transform:scale(.98)}
+.hm-tile .ti{font-size:22px}.hm-tile b{display:block;font-size:13px;margin-top:6px}.hm-tile span{font-size:11px;color:var(--soft)}
+.hm-card{padding:16px}
+.hm-h{font-size:14px;font-weight:700;margin-bottom:10px}
+.hm-h2{font-size:12px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
+.hm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hm-stat{background:var(--surface2);border-radius:12px;padding:10px 4px;text-align:center}
+.hm-stat b{display:block;font-size:18px;font-weight:800}.hm-stat span{font-size:10px;color:var(--soft)}
+.hm-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.hm-day{text-align:center;font-size:10px;color:var(--soft)}
+.hm-dot{width:100%;aspect-ratio:1;max-width:38px;margin:4px auto 0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.hm-dot.ok{background:var(--greenBg);color:var(--green)}.hm-dot.late{background:var(--amberBg);color:var(--amber)}
+.hm-dot.off{background:var(--surface2);color:var(--border2)}.hm-dot.miss{background:var(--redBg);color:var(--red)}
+.hm-dot.now{background:#fff;border:2px dashed var(--accent);color:var(--accent)}
+.hm-leg{font-size:11px;color:var(--soft);margin-top:8px}
+.hm-rec{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--border);font-size:13px}
+.hm-rec:first-child{border-top:0}
+.hm-rec small{display:block;color:var(--soft);font-size:11px}
+.hm-back{margin-left:auto;background:#fff;border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent2);font-family:inherit}
 </style>
 </head>
 <body>
@@ -300,17 +340,48 @@ textarea{min-height:72px;resize:vertical}
 </div>
 </div>
 
+<!-- ══ EMPLOYEE HOME ══ -->
+<div id="homeScreen" class="screen">
+  <div class="hm-hero">
+    <div class="hm-top">
+      <div class="hm-av" id="hmAv">?</div>
+      <div><div class="hm-hi" id="hmHi">Hello</div><div class="hm-nm" id="hmName">—</div></div>
+      <button class="hm-out" onclick="logout()">Sign out</button>
+    </div>
+    <div class="hm-date" id="hmDate"></div>
+  </div>
+  <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
+  <div id="hmSite"></div>
+  <div class="hm-grid">
+    <button class="hm-tile" onclick="openPunch()"><div class="ti">📸</div><b>Attendance</b><span>Punch in · out · meeting</span></button>
+    <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
+    <button class="hm-tile" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">Start or stop</span></button>
+    <button class="hm-tile" onclick="showLeavePanel()"><div class="ti">📋</div><b>Apply for leave</b><span id="hmLeaveSub">Balance below</span></button>
+  </div>
+  <div class="card hm-card">
+    <div class="hm-h">This month</div>
+    <div class="hm-stats" id="hmStats"><div class="hm-stat"><b>…</b><span>Present</span></div></div>
+    <div class="hm-h2">Last 7 days</div>
+    <div class="hm-strip" id="hmStrip"></div>
+    <div class="hm-leg">✓ on time · ! late · ✕ no record · – off day</div>
+  </div>
+  <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div></div>
+  <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
+  <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
+</div>
+
 <!-- ══ CAMERA SCREEN ══ -->
 <div id="cameraScreen" class="screen">
 <div class="card">
   <div class="emp-badge">
     <div class="avatar" id="empAvatar">?</div>
     <div><div style="font-weight:700;font-size:15px" id="empName">—</div><div style="font-size:12px;color:var(--soft)" id="empIdLbl">—</div></div>
+    <button class="hm-back" onclick="goHome()">🏠 Home</button>
   </div>
   <!-- Holiday state -->
   <div id="stHoliday" style="display:none">
     <div class="state-box box-holiday"><div class="icon" id="holIcon">🎉</div><h3 id="holTitle">Holiday</h3><p id="holNameTxt"></p><p>No attendance needed today. Enjoy your day!</p></div>
-    <button class="btn btn-outline" onclick="logout()">Logout</button>
+    <button class="btn btn-outline" onclick="logout()">Sign out</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
   </div>
   <!-- Done state -->
@@ -318,7 +389,7 @@ textarea{min-height:72px;resize:vertical}
     <div class="state-box box-done"><div class="icon">✅</div><h3>Attendance complete for today!</h3></div>
     <div id="doneTimeline"></div>
     <div class="total-hrs" id="doneTotalHrs" style="display:none"></div>
-    <button class="btn btn-outline" onclick="logout()" style="margin-top:10px">Logout</button>
+    <button class="btn btn-outline" onclick="logout()" style="margin-top:10px">Sign out</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
   </div>
   <!-- Camera state -->
@@ -357,7 +428,7 @@ textarea{min-height:72px;resize:vertical}
     <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
     <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="loadCameraScreen()">✖ Cancel</button>
     <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
-    <button class="btn btn-outline" onclick="logout()">Logout</button>
+    <button class="btn btn-outline" onclick="logout()">Sign out</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
     <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <div class="msg msg-error" id="camErr"></div>
@@ -921,7 +992,8 @@ async function init(){
   pruneLocal();
   if(swAll().length){ swAll().forEach(s=>{ if(!nativeRunning(s)) nativeStart(s); }); startSiteTimer(); siteTick(); }   // site work on this phone is checked even before anyone signs in
   const apk=document.getElementById('apkLink'); if(apk&&APK_URL&&!NATIVE){ apk.href=APK_URL; apk.style.display='block'; }
-  if(hasCached&&_D.admin) showScreen('loginScreen');
+  const auto=hasCached&&autoLogin();   // remembered employee goes straight to the dashboard
+  if(auto){} else if(hasCached&&_D.admin) showScreen('loginScreen');
   else loading(true,'Starting up…');
   if(!USE_SHEETS&&!(_D.employees&&_D.employees.length)){
     const l=[];
@@ -934,7 +1006,8 @@ async function init(){
       const fresh=await api('getAll',{date:todayStr()});
       Object.assign(_D,fresh,{loadedAt:Date.now()}); saveCache(); loading(false);
       if(!_D.admin) showScreen('setupScreen');
-      else if(!hasCached) showScreen('loginScreen');
+      else if(!hasCached&&!currentEmp) showScreen('loginScreen');
+      syncLogin();
     }catch(e){
       loading(false);
       if(!hasCached){alert('Connection error: '+e.message);showScreen('setupScreen');}
@@ -947,7 +1020,8 @@ async function init(){
     _D.customHolidays=JSON.parse(localStorage.getItem('att_hols')||'{}');
     loading(false);
     if(!_D.admin) showScreen('setupScreen');
-    else if(!hasCached) showScreen('loginScreen');
+    else if(!hasCached&&!currentEmp) showScreen('loginScreen');
+    syncLogin();
   }
   document.getElementById('filterDate').value=todayStr();
   document.getElementById('siteDate').value=todayStr();
@@ -995,6 +1069,132 @@ function setRole(role){
   });
 }
 
+/* ══════════════════════════════════════════════════════════════
+   ONE-TIME SIGN-IN — remembered on this phone until "Sign out"
+   Stores only the employee ID and the password hash (already kept on the phone); if the
+   password is changed in the admin panel, or the employee is removed, the next refresh signs out.
+══════════════════════════════════════════════════════════════ */
+const ME_KEY='att_me';
+function meSave(emp){ try{ localStorage.setItem(ME_KEY,JSON.stringify({id:emp.id,ph:emp.passHash})); }catch(e){} }
+function meLoad(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||'null'); }catch(e){ return null; } }
+function meClear(){ try{ localStorage.removeItem(ME_KEY); }catch(e){} }
+function meMatch(){ const me=meLoad(); if(!me) return null; return (_D.employees||[]).find(e=>String(e.id)===String(me.id)&&e.passHash===me.ph)||null; }
+function autoLogin(){ const emp=meMatch(); if(!emp||currentEmp) return !!currentEmp; currentEmp=emp; loadHome(); return true; }
+function syncLogin(){   // after fresh data arrives from the sheet
+  if(!meLoad()) return;
+  if(currentEmp){
+    const still=meMatch();
+    if(!still){ logout(); const e=document.getElementById('loginErr'); if(e){ e.textContent='Please sign in again.'; e.classList.add('show'); } }
+    else if(document.getElementById('homeScreen').classList.contains('active')){ currentEmp=still; loadHome(); }
+  } else if(meMatch()) autoLogin();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EMPLOYEE HOME DASHBOARD
+══════════════════════════════════════════════════════════════ */
+let homeTok=0, homeTimerInt=null;
+const _p2=n=>String(n).padStart(2,'0');
+function dstr(d){ return d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'+_p2(d.getDate()); }
+function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
+async function openPunch(mode){
+  if(!currentEmp) return;
+  await loadCameraScreen();
+  if(mode==='visit'&&punchMode==='out') switchToVisit();
+}
+function setHtml(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
+async function loadHome(){
+  if(!currentEmp) return;
+  const tok=++homeTok, emp=currentEmp;
+  stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); clearInterval(homeTimerInt);
+  showScreen('homeScreen');
+  const now=new Date(), h=now.getHours();
+  document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('hmName').textContent=emp.name;
+  document.getElementById('hmAv').textContent=initials(emp.name);
+  document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
+  const dayOff=checkDayOff(todayStr());
+  let rec=null; if(!dayOff){ try{ rec=await getRecordToday(emp.id); }catch(e){} }
+  if(tok!==homeTok) return;
+  checkSiteWork(!!(rec&&rec.punchOut));
+  renderHomeToday(rec,dayOff);
+  renderHomeSite();
+  homeTimerInt=setInterval(()=>{
+    if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
+    const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
+  },30000);
+  homeStats(emp,tok); homeLeave(emp,tok);
+}
+function renderHomeToday(rec,dayOff){
+  const set=settingsNow(), limit=parseTimeMins(set.start)+set.grace;
+  const btn=(l,c)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch()">${l}</button>`;
+  let ico='⏰', title='', sub='', extra='', b='';
+  if(dayOff){ ico=dayOff.icon; title=dayOff.type==='Sunday'?'Today is Sunday':'Public holiday'; sub=dayOff.name+' · no attendance needed'; }
+  else if(rec&&rec.punchIn&&rec.punchOut){
+    const th=calcTotalHrs(rec); ico='✅'; title='Day complete';
+    sub='In '+fmt12(rec.punchIn.time)+' · Out '+fmt12(rec.punchOut.time);
+    if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
+    b=btn('View today','btn-outline');
+  } else if(rec&&rec.punchIn){
+    const am=getActiveMeeting(rec), late=parseTimeMins(rec.punchIn.time)>limit;
+    ico=am?'🚗':'🟢'; title=(am?'In a meeting':'You are punched in')+`<span class="hm-chip" style="background:${late?'var(--amberBg)':'var(--greenBg)'};color:${late?'var(--amber)':'var(--green)'}">${late?'Late':'On time'}</span>`;
+    sub='Since '+fmt12(rec.punchIn.time);
+    const since=parseTimeMins(rec.punchIn.time);
+    extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
+    b=am?btn('🔙 I am back — confirm','btn-purple'):btn('📸 Punch Out','btn-blue');
+  } else { title='Not punched in yet'; sub='Office starts at '+set.start; b=btn('📸 Punch In','btn-green'); }
+  const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
+  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}`);
+}
+function renderHomeSite(){
+  const sw=mySite(), el=document.getElementById('hmSite'), sub=document.getElementById('hmSiteSub');
+  if(el) el.innerHTML=sw?`<div class="hm-site" onclick="openPunch()"><span class="live-dot"></span><span>On site since ${String(fmt12(sw.startTime)).toUpperCase()} · ${sw.startArea||'Site'}</span></div>`:'';
+  if(sub) sub.textContent=sw?'Running · tap to view':'Start or stop';
+}
+async function homeStats(emp,tok){
+  const today=new Date(), t=todayStr(), ms=t.slice(0,7)+'-01';
+  const wk=dstr(new Date(today.getTime()-6*86400000)), start=wk<ms?wk:ms;
+  let recs=[]; try{ recs=(await getAttRange(start,t))||[]; }catch(e){ recs=_D.attendance||[]; }
+  if(tok!==homeTok) return;
+  const eid=String(emp.id).toUpperCase();
+  const mine=recs.filter(r=>String(r.empId).toUpperCase()===eid&&r.punchIn);
+  const by={}; mine.forEach(r=>by[r.date]=r);
+  const set=settingsNow(), limit=parseTimeMins(set.start)+set.grace;
+  const isLate=r=>parseTimeMins(r.punchIn.time)>limit;
+  const mon=mine.filter(r=>String(r.date).slice(0,7)===t.slice(0,7));
+  let late=0, full=0, mins=0;
+  mon.forEach(r=>{ if(isLate(r)) late++; if(r.punchOut){ full++; mins+=officeMins(r); } });
+  const days=mon.length, tile=(v,l,c)=>`<div class="hm-stat"><b${c?` style="color:${c}"`:''}>${v}</b><span>${l}</span></div>`;
+  setHtml('hmStats',tile(days,'Days present')+tile(late,'Late',late?'var(--amber)':'')+tile(days?Math.round(100*(days-late)/days)+'%':'—','On time')+tile(full?fmtMins(mins/full):'—','Avg / day'));
+  let strip='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(today.getTime()-i*86400000), ds=dstr(d), r=by[ds], off=checkDayOff(ds);
+    const cls=r?(isLate(r)?'late':'ok'):off?'off':ds===t?'now':'miss';
+    const sym={ok:'✓',late:'!',off:'–',now:'•',miss:'✕'}[cls];
+    strip+=`<div class="hm-day">${d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,3)}<div class="hm-dot ${cls}">${sym}</div>${d.getDate()}</div>`;
+  }
+  setHtml('hmStrip',strip);
+  const recent=[...mine].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);
+  setHtml('hmRecent',recent.length?recent.map(r=>{
+    const th=calcTotalHrs(r), dd=new Date(r.date+'T12:00:00');
+    return `<div class="hm-rec"><div><b>${dd.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><small>In ${fmt12(r.punchIn.time)}${r.punchOut?' · Out '+fmt12(r.punchOut.time):' · no punch-out'}</small></div><div style="text-align:right">${th?`<b>${th}</b>`:''}${isLate(r)?'<small style="color:var(--amber)">Late</small>':'<small style="color:var(--green)">On time</small>'}</div></div>`;
+  }).join(''):'<div class="empty" style="padding:10px 0">No attendance yet.</div>');
+}
+async function homeLeave(emp,tok){
+  try{
+    const[leaves,quotas]=await Promise.all([getLeaves(emp.id),getQuotas()]);
+    if(tok!==homeTok) return;
+    const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
+    setHtml('hmLeave',Object.keys(LEAVE_TYPES).map(type=>{
+      const used=leaves.filter(l=>l.type===type&&l.status==='approved').length, total=q[type]||DEFAULT_QUOTA[type];
+      const rem=Math.max(0,total-used), pct=total>0?Math.min(used/total*100,100):0;
+      return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${rem}<span style="font-size:12px;color:var(--soft)">/${total}</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${used} used</div></div>`;
+    }).join(''));
+    const pend=leaves.filter(l=>l.status==='pending').length, sub=document.getElementById('hmLeaveSub');
+    if(sub) sub.textContent=pend?pend+' request'+(pend>1?'s':'')+' pending':'Balance below';
+  }catch(e){}
+}
+
 async function handleLogin(){
   const id=document.getElementById('loginId').value.trim().toUpperCase();
   const pass=document.getElementById('loginPass').value;
@@ -1005,7 +1205,7 @@ async function handleLogin(){
     let emp=emps.find(e=>String(e.id).toUpperCase()===id);
     if(!emp&&/^\d+$/.test(id)) emp=emps.find(e=>/^\d+$/.test(String(e.id))&&Number(e.id)===Number(id));
     if(!emp||!(await verifyPass(pass,emp.passHash))){loading(false);err.classList.add('show');return;}
-    err.classList.remove('show'); currentEmp=emp; loading(false); await loadCameraScreen();
+    err.classList.remove('show'); currentEmp=emp; meSave(emp); loading(false); await loadHome();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
 
@@ -1297,15 +1497,15 @@ async function captureAndMark(){
     const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',visit:'🤝 Visit saved at '};
     document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+punch.area+extra;
     document.getElementById('camOk').classList.add('show');
-    setTimeout(()=>loadCameraScreen(),2200);
+    setTimeout(()=>loadHome(),2200);
   }catch(e){
     loading(false); camErr.textContent='Error: '+e.message; camErr.classList.add('show');
     btn.disabled=false;
   }
 }
 
-/* Logout does not stop site work: its checks go on while this page is open */
-function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);currentEmp=null;['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+/* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
+function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -1874,7 +2074,7 @@ function showLeavePanel(){
   loadLeaveBalance();
   loadLeaveHistory();
 }
-function hideLeavePanel(){ if(currentEmp) loadCameraScreen(); else showScreen('loginScreen'); }
+function hideLeavePanel(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
 
 async function loadLeaveBalance(){
   try{
