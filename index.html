@@ -432,7 +432,7 @@ textarea{min-height:72px;resize:vertical}
     <div class="hm-strip" id="hmStrip"></div>
     <div class="hm-leg">✓ on time · ! late · L leave · ✕ no record · – off day</div>
   </div>
-  <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div></div>
+  <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div><div id="hmLeavePol" style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5"></div></div>
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
   <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
   <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
@@ -569,6 +569,7 @@ textarea{min-height:72px;resize:vertical}
     <div><div style="font-weight:700;font-size:15px" id="lvName">—</div><div style="font-size:12px;color:var(--soft)">Leave Management</div></div>
   </div>
   <div class="bal-grid" id="lvBalance"></div>
+  <div id="lvPolicy" style="font-size:12px;color:var(--soft);margin:-2px 2px 12px;line-height:1.5"></div>
   <div class="add-form">
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
@@ -718,8 +719,17 @@ textarea{min-height:72px;resize:vertical}
       <div class="lc-leg"><span><b style="color:var(--purple)">CL</b> casual</span><span><b style="color:var(--green)">VL</b> vacation</span><span><b style="color:var(--red)">ML</b> medical</span><span><b style="color:var(--amber)">?</b> waiting for approval</span><span>grey = Sunday / holiday</span></div>
     </div>
     <div style="margin-top:20px;background:var(--surface2);border-radius:var(--r);padding:14px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚙️ Leave Quotas</div>
-      <p style="font-size:12px;color:var(--soft);margin-bottom:12px">Days available per employee per year.</p>
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚙️ Leave policy</div>
+      <p style="font-size:12px;color:var(--soft);margin-bottom:10px">The same rules for everyone. Casual leave is earned every month and unused days carry forward until the leave year ends; vacation and medical leave are yearly. Everything starts fresh at the start of the next leave year.</p>
+      <div class="ru-grid">
+        <div><label style="margin:0 0 4px">CL earned per month</label><input type="number" id="lpCl" min="0" max="10"></div>
+        <div><label style="margin:0 0 4px">VL per year</label><input type="number" id="lpVl" min="0" max="60"></div>
+        <div><label style="margin:0 0 4px">ML per year</label><input type="number" id="lpMl" min="0" max="60"></div>
+        <div><label style="margin:0 0 4px">Leave year starts</label><select id="lpSm"></select></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button onclick="saveLeavePolicy()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save policy</button><span id="lpMsg" style="font-size:12px;color:var(--green)"></span></div>
+      <div style="font-weight:700;font-size:13px;margin:16px 0 4px">Extra days for one person</div>
+      <p style="font-size:12px;color:var(--soft);margin-bottom:8px">Added to (or taken from) the policy for that person, every year until you change it. Leave at 0 for most people.</p>
       <div id="lvQuotaList"></div>
     </div>
   </div>
@@ -1323,6 +1333,68 @@ function leaveDates(from,to){ const out=[]; if(!from) return out; to=to||from; f
 function workDaysBetween(from,to){ return leaveDates(from,to).filter(d=>!checkDayOff(d)).length; }
 function leaveDays(l){ return l.fromDate?(+l.days||workDaysBetween(l.fromDate,l.toDate)):1; }
 function usedDays(leaves,type){ return leaves.filter(l=>l.type===type&&l.status==='approved').reduce((s,l)=>s+leaveDays(l),0); }
+/* ── Leave policy: CL 2 a month (unused days carry forward in the year) · VL 5 a year · ML 5 a year · fresh start each leave year ── */
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function leavePolicy(){
+  const st=_D.settings||{}, n=(k,d)=>{ const v=parseInt(st[k]); return isNaN(v)?d:Math.max(0,v); };
+  return {cl:n('clPerMonth',2),vl:n('vlYear',5),ml:n('mlYear',5),sm:Math.min(12,Math.max(1,n('leaveYearStart',1)||1))};
+}
+const _lp2=n=>String(n).padStart(2,'0');
+function leaveYear(ds,sm){ const y=+ds.slice(0,4), m=+ds.slice(5,7); return m>=sm?y:y-1; }
+function leaveYearStart(label,sm){ return label+'-'+_lp2(sm)+'-01'; }
+function leaveYearEnd(label,sm){ return isoAdd(leaveYearStart(label+1,sm),-1); }
+function leaveAdj(empId){ const q=(_D.quotas||{})[String(empId).toUpperCase()]||{}; return {CL:+q.CL||0,VL:+q.VL||0,ML:+q.ML||0}; }
+function leaveEntitled(type,label,asOf,P,adj,joined){
+  if(type==='CL'){
+    const ys=leaveYearStart(label,P.sm); let from=ys;
+    if(joined&&joined>ys&&joined<=leaveYearEnd(label,P.sm)) from=joined.slice(0,7)+'-01';
+    const a=+from.slice(0,4)*12+ +from.slice(5,7), b=+asOf.slice(0,4)*12+ +asOf.slice(5,7);
+    return Math.max(0,Math.min(12,b-a+1))*P.cl+adj.CL;
+  }
+  return (type==='VL'?P.vl:P.ml)+adj[type];
+}
+function leaveWorkdaysIn(from,to,ws,we){ let n=0; const a=from>ws?from:ws, z=to<we?to:we; for(let d=a,i=0;d<=z&&i<800;d=isoAdd(d,1),i++) if(!checkDayOff(d)) n++; return n; }
+function leaveUsedIn(type,empId,ws,we,statuses){
+  const e=String(empId).toUpperCase(); let n=0;
+  (_D.leaves||[]).forEach(l=>{
+    if(l.type!==type||String(l.empId).toUpperCase()!==e||!statuses.includes(l.status)) return;
+    if(l.fromDate) n+=leaveWorkdaysIn(l.fromDate,l.toDate||l.fromDate,ws,we);
+    else{ const d=String(l.requestedAt||'').slice(0,10); if(d>=ws&&d<=we) n++; }
+  });
+  return n;
+}
+/* What one person has of one leave type today */
+function leaveBal(empId,type,asOf){
+  const P=leavePolicy(), label=leaveYear(asOf,P.sm), ws=leaveYearStart(label,P.sm), we=leaveYearEnd(label,P.sm);
+  const emp=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||{};
+  const ent=leaveEntitled(type,label,asOf,P,leaveAdj(empId),emp.joined);
+  const used=leaveUsedIn(type,empId,ws,we,['approved']), all=leaveUsedIn(type,empId,ws,we,['approved','pending']);
+  return {ent,used,pending:all-used,left:Math.max(0,ent-all)};
+}
+function policyText(){
+  const P=leavePolicy();
+  return 'CL: '+P.cl+' a month — unused days carry forward within the year · VL: '+P.vl+' a year · ML: '+P.ml+' a year · Everything starts fresh on 1 '+MONTH_NAMES[P.sm-1]+'.';
+}
+function balHtml(empId){
+  const t=todayStr();
+  return Object.keys(LEAVE_TYPES).map(type=>{
+    const b=leaveBal(empId,type,t), pct=b.ent>0?Math.min((b.used+b.pending)/b.ent*100,100):0;
+    const sub=(type==='CL'?b.ent+' earned so far · ':'')+b.used+' used'+(b.pending?' · '+b.pending+' pending':'');
+    return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${b.left}<span style="font-size:12px;color:var(--soft)"> left</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${sub}</div></div>`;
+  }).join('');
+}
+/* '' when a request fits, else why not — the same rule the server applies; a request over a year end is checked year by year */
+function leaveProblem(empId,type,from,to){
+  const P=leavePolicy(), adj=leaveAdj(empId), emp=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||{}, seen={};
+  for(const label of [leaveYear(from,P.sm),leaveYear(to,P.sm)]){
+    if(seen[label]) continue; seen[label]=1;
+    const ws=leaveYearStart(label,P.sm), we=leaveYearEnd(label,P.sm), days=leaveWorkdaysIn(from,to,ws,we);
+    if(!days) continue;
+    const asOf=to<we?to:we, ent=leaveEntitled(type,label,asOf,P,adj,emp.joined), used=leaveUsedIn(type,empId,ws,we,['approved','pending']), left=Math.max(0,ent-used);
+    if(days>left) return 'You have only '+left+' '+type+' day'+(left===1?'':'s')+' available'+(type==='CL'?' ('+P.cl+' a month carried forward: '+ent+' earned so far, '+used+' used or requested)':' this year ('+ent+' a year, '+used+' used or requested)')+'. Pick another type or fewer days.';
+  }
+  return '';
+}
 function leaveOn(empId,ds,statuses){ statuses=statuses||['approved']; const e=String(empId).toUpperCase(); return (_D.leaves||[]).find(l=>l.fromDate&&statuses.includes(l.status)&&String(l.empId).toUpperCase()===e&&l.fromDate<=ds&&ds<=(l.toDate||l.fromDate))||null; }
 function leaveSpan(l){ if(!l.fromDate) return ''; const f=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); const n=leaveDays(l); return f(l.fromDate)+(l.toDate&&l.toDate!==l.fromDate?' → '+f(l.toDate):'')+' · '+n+' day'+(n>1?'s':''); }
 async function refreshMyLeaves(empId){
@@ -1773,12 +1845,7 @@ async function homeLeave(emp,tok){
     await refreshMyLeaves(emp.id);
     const[leaves,quotas]=await Promise.all([getLeaves(emp.id),getQuotas()]);
     if(tok!==homeTok) return;
-    const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
-    setHtml('hmLeave',Object.keys(LEAVE_TYPES).map(type=>{
-      const used=usedDays(leaves,type), total=q[type]||DEFAULT_QUOTA[type];
-      const rem=Math.max(0,total-used), pct=total>0?Math.min(used/total*100,100):0;
-      return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${rem}<span style="font-size:12px;color:var(--soft)">/${total}</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${used} used</div></div>`;
-    }).join(''));
+    setHtml('hmLeave',balHtml(emp.id)); { const pl=document.getElementById('hmLeavePol'); if(pl) pl.textContent=policyText(); }
     const pend=leaves.filter(l=>l.status==='pending').length, sub=document.getElementById('hmLeaveSub');
     if(sub) sub.textContent=pend?pend+' request'+(pend>1?'s':'')+' pending':'Balance below';
   }catch(e){}
@@ -2804,7 +2871,7 @@ function exportMonthlyCSV(){
    LEAVES TAB (Admin)
 ══════════════════════════════════════════════════════════════ */
 const LEAVE_TYPES={CL:'Casual Leave',VL:'Vacation Leave',ML:'Medical Leave'};
-const DEFAULT_QUOTA={CL:12,VL:15,ML:10};
+const DEFAULT_QUOTA={CL:0,VL:0,ML:0};   // extra days per person on top of the policy
 const LT_COLOR={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)'};
 const LT_BG={CL:'var(--purpleBg)',VL:'var(--greenBg)',ML:'var(--redBg)'};
 
@@ -2849,16 +2916,17 @@ async function loadLeavesTab(){
         </div>`).join('');
     }
     renderLeaveCal();
+    initLeavePolicy();
     if(qSec){
       if(!emps.length){qSec.innerHTML='<div style="color:var(--soft);font-size:13px">No employees yet.</div>';return;}
       qSec.innerHTML=`<div class="quota-grid" style="border-top:none">
-        <div style="font-size:10px;font-weight:700;color:var(--soft)">EMPLOYEE</div>
+        <div style="font-size:10px;font-weight:700;color:var(--soft)">EMPLOYEE (extra days ±)</div>
         <div style="font-size:10px;font-weight:700;color:var(--purple);text-align:center">CL</div>
         <div style="font-size:10px;font-weight:700;color:var(--green);text-align:center">VL</div>
         <div style="font-size:10px;font-weight:700;color:var(--red);text-align:center">ML</div>
       </div>`+emps.map(emp=>{
         const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
-        return`<div class="quota-grid"><div style="font-size:13px;font-weight:600">${emp.name}</div>${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="0" max="365" value="${q[t]||DEFAULT_QUOTA[t]}" onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}</div>`;
+        return`<div class="quota-grid"><div style="font-size:13px;font-weight:600">${emp.name}</div>${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="-100" max="100" value="${+q[t]||0}" onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}</div>`;
       }).join('');
     }
   }catch(e){list.innerHTML=`<div class="msg msg-error show">⚠️ Error: ${e.message}<br><button onclick="loadLeavesTab()" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
@@ -2876,10 +2944,23 @@ async function decideLeave(id,status){
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
+function initLeavePolicy(){
+  const P=leavePolicy(), g=id=>document.getElementById(id); if(!g('lpCl')) return;
+  g('lpCl').value=P.cl; g('lpVl').value=P.vl; g('lpMl').value=P.ml;
+  g('lpSm').innerHTML=MONTH_NAMES.map((m,i)=>`<option value="${i+1}"${i+1===P.sm?' selected':''}>${m}</option>`).join('');
+}
+async function saveLeavePolicy(){
+  const g=id=>document.getElementById(id), msg=g('lpMsg');
+  const v=(id,lo,hi,d)=>{ const n=parseInt(g(id).value); return String(isNaN(n)?d:Math.max(lo,Math.min(hi,n))); };
+  const settings={clPerMonth:v('lpCl',0,10,2),vlYear:v('lpVl',0,60,5),mlYear:v('lpMl',0,60,5),leaveYearStart:v('lpSm',1,12,1)};
+  loading(true,'Saving…');
+  try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); msg.textContent='✅ Saved'; setTimeout(()=>msg.textContent='',2500); initLeavePolicy(); }
+  catch(e){ loading(false); msg.style.color='var(--red)'; msg.textContent=e.message; }
+}
 async function updateQuota(empId,type,value){
   const quotas=await getQuotas();
   const q=quotas[empId.toUpperCase()]||{...DEFAULT_QUOTA};
-  q[type]=Math.max(0,parseInt(value)||0);
+  q[type]=Math.max(-100,Math.min(100,parseInt(value)||0));
   await setQuotaStore(empId,q);
 }
 
@@ -2901,14 +2982,8 @@ function hideLeavePanel(){ if(currentEmp) loadHome(); else showScreen('loginScre
 async function loadLeaveBalance(){
   try{
     const[leaves,quotas]=await Promise.all([getLeaves(currentEmp.id),getQuotas()]);
-    const q=quotas[currentEmp.id.toUpperCase()]||DEFAULT_QUOTA;
-    document.getElementById('lvBalance').innerHTML=Object.keys(LEAVE_TYPES).map(type=>{
-      const used=usedDays(leaves,type);
-      const total=q[type]||DEFAULT_QUOTA[type];
-      const rem=Math.max(0,total-used);
-      const pct=total>0?Math.min((used/total)*100,100):0;
-      return`<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${rem}<span style="font-size:12px;color:var(--soft)">/${total}</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${used} used</div></div>`;
-    }).join('');
+    document.getElementById('lvBalance').innerHTML=balHtml(currentEmp.id);
+    document.getElementById('lvPolicy').textContent=policyText();
   }catch(e){}
 }
 
@@ -2944,8 +3019,7 @@ async function submitLeave(){
   if(!reason){err.textContent='Please add a reason.';err.classList.add('show');return;}
   await refreshMyLeaves(currentEmp.id);
   if((_D.leaves||[]).some(l=>l.fromDate&&String(l.empId).toUpperCase()===String(currentEmp.id).toUpperCase()&&['pending','approved'].includes(l.status)&&from<=(l.toDate||l.fromDate)&&to>=l.fromDate)){err.textContent='You already have a leave request covering some of those days.';err.classList.add('show');return;}
-  { const quotas=await getQuotas(), q=quotas[currentEmp.id.toUpperCase()]||DEFAULT_QUOTA, left=(q[type]!==undefined?q[type]:DEFAULT_QUOTA[type])-usedDays(await getLeaves(currentEmp.id),type);
-    if(days>left){err.textContent='You have only '+Math.max(0,left)+' '+type+' day'+(left===1?'':'s')+' left. Pick another type, or ask your admin to raise your quota.';err.classList.add('show');return;} }
+  { const pr=leaveProblem(currentEmp.id,type,from,to); if(pr){err.textContent=pr;err.classList.add('show');return;} }
   loading(true,'Submitting…');
   try{
     const leave={id:'lv-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,type,reason,status:'pending',requestedAt:new Date().toISOString(),decidedAt:'',fromDate:from,toDate:to,days};
