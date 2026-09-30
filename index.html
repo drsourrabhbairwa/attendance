@@ -286,6 +286,13 @@ textarea{min-height:72px;resize:vertical}
 .hm-rec:first-child{border-top:0}
 .hm-rec small{display:block;color:var(--soft);font-size:11px}
 .hm-back{margin-left:auto;background:#fff;border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent2);font-family:inherit}
+
+.pf-note{display:flex;align-items:center;gap:9px;border-radius:12px;padding:10px 13px;margin:0 0 14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--amberBg);color:var(--amber);border:1px solid #e8cf9c}
+.hm-tools{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+.hm-tools .hm-out{margin-left:0}
+.hm-top>div:nth-child(2){min-width:0}
+.emp-acts{display:flex;gap:6px;align-items:center}
+.key-btn{border:1px solid var(--border);background:var(--surface2);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:13px}
 </style>
 </head>
 <body>
@@ -323,6 +330,7 @@ textarea{min-height:72px;resize:vertical}
     <label>Password</label><input type="password" id="loginPass" placeholder="Your password">
     <div class="msg msg-error" id="loginErr">Incorrect Employee ID or password.</div>
     <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
+    <div style="font-size:11px;color:var(--soft);text-align:center;margin-top:10px">Forgot your password? Ask your admin to reset it.</div>
     <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <a href="#" class="help-link" id="apkLink" style="display:none">📲 Download the Android app</a>
   </div>
@@ -346,12 +354,13 @@ textarea{min-height:72px;resize:vertical}
     <div class="hm-top">
       <div class="hm-av" id="hmAv">?</div>
       <div><div class="hm-hi" id="hmHi">Hello</div><div class="hm-nm" id="hmName">—</div></div>
-      <button class="hm-out" onclick="logout()">Sign out</button>
+      <div class="hm-tools"><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
   <div id="hmSite"></div>
+  <div id="hmNote"></div>
   <div class="hm-grid">
     <button class="hm-tile" onclick="openPunch()"><div class="ti">📸</div><b>Attendance</b><span>Punch in · out · meeting</span></button>
     <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
@@ -367,7 +376,38 @@ textarea{min-height:72px;resize:vertical}
   </div>
   <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div></div>
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
+  <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
   <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div id="profileScreen" class="screen">
+  <div class="card">
+    <div class="emp-badge">
+      <div class="avatar" id="pfAv">?</div>
+      <div><div style="font-weight:700;font-size:15px" id="pfHead">—</div><div style="font-size:12px;color:var(--soft)" id="pfId">—</div></div>
+      <button class="hm-back" onclick="goHome()">🏠 Home</button>
+    </div>
+    <div style="font-weight:700;font-size:15px;margin:2px 0 4px">👤 My profile</div>
+    <label>Full name</label><input type="text" id="pfName" autocomplete="off">
+    <label>Phone number</label><input type="text" inputmode="tel" id="pfPhone" placeholder="e.g. 98765 43210" autocomplete="off">
+    <label>Email</label><input type="text" inputmode="email" id="pfEmail" placeholder="name@example.com" autocomplete="off" autocapitalize="off">
+    <label>Designation / department</label><input type="text" id="pfDesig" placeholder="e.g. Site installer" autocomplete="off">
+    <label>Address</label><input type="text" id="pfAddr" autocomplete="off">
+    <label>Emergency contact (name &amp; number)</label><input type="text" id="pfEmerg" autocomplete="off">
+    <div class="msg msg-error" id="pfErr"></div><div class="msg msg-success" id="pfOk"></div>
+    <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">🔑 Change password</div>
+    <label>Current password</label><input type="password" id="pwOld" autocomplete="off">
+    <label>New password <span style="text-transform:none;font-weight:400">(min 6 characters)</span></label><input type="password" id="pwNew" autocomplete="off">
+    <label>Repeat new password</label><input type="password" id="pwConf" autocomplete="off">
+    <div class="msg msg-error" id="pwErr"></div><div class="msg msg-success" id="pwOk"></div>
+    <button class="btn btn-primary" onclick="changeMyPassword()">Change password</button>
+    <div style="font-size:11px;color:var(--soft);margin-top:10px">Forgot your password? Ask your admin to reset it — it goes back to your Employee ID.</div>
+  </div>
+  <button class="btn btn-outline" onclick="goHome()">← Back</button>
 </div>
 
 <!-- ══ CAMERA SCREEN ══ -->
@@ -1123,7 +1163,7 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
   },30000);
-  homeStats(emp,tok); homeLeave(emp,tok);
+  homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok);
 }
 function renderHomeToday(rec,dayOff){
   const set=settingsNow(), limit=parseTimeMins(set.start)+set.grace;
@@ -1193,6 +1233,80 @@ async function homeLeave(emp,tok){
     const pend=leaves.filter(l=>l.status==='pending').length, sub=document.getElementById('hmLeaveSub');
     if(sub) sub.textContent=pend?pend+' request'+(pend>1?'s':'')+' pending':'Balance below';
   }catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EMPLOYEE PROFILE + PASSWORD
+══════════════════════════════════════════════════════════════ */
+const PF_MAP={pfName:'name',pfPhone:'phone',pfEmail:'email',pfDesig:'designation',pfAddr:'address',pfEmerg:'emergency'};
+function curRec(){ return currentEmp?((_D.employees||[]).find(e=>String(e.id)===String(currentEmp.id))||currentEmp):null; }
+function pfMsg(id,txt,good){ ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>{ if(i.slice(0,2)===id.slice(0,2)&&i!==id) document.getElementById(i).classList.remove('show'); }); const el=document.getElementById(id); el.textContent=txt; el.classList.add('show'); }
+function showProfile(){
+  if(!currentEmp) return;
+  stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); homeTok++;
+  const r=curRec();
+  document.getElementById('pfAv').textContent=initials(r.name);
+  document.getElementById('pfHead').textContent=r.name; document.getElementById('pfId').textContent=r.id;
+  Object.keys(PF_MAP).forEach(k=>document.getElementById(k).value=r[PF_MAP[k]]||'');
+  ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
+  ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
+  showScreen('profileScreen');
+}
+async function updateEmpLocal(id,patch){
+  const list=_D.employees||[]; const r=list.find(e=>String(e.id)===String(id)); if(r) Object.assign(r,patch);
+  if(currentEmp&&String(currentEmp.id)===String(id)) Object.assign(currentEmp,patch);
+  if(!USE_SHEETS) localStorage.setItem('att_emp',JSON.stringify(list));
+  saveCache();
+}
+async function saveProfile(){
+  const v={}; Object.keys(PF_MAP).forEach(k=>v[PF_MAP[k]]=document.getElementById(k).value.trim().slice(0,200));
+  if(!v.name) return pfMsg('pfErr','Name cannot be empty.');
+  if(v.phone&&!/^\+?[\d\s-]{8,16}$/.test(v.phone)) return pfMsg('pfErr','Enter a valid phone number (digits only).');
+  if(v.email&&!/^\S+@\S+\.\S+$/.test(v.email)) return pfMsg('pfErr','Enter a valid email address.');
+  loading(true,'Saving…');
+  try{
+    if(USE_SHEETS) await api('updateProfile',{id:currentEmp.id,fields:v});
+    await updateEmpLocal(currentEmp.id,v); loading(false);
+    document.getElementById('pfHead').textContent=v.name; document.getElementById('pfAv').textContent=initials(v.name);
+    pfMsg('pfOk','✅ Profile saved.');
+  }catch(e){ loading(false); pfMsg('pfErr','Error: '+e.message); }
+}
+async function changeMyPassword(){
+  const o=document.getElementById('pwOld').value, n=document.getElementById('pwNew').value, c=document.getElementById('pwConf').value;
+  const r=curRec();
+  if(!o||!n) return pfMsg('pwErr','Fill in the current and the new password.');
+  if(!(await verifyPass(o,r.passHash))) return pfMsg('pwErr','Current password is wrong.');
+  if(n.length<6) return pfMsg('pwErr','New password must be at least 6 characters.');
+  if(n===o) return pfMsg('pwErr','New password must be different from the old one.');
+  if(n!==c) return pfMsg('pwErr','The two new passwords do not match.');
+  loading(true,'Saving…');
+  try{
+    const newHash=await hashPass(n);
+    if(USE_SHEETS) await api('changePassword',{id:r.id,oldHash:r.passHash,newHash});
+    await updateEmpLocal(r.id,{passHash:newHash}); meSave(currentEmp); loading(false);
+    ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
+    pfMsg('pwOk','✅ Password changed. Use the new one next time you sign in on another phone.');
+  }catch(e){ loading(false); pfMsg('pwErr','Error: '+e.message); }
+}
+async function homeNudge(emp,tok){
+  const r=(_D.employees||[]).find(e=>String(e.id)===String(emp.id))||emp, el=document.getElementById('hmNote'); if(!el) return;
+  let def=false; try{ def=(await hashPass(String(r.id).toUpperCase()))===r.passHash; }catch(e){}
+  if(tok!==homeTok) return;
+  el.innerHTML=def?'<div class="pf-note" onclick="showProfile()">🔐 You are using the default password — tap to change it</div>'
+    :(!r.phone?'<div class="pf-note" onclick="showProfile()">👤 Complete your profile (phone, email) — tap here</div>':'');
+}
+/* Admin: put an employee's password back to their Employee ID */
+async function resetEmpPass(id){
+  const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
+  if(!confirm('Reset the password of '+e.name+' ('+e.id+') to their Employee ID?\nThey will be signed out on their phone and must sign in with the ID as the password.')) return;
+  loading(true,'Resetting…');
+  try{
+    const h=await hashPass(String(e.id).toUpperCase());
+    if(USE_SHEETS) await api('setPassword',{id:e.id,passHash:h});
+    else{ e.passHash=h; localStorage.setItem('att_emp',JSON.stringify(_D.employees)); }
+    e.passHash=h; saveCache(); loading(false);
+    const ok=document.getElementById('empOk'); ok.textContent='🔑 Password of '+e.name+' reset. New password: '+String(e.id).toUpperCase(); ok.classList.add('show');
+  }catch(err){ loading(false); alert('Error: '+err.message); }
 }
 
 async function handleLogin(){
@@ -2136,7 +2250,8 @@ async function renderEmpList(){
     const emps=await getEmployees();loading(false);
     const list=document.getElementById('empList');
     if(!emps.length){list.innerHTML='<div class="empty"><div class="eicon">👥</div>No employees yet.</div>';return;}
-    list.innerHTML=emps.map(e=>`<div class="list-item"><div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id} · Password: <em>hidden</em></div></div><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div>`).join('');
+    list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
+      return `<div class="list-item"><div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}</div></div><div class="emp-acts"><button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
