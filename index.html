@@ -322,6 +322,30 @@ textarea{min-height:72px;resize:vertical}
 .al-chk{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer}
 .al-chk input{width:auto !important}
 .fx-card{border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:8px;background:var(--surface)}
+
+/* v13 */
+.avatar.has-img,.hm-av.has-img{padding:0;overflow:hidden;background:none}
+.avatar img,.hm-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.avatar.big{width:84px;height:84px;font-size:28px}
+.pf-photo{display:flex;align-items:center;gap:14px;margin:6px 0 10px}
+.pf-photo .pf-btns{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.pf-photo button,.pf-small{padding:8px 12px;border:1.5px solid var(--border2);background:var(--surface);color:var(--ink);border-radius:var(--rs);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}
+.pf-small.link{border:none;background:none;color:var(--soft);font-weight:600;padding:2px 0;font-size:12px;text-decoration:underline}
+.pf-cam-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1200;display:none;align-items:center;justify-content:center;padding:16px}
+.pf-cam-ov.on{display:flex}
+.pf-cam{background:var(--surface);border-radius:14px;padding:14px;max-width:360px;width:100%}
+.pf-cam video{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#000;transform:scaleX(-1)}
+.pf-cam-row{display:flex;gap:8px;margin-top:10px}.pf-cam-row .btn{margin-top:0}
+.trk-box{max-width:380px;background:var(--surface);border-radius:14px;padding:18px;max-height:90vh;overflow:auto}
+.trk-box h3{margin:0 0 8px;font-size:17px}.trk-box p{font-size:13px;line-height:1.5;margin:6px 0}
+.trk-box ul{margin:6px 0 6px 18px;padding:0;font-size:13px;line-height:1.5}
+.ph-row{display:flex;align-items:center;gap:10px}.ph-row .avatar{width:36px;height:36px;font-size:13px}
+.bd-card{margin:10px 16px 0;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FFF6E0,#FDE8EF);border:1px solid #F0D9A8;color:#5a3d12;font-size:13px;line-height:1.5}
+.bd-card b{font-size:14px}
+.bd-me{font-size:15px}
+.trk-note{margin:10px 16px 0;padding:9px 12px;border-radius:12px;background:var(--surface2);color:var(--soft);font-size:12px;line-height:1.45}
+.sal-wrap{overflow-x:auto;margin-top:10px}.sal-wrap table{font-size:12px;white-space:nowrap}
+.ru-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:9px}
 </style>
 </head>
 <body>
@@ -391,6 +415,8 @@ textarea{min-height:72px;resize:vertical}
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
+  <div id="hmBday"></div>
+  <div id="hmTrack"></div>
   <div class="hm-grid">
     <button class="hm-tile" onclick="openPunch()"><div class="ti">📸</div><b>Attendance</b><span>Punch in · out · meeting</span></button>
     <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
@@ -421,12 +447,21 @@ textarea{min-height:72px;resize:vertical}
       <button class="hm-back" onclick="goHome()">🏠 Home</button>
     </div>
     <div style="font-weight:700;font-size:15px;margin:2px 0 4px">👤 My profile</div>
+    <div class="pf-photo"><div class="avatar big" id="pfBig">?</div><div class="pf-btns">
+      <button type="button" onclick="pfCamOpen()">📷 Take a photo</button>
+      <button type="button" onclick="document.getElementById('pfFile').click()">🖼 Choose a picture</button>
+      <button type="button" class="pf-small link" id="pfRemove" onclick="removeMyPhoto()" style="display:none">Remove photo</button>
+      <input type="file" id="pfFile" accept="image/*" style="display:none" onchange="pickProfilePhoto(this)">
+    </div></div>
+    <div style="font-size:11px;color:var(--soft);margin:-4px 0 8px">This picture is shown on your dashboard and to the office. Your punch-in selfie stays separate as proof.</div>
     <label>Full name</label><input type="text" id="pfName" autocomplete="off">
     <label>Phone number</label><input type="text" inputmode="tel" id="pfPhone" placeholder="e.g. 98765 43210" autocomplete="off">
     <label>Email</label><input type="text" inputmode="email" id="pfEmail" placeholder="name@example.com" autocomplete="off" autocapitalize="off">
     <label>Designation / department</label><input type="text" id="pfDesig" placeholder="e.g. Site installer" autocomplete="off">
     <label>Address</label><input type="text" id="pfAddr" autocomplete="off">
     <label>Emergency contact (name &amp; number)</label><input type="text" id="pfEmerg" autocomplete="off">
+    <label>Birthday</label><input type="date" id="pfDob">
+    <label>Joined Amitek on</label><input type="date" id="pfJoined">
     <div class="msg msg-error" id="pfErr"></div><div class="msg msg-success" id="pfOk"></div>
     <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
   </div>
@@ -441,6 +476,23 @@ textarea{min-height:72px;resize:vertical}
   </div>
   <button class="btn btn-outline" onclick="goHome()">← Back</button>
 </div>
+
+<div id="pfCamOv" class="pf-cam-ov"><div class="pf-cam"><video id="pfVideo" autoplay playsinline muted></video>
+  <div class="pf-cam-row"><button class="btn btn-primary" onclick="pfSnap()">📸 Use this photo</button><button class="btn btn-outline" onclick="pfCamClose()">Cancel</button></div>
+  <div style="font-size:11px;color:var(--soft);text-align:center;margin-top:6px">Keep your face in the middle of the picture</div></div></div>
+<div id="trkOv" class="pf-cam-ov"><div class="trk-box">
+  <h3>📍 Location during office hours</h3>
+  <p>To keep attendance fair for <b>everyone</b>, the same location check applies to <b>every employee</b>:</p>
+  <ul>
+    <li>Your phone records its location <b>only while you are punched in</b> — from punch-in until punch-out, and never after <b id="trkEndTxt">7:30 PM</b>.</li>
+    <li>Nothing is recorded before you punch in, after you punch out, on holidays or on leave.</li>
+    <li>The office sees the places recorded during office hours, and you can see how many checks were made today.</li>
+  </ul>
+  <p style="color:var(--soft)" lang="hi">आपकी लोकेशन केवल ऑफिस समय में, पंच-इन से पंच-आउट तक, सभी कर्मचारियों के लिए एक जैसी रिकॉर्ड की जाती है। ऑफिस समय के बाद कुछ रिकॉर्ड नहीं होता।</p>
+  <button class="btn btn-primary" onclick="trkAccept()">✅ I agree, continue</button>
+  <button class="btn btn-outline" onclick="trkDecline()">Sign out</button>
+  <div class="msg msg-error" id="trkErr"></div>
+</div></div>
 
 <!-- ══ CAMERA SCREEN ══ -->
 <div id="cameraScreen" class="screen">
@@ -686,6 +738,7 @@ textarea{min-height:72px;resize:vertical}
       <div class="msg msg-error" id="empErr"></div>
       <div class="msg msg-success" id="empOk"></div>
     </div>
+    <div id="bdayAdmin"></div>
     <div id="empList"></div>
   </div>
 
@@ -736,6 +789,29 @@ textarea{min-height:72px;resize:vertical}
       <div class="msg msg-error" id="dpErr"></div><div class="msg msg-success" id="dpOk"></div>
     </div>
     <div class="add-form" style="margin-top:14px">
+      <h3>⚖️ Attendance rules &amp; tracking</h3>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">These rules feed the salary sheet below and the dashboard. Leave a field empty to switch that rule off.</p>
+      <div class="ru-grid">
+        <div><label style="margin:0 0 4px">Half day if punch-in after</label><input type="text" id="ruHalf" placeholder="11:00 AM"></div>
+        <div><label style="margin:0 0 4px">Late marks that cost a half day</label><input type="number" id="ruLateN" min="0" placeholder="3 (0 = off)"></div>
+        <div><label style="margin:0 0 4px">Location tracking stops at</label><input type="text" id="ruEnd" placeholder="07:30 PM"></div>
+        <div><label style="margin:0 0 4px">Low battery alert at (%)</label><input type="number" id="ruBatt" min="5" max="50" placeholder="15"></div>
+        <div><label style="margin:0 0 4px">Phone silent alert after (min)</label><input type="number" id="ruSilent" min="60" placeholder="150"></div>
+      </div>
+      <label class="al-chk"><input type="checkbox" id="ruTrack"> Track <b>every</b> employee from punch-in to punch-out (office hours only, after they accept the notice)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button onclick="saveRules()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save rules</button></div>
+      <div class="msg msg-error" id="ruErr"></div><div class="msg msg-success" id="ruOk"></div>
+    </div>
+    <div class="add-form" style="margin-top:14px">
+      <h3>💰 Salary-ready sheet</h3>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">For the month picked at the top. Counts working days (Sundays and holidays are paid), approved leave as paid, absences as unpaid, half days as 0.5, and the late-mark rule above. Only days up to yesterday are counted for the current month.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button onclick="payrollShow()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Show salary sheet</button>
+        <button onclick="payrollCSV()" style="padding:9px 13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">⬇ Salary CSV</button>
+      </div>
+      <div id="salContent"></div>
+    </div>
+    <div class="add-form" style="margin-top:14px">
       <h3>🔔 Alerts, reminders &amp; photos</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Alerts go by e-mail to you and to the supervisor assigned to that employee. Reminders go to employees who have an e-mail in their profile.</p>
       <div class="al-grid">
@@ -747,10 +823,13 @@ textarea{min-height:72px;resize:vertical}
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
       <label class="al-chk"><input type="checkbox" id="alSite"> Alert me and the supervisor when a site check fails or goes silent</label>
       <label class="al-chk"><input type="checkbox" id="alDrive"> Save photos in Google Drive (keeps the sheet small and fast)</label>
+      <label class="al-chk"><input type="checkbox" id="alWeekly"> E-mail me a weekly summary every Monday morning</label>
+      <label class="al-chk"><input type="checkbox" id="alBday"> Send birthday / work-anniversary wishes to employees (and tell me each morning)</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
         <button onclick="saveAlerts()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save</button>
         <button onclick="testAlertEmail()" style="padding:9px 13px;background:var(--surface);color:var(--ink);border:1.5px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">✉️ Send test e-mail</button>
         <button onclick="turnOnReminders()" style="padding:9px 13px;background:var(--surface);color:var(--ink);border:1.5px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">⏱ Turn on reminder timer</button>
+        <button onclick="sendWeeklyNow()" style="padding:9px 13px;background:var(--surface);color:var(--ink);border:1.5px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">📊 Send last week's summary now</button>
       </div>
       <div id="alStatus" style="font-size:12px;color:var(--soft);margin-top:10px"></div>
       <div class="msg msg-error" id="alErr"></div><div class="msg msg-success" id="alOk"></div>
@@ -1285,7 +1364,7 @@ function needSheet(msg){ if(USE_SHEETS) return false; alert((msg||'This')+' need
 async function showFix(){
   if(!currentEmp||needSheet('Punch corrections')) return;
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); homeTok++;
-  document.getElementById('fxAv').textContent=initials(currentEmp.name); document.getElementById('fxHead').textContent=currentEmp.name;
+  fillAv('fxAv',curRec()||currentEmp); document.getElementById('fxHead').textContent=currentEmp.name;
   const dt=document.getElementById('fxDate'); dt.max=todayStr(); dt.value=isoAdd(todayStr(),-1);
   document.getElementById('fxTime').value=''; document.getElementById('fxReason').value='';
   ['fxErr','fxOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
@@ -1448,6 +1527,7 @@ function initAlerts(){
   const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('alMail')) return;
   g('alMail').value=s.adminEmail||''; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90;
   g('alRem').checked=s.reminders!=='0'; g('alSite').checked=s.alertsSite!=='0'; g('alDrive').checked=s.photosToDrive!=='0';
+  g('alWeekly').checked=s.weeklyEmail!=='0'; g('alBday').checked=s.birthdayMail!=='0';
   refreshAlertStatus();
 }
 async function refreshAlertStatus(){
@@ -1462,7 +1542,7 @@ function alertSettings(){
   const mail=g('alMail').value.trim(), outAt=normTime(g('alOutAt').value), sumAt=normTime(g('alSumAt').value);
   if(mail&&!/^\S+@\S+\.\S+$/.test(mail)) return {error:'Your e-mail does not look right.'};
   if(!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
-  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
+  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
 }
 async function saveAlerts(quiet){
   const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
@@ -1477,6 +1557,75 @@ async function testAlertEmail(){
   loading(true,'Sending…');
   try{ await api('testEmail',{}); loading(false); ok.textContent='✅ Test e-mail sent to '+_D.settings.adminEmail+'. Check your inbox (and spam).'; ok.classList.add('show'); refreshAlertStatus(); }
   catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
+}
+async function sendWeeklyNow(){
+  const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
+  if(!(await saveAlerts(true))) return;
+  loading(true,'Sending…');
+  try{ await api('sendWeekly'); loading(false); ok.textContent='✅ Last week\'s summary was sent to '+_D.settings.adminEmail+'.'; ok.classList.add('show'); }
+  catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
+}
+/* ── Rules, tracking settings ── */
+const trackOn=()=>((_D.settings||{}).trackAll)!=='0';
+const trackEndMins=()=>{ const v=(_D.settings||{}).trackEnd||'07:30 PM'; return parseTimeMins(v); };
+function payRules(){ const s=_D.settings||{}; return {halfAfter:s.halfDayAfter?parseTimeMins(s.halfDayAfter):null,lateN:parseInt(s.lateToHalf)||0}; }
+function isHalfDay(r){ const x=payRules(); return x.halfAfter!==null&&!!(r&&r.punchIn)&&parseTimeMins(r.punchIn.time)>x.halfAfter; }
+function initRules(){
+  const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('ruHalf')) return;
+  g('ruHalf').value=s.halfDayAfter||''; g('ruLateN').value=s.lateToHalf||''; g('ruEnd').value=s.trackEnd||'07:30 PM';
+  g('ruBatt').value=s.lowBattery||15; g('ruSilent').value=s.silentMinsAll||150; g('ruTrack').checked=s.trackAll!=='0';
+}
+async function saveRules(){
+  const g=id=>document.getElementById(id), err=g('ruErr'), ok=g('ruOk'); err.classList.remove('show'); ok.classList.remove('show');
+  const half=g('ruHalf').value.trim(), hn=half?normTime(half):'', end=normTime(g('ruEnd').value);
+  if(half&&!hn){ err.textContent='Half-day time like 11:00 AM (or leave empty).'; err.classList.add('show'); return; }
+  if(!end){ err.textContent='Tracking stop time like 07:30 PM.'; err.classList.add('show'); return; }
+  const settings={halfDayAfter:hn,lateToHalf:String(Math.max(0,parseInt(g('ruLateN').value)||0)),trackEnd:end,lowBattery:String(Math.min(50,Math.max(5,parseInt(g('ruBatt').value)||15))),silentMinsAll:String(Math.max(60,parseInt(g('ruSilent').value)||150)),trackAll:g('ruTrack').checked?'1':'0'};
+  loading(true,'Saving…');
+  try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); ok.textContent='✅ Saved.'; ok.classList.add('show'); }
+  catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
+}
+/* ── Salary-ready sheet ── */
+async function payrollBuild(){
+  const mv=(document.getElementById('rptMonth').value||todayStr().slice(0,7)).trim(), mm=mv.match(/^(\d{4})-(\d{1,2})$/);
+  if(!mm) throw new Error('Pick a month at the top of this tab first.');
+  const y=+mm[1], mo=+mm[2], p2=n=>String(n).padStart(2,'0'), last=new Date(y,mo,0).getDate();
+  const start=y+'-'+p2(mo)+'-01', endFull=y+'-'+p2(mo)+'-'+p2(last), yest=isoAdd(todayStr(),-1), end=endFull<yest?endFull:yest;
+  if(end<start) throw new Error('Nothing to count yet for that month.');
+  const d=await api('monthReport',{start,end:endFull})||{}, R=payRules(), key=id=>String(id).toUpperCase();
+  const byEmp={}; (d.attendance||[]).forEach(r=>{ if(r.punchIn) (byEmp[key(r.empId)]=byEmp[key(r.empId)]||{})[r.date]=r; });
+  const emps=await getEmployees();
+  const list=emps.map(e=>{
+    const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
+    let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[];
+    for(let ds=from;ds<=end;ds=isoAdd(ds,1)){
+      cal++; if(checkDayOff(ds)) continue; work++;
+      const r=(byEmp[key(e.id)]||{})[ds];
+      if(r){ const m=parseTimeMins(r.punchIn.time); if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); } else{ full++; if(m>lateLim) late++; } }
+      else if(leaveOn(e.id,ds)) leave++;
+      else{ absent++; notes.push(ds.slice(8)+' absent'); }
+    }
+    const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
+    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,notes:notes.join(' · ')};
+  }).sort((a,b)=>a.name<b.name?-1:1);
+  return {month:mv,end,list,R};
+}
+const fmtD=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+async function payrollShow(){
+  const el=document.getElementById('salContent'); el.innerHTML='<div class="empty">⏳ Working it out…</div>';
+  try{
+    const r=await payrollBuild(); window._payroll=r;
+    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>`;
+  }catch(e){ el.innerHTML='<div class="msg msg-error show">'+e.message+'</div>'; }
+}
+async function payrollCSV(){
+  try{
+    const r=await payrollBuild(); window._payroll=r;
+    const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+    const hdr=['ID','Name','Department','Calendar days','Working days','Full days present','Half days','Late marks','Late deduction (days)','Approved leave days','Absent days','Unpaid days','Payable days','Notes (day of month)'];
+    const rows=r.list.map(e=>[e.id,q(e.name),q(e.dept),e.cal,e.work,e.full,e.half,e.late,e.ded,e.leave,e.absent,fmtD(e.unpaid),fmtD(e.payable),q(e.notes)].join(','));
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'salary-'+r.month+'.csv'}); a.click();
+  }catch(e){ alert(e.message); }
 }
 async function turnOnReminders(){
   const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
@@ -1528,7 +1677,7 @@ async function loadHome(){
   const now=new Date(), h=now.getHours();
   document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   document.getElementById('hmName').textContent=emp.name;
-  document.getElementById('hmAv').textContent=initials(emp.name);
+  fillAv('hmAv',curRec()||emp);
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
   const dayOff=checkDayOff(todayStr());
   let rec=null; if(!dayOff){ try{ rec=await getRecordToday(emp.id); }catch(e){} }
@@ -1540,13 +1689,15 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
   },30000);
-  homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok);
+  homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
+  trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
   if(!dayOff&&USE_SHEETS){
     const fresh=await freshRecordToday(emp.id);
     if(fresh!==undefined&&tok===homeTok){
       const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.edited||'')):'';
       if(sig(fresh)!==sig(rec)){ rec=fresh; checkSiteWork(!!(rec&&rec.punchOut)); renderHomeToday(rec,dayOff); homeNudge(emp,tok,rec,dayOff); }
+      ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
     }
   }
 }
@@ -1573,8 +1724,8 @@ function renderHomeToday(rec,dayOff){
     if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
     b=btn('View today','btn-outline');
   } else if(rec&&rec.punchIn){
-    const am=getActiveMeeting(rec), late=parseTimeMins(rec.punchIn.time)>limit;
-    ico=am?'🚗':'🟢'; title=(am?'In a meeting':'You are punched in')+`<span class="hm-chip" style="background:${late?'var(--amberBg)':'var(--greenBg)'};color:${late?'var(--amber)':'var(--green)'}">${late?'Late':'On time'}</span>`;
+    const am=getActiveMeeting(rec), half=isHalfDay(rec), late=!half&&parseTimeMins(rec.punchIn.time)>limit;
+    ico=am?'🚗':'🟢'; title=(am?'In a meeting':'You are punched in')+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
     extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
@@ -1584,7 +1735,7 @@ function renderHomeToday(rec,dayOff){
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}`);
 }
 function renderHomeSite(){
-  const sw=mySite(), el=document.getElementById('hmSite'), sub=document.getElementById('hmSiteSub');
+  const sw=mySiteManual(), el=document.getElementById('hmSite'), sub=document.getElementById('hmSiteSub');
   if(el) el.innerHTML=sw?`<div class="hm-site" onclick="openPunch()"><span class="live-dot"></span><span>On site since ${String(fmt12(sw.startTime)).toUpperCase()} · ${sw.startArea||'Site'}</span></div>`:'';
   if(sub) sub.textContent=sw?'Running · tap to view':'Start or stop';
 }
@@ -1614,7 +1765,7 @@ async function homeStats(emp,tok){
   const recent=[...mine].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);
   setHtml('hmRecent',recent.length?recent.map(r=>{
     const th=calcTotalHrs(r), dd=new Date(r.date+'T12:00:00');
-    return `<div class="hm-rec"><div><b>${dd.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><small>In ${fmt12(r.punchIn.time)}${r.punchOut?' · Out '+fmt12(r.punchOut.time):' · no punch-out'}</small></div><div style="text-align:right">${th?`<b>${th}</b>`:''}${isLate(r)?'<small style="color:var(--amber)">Late</small>':'<small style="color:var(--green)">On time</small>'}</div></div>`;
+    return `<div class="hm-rec"><div><b>${dd.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><small>In ${fmt12(r.punchIn.time)}${r.punchOut?' · Out '+fmt12(r.punchOut.time):' · no punch-out'}</small></div><div style="text-align:right">${th?`<b>${th}</b>`:''}${isHalfDay(r)?'<small style="color:var(--amber)">Half day</small>':isLate(r)?'<small style="color:var(--amber)">Late</small>':'<small style="color:var(--green)">On time</small>'}</div></div>`;
   }).join(''):'<div class="empty" style="padding:10px 0">No attendance yet.</div>');
 }
 async function homeLeave(emp,tok){
@@ -1636,20 +1787,79 @@ async function homeLeave(emp,tok){
 /* ══════════════════════════════════════════════════════════════
    EMPLOYEE PROFILE + PASSWORD
 ══════════════════════════════════════════════════════════════ */
-const PF_MAP={pfName:'name',pfPhone:'phone',pfEmail:'email',pfDesig:'designation',pfAddr:'address',pfEmerg:'emergency'};
+const PF_MAP={pfName:'name',pfPhone:'phone',pfEmail:'email',pfDesig:'designation',pfAddr:'address',pfEmerg:'emergency',pfDob:'dob',pfJoined:'joined'};
 function curRec(){ return currentEmp?((_D.employees||[]).find(e=>String(e.id)===String(currentEmp.id))||currentEmp):null; }
 function pfMsg(id,txt,good){ ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>{ if(i.slice(0,2)===id.slice(0,2)&&i!==id) document.getElementById(i).classList.remove('show'); }); const el=document.getElementById(id); el.textContent=txt; el.classList.add('show'); }
 function showProfile(){
   if(!currentEmp) return;
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); homeTok++;
   const r=curRec();
-  document.getElementById('pfAv').textContent=initials(r.name);
+  fillAv('pfAv',r); fillAv('pfBig',r); document.getElementById('pfRemove').style.display=r.photo?'':'none';
   document.getElementById('pfHead').textContent=r.name; document.getElementById('pfId').textContent=r.id;
   { const s=settingsFor(r); document.getElementById('pfDept').textContent=(r.department?'Department: '+r.department+' · ':'')+'Office starts '+s.start+' (late after '+s.grace+' min)'; }
   Object.keys(PF_MAP).forEach(k=>document.getElementById(k).value=r[PF_MAP[k]]||'');
   ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
   ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
   showScreen('profileScreen');
+}
+/* Profile picture: a small square JPEG (about 10 KB) so it loads fast on every phone */
+function fillAv(idOrEl,emp){
+  const el=typeof idOrEl==='string'?document.getElementById(idOrEl):idOrEl; if(!el) return;
+  const ph=emp&&emp.photo;
+  if(ph&&/^(data:image|https:)/.test(ph)){ el.innerHTML='<img alt="" src="'+String(ph).replace(/"/g,'&quot;')+'">'; el.classList.add('has-img'); }
+  else{ el.textContent=initials(emp&&emp.name); el.classList.remove('has-img'); }
+}
+function avSm(e){ const d=document.createElement('div'); d.className='avatar'; fillAv(d,e); return d.outerHTML; }
+function squarePhoto(src,w,h){
+  const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
+  const side=Math.min(w,h), sx=(w-side)/2, sy=(h-side)/2;
+  c.getContext('2d').drawImage(src,sx,sy,side,side,0,0,S,S);
+  return c.toDataURL('image/jpeg',0.72);
+}
+let pfStream=null;
+async function pfCamOpen(){
+  try{
+    pfStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:640}},audio:false});
+    const v=document.getElementById('pfVideo'); v.srcObject=pfStream; document.getElementById('pfCamOv').classList.add('on');
+  }catch(e){ pfMsg('pfErr','Camera is not allowed here. Use “Choose a picture” instead, or allow the camera for this app.'); }
+}
+function pfCamClose(){ try{ if(pfStream) pfStream.getTracks().forEach(t=>t.stop()); }catch(e){} pfStream=null; document.getElementById('pfCamOv').classList.remove('on'); }
+async function pfSnap(){
+  const v=document.getElementById('pfVideo');
+  if(!v.videoWidth){ return; }
+  const data=squarePhoto(v,v.videoWidth,v.videoHeight); pfCamClose(); await saveMyPhoto(data);
+}
+function pickProfilePhoto(inp){
+  const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+  if(!/^image\//.test(f.type)) return pfMsg('pfErr','Please pick a picture.');
+  const url=URL.createObjectURL(f), im=new Image();
+  im.onload=async()=>{ const data=squarePhoto(im,im.naturalWidth,im.naturalHeight); URL.revokeObjectURL(url); await saveMyPhoto(data); };
+  im.onerror=()=>pfMsg('pfErr','That file could not be read as a picture.');
+  im.src=url;
+}
+async function saveMyPhoto(data){
+  loading(true,'Saving photo…');
+  try{
+    let url=data; if(USE_SHEETS) url=await api('setProfilePhoto',{id:currentEmp.id,photo:data});
+    await updateEmpLocal(currentEmp.id,{photo:url}); loading(false);
+    const r=curRec(); fillAv('pfBig',r); fillAv('pfAv',r); document.getElementById('pfRemove').style.display='';
+    pfMsg('pfOk','✅ Photo saved.');
+  }catch(e){ loading(false); pfMsg('pfErr','Error: '+e.message); }
+}
+async function removeMyPhoto(){
+  if(!confirm('Remove your profile photo?')) return;
+  loading(true,'Removing…');
+  try{
+    if(USE_SHEETS) await api('setProfilePhoto',{id:currentEmp.id,photo:''});
+    await updateEmpLocal(currentEmp.id,{photo:''}); loading(false);
+    const r=curRec(); fillAv('pfBig',r); fillAv('pfAv',r); document.getElementById('pfRemove').style.display='none';
+  }catch(e){ loading(false); pfMsg('pfErr','Error: '+e.message); }
+}
+async function adminClearPhoto(id){
+  if(!confirm('Remove this employee\'s profile photo?')) return;
+  loading(true,'Removing…');
+  try{ if(USE_SHEETS) await api('setProfilePhoto',{id,photo:''}); await updateEmpLocal(id,{photo:''}); loading(false); renderEmpList(); }
+  catch(e){ loading(false); alert('Error: '+e.message); }
 }
 async function updateEmpLocal(id,patch){
   const list=_D.employees||[]; const r=list.find(e=>String(e.id)===String(id)); if(r) Object.assign(r,patch);
@@ -1662,11 +1872,13 @@ async function saveProfile(){
   if(!v.name) return pfMsg('pfErr','Name cannot be empty.');
   if(v.phone&&!/^\+?[\d\s-]{8,16}$/.test(v.phone)) return pfMsg('pfErr','Enter a valid phone number (digits only).');
   if(v.email&&!/^\S+@\S+\.\S+$/.test(v.email)) return pfMsg('pfErr','Enter a valid email address.');
+  if(v.dob&&v.dob>todayStr()) return pfMsg('pfErr','Birthday cannot be in the future.');
+  if(v.joined&&v.joined>todayStr()) return pfMsg('pfErr','Joining date cannot be in the future.');
   loading(true,'Saving…');
   try{
     if(USE_SHEETS) await api('updateProfile',{id:currentEmp.id,fields:v});
     await updateEmpLocal(currentEmp.id,v); loading(false);
-    document.getElementById('pfHead').textContent=v.name; document.getElementById('pfAv').textContent=initials(v.name);
+    document.getElementById('pfHead').textContent=v.name; fillAv('pfAv',curRec());
     pfMsg('pfOk','✅ Profile saved.');
   }catch(e){ loading(false); pfMsg('pfErr','Error: '+e.message); }
 }
@@ -1686,6 +1898,38 @@ async function changeMyPassword(){
     ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
     pfMsg('pwOk','✅ Password changed. Use the new one next time you sign in on another phone.');
   }catch(e){ loading(false); pfMsg('pwErr','Error: '+e.message); }
+}
+/* ── Birthdays and work anniversaries ── */
+function celebsOn(ds){
+  const md=ds.slice(5), y=+ds.slice(0,4), out=[];
+  (_D.employees||[]).forEach(e=>{
+    if(e.dob&&String(e.dob).slice(5)===md) out.push({e,kind:'birthday'});
+    if(e.joined&&String(e.joined).slice(5)===md&&+String(e.joined).slice(0,4)<y) out.push({e,kind:'anniv',years:y-+String(e.joined).slice(0,4)});
+  });
+  return out;
+}
+const celebText=c=>c.e.name+(c.kind==='birthday'?' 🎂':' 🎉 '+c.years+' yr'+(c.years>1?'s':''));
+function upcomingCelebs(n){
+  const out=[]; let d=todayStr();
+  for(let i=0;i<=n;i++,d=isoAdd(d,1)) celebsOn(d).forEach(c=>out.push(Object.assign({date:d,inDays:i},c)));
+  return out;
+}
+function homeBday(emp,tok){
+  const el=document.getElementById('hmBday'); if(!el||tok!==homeTok) return;
+  const t=todayStr(), today=celebsOn(t), mine=today.filter(c=>String(c.e.id)===String(emp.id));
+  const others=today.filter(c=>String(c.e.id)!==String(emp.id));
+  const soon=upcomingCelebs(7).filter(c=>c.inDays>0&&String(c.e.id)!==String(emp.id)).slice(0,4);
+  let h='';
+  mine.forEach(c=>{ h+=`<div class="bd-me">${c.kind==='birthday'?'🎂 <b>Happy birthday, '+emp.name.split(' ')[0]+'!</b> Have a wonderful day.':'🎉 <b>Happy work anniversary!</b> '+c.years+' year'+(c.years>1?'s':'')+' with Amitek today.'}</div>`; });
+  if(others.length) h+=`<div style="margin-top:${mine.length?6:0}px">🎈 Today: ${others.map(celebText).join(' · ')}</div>`;
+  if(soon.length) h+=`<div style="margin-top:6px;font-size:12px;opacity:.85">Coming up: ${soon.map(c=>c.e.name.split(' ')[0]+(c.kind==='birthday'?' 🎂':' 🎉')+' '+new Date(c.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})).join(' · ')}</div>`;
+  el.innerHTML=h?`<div class="bd-card">${h}</div>`:'';
+}
+function renderBdayAdmin(){
+  const el=document.getElementById('bdayAdmin'); if(!el) return;
+  const l=upcomingCelebs(30);
+  const missing=(_D.employees||[]).filter(e=>!e.dob).length;
+  el.innerHTML=`<div class="add-form" style="margin-bottom:12px"><h3>🎂 Birthdays &amp; anniversaries — next 30 days</h3>${l.length?l.map(c=>`<div style="font-size:13px;padding:4px 0">${c.inDays===0?'<b>Today</b>':c.inDays===1?'Tomorrow':new Date(c.date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})} — ${c.e.name} ${c.kind==='birthday'?'🎂 birthday':'🎉 '+c.years+' year work anniversary'}</div>`).join(''):'<div style="font-size:12px;color:var(--soft);margin-top:6px">Nobody in the next 30 days.</div>'}<div style="font-size:11px;color:var(--soft);margin-top:8px">${missing?missing+' employee'+(missing>1?'s have':' has')+' not added a birthday yet — they can add it under My profile.':'Everyone has added a birthday.'}</div></div>`;
 }
 async function homeNudge(emp,tok,rec,dayOff){
   const r=(_D.employees||[]).find(e=>String(e.id)===String(emp.id))||emp, el=document.getElementById('hmNote'); if(!el) return;
@@ -1896,7 +2140,7 @@ let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
 async function loadCameraScreen(){
   showScreen('cameraScreen');
-  document.getElementById('empAvatar').textContent=initials(currentEmp.name);
+  fillAv('empAvatar',curRec()||currentEmp);
   document.getElementById('empName').textContent=currentEmp.name;
   document.getElementById('empIdLbl').textContent=currentEmp.id;
   ['stHoliday','stDone','stCamera'].forEach(id=>document.getElementById(id).style.display='none');
@@ -2007,7 +2251,7 @@ async function captureAndMark(){
   loading(true,'Saving attendance…');
   try{
     if(punchMode==='in') await storePunchIn(currentEmp.id,currentEmp.name,todayStr(),punch);
-    else if(punchMode==='out'){ await storePunchOut(currentEmp.id,todayStr(),punch); if(mySite()&&await stopSiteWork(true,photo)) extra=' · 🏗️ Site work stopped'; }
+    else if(punchMode==='out'){ await storePunchOut(currentEmp.id,todayStr(),punch); const _sw=mySite(); if(_sw&&await stopSiteWork(true,photo)&&_sw.mode!=='auto') extra=' · 🏗️ Site work stopped'; }
     else if(punchMode==='meeting_out'){ punch.note=note; const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch); updateMeetingCache(currentEmp.id,todayStr(),'out',punch,(r&&r.seq)?r.seq:null); }
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
     else if(punchMode==='visit'){ await storeVisit(Object.assign({},punch,{customer,note:vnote,accuracy:capAcc})); extra=' · '+customer; }
@@ -2085,11 +2329,62 @@ function swAll(){
   return Object.values(swLive).filter(s=>s.date===t);
 }
 function mySite(){ return currentEmp?swGet(currentEmp.id):null; }
+function mySiteManual(){ const s=mySite(); return s&&s.mode!=='auto'?s:null; }   // the all-staff session is not something the employee starts or stops
+function trkLabel(e){ return trackOn()?(e.trackConsent?' · 📍 notice accepted':' · ⏳ notice not accepted yet'):''; }
+/* ── Tracking for every employee: punch-in → punch-out, never after the closing time ── */
+let autoBusy=false;
+async function ensureAutoTrack(emp,rec){
+  if(autoBusy) return;
+  try{
+    if(!USE_SHEETS||!trackOn()||!emp||!rec||!rec.punchIn||rec.punchOut) return;
+    const me=curRec()||emp; if(!me.trackConsent) return;
+    if(nowMins()>=trackEndMins()||mySite()) return;
+    autoBusy=true;
+    let lat=parseFloat(rec.punchIn.lat), lng=parseFloat(rec.punchIn.lng), area=rec.punchIn.area||'';
+    if(!isFinite(lat)||!isFinite(lng)){ const f=await freshFix().catch(()=>null); if(!f) return; lat=f.lat; lng=f.lng; area=await reverseGeocode(lat,lng); }
+    const id='sw-'+Date.now(), startTime=nowTime(), date=todayStr();
+    let sw={id,empId:emp.id,empName:emp.name,startTime,siteLat:lat,siteLng:lng,startArea:area,date,nextCheckAt:0,mode:'auto'};
+    const r=await api('startSiteWork',{id,empId:emp.id,name:emp.name,date,startTime,lat:lat.toFixed(6),lng:lng.toFixed(6),area,accuracy:'',photo:'',mode:'auto'});
+    const s=r&&r.already&&r.session?siteFromServer(r.session):null; if(s) sw=s;
+    swPut(sw); nativeStart(sw); startSiteTimer(); siteTick();
+  }catch(e){ /* tracking retries the next time Home opens */ }
+  finally{ autoBusy=false; }
+}
+function autoTimeUp(){
+  if(nowMins()<trackEndMins()) return;
+  swAll().filter(x=>x.mode==='auto').forEach(async sw=>{
+    try{ if(USE_SHEETS) await api('stopSiteWork',{id:sw.id,empId:sw.empId,date:sw.date,stopTime:((_D.settings||{}).trackEnd||'07:30 PM'),lat:'',lng:'',area:'',accuracy:'',photo:''}); }catch(e){ if(!/no active site work/i.test(e.message||'')) return; }
+    swDel(sw.empId); nativeStop(sw.id); updateSiteBar();
+  });
+}
+async function batteryInfo(){ try{ if(navigator.getBattery){ const b=await navigator.getBattery(); return {battery:Math.round(b.level*100),charging:!!b.charging}; } }catch(e){} return {}; }
+function trkConsentCheck(emp){
+  const ov=document.getElementById('trkOv'); if(!ov) return;
+  const me=curRec()||emp;
+  if(!USE_SHEETS||!trackOn()||me.trackConsent){ ov.classList.remove('on'); return; }
+  const t=String((_D.settings||{}).trackEnd||'07:30 PM').replace(/^0/,''); document.getElementById('trkEndTxt').textContent=t;
+  ov.classList.add('on');
+}
+async function trkAccept(){
+  const err=document.getElementById('trkErr'); err.classList.remove('show');
+  try{ await api('acceptTracking',{id:currentEmp.id}); await updateEmpLocal(currentEmp.id,{trackConsent:new Date().toISOString()}); document.getElementById('trkOv').classList.remove('on'); goHome(); }
+  catch(e){ err.textContent='Could not save: '+e.message; err.classList.add('show'); }
+}
+function trkDecline(){ document.getElementById('trkOv').classList.remove('on'); logout(); }
+async function homeTrack(emp,tok,rec,dayOff){
+  const el=document.getElementById('hmTrack'); if(!el||tok!==homeTok) return;
+  if(!trackOn()||dayOff||!(curRec()||emp).trackConsent){ el.innerHTML=''; return; }
+  const endTxt=String((_D.settings||{}).trackEnd||'07:30 PM').replace(/^0/,'');
+  const on=rec&&rec.punchIn&&!rec.punchOut&&nowMins()<trackEndMins();
+  let extra='';
+  if(on&&USE_SHEETS){ try{ const t=await api('myTrail',{empId:emp.id,date:todayStr()}); if(tok!==homeTok) return; if(t&&t.count) extra=' Today: <b>'+t.count+'</b> check'+(t.count>1?'s':'')+(t.last?' · last at '+fmt12(t.last.time)+(t.last.area?' · '+t.last.area:''):'')+'.'; }catch(e){} }
+  el.innerHTML='<div class="trk-note">📍 '+(on?'Location is being recorded while you are punched in':'Location is recorded only from punch-in to punch-out')+' — never after '+endTxt+'.'+extra+'</div>';
+}
 function empNameOf(id){ const e=(_D.employees||[]).find(x=>swKey(x.id)===swKey(id)); return e?e.name:String(id); }
 function siteFromServer(s){
   const lat=parseFloat(s.startLat), lng=parseFloat(s.startLng);
   if(!isFinite(lat)||!isFinite(lng)) return null;
-  return {id:s.id,empId:s.empId,empName:s.name||empNameOf(s.empId),startTime:s.startTime,siteLat:lat,siteLng:lng,startArea:s.startArea||'',date:s.date,nextCheckAt:0};
+  return {mode:s.mode||'site',id:s.id,empId:s.empId,empName:s.name||empNameOf(s.empId),startTime:s.startTime,siteLat:lat,siteLng:lng,startArea:s.startArea||'',date:s.date,nextCheckAt:0};
 }
 function checkSiteWork(dayOver){
   if(!currentEmp) return;
@@ -2109,7 +2404,7 @@ function checkSiteWork(dayOver){
 function updateSiteBar(){
   const bar=document.getElementById('siteWorkBar'), startBtn=document.getElementById('startSiteBtn');
   if(bar&&startBtn){
-    const sw=mySite();
+    const sw=mySiteManual();
     if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng)?'block':'none'; }
     else{
       bar.style.display='block'; startBtn.style.display='none';
@@ -2122,7 +2417,7 @@ function updateSiteBar(){
   }
   const bn=document.getElementById('siteRunBanner');
   if(bn){
-    const list=swAll();
+    const list=swAll().filter(x=>x.mode!=='auto');
     bn.style.display=list.length?'block':'none';
     if(list.length) bn.textContent='🏗️ Site work is running for '+list.map(s=>s.empName||empNameOf(s.empId)).join(', ')+(NATIVE?'. Sign in to stop it.':'. Keep this page open; sign in to stop it.');
   }
@@ -2134,6 +2429,7 @@ async function beginSiteWork(){
   if(!video||!video.srcObject){ alert('Camera not ready. Allow the camera for this site, then try again.'); return; }
   btn.disabled=true; btn.textContent='⏳ Getting exact location…';
   try{
+    { const cur=mySite(); if(cur&&cur.mode==='auto') await stopSiteWork(true); }   // a real site session replaces the all-day check
     const photo=compressPhoto(video);   // taken the moment Start is tapped
     const startTime=nowTime(), date=todayStr();
     const fix=await preciseFix(100,15000);   // wait up to 15 s for a reading accurate to 100 m
@@ -2141,7 +2437,7 @@ async function beginSiteWork(){
     btn.textContent='⏳ Starting…';
     const area=await reverseGeocode(fix.lat,fix.lng);
     const id='sw-'+Date.now();
-    let sw={id,empId:currentEmp.id,empName:currentEmp.name,startTime,siteLat:fix.lat,siteLng:fix.lng,startArea:area,startAcc:fix.acc,date,nextCheckAt:0};
+    let sw={id,empId:currentEmp.id,empName:currentEmp.name,startTime,siteLat:fix.lat,siteLng:fix.lng,startArea:area,startAcc:fix.acc,date,nextCheckAt:0,mode:'site'};
     let msg='🏗️ Site work started at '+area+' · '+String(fmt12(startTime)).toUpperCase();
     if(USE_SHEETS){
       const r=await api('startSiteWork',{id,empId:currentEmp.id,name:currentEmp.name,date,startTime,lat:fix.lat.toFixed(6),lng:fix.lng.toFixed(6),area,accuracy:fix.acc,photo});
@@ -2160,7 +2456,7 @@ function nativeRunning(sw){ try{ return NATIVE&&!!sw&&window.AndroidTracker.runn
 function nativeStart(sw){
   if(!NATIVE||!USE_SHEETS||!sw) return false;
   try{
-    return window.AndroidTracker.start(JSON.stringify({scriptUrl:SCRIPT_URL,secret:API_SECRET,siteId:String(sw.id),empId:sw.empId,
+    return window.AndroidTracker.start(JSON.stringify({endMin:sw.mode==='auto'?trackEndMins():0,scriptUrl:SCRIPT_URL,secret:API_SECRET,siteId:String(sw.id),empId:sw.empId,
       name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:SITE_RADIUS,minGap:CHECK_MIN,maxGap:CHECK_MAX,retry:RETRY_MINS}));
   }catch(e){ return false; }
 }
@@ -2175,11 +2471,13 @@ async function doSiteChecks(){
   pingBusy=true;
   try{
     let pos=null, help=null;
+    const bat=await batteryInfo();
     try{ pos=await freshFix(); }catch(e){ help=gpsHelp(e); }
     const area=pos?await reverseGeocode(pos.lat,pos.lng):'';
     for(const sw of due){
       const cur=swGet(sw.empId); if(!cur||cur.id!==sw.id) continue;   // stopped meanwhile
-      const base={id:'ping-'+Date.now()+'-'+swKey(sw.empId),siteId:sw.id,empId:sw.empId,name:sw.empName||empNameOf(sw.empId),date:sw.date,time:nowTime(),siteLat:sw.siteLat,siteLng:sw.siteLng};
+      const base={id:'ping-'+Date.now()+'-'+swKey(sw.empId),siteId:sw.id,empId:sw.empId,name:sw.empName||empNameOf(sw.empId),date:sw.date,time:nowTime(),siteLat:sw.siteLat,siteLng:sw.siteLng,mode:sw.mode||'site'};
+      if(bat.battery!==undefined){ base.battery=bat.battery; base.charging=bat.charging; }
       try{
         if(pos){
           const dist=Math.round(distMeters(sw.siteLat,sw.siteLng,pos.lat,pos.lng));
@@ -2200,6 +2498,7 @@ async function doSiteChecks(){
   }finally{ pingBusy=false; updateSiteBar(); }
 }
 function siteTick(){
+  autoTimeUp();
   const list=swAll();
   if(!list.length){ if(siteTimer){ clearInterval(siteTimer); siteTimer=null; } updateSiteBar(); return; }
   if(!pingBusy&&list.some(s=>!nativeRunning(s)&&Date.now()>=(s.nextCheckAt||0)-30000)) doSiteChecks(); else updateSiteBar();
@@ -2589,7 +2888,7 @@ async function updateQuota(empId,type,value){
 ══════════════════════════════════════════════════════════════ */
 function showLeavePanel(){
   if(!currentEmp) return;
-  document.getElementById('lvAvatar').textContent=initials(currentEmp.name);
+  fillAv('lvAvatar',curRec()||currentEmp);
   document.getElementById('lvName').textContent=currentEmp.name;
   showScreen('leavePanel');
   { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvDatesChanged(); }
@@ -2663,6 +2962,7 @@ async function submitLeave(){
    EMPLOYEES TAB
 ══════════════════════════════════════════════════════════════ */
 async function renderEmpList(){
+  renderBdayAdmin();
   loading(true,'Loading…');
   try{
     const emps=await getEmployees();loading(false);
@@ -2671,7 +2971,7 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}</div></div><div class="emp-acts">${sel}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${e.id}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -2812,7 +3112,7 @@ function initReports(){
   const rm=document.getElementById('rptMonth'); if(rm&&!rm.value) rm.value=todayStr().slice(0,7);
   const s=settingsNow();
   document.getElementById('setStart').value=s.start; document.getElementById('setGrace').value=s.grace; document.getElementById('setRate').value=s.rate||'';
-  renderDeptList(); initAlerts();
+  renderDeptList(); initAlerts(); initRules();
 }
 async function saveReportSettings(){
   const ok=document.getElementById('setOk');
@@ -2852,9 +3152,9 @@ async function loadReports(){
     });
     (d.visits||[]).forEach(v=>get(v.empId,v.name).visits++);
     (d.sites||[]).forEach(s=>{
-      const e=get(s.empId,s.name); e.siteMins+=s.minutes||0; e.checks+=s.checks||0; e.inside+=s.inside||0;
+      const e=get(s.empId,s.name); if(s.mode!=='auto') e.siteMins+=s.minutes||0; e.checks+=s.checks||0; e.inside+=s.inside||0;
       e.outside+=(s.outside||0)-(s.fake||0); e.noGps+=s.noGps||0; e.fake+=s.fake||0;
-      if(s.status==='working'&&s.date<today) e.open++;
+      if(s.status==='working'&&s.date<today&&s.mode!=='auto') e.open++;
       if((s.longestGap||0)>GAP_MINS) e.silent++;
     });
     // travel: route of every employee-day
@@ -2930,6 +3230,7 @@ function siteResult(p,showAcc){
   if(st==='NO GPS') return '<span class="viol-badge">📵 No GPS</span>';
   if(st==='FAKE GPS') return '<span class="viol-badge">🚫 Fake GPS app</span>'+(d?'<div style="color:var(--soft);font-size:11px">shows '+d+'m</div>':'');
   if(st==='YES'||st==='TRUE') return '<span style="color:var(--green);font-weight:700">✅ '+d+'m</span>'+acc;
+  if(st==='AWAY') return '<span style="color:var(--soft);font-weight:700">➜ '+d+'m from punch-in</span>'+acc;
   if(st==='ROUGH') return '<span style="color:var(--amber);font-weight:700">≈ '+d+'m</span><div style="color:var(--soft);font-size:11px">weak GPS'+(p.accuracy?' ±'+p.accuracy+'m':'')+'</div>';
   return '<span class="viol-badge">⚠️ '+d+'m</span>'+acc;
 }
@@ -2954,7 +3255,7 @@ async function refreshSiteMonitor(role){
     else{
       html+=`<div class="site-wrap"><div class="site-row site-head"><div>Employee</div><div>Status</div><div>Started</div><div>Last Check</div><div>Distance</div><div>Map</div></div>`;
       data.forEach(r=>{
-        const stEl=r.status==='working'?(today?'<span style="color:var(--orange);font-weight:700">🟡 On Site</span>':'<span class="viol-badge">⚠️ Never stopped</span>')
+        const stEl=r.status==='working'?(today?(r.mode==='auto'?'<span style="color:var(--green);font-weight:700">🟢 Tracking</span>':'<span style="color:var(--orange);font-weight:700">🟡 On Site</span>'):'<span class="viol-badge">⚠️ Never stopped</span>')
           :r.status==='done'?'<span style="color:var(--green);font-weight:700">✅ Done</span>':'—';
         const lp=r.latestPing, fx=r.lastFix||(lp&&lp.lat?lp:null), n=parseInt(r.pingCount||0,10);
         // still on site today but nothing heard for a long time: phone locked, app closed or offline
