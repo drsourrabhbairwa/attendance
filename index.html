@@ -38,7 +38,7 @@ body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh
 /* Form */
 label{display:block;font-size:12px;font-weight:700;color:var(--soft);margin:14px 0 4px;text-transform:uppercase;letter-spacing:.05em}
 label:first-child{margin-top:0}
-input[type=text],input[type=password],input[type=date],input[type=number],select,textarea{
+input[type=text],input[type=password],input[type=date],input[type=number],input[type=time],select,textarea{
   width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--rs);
   font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;
   transition:border-color .15s;-webkit-appearance:none}
@@ -297,6 +297,31 @@ textarea{min-height:72px;resize:vertical}
 .brand{background:url(data:image/png;base64,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) center/contain no-repeat;height:30px;width:170px;max-width:100%;margin:0 auto 12px}
 .hm-brand{display:inline-block;background:#fff;border-radius:20px;padding:7px 14px;margin-bottom:14px;position:relative;z-index:1}
 .hm-brand .brand{height:15px;width:88px;margin:0}
+
+.b-leave{background:var(--purpleBg);color:var(--purple)}
+.hm-dot.leave{background:var(--purpleBg);color:var(--purple)}
+.lc-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs)}
+.lc{border-collapse:collapse;font-size:11px;min-width:100%;background:var(--surface)}
+.lc th,.lc td{border:1px solid var(--border);padding:0;text-align:center;min-width:23px;height:26px}
+.lc th{background:var(--surface2);font-weight:700;color:var(--soft);line-height:1.15}
+.lc .nm{position:sticky;left:0;background:var(--surface);text-align:left;padding:0 8px;min-width:118px;font-weight:600;white-space:nowrap;z-index:1}
+.lc th.nm{background:var(--surface2)}
+.lc .off{background:var(--surface2);color:var(--border2)}
+.lc .tdy{box-shadow:inset 0 0 0 2px var(--accent)}
+.lc .CL{background:var(--purpleBg);color:var(--purple);font-weight:800}
+.lc .VL{background:var(--greenBg);color:var(--green);font-weight:800}
+.lc .ML{background:var(--redBg);color:var(--red);font-weight:800}
+.lc .pend{background:repeating-linear-gradient(45deg,var(--amberBg),var(--amberBg) 4px,#fff 4px,#fff 8px);color:var(--amber);font-weight:800}
+.lc tfoot td{background:var(--surface2);font-weight:700;color:var(--soft)}
+.lc-leg{font-size:11px;color:var(--soft);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}
+.dept-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+.dept-row:first-child{border-top:0}
+.dept-sel{width:auto !important;padding:5px 8px !important;font-size:12px !important;max-width:130px}
+.al-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:9px}
+@media(max-width:600px){.al-grid{grid-template-columns:1fr}}
+.al-chk{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer}
+.al-chk input{width:auto !important}
+.fx-card{border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:8px;background:var(--surface)}
 </style>
 </head>
 <body>
@@ -371,13 +396,15 @@ textarea{min-height:72px;resize:vertical}
     <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
     <button class="hm-tile" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">Start or stop</span></button>
     <button class="hm-tile" onclick="showLeavePanel()"><div class="ti">📋</div><b>Apply for leave</b><span id="hmLeaveSub">Balance below</span></button>
+    <button class="hm-tile" onclick="showFix()"><div class="ti">✏️</div><b>Fix a punch</b><span id="hmFixSub">Missed or wrong time</span></button>
+    <button class="hm-tile" onclick="showProfile()"><div class="ti">👤</div><b>My profile</b><span>Details &amp; password</span></button>
   </div>
   <div class="card hm-card">
     <div class="hm-h">This month</div>
     <div class="hm-stats" id="hmStats"><div class="hm-stat"><b>…</b><span>Present</span></div></div>
     <div class="hm-h2">Last 7 days</div>
     <div class="hm-strip" id="hmStrip"></div>
-    <div class="hm-leg">✓ on time · ! late · ✕ no record · – off day</div>
+    <div class="hm-leg">✓ on time · ! late · L leave · ✕ no record · – off day</div>
   </div>
   <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div></div>
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
@@ -390,7 +417,7 @@ textarea{min-height:72px;resize:vertical}
   <div class="card">
     <div class="emp-badge">
       <div class="avatar" id="pfAv">?</div>
-      <div><div style="font-weight:700;font-size:15px" id="pfHead">—</div><div style="font-size:12px;color:var(--soft)" id="pfId">—</div></div>
+      <div><div style="font-weight:700;font-size:15px" id="pfHead">—</div><div style="font-size:12px;color:var(--soft)" id="pfId">—</div><div style="font-size:11px;color:var(--soft)" id="pfDept"></div></div>
       <button class="hm-back" onclick="goHome()">🏠 Home</button>
     </div>
     <div style="font-weight:700;font-size:15px;margin:2px 0 4px">👤 My profile</div>
@@ -494,6 +521,11 @@ textarea{min-height:72px;resize:vertical}
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
     <select id="lvType"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label>From</label><input type="date" id="lvFrom" oninput="lvDatesChanged()"></div>
+      <div><label>To</label><input type="date" id="lvTo" oninput="lvDatesChanged()"></div>
+    </div>
+    <div id="lvDaysNote" style="font-size:12px;color:var(--soft);margin-top:6px"></div>
     <label>Reason</label>
     <textarea id="lvReason" rows="3" placeholder="Briefly explain the reason…"></textarea>
     <button class="btn btn-primary" onclick="submitLeave()" style="margin-top:10px">Submit Request</button>
@@ -504,6 +536,29 @@ textarea{min-height:72px;resize:vertical}
   <div id="lvHistory" style="max-height:240px;overflow-y:auto"></div>
   <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
 </div>
+</div>
+
+<!-- ══ FIX A PUNCH ══ -->
+<div id="fixScreen" class="screen">
+  <div class="card">
+    <div class="emp-badge">
+      <div class="avatar" id="fxAv">?</div>
+      <div><div style="font-weight:700;font-size:15px" id="fxHead">—</div><div style="font-size:12px;color:var(--soft)">Punch correction</div></div>
+      <button class="hm-back" onclick="goHome()">🏠 Home</button>
+    </div>
+    <div style="font-weight:700;font-size:15px;margin:2px 0 4px">✏️ Fix a punch</div>
+    <div style="font-size:12px;color:var(--soft);margin-bottom:4px">Forgot to punch, or the time is wrong? Send a request — your admin approves it and the record is corrected.</div>
+    <label>Day</label><input type="date" id="fxDate" onchange="fixShowCurrent()">
+    <label>What needs fixing</label>
+    <select id="fxField"><option value="in">Punch-in time (missed or wrong)</option><option value="out">Punch-out time (missed or wrong)</option></select>
+    <div id="fxCurrent" style="font-size:12px;color:var(--soft);margin-top:6px"></div>
+    <label>Correct time</label><input type="time" id="fxTime">
+    <label>Reason</label><textarea id="fxReason" rows="3" placeholder="e.g. Phone battery died at the site"></textarea>
+    <div class="msg msg-error" id="fxErr"></div><div class="msg msg-success" id="fxOk"></div>
+    <button class="btn btn-primary" onclick="submitFix()">Send request</button>
+  </div>
+  <div class="card"><div style="font-weight:700;font-size:14px;margin-bottom:8px">My requests</div><div id="fxHist"></div></div>
+  <button class="btn btn-outline" onclick="goHome()">← Back</button>
 </div>
 
 <!-- ══ ADMIN LOGIN ══ -->
@@ -533,6 +588,8 @@ textarea{min-height:72px;resize:vertical}
     <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
     <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
     <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
+    <button class="tab-btn" onclick="switchTab('corrections')">✏️ Corrections</button>
+    <button class="tab-btn" onclick="switchTab('log')">🧾 Log</button>
   </div>
 
   <!-- ATTENDANCE TAB -->
@@ -582,7 +639,7 @@ textarea{min-height:72px;resize:vertical}
       </div>
     </div>
     <div style="overflow-x:auto"><table class="tbl" id="monthTable" style="display:none">
-      <thead><tr><th>Employee</th><th>ID</th><th>Working Days</th><th>Present</th><th>Absent</th><th>Missed Punch-out</th><th>Meetings</th><th>Attendance%</th><th>Avg Hrs/Day</th></tr></thead>
+      <thead><tr><th>Employee</th><th>ID</th><th>Working Days</th><th>Present</th><th>Absent</th><th>On leave</th><th>Missed Punch-out</th><th>Meetings</th><th>Attendance%</th><th>Avg Hrs/Day</th></tr></thead>
       <tbody id="monthBody"></tbody>
     </table></div>
     <div class="empty" id="monthEmpty"><div class="eicon">📊</div>Select month &amp; year, then click Generate.</div>
@@ -600,6 +657,14 @@ textarea{min-height:72px;resize:vertical}
       <button onclick="loadLeavesTab()" style="background:var(--accent)">🔄 Refresh</button>
     </div>
     <div id="lvAdminList"><div class="empty"><div class="eicon">⏳</div>Click Refresh to load.</div></div>
+    <div style="margin-top:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="font-weight:700;font-size:14px">📆 Leave calendar</div>
+        <input type="month" id="lvCalMonth" onchange="renderLeaveCal()" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit">
+      </div>
+      <div class="lc-wrap" id="lvCal"></div>
+      <div class="lc-leg"><span><b style="color:var(--purple)">CL</b> casual</span><span><b style="color:var(--green)">VL</b> vacation</span><span><b style="color:var(--red)">ML</b> medical</span><span><b style="color:var(--amber)">?</b> waiting for approval</span><span>grey = Sunday / holiday</span></div>
+    </div>
     <div style="margin-top:20px;background:var(--surface2);border-radius:var(--r);padding:14px">
       <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚙️ Leave Quotas</div>
       <p style="font-size:12px;color:var(--soft);margin-bottom:12px">Days available per employee per year.</p>
@@ -658,6 +723,61 @@ textarea{min-height:72px;resize:vertical}
       </div>
       <div class="msg msg-success" id="setOk"></div>
     </div>
+    <div class="add-form" style="margin-top:14px">
+      <h3>🏢 Departments &amp; office hours</h3>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">Give a group its own start time (for example site workers 07:00 AM). Assign people on the Staff tab; everyone else uses the company hours above.</p>
+      <div id="deptList" style="margin-top:8px"></div>
+      <div class="set-row" style="margin-top:9px">
+        <div><label style="margin:0 0 4px">Department</label><input type="text" id="dpName" placeholder="Sales"></div>
+        <div><label style="margin:0 0 4px">Office start</label><input type="text" id="dpStart" placeholder="09:00 AM"></div>
+        <div><label style="margin:0 0 4px">Late after (min)</label><input type="number" id="dpGrace" min="0" placeholder="10"></div>
+        <div><button onclick="addDept()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
+      </div>
+      <div class="msg msg-error" id="dpErr"></div><div class="msg msg-success" id="dpOk"></div>
+    </div>
+    <div class="add-form" style="margin-top:14px">
+      <h3>🔔 Alerts, reminders &amp; photos</h3>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">Alerts go by e-mail to you and to the supervisor assigned to that employee. Reminders go to employees who have an e-mail in their profile.</p>
+      <div class="al-grid">
+        <div><label style="margin:0 0 4px">Your e-mail (alerts &amp; summaries)</label><input type="text" id="alMail" placeholder="you@company.com"></div>
+        <div><label style="margin:0 0 4px">Punch-out reminder at</label><input type="text" id="alOutAt" placeholder="07:30 PM"></div>
+        <div><label style="margin:0 0 4px">“Not punched in” summary at</label><input type="text" id="alSumAt" placeholder="10:30 AM"></div>
+        <div><label style="margin:0 0 4px">Site work silent alert after (min)</label><input type="number" id="alSilent" min="30" placeholder="90"></div>
+      </div>
+      <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
+      <label class="al-chk"><input type="checkbox" id="alSite"> Alert me and the supervisor when a site check fails or goes silent</label>
+      <label class="al-chk"><input type="checkbox" id="alDrive"> Save photos in Google Drive (keeps the sheet small and fast)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button onclick="saveAlerts()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save</button>
+        <button onclick="testAlertEmail()" style="padding:9px 13px;background:var(--surface);color:var(--ink);border:1.5px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">✉️ Send test e-mail</button>
+        <button onclick="turnOnReminders()" style="padding:9px 13px;background:var(--surface);color:var(--ink);border:1.5px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">⏱ Turn on reminder timer</button>
+      </div>
+      <div id="alStatus" style="font-size:12px;color:var(--soft);margin-top:10px"></div>
+      <div class="msg msg-error" id="alErr"></div><div class="msg msg-success" id="alOk"></div>
+    </div>
+  </div>
+
+  <!-- CORRECTIONS TAB -->
+  <div id="tabCorrections" class="tab-pane">
+    <div class="filter-row" style="margin-bottom:12px">
+      <select id="fxFilter" onchange="loadCorrectionsTab()" style="margin-top:0">
+        <option value="pending">⏳ Pending</option><option value="approved">✅ Approved</option><option value="rejected">❌ Rejected</option><option value="all">📋 All</option>
+      </select>
+      <button onclick="loadCorrectionsTab()">🔄 Refresh</button>
+    </div>
+    <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Employees ask for a missed or wrong punch to be fixed. Approving changes the attendance record and marks it ✏️.</div>
+    <div id="fxAdminList"><div class="empty"><div class="eicon">✏️</div>Loading…</div></div>
+  </div>
+
+  <!-- ACTIONS LOG TAB -->
+  <div id="tabLog" class="tab-pane">
+    <div class="filter-row" style="margin-bottom:8px">
+      <input type="text" id="logFilter" placeholder="Search name, action, ID…" oninput="renderAudit()" style="margin-top:0">
+      <button onclick="loadAuditTab()">🔄 Refresh</button>
+    </div>
+    <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Who changed what, newest first (last 300). The name comes from the app, so treat it as a record, not proof.</div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th><th>Details</th></tr></thead><tbody id="logBody"></tbody></table></div>
+    <div class="empty" id="logEmpty" style="display:none"><div class="eicon">🧾</div>Nothing logged yet.</div>
   </div>
 
   <!-- SITE MONITOR TAB -->
@@ -684,9 +804,10 @@ textarea{min-height:72px;resize:vertical}
       <div style="font-weight:700;font-size:14px;margin-bottom:10px">👷 Supervisors</div>
       <div class="add-form">
         <h3>➕ Add Supervisor</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
           <div><label style="margin:0 0 4px">Name</label><input type="text" id="newSupName" placeholder="Supervisor name"></div>
           <div><label style="margin:0 0 4px">Password</label><input type="password" id="newSupPass" placeholder="Set password"></div>
+          <div><label style="margin:0 0 4px">E-mail (alerts)</label><input type="text" id="newSupEmail" placeholder="optional"></div>
           <div><button onclick="addSupervisor()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
         </div>
         <div class="msg msg-error" id="supMgrErr"></div>
@@ -770,11 +891,12 @@ function loadCache(){
 /* ══════════════════════════════════════════════════════════════
    API
 ══════════════════════════════════════════════════════════════ */
+let _actor='';   // who is using the app (written to the actions log)
 async function api(action, params={}){
   const res = await fetch(SCRIPT_URL, {
     method:'POST', redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({action, secret:API_SECRET, ...params})
+    body: JSON.stringify({action, secret:API_SECRET, actor:_actor, ...params})
   });
   if(!res.ok) throw new Error('Network error '+res.status);
   const j = await res.json();
@@ -1115,6 +1237,256 @@ function setRole(role){
 }
 
 /* ══════════════════════════════════════════════════════════════
+   LEAVE DATES, CALENDAR
+══════════════════════════════════════════════════════════════ */
+function isoAdd(ds,n){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+n); return dstr(d); }
+function leaveDates(from,to){ const out=[]; if(!from) return out; to=to||from; for(let d=from,i=0;d<=to&&i<400;d=isoAdd(d,1),i++) out.push(d); return out; }
+function workDaysBetween(from,to){ return leaveDates(from,to).filter(d=>!checkDayOff(d)).length; }
+function leaveDays(l){ return l.fromDate?(+l.days||workDaysBetween(l.fromDate,l.toDate)):1; }
+function usedDays(leaves,type){ return leaves.filter(l=>l.type===type&&l.status==='approved').reduce((s,l)=>s+leaveDays(l),0); }
+function leaveOn(empId,ds,statuses){ statuses=statuses||['approved']; const e=String(empId).toUpperCase(); return (_D.leaves||[]).find(l=>l.fromDate&&statuses.includes(l.status)&&String(l.empId).toUpperCase()===e&&l.fromDate<=ds&&ds<=(l.toDate||l.fromDate))||null; }
+function leaveSpan(l){ if(!l.fromDate) return ''; const f=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); const n=leaveDays(l); return f(l.fromDate)+(l.toDate&&l.toDate!==l.fromDate?' → '+f(l.toDate):'')+' · '+n+' day'+(n>1?'s':''); }
+async function refreshMyLeaves(empId){
+  if(!USE_SHEETS) return;
+  try{ const f=await api('getLeaves',{empId}); const e=String(empId).toUpperCase(); _D.leaves=(_D.leaves||[]).filter(l=>String(l.empId).toUpperCase()!==e).concat(f||[]); saveCache(); }catch(err){}
+}
+function lvDatesChanged(){
+  const f=document.getElementById('lvFrom').value, t=document.getElementById('lvTo').value||f, n=document.getElementById('lvDaysNote');
+  if(!f){ n.textContent=''; return; }
+  if(t<f){ n.textContent='The last day is before the first day.'; return; }
+  const d=workDaysBetween(f,t), all=leaveDates(f,t).length;
+  n.textContent=d?d+' working day'+(d>1?'s':'')+(all>d?' (Sundays / holidays are not counted)':''):'Sunday / holiday only — no leave needed.';
+}
+async function renderLeaveCal(){
+  const box=document.getElementById('lvCal'); if(!box) return;
+  const inp=document.getElementById('lvCalMonth'); if(!inp.value) inp.value=todayStr().slice(0,7);
+  const[y,m]=inp.value.split('-').map(Number), dim=new Date(y,m,0).getDate(), p2=n=>String(n).padStart(2,'0'), today=todayStr();
+  const emps=await getEmployees(); if(!emps.length){ box.innerHTML='<div class="empty" style="padding:14px">No employees yet.</div>'; return; }
+  const days=[]; for(let d=1;d<=dim;d++){ const ds=y+'-'+p2(m)+'-'+p2(d); days.push({d,ds,dow:new Date(ds+'T12:00:00').getDay(),off:!!checkDayOff(ds)}); }
+  const count=days.map(()=>0);
+  let html='<table class="lc"><thead><tr><th class="nm">Employee</th>'+days.map(x=>`<th class="${x.off?'off':''}${x.ds===today?' tdy':''}">${x.d}<br><span style="font-weight:400">${'SMTWTFS'[x.dow]}</span></th>`).join('')+'</tr></thead><tbody>';
+  emps.forEach(e=>{
+    html+=`<tr><td class="nm">${e.name}</td>`+days.map((x,i)=>{
+      const a=leaveOn(e.id,x.ds), p=!a&&leaveOn(e.id,x.ds,['pending']), tip=(a||p)?` title="${(e.name+' · '+(a||p).type+' · '+leaveSpan(a||p)+(p?' (waiting)':'')).replace(/"/g,'&quot;')}"`:'';
+      if(a&&!x.off){ count[i]++; return `<td class="${a.type}${x.ds===today?' tdy':''}"${tip}>${a.type[0]}</td>`; }
+      if(p&&!x.off) return `<td class="pend${x.ds===today?' tdy':''}"${tip}>?</td>`;
+      return `<td class="${x.off?'off':''}${x.ds===today?' tdy':''}">${x.off?'·':''}</td>`;
+    }).join('')+'</tr>';
+  });
+  html+='</tbody><tfoot><tr><td class="nm">On leave</td>'+count.map(c=>`<td>${c||''}</td>`).join('')+'</tr></tfoot></table>';
+  box.innerHTML=html;
+  const tt=box.querySelector('th.tdy'); if(tt) box.scrollLeft=Math.max(0,tt.offsetLeft-150);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIX A PUNCH (employee) + CORRECTIONS (admin)
+══════════════════════════════════════════════════════════════ */
+function needSheet(msg){ if(USE_SHEETS) return false; alert((msg||'This')+' needs the Google Sheet connection.'); return true; }
+async function showFix(){
+  if(!currentEmp||needSheet('Punch corrections')) return;
+  stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); homeTok++;
+  document.getElementById('fxAv').textContent=initials(currentEmp.name); document.getElementById('fxHead').textContent=currentEmp.name;
+  const dt=document.getElementById('fxDate'); dt.max=todayStr(); dt.value=isoAdd(todayStr(),-1);
+  document.getElementById('fxTime').value=''; document.getElementById('fxReason').value='';
+  ['fxErr','fxOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
+  showScreen('fixScreen'); fixShowCurrent(); loadFixHistory();
+}
+async function fixShowCurrent(){
+  const d=document.getElementById('fxDate').value, el=document.getElementById('fxCurrent'); if(!d){ el.textContent=''; return; }
+  el.textContent='Checking that day…';
+  try{
+    const recs=await api('getAttendance',{startDate:d,endDate:d,photos:false}), eid=String(currentEmp.id).toUpperCase();
+    const r=(recs||[]).find(x=>String(x.empId).toUpperCase()===eid);
+    el.textContent=r&&r.punchIn?'Recorded: In '+fmt12(r.punchIn.time)+' · Out '+(r.punchOut?fmt12(r.punchOut.time):'— (no punch-out)'):(checkDayOff(d)?'That day is a '+checkDayOff(d).type+'.':'Nothing recorded for that day.');
+  }catch(e){ el.textContent=''; }
+}
+async function submitFix(){
+  const date=document.getElementById('fxDate').value, field=document.getElementById('fxField').value, tv=document.getElementById('fxTime').value, reason=document.getElementById('fxReason').value.trim();
+  const err=document.getElementById('fxErr'), ok=document.getElementById('fxOk'); err.classList.remove('show'); ok.classList.remove('show');
+  const bad=m=>{ err.textContent=m; err.classList.add('show'); };
+  if(!date||date>todayStr()) return bad('Pick a day that has already happened.');
+  if(!/^\d{1,2}:\d{2}$/.test(tv)) return bad('Enter the correct time.');
+  if(!reason) return bad('Please add a reason.');
+  loading(true,'Sending…');
+  try{
+    await api('submitCorrection',{id:'cr-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,date,field,time:fmt12(tv+':00'),reason,requestedAt:new Date().toISOString()});
+    loading(false); ok.textContent='✅ Sent. Your admin will review it.'; ok.classList.add('show');
+    document.getElementById('fxReason').value=''; loadFixHistory();
+  }catch(e){ loading(false); bad(e.message); }
+}
+const FX_ST={pending:['var(--amberBg)','var(--amber)'],approved:['var(--greenBg)','var(--green)'],rejected:['var(--redBg)','var(--red)']};
+const fxWhat=r=>'Punch-'+r.field+' on '+new Date(r.date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' → <b>'+fmt12(r.time).replace(/:00\s([AP]M)$/,' $1')+'</b>';
+async function loadFixHistory(){
+  const el=document.getElementById('fxHist'); if(!el) return;
+  try{
+    const l=(await api('getCorrections',{empId:currentEmp.id})||[]).sort((a,b)=>String(b.requestedAt).localeCompare(String(a.requestedAt)));
+    _D.fixPending=l.filter(x=>x.status==='pending').length;
+    el.innerHTML=l.length?l.map(r=>`<div class="fx-card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div style="font-size:13px">${fxWhat(r)}</div><span class="badge" style="background:${FX_ST[r.status][0]};color:${FX_ST[r.status][1]}">${r.status}</span></div><div style="font-size:12px;color:var(--soft);margin-top:4px">${String(r.reason||'').replace(/</g,'&lt;')}</div></div>`).join(''):'<div class="empty" style="padding:10px 0">No requests yet.</div>';
+  }catch(e){ el.innerHTML=''; }
+}
+async function fixNudge(emp,tok){
+  if(!USE_SHEETS) return;
+  try{
+    const l=await api('getCorrections',{empId:emp.id}); if(tok!==homeTok) return;
+    const p=(l||[]).filter(x=>x.status==='pending').length, s=document.getElementById('hmFixSub');
+    if(s) s.textContent=p?p+' request'+(p>1?'s':'')+' pending':'Missed or wrong time';
+  }catch(e){}
+}
+async function loadCorrectionsTab(){
+  const el=document.getElementById('fxAdminList'); if(!el) return;
+  if(!USE_SHEETS){ el.innerHTML='<div class="msg msg-error show">Corrections need the Google Sheet connection.</div>'; return; }
+  const f=document.getElementById('fxFilter').value;
+  el.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{
+    const all=(await api('getCorrections',{})||[]).sort((a,b)=>String(b.requestedAt).localeCompare(String(a.requestedAt)));
+    setTabBadge('corrections',all.filter(x=>x.status==='pending').length);
+    const l=f==='all'?all:all.filter(x=>x.status===f);
+    el.innerHTML=l.length?l.map(r=>`<div class="fx-card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>${String(r.name||r.empId).replace(/</g,'&lt;')}</b> <span style="color:var(--soft);font-size:12px">${r.empId}</span></div><span class="badge" style="background:${FX_ST[r.status][0]};color:${FX_ST[r.status][1]}">${r.status}</span></div>
+      <div style="font-size:13px;margin-top:5px">${fxWhat(r)}</div>
+      <div style="font-size:13px;margin-top:4px">“${String(r.reason||'').replace(/</g,'&lt;')}”</div>
+      <div style="font-size:11px;color:var(--soft);margin-top:4px">asked ${safeDateStr(r.requestedAt)}${r.decidedBy?' · decided by '+String(r.decidedBy).replace(/</g,'&lt;'):''}</div>
+      ${r.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideFix('${r.id}','approved')">✅ Approve &amp; correct</button><button class="btn-reject" onclick="decideFix('${r.id}','rejected')">❌ Reject</button></div>`:''}</div>`).join(''):'<div class="empty"><div class="eicon">✏️</div>'+(f==='pending'?'No pending requests.':'No records.')+'</div>';
+  }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+async function decideFix(id,status){
+  loading(true,'Updating…');
+  try{ await api('decideCorrection',{id,status,decidedAt:new Date().toISOString()}); _D.attendance=[]; loading(false); loadCorrectionsTab(); }
+  catch(e){ loading(false); alert(e.message); }
+}
+function setTabBadge(tab,n){
+  const b=document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`); if(!b) return;
+  if(!b.dataset.l) b.dataset.l=b.textContent.replace(/\s*\(\d+\)$/,'');
+  b.textContent=b.dataset.l+(n?' ('+n+')':'');
+}
+async function adminBadges(){
+  if(!USE_SHEETS) return;
+  try{
+    const[c,l]=await Promise.all([api('getCorrections',{}),api('getLeaves',{})]);
+    if(l){ _D.leaves=l; saveCache(); }
+    setTabBadge('corrections',(c||[]).filter(x=>x.status==='pending').length);
+    setTabBadge('leaves',(l||[]).filter(x=>x.status==='pending').length);
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ACTIONS LOG (admin)
+══════════════════════════════════════════════════════════════ */
+let _audit=[];
+async function loadAuditTab(){
+  const b=document.getElementById('logBody'); if(!b) return;
+  if(!USE_SHEETS){ b.innerHTML=''; document.getElementById('logEmpty').style.display='block'; return; }
+  b.innerHTML='<tr><td colspan="5" style="color:var(--soft)">⏳ Loading…</td></tr>';
+  try{ _audit=await api('getAudit',{limit:300})||[]; renderAudit(); }catch(e){ b.innerHTML='<tr><td colspan="5" style="color:var(--red)">⚠️ '+e.message+'</td></tr>'; }
+}
+function renderAudit(){
+  const q=(document.getElementById('logFilter').value||'').toLowerCase(), b=document.getElementById('logBody');
+  const l=_audit.filter(a=>!q||[a.actor,a.action,a.target,a.detail].join(' ').toLowerCase().includes(q));
+  document.getElementById('logEmpty').style.display=l.length?'none':'block';
+  const e=s=>String(s||'').replace(/</g,'&lt;');
+  b.innerHTML=l.map(a=>{ const d=new Date(a.at); const w=isNaN(d)?e(a.at):d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    return `<tr><td style="white-space:nowrap">${w}</td><td>${e(a.actor)||'—'}</td><td style="font-weight:600">${e(a.action)}</td><td>${e(a.target)}</td><td style="color:var(--soft)">${e(a.detail)}</td></tr>`; }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DEPARTMENTS (office hours per group)
+══════════════════════════════════════════════════════════════ */
+function normTime(v){ v=String(v||'').trim(); const m=v.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/); if(!m) return null; let h=+m[1], ap=m[3]?m[3].toUpperCase():null; if(!ap){ ap=h>=12?'PM':'AM'; h=h%12||12; } if(h<1||h>12||+m[2]>59) return null; return String(h).padStart(2,'0')+':'+m[2]+' '+ap; }
+function deptList(){
+  const s=_D.settings||{};
+  return Object.keys(s).filter(k=>k.indexOf('dept|')===0&&s[k]).map(k=>{ const p=String(s[k]).split('|'); return {name:k.slice(5),start:p[0],grace:p[1]===undefined||p[1]===''?null:+p[1]}; }).sort((a,b)=>a.name<b.name?-1:1);
+}
+function settingsFor(emp){
+  const base=settingsNow(), d=emp&&emp.department;
+  if(d){ const r=deptList().find(x=>x.name===d); if(r&&r.start) return Object.assign({},base,{start:r.start,grace:r.grace===null?base.grace:r.grace}); }
+  return base;
+}
+function limitFor(empId){
+  const e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase()), s=settingsFor(e);
+  return parseTimeMins(s.start)+s.grace;
+}
+function renderDeptList(){
+  const el=document.getElementById('deptList'); if(!el) return;
+  const l=deptList();
+  el.innerHTML=l.length?l.map(d=>`<div class="dept-row"><div><b>${d.name.replace(/</g,'&lt;')}</b> <span style="color:var(--soft)">· starts ${d.start} · late after ${d.grace===null?settingsNow().grace:d.grace} min · ${(_D.employees||[]).filter(e=>e.department===d.name).length} people</span></div><button class="del-btn" onclick="removeDept('${d.name.replace(/'/g,"\\'")}')">✕</button></div>`).join(''):'<div style="font-size:12px;color:var(--soft)">No departments yet — everyone follows the company hours.</div>';
+}
+async function addDept(){
+  const n=document.getElementById('dpName').value.trim(), st=document.getElementById('dpStart').value.trim(), g=document.getElementById('dpGrace').value;
+  const err=document.getElementById('dpErr'), ok=document.getElementById('dpOk'); err.classList.remove('show'); ok.classList.remove('show');
+  const bad=m=>{ err.textContent=m; err.classList.add('show'); };
+  if(!n||/[|]/.test(n)) return bad('Give the department a name (no | sign).');
+  const t=normTime(st); if(!t) return bad('Office start like 09:00 AM.');
+  const key='dept|'+n, val=t+'|'+(g===''?'':Math.max(0,parseInt(g)||0));
+  loading(true,'Saving…');
+  try{
+    if(USE_SHEETS) await api('saveSettings',{settings:{[key]:val}});
+    _D.settings=Object.assign({},_D.settings,{[key]:val}); saveCache(); loading(false);
+    ['dpName','dpStart','dpGrace'].forEach(i=>document.getElementById(i).value=''); ok.textContent='✅ Department saved. Assign people on the Staff tab.'; ok.classList.add('show'); renderDeptList();
+  }catch(e){ loading(false); bad(e.message); }
+}
+async function removeDept(n){
+  const cnt=(_D.employees||[]).filter(e=>e.department===n).length;
+  if(!confirm('Remove department "'+n+'"?'+(cnt?'\n'+cnt+' people will go back to the company hours.':''))) return;
+  loading(true,'Removing…');
+  try{ const key='dept|'+n; if(USE_SHEETS) await api('saveSettings',{settings:{[key]:''}}); _D.settings=Object.assign({},_D.settings,{[key]:''}); saveCache(); loading(false); renderDeptList(); }
+  catch(e){ loading(false); alert(e.message); }
+}
+async function setEmpDept(id,val){
+  try{ if(USE_SHEETS) await api('setDepartment',{id,department:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.department=val; saveCache(); }
+  catch(err){ alert('Error: '+err.message); renderEmpList(); }
+}
+async function setSupEmail(id,val){
+  val=(val||'').trim();
+  if(val&&!/^\S+@\S+\.\S+$/.test(val)){ alert('That e-mail does not look right.'); renderSupList(); return; }
+  try{ if(USE_SHEETS) await api('updateSupEmail',{id,email:val}); const s=(_D.supervisors||[]).find(x=>x.id===id); if(s) s.email=val; saveCache(); }
+  catch(e){ alert('Error: '+e.message); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALERTS, REMINDERS & PHOTOS (admin settings)
+══════════════════════════════════════════════════════════════ */
+function initAlerts(){
+  const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('alMail')) return;
+  g('alMail').value=s.adminEmail||''; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90;
+  g('alRem').checked=s.reminders!=='0'; g('alSite').checked=s.alertsSite!=='0'; g('alDrive').checked=s.photosToDrive!=='0';
+  refreshAlertStatus();
+}
+async function refreshAlertStatus(){
+  const el=document.getElementById('alStatus'); if(!el||!USE_SHEETS) return;
+  try{ const s=await api('alertStatus');
+    el.innerHTML='⏱ Reminder timer: <b style="color:'+(s.timer?'var(--green)':'var(--red)')+'">'+(s.timer?'on':'off')+'</b> · ✉️ E-mail: '+(s.mailLeft===null?'<b style="color:var(--red)">not allowed yet</b>':'<b>'+s.mailLeft+'</b> left today')+' · 📁 Drive folder: '+(s.drive?'<b style="color:var(--green)">ready</b>':'not used yet');
+    if(s.mailLeft===null||!s.timer) el.innerHTML+='<br>If something says off / not allowed: open the Apps Script editor, run <b>authorizeAll</b> once, then Deploy → New version.';
+  }catch(e){ el.textContent=''; }
+}
+function alertSettings(){
+  const g=id=>document.getElementById(id);
+  const mail=g('alMail').value.trim(), outAt=normTime(g('alOutAt').value), sumAt=normTime(g('alSumAt').value);
+  if(mail&&!/^\S+@\S+\.\S+$/.test(mail)) return {error:'Your e-mail does not look right.'};
+  if(!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
+  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
+}
+async function saveAlerts(quiet){
+  const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
+  const a=alertSettings(); if(a.error){ err.textContent=a.error; err.classList.add('show'); return false; }
+  loading(true,'Saving…');
+  try{ if(USE_SHEETS) await api('saveSettings',{settings:a.settings}); _D.settings=Object.assign({},_D.settings,a.settings); saveCache(); loading(false); if(!quiet){ ok.textContent='✅ Saved.'; ok.classList.add('show'); } return true; }
+  catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); return false; }
+}
+async function testAlertEmail(){
+  const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
+  if(!(await saveAlerts(true))) return;
+  loading(true,'Sending…');
+  try{ await api('testEmail',{}); loading(false); ok.textContent='✅ Test e-mail sent to '+_D.settings.adminEmail+'. Check your inbox (and spam).'; ok.classList.add('show'); refreshAlertStatus(); }
+  catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
+}
+async function turnOnReminders(){
+  const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
+  if(!(await saveAlerts(true))) return;
+  loading(true,'Starting…');
+  try{ await api('setupReminders'); loading(false); ok.textContent='✅ Reminder timer is on (checks every 10 minutes).'; ok.classList.add('show'); refreshAlertStatus(); }
+  catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
+}
+
+/* ══════════════════════════════════════════════════════════════
    ONE-TIME SIGN-IN — remembered on this phone until "Sign out"
    Stores only the employee ID and the password hash (already kept on the phone); if the
    password is changed in the admin panel, or the employee is removed, the next refresh signs out.
@@ -1124,7 +1496,7 @@ function meSave(emp){ try{ localStorage.setItem(ME_KEY,JSON.stringify({id:emp.id
 function meLoad(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||'null'); }catch(e){ return null; } }
 function meClear(){ try{ localStorage.removeItem(ME_KEY); }catch(e){} }
 function meMatch(){ const me=meLoad(); if(!me) return null; return (_D.employees||[]).find(e=>String(e.id)===String(me.id)&&e.passHash===me.ph)||null; }
-function autoLogin(){ const emp=meMatch(); if(!emp||currentEmp) return !!currentEmp; currentEmp=emp; loadHome(); return true; }
+function autoLogin(){ const emp=meMatch(); if(!emp||currentEmp) return !!currentEmp; currentEmp=emp; _actor=emp.id+' ('+emp.name+')'; loadHome(); return true; }
 function syncLogin(){   // after fresh data arrives from the sheet
   if(!meLoad()) return;
   if(currentEmp){
@@ -1168,13 +1540,14 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
   },30000);
-  homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok);
+  homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok);
 }
 function renderHomeToday(rec,dayOff){
-  const set=settingsNow(), limit=parseTimeMins(set.start)+set.grace;
+  const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
   const btn=(l,c)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch()">${l}</button>`;
   let ico='⏰', title='', sub='', extra='', b='';
   if(dayOff){ ico=dayOff.icon; title=dayOff.type==='Sunday'?'Today is Sunday':'Public holiday'; sub=dayOff.name+' · no attendance needed'; }
+  else if(!(rec&&rec.punchIn)&&leaveOn(curRec().id,todayStr())){ const lv=leaveOn(curRec().id,todayStr()); ico='🌴'; title='On approved leave'; sub=lv.type+' · '+leaveSpan(lv); b=btn('Open attendance','btn-outline'); }
   else if(rec&&rec.punchIn&&rec.punchOut){
     const th=calcTotalHrs(rec); ico='✅'; title='Day complete';
     sub='In '+fmt12(rec.punchIn.time)+' · Out '+fmt12(rec.punchOut.time);
@@ -1204,7 +1577,7 @@ async function homeStats(emp,tok){
   const eid=String(emp.id).toUpperCase();
   const mine=recs.filter(r=>String(r.empId).toUpperCase()===eid&&r.punchIn);
   const by={}; mine.forEach(r=>by[r.date]=r);
-  const set=settingsNow(), limit=parseTimeMins(set.start)+set.grace;
+  const set=settingsFor((_D.employees||[]).find(e=>String(e.id)===String(emp.id))||emp), limit=parseTimeMins(set.start)+set.grace;
   const isLate=r=>parseTimeMins(r.punchIn.time)>limit;
   const mon=mine.filter(r=>String(r.date).slice(0,7)===t.slice(0,7));
   let late=0, full=0, mins=0;
@@ -1214,8 +1587,8 @@ async function homeStats(emp,tok){
   let strip='';
   for(let i=6;i>=0;i--){
     const d=new Date(today.getTime()-i*86400000), ds=dstr(d), r=by[ds], off=checkDayOff(ds);
-    const cls=r?(isLate(r)?'late':'ok'):off?'off':ds===t?'now':'miss';
-    const sym={ok:'✓',late:'!',off:'–',now:'•',miss:'✕'}[cls];
+    const cls=r?(isLate(r)?'late':'ok'):leaveOn(emp.id,ds)?'leave':off?'off':ds===t?'now':'miss';
+    const sym={ok:'✓',late:'!',leave:'L',off:'–',now:'•',miss:'✕'}[cls];
     strip+=`<div class="hm-day">${d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,3)}<div class="hm-dot ${cls}">${sym}</div>${d.getDate()}</div>`;
   }
   setHtml('hmStrip',strip);
@@ -1227,11 +1600,12 @@ async function homeStats(emp,tok){
 }
 async function homeLeave(emp,tok){
   try{
+    await refreshMyLeaves(emp.id);
     const[leaves,quotas]=await Promise.all([getLeaves(emp.id),getQuotas()]);
     if(tok!==homeTok) return;
     const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
     setHtml('hmLeave',Object.keys(LEAVE_TYPES).map(type=>{
-      const used=leaves.filter(l=>l.type===type&&l.status==='approved').length, total=q[type]||DEFAULT_QUOTA[type];
+      const used=usedDays(leaves,type), total=q[type]||DEFAULT_QUOTA[type];
       const rem=Math.max(0,total-used), pct=total>0?Math.min(used/total*100,100):0;
       return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${rem}<span style="font-size:12px;color:var(--soft)">/${total}</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${used} used</div></div>`;
     }).join(''));
@@ -1252,6 +1626,7 @@ function showProfile(){
   const r=curRec();
   document.getElementById('pfAv').textContent=initials(r.name);
   document.getElementById('pfHead').textContent=r.name; document.getElementById('pfId').textContent=r.id;
+  { const s=settingsFor(r); document.getElementById('pfDept').textContent=(r.department?'Department: '+r.department+' · ':'')+'Office starts '+s.start+' (late after '+s.grace+' min)'; }
   Object.keys(PF_MAP).forEach(k=>document.getElementById(k).value=r[PF_MAP[k]]||'');
   ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
   ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
@@ -1293,8 +1668,13 @@ async function changeMyPassword(){
     pfMsg('pwOk','✅ Password changed. Use the new one next time you sign in on another phone.');
   }catch(e){ loading(false); pfMsg('pwErr','Error: '+e.message); }
 }
-async function homeNudge(emp,tok){
+async function homeNudge(emp,tok,rec,dayOff){
   const r=(_D.employees||[]).find(e=>String(e.id)===String(emp.id))||emp, el=document.getElementById('hmNote'); if(!el) return;
+  if(!dayOff&&!leaveOn(r.id,todayStr())){
+    const set=settingsFor(r), nowM=nowMins(), outAt=parseTimeMins((_D.settings||{}).remindOutAt||'07:30 PM');
+    if(!(rec&&rec.punchIn)&&nowM>=parseTimeMins(set.start)+set.grace){ el.innerHTML='<div class="pf-note" onclick="openPunch()">⏰ It is past '+set.start+' — you have not punched in yet. Tap to punch in.</div>'; return; }
+    if(rec&&rec.punchIn&&!rec.punchOut&&nowM>=outAt){ el.innerHTML='<div class="pf-note" onclick="openPunch()">🔵 Do not forget to punch out before you leave. Tap here.</div>'; return; }
+  }
   let def=false; try{ def=(await hashPass(String(r.id).toUpperCase()))===r.passHash; }catch(e){}
   if(tok!==homeTok) return;
   el.innerHTML=def?'<div class="pf-note" onclick="showProfile()">🔐 You are using the default password — tap to change it</div>'
@@ -1324,7 +1704,7 @@ async function handleLogin(){
     let emp=emps.find(e=>String(e.id).toUpperCase()===id);
     if(!emp&&/^\d+$/.test(id)) emp=emps.find(e=>/^\d+$/.test(String(e.id))&&Number(e.id)===Number(id));
     if(!emp||!(await verifyPass(pass,emp.passHash))){loading(false);err.classList.add('show');return;}
-    err.classList.remove('show'); currentEmp=emp; meSave(emp); loading(false); await loadHome();
+    err.classList.remove('show'); currentEmp=emp; _actor=emp.id+' ('+emp.name+')'; meSave(emp); loading(false); await loadHome();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
 
@@ -1624,7 +2004,7 @@ async function captureAndMark(){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -1920,12 +2300,12 @@ async function handleAdminLogin(){
   try{
     const cr=await getAdminStore();
     if(!cr||u!==cr.username||!(await verifyPass(p,cr.passHash))){loading(false);err.classList.add('show');return;}
-    err.classList.remove('show');
+    err.classList.remove('show'); _actor='Admin ('+u+')';
     document.getElementById('adminDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    loading(false); switchTab('attendance'); showScreen('adminScreen');
+    loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function adminLogout(){ ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+function adminLogout(){ _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -1940,19 +2320,19 @@ async function handleSupLogin(){
     if(USE_SHEETS&&!(_D.supervisors&&_D.supervisors.length)){try{const f=await api('getSupervisors');if(f){_D.supervisors=f;saveCache();}}catch(e){}}
     const sup=(_D.supervisors||[]).find(s=>s.name===name);
     if(!sup||!(await verifyPass(pass,sup.passHash))){loading(false);err.classList.add('show');return;}
-    err.classList.remove('show'); currentSupervisor=sup; loading(false);
+    err.classList.remove('show'); currentSupervisor=sup; _actor='Supervisor '+sup.name; loading(false);
     document.getElementById('supLabel').textContent=sup.name;
     document.getElementById('supDateLbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     showScreen('supervisorScreen'); refreshSiteMonitor('sup');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function supLogout(){ currentSupervisor=null; showScreen('loginScreen'); }
+function supLogout(){ currentSupervisor=null; _actor=''; showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports'];
+  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports','corrections','log'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
@@ -1963,6 +2343,8 @@ function switchTab(tab){
   if(tab==='employees')  renderEmpList();
   if(tab==='holidays')   renderHolList();
   if(tab==='reports') initReports();
+  if(tab==='corrections') loadCorrectionsTab();
+  if(tab==='log') loadAuditTab();
   if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();const sm=document.getElementById('siteMonth');if(sm&&!sm.value)sm.value=todayStr().slice(0,7);refreshSiteMonitor('admin');renderSupList();}
 }
 
@@ -1982,7 +2364,7 @@ async function loadAttTab(){
     document.getElementById('sTotal').textContent=emps.length;
     document.getElementById('sPresent').textContent=present;
     document.getElementById('sPartial').textContent=partial+meetOut;
-    document.getElementById('sAbsent').textContent=emps.filter(e=>!presIds.includes(String(e.id).toUpperCase())).length;
+    document.getElementById('sAbsent').textContent=emps.filter(e=>!presIds.includes(String(e.id).toUpperCase())&&!leaveOn(e.id,fd)).length;
     const dayOff=checkDayOff(fd);
     const ban=document.getElementById('holBanner');
     if(dayOff){ban.textContent=dayOff.icon+' '+fd+' is a '+dayOff.type+': '+dayOff.name;ban.style.display='block';}
@@ -1996,14 +2378,14 @@ async function loadAttTab(){
     tbody.innerHTML=rows.map(r=>{
       const hasPi=r.punchIn&&r.punchIn.time,hasPo=r.punchOut&&r.punchOut.time;
       const am=getActiveMeeting(r),mCnt=(r.meetings||[]).length;
-      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">Out/Meeting</span>':hasPi?'<span class="badge b-partial">In Progress</span>':'<span class="badge b-absent">Absent</span>';
+      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">Out/Meeting</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':'<span class="badge b-absent">Absent</span>';
       const hrs=(hasPi&&hasPo)?(calcTotalHrs(r)||'—'):'—';
       const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${r.punchIn.photo}" onclick="openModal('${esc(r.name)}','Punch In','${r.punchIn.photo}','${r.punchIn.lat||''}','${r.punchIn.lng||''}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">🚗 ${mCnt}</button>`:'—';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${r.date}')">🗺️ Route</button>`:'—';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${r.name}</td><td style="color:var(--soft)">${r.empId}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time):'—'}</td><td>${hasPo?fmt12(r.punchOut.time):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${r.name}</td><td style="color:var(--soft)">${r.empId}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':''):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':''):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
@@ -2062,16 +2444,16 @@ async function generateReport(){
     for(let d=1;d<=dim;d++){const ds=mStr+'-'+pad(d);if(checkDayOff(ds))oDays++;else if(ds<=today){wDays++;counted.push(ds);}}
     const byKey={};allRecs.forEach(r=>{byKey[String(r.empId).toUpperCase()+'|'+r.date]=r;});
     const stats=emps.map(emp=>{
-      let present=0,missed=0,complete=0,totalMins=0,totalMeet=0;
+      let present=0,missed=0,complete=0,totalMins=0,totalMeet=0,leave=0;
       counted.forEach(ds=>{
         const rec=byKey[String(emp.id).toUpperCase()+'|'+ds];
-        if(!rec||!rec.punchIn) return;
+        if(!rec||!rec.punchIn){ if(leaveOn(emp.id,ds)) leave++; return; }
         present++;totalMeet+=(rec.meetings||[]).length;
         if(rec.punchOut){complete++;totalMins+=officeMins(rec);}
         else if(ds<today) missed++;
       });
       // Average only over days with both punches, so a forgotten punch-out doesn't count as a 0-hour day
-      return{name:emp.name,id:emp.id,present,absent:wDays-present,missed,pct:wDays>0?Math.round(present/wDays*100):0,avgH:complete>0?(totalMins/60/complete).toFixed(1):'0',totalMeet};
+      return{name:emp.name,id:emp.id,present,leave,absent:Math.max(0,wDays-present-leave),missed,pct:wDays-leave>0?Math.round(present/(wDays-leave)*100):0,avgH:complete>0?(totalMins/60/complete).toFixed(1):'0',totalMeet};
     });
     const inProgress=mStr===today.slice(0,7);
     document.getElementById('mDays').textContent=wDays;
@@ -2083,7 +2465,7 @@ async function generateReport(){
     document.getElementById('monthTable').style.display='';
     document.getElementById('monthBody').innerHTML=stats.map(e=>{
       const col=e.pct>=90?'var(--green)':e.pct>=75?'var(--amber)':'var(--red)';
-      return`<tr><td style="font-weight:600">${e.name}</td><td style="color:var(--soft)">${e.id}</td><td>${wDays}</td><td style="color:var(--green)">${e.present}</td><td style="color:var(--red)">${e.absent}</td><td${e.missed?' style="color:var(--amber);font-weight:700"':''}>${e.missed}</td><td>${e.totalMeet}</td><td><strong style="color:${col}">${e.pct}%</strong></td><td>${e.avgH}h</td></tr>`;
+      return`<tr><td style="font-weight:600">${e.name}</td><td style="color:var(--soft)">${e.id}</td><td>${wDays}</td><td style="color:var(--green)">${e.present}</td><td style="color:var(--red)">${e.absent}</td><td style="color:var(--purple)">${e.leave||0}</td><td${e.missed?' style="color:var(--amber);font-weight:700"':''}>${e.missed}</td><td>${e.totalMeet}</td><td><strong style="color:${col}">${e.pct}%</strong></td><td>${e.avgH}h</td></tr>`;
     }).join('');
     window._lastReport={wDays,oDays,stats,month,year,inProgress,today};
   }catch(e){loading(false);alert('Error: '+e.message);}
@@ -2092,9 +2474,9 @@ async function generateReport(){
 function exportMonthlyCSV(){
   const r=window._lastReport;if(!r){alert('Generate the report first.');return;}
   const mName=new Date(r.year,r.month-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
-  const hdr=['Name','ID','Working Days','Present','Absent','Missed Punch-out','Meetings','Attendance%','Avg Hrs/Day'];
+  const hdr=['Name','ID','Working Days','Present','Absent','On leave','Missed Punch-out','Meetings','Attendance%','Avg Hrs/Day'];
   const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const rows=r.stats.map(e=>[e.name,e.id,r.wDays,e.present,e.absent,e.missed,e.totalMeet,e.pct+'%',e.avgH+'h'].map(q).join(','));
+  const rows=r.stats.map(e=>[e.name,e.id,r.wDays,e.present,e.absent,e.leave||0,e.missed,e.totalMeet,e.pct+'%',e.avgH+'h'].map(q).join(','));
   const title='Month: '+mName+(r.inProgress?' (up to '+r.today+')':'');
   const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[q(title),hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'monthly-'+r.year+'-'+String(r.month).padStart(2,'0')+'.csv'});
   a.click();
@@ -2143,11 +2525,12 @@ async function loadLeavesTab(){
             </div>
             <span class="badge" style="background:${stBg[l.status]};color:${stC[l.status]}">${l.status}</span>
           </div>
-          <div style="font-size:12px;color:var(--soft);margin-top:3px">${l.empId} · ${safeDateStr(l.requestedAt)}</div>
+          <div style="font-size:12px;color:var(--soft);margin-top:3px">${l.empId} · ${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
           <div style="font-size:13px;color:var(--ink);margin-top:6px">"${l.reason||'—'}"</div>
           ${l.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideLeave('${l.id}','approved')">✅ Approve</button><button class="btn-reject" onclick="decideLeave('${l.id}','rejected')">❌ Reject</button></div>`:''}
         </div>`).join('');
     }
+    renderLeaveCal();
     if(qSec){
       if(!emps.length){qSec.innerHTML='<div style="color:var(--soft);font-size:13px">No employees yet.</div>';return;}
       qSec.innerHTML=`<div class="quota-grid" style="border-top:none">
@@ -2171,7 +2554,7 @@ async function decideLeave(id,status){
     const idx=(_D.leaves||[]).findIndex(l=>l.id===id);
     if(idx!==-1){_D.leaves[idx].status=status;_D.leaves[idx].decidedAt=decidedAt;saveCache();}
     else{_D.leaves=_D.leaves||[];} // force refresh on next load
-    loading(false);loadLeavesTab();
+    loading(false);loadLeavesTab();adminBadges();
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -2190,6 +2573,8 @@ function showLeavePanel(){
   document.getElementById('lvAvatar').textContent=initials(currentEmp.name);
   document.getElementById('lvName').textContent=currentEmp.name;
   showScreen('leavePanel');
+  { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvDatesChanged(); }
+  refreshMyLeaves(currentEmp.id).then(()=>{ loadLeaveBalance(); loadLeaveHistory(); });
   loadLeaveBalance();
   loadLeaveHistory();
 }
@@ -2200,7 +2585,7 @@ async function loadLeaveBalance(){
     const[leaves,quotas]=await Promise.all([getLeaves(currentEmp.id),getQuotas()]);
     const q=quotas[currentEmp.id.toUpperCase()]||DEFAULT_QUOTA;
     document.getElementById('lvBalance').innerHTML=Object.keys(LEAVE_TYPES).map(type=>{
-      const used=leaves.filter(l=>l.type===type&&l.status==='approved').length;
+      const used=usedDays(leaves,type);
       const total=q[type]||DEFAULT_QUOTA[type];
       const rem=Math.max(0,total-used);
       const pct=total>0?Math.min((used/total)*100,100):0;
@@ -2222,7 +2607,7 @@ async function loadLeaveHistory(){
         <span style="font-weight:700;font-size:13px;color:${LT_COLOR[l.type]}">${l.type} — ${LEAVE_TYPES[l.type]||l.type}</span>
         <span class="badge" style="background:${stBg[l.status]};color:${stC[l.status]}">${l.status}</span>
       </div>
-      <div style="font-size:12px;color:var(--soft);margin-top:3px">${safeDateStr(l.requestedAt)}</div>
+      <div style="font-size:12px;color:var(--soft);margin-top:3px">${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
       <div style="font-size:13px;margin-top:5px">${l.reason}</div>
     </div>`).join('');
   }catch(e){}
@@ -2233,15 +2618,24 @@ async function submitLeave(){
   const reason=document.getElementById('lvReason').value.trim();
   const err=document.getElementById('lvErr'),ok=document.getElementById('lvOk');
   err.classList.remove('show');ok.classList.remove('show');
+  const from=document.getElementById('lvFrom').value, to=document.getElementById('lvTo').value||from;
+  if(!from){err.textContent='Pick the first day of your leave.';err.classList.add('show');return;}
+  if(to<from){err.textContent='The last day is before the first day.';err.classList.add('show');return;}
+  const days=workDaysBetween(from,to);
+  if(!days){err.textContent='Those days are Sunday or a holiday — no leave needed.';err.classList.add('show');return;}
   if(!reason){err.textContent='Please add a reason.';err.classList.add('show');return;}
+  await refreshMyLeaves(currentEmp.id);
+  if((_D.leaves||[]).some(l=>l.fromDate&&String(l.empId).toUpperCase()===String(currentEmp.id).toUpperCase()&&['pending','approved'].includes(l.status)&&from<=(l.toDate||l.fromDate)&&to>=l.fromDate)){err.textContent='You already have a leave request covering some of those days.';err.classList.add('show');return;}
+  { const quotas=await getQuotas(), q=quotas[currentEmp.id.toUpperCase()]||DEFAULT_QUOTA, left=(q[type]!==undefined?q[type]:DEFAULT_QUOTA[type])-usedDays(await getLeaves(currentEmp.id),type);
+    if(days>left){err.textContent='You have only '+Math.max(0,left)+' '+type+' day'+(left===1?'':'s')+' left. Pick another type, or ask your admin to raise your quota.';err.classList.add('show');return;} }
   loading(true,'Submitting…');
   try{
-    const leave={id:'lv-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,type,reason,status:'pending',requestedAt:new Date().toISOString(),decidedAt:''};
+    const leave={id:'lv-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,type,reason,status:'pending',requestedAt:new Date().toISOString(),decidedAt:'',fromDate:from,toDate:to,days};
     if(USE_SHEETS) await api('submitLeave',leave);
     else{const all=JSON.parse(localStorage.getItem('att_leaves')||'[]');all.push(leave);localStorage.setItem('att_leaves',JSON.stringify(all));}
     (_D.leaves=_D.leaves||[]).push(leave); saveCache();
     document.getElementById('lvReason').value='';
-    loading(false);ok.textContent='✅ Leave request submitted!';ok.classList.add('show');
+    loading(false);ok.textContent='✅ Leave request submitted for '+days+' working day'+(days>1?'s':'')+'.';ok.classList.add('show');
     loadLeaveBalance();loadLeaveHistory();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
@@ -2255,8 +2649,10 @@ async function renderEmpList(){
     const emps=await getEmployees();loading(false);
     const list=document.getElementById('empList');
     if(!emps.length){list.innerHTML='<div class="empty"><div class="eicon">👥</div>No employees yet.</div>';return;}
+    const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
-      return `<div class="list-item"><div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}</div></div><div class="emp-acts"><button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
+      const sel=depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
+      return `<div class="list-item"><div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}</div></div><div class="emp-acts">${sel}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -2397,6 +2793,7 @@ function initReports(){
   const rm=document.getElementById('rptMonth'); if(rm&&!rm.value) rm.value=todayStr().slice(0,7);
   const s=settingsNow();
   document.getElementById('setStart').value=s.start; document.getElementById('setGrace').value=s.grace; document.getElementById('setRate').value=s.rate||'';
+  renderDeptList(); initAlerts();
 }
 async function saveReportSettings(){
   const ok=document.getElementById('setOk');
@@ -2431,7 +2828,7 @@ async function loadReports(){
     (d.attendance||[]).forEach(r=>{
       const e=get(r.empId,r.name); if(!r.punchIn) return;
       e.days++; if(perDay[r.date]) perDay[r.date].present++;
-      if(parseTimeMins(r.punchIn.time)>startM){ e.late++; if(perDay[r.date]) perDay[r.date].late++; }
+      if(parseTimeMins(r.punchIn.time)>limitFor(r.empId)){ e.late++; if(perDay[r.date]) perDay[r.date].late++; }
       if(r.punchOut){ e.full++; e.mins+=officeMins(r); } else if(r.date<today) e.noOut++;
     });
     (d.visits||[]).forEach(v=>get(v.empId,v.name).visits++);
@@ -2453,7 +2850,8 @@ async function loadReports(){
     const wd=Object.keys(perDay).filter(dt=>dt<=today&&!checkDayOff(dt)).length;
     const totVisits=list.reduce((s,e)=>s+e.visits,0), totKm=list.reduce((s,e)=>s+e.km,0);
     const active=list.filter(e=>e.days||e.checks||e.visits), avgScore=active.length?Math.round(active.reduce((s,e)=>s+honesty(e),0)/active.length):null;
-    const attPct=wd&&list.length?Math.round(100*list.reduce((s,e)=>s+e.days,0)/(wd*list.length)):null;
+    const lvDays=list.reduce((s,e)=>s+Object.keys(perDay).filter(dt=>dt<=today&&!checkDayOff(dt)&&leaveOn(e.id,dt)).length,0);
+    const attPct=wd&&list.length&&(wd*list.length-lvDays)>0?Math.round(100*list.reduce((s,e)=>s+e.days,0)/(wd*list.length-lvDays)):null;
     let html=`<div class="stats-grid">
       <div class="stat"><div class="n c-green">${attPct===null?'—':attPct+'%'}</div><div class="l">Attendance (${wd} working days)</div></div>
       <div class="stat"><div class="n c-purple">${totVisits}</div><div class="l">Customer visits</div></div>
@@ -2465,7 +2863,7 @@ async function loadReports(){
       list.map((e,i)=>{ const pct=e.checks?Math.round(100*e.inside/e.checks)+'%':'—', has=e.days||e.checks||e.visits;
         return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days}${e.noOut?` <span style="color:var(--red);font-size:11px">(${e.noOut} no out)</span>`:''}</td><td>${e.late?`<span style="color:var(--amber);font-weight:700">${e.late}</span>`:0}</td><td>${e.full?fmtMins(e.mins/e.full):'—'}</td><td>${e.visits}</td><td>${e.km.toFixed(1)}</td><td>${set.rate?'₹'+Math.round(e.km*set.rate):'—'}</td><td>${e.siteMins?fmtMins(e.siteMins):'—'}</td><td>${pct}</td><td>${has?`<button onclick="showHonesty(${i})" style="border:none;background:none;cursor:pointer;padding:0">${sc(honesty(e))}</button>`:'—'}</td></tr>`; }).join('')
     }</tbody></table></div>
-    <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after ${set.start} + ${set.grace} min. Km = straight line between recorded places. Tap a score to see how it was worked out.</div>`;
+    <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after the office start + grace (${set.start} + ${set.grace} min, or the department's own hours). Approved leave days are left out of the attendance %. Km = straight line between recorded places. Tap a score to see how it was worked out.</div>`;
     el.innerHTML=html;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
@@ -2635,8 +3033,11 @@ async function addSupervisor(){
   loading(true,'Adding…');
   try{
     const id='sup-'+Date.now(),ph=await hashPass(pass);
-    if(USE_SHEETS) await api('addSupervisor',{id,name,passHash:ph,assignedEmp:''});
-    (_D.supervisors=_D.supervisors||[]).push({id,name,passHash:ph,assignedEmp:''});
+    const email=(document.getElementById('newSupEmail').value||'').trim();
+    if(email&&!/^\S+@\S+\.\S+$/.test(email)){ loading(false); err.textContent='That e-mail does not look right.'; err.classList.add('show'); return; }
+    if(USE_SHEETS) await api('addSupervisor',{id,name,passHash:ph,assignedEmp:'',email});
+    (_D.supervisors=_D.supervisors||[]).push({id,name,passHash:ph,assignedEmp:'',email});
+    document.getElementById('newSupEmail').value='';
     saveCache();
     document.getElementById('newSupName').value='';document.getElementById('newSupPass').value='';
     loading(false);ok.textContent='✅ '+name+' added as supervisor.';ok.classList.add('show');renderSupList();
@@ -2667,6 +3068,7 @@ function renderSupList(){
   el.innerHTML=sups.map(s=>{
     const assigned=(s.assignedEmp||'').split(',').map(e=>e.trim()).filter(Boolean);
     return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${s.name}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${s.id}')">✕</button></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:12px">📧</span><input type="text" value="${(s.email||'').replace(/"/g,'&quot;')}" placeholder="E-mail for alerts (optional)" onchange="setSupEmail('${s.id}',this.value)" style="margin:0;padding:6px 9px;font-size:12px"></div>
       <details><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none">▼ Assign Employees</summary>
       <div style="margin-top:8px;max-height:160px;overflow-y:auto">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${s.id}','${emp.id}',this.checked)" style="width:14px;height:14px"> ${emp.name} <span style="color:var(--soft);font-size:11px">${emp.id}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
       </details></div>`;
