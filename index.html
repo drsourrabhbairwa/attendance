@@ -1541,6 +1541,25 @@ async function loadHome(){
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
   },30000);
   homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok);
+  // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
+  if(!dayOff&&USE_SHEETS){
+    const fresh=await freshRecordToday(emp.id);
+    if(fresh!==undefined&&tok===homeTok){
+      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.edited||'')):'';
+      if(sig(fresh)!==sig(rec)){ rec=fresh; checkSiteWork(!!(rec&&rec.punchOut)); renderHomeToday(rec,dayOff); homeNudge(emp,tok,rec,dayOff); }
+    }
+  }
+}
+async function freshRecordToday(empId){
+  const eid=String(empId).toUpperCase(), t=todayStr(), ck='pc_'+eid+'_'+t;
+  try{
+    const recs=(await api('getAttendance',{startDate:t,endDate:t}))||[];
+    const rec=recs.find(r=>String(r.empId).toUpperCase()===eid)||null;
+    _D.attendance=(_D.attendance||[]).filter(r=>!(String(r.empId).toUpperCase()===eid&&r.date===t)).concat(rec?[rec]:[]);
+    saveCache();
+    if(rec) lsSet(ck,rec);
+    return rec;
+  }catch(e){ return undefined; }
 }
 function renderHomeToday(rec,dayOff){
   const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
