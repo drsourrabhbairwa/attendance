@@ -3027,7 +3027,7 @@ async function handleAdminLogin(){
     } else {
       let r;
       try{ r=await api('login',{kind:'manager',username:u,passHash:await hashPass(p)}); }
-      catch(e){ loading(false); err.textContent=/wait|switched off|Too many/i.test(e.message)?e.message:'Incorrect username or password.'; err.classList.add('show'); return; }
+      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect username or password.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[]};
       const fresh=await api('getAll',{date:todayStr()});     // only what this person may see
       Object.assign(_D,{employees:[],attendance:[],leaves:[],quotas:{},supervisors:[]},fresh,{loadedAt:Date.now()});
@@ -3063,7 +3063,7 @@ async function handleSupLogin(){
     if(USE_SHEETS){
       let r;
       try{ r=await api('login',{kind:'supervisor',name,passHash:await hashPass(pass)}); }
-      catch(e){ loading(false); err.textContent=/wait|Too many/i.test(e.message)?e.message:'Incorrect supervisor credentials.'; err.classList.add('show'); return; }
+      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect supervisor credentials.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:'V',name:r.name,id:r.id,departments:[]};
       sup={id:r.id,name:r.name,assignedEmp:r.assignedEmp||'',email:r.email||''};
     } else {
