@@ -529,6 +529,18 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .hm-hero{background:linear-gradient(135deg,rgba(10,46,50,.86) 0%,rgba(14,70,68,.62) 55%,rgba(14,70,68,.30) 100%),url(img/hero-site.webp) center/cover no-repeat #0E3C3E}
 .hm-hero,.hm-hero *{text-shadow:0 1px 6px rgba(0,0,0,.35)}
 .eimg{display:block;width:92px;height:92px;object-fit:contain;margin:0 auto 6px;opacity:.92;border-radius:18px}
+
+/* ── Home: only the buttons that matter right now ── */
+.hm-grid.n0{display:none}
+.hm-grid.n1{grid-template-columns:1fr}
+.hm-grid.n1 .hm-tile{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;align-content:center;min-height:80px;text-align:left}
+.hm-grid.n1 .hm-tile .ti{grid-row:1/3;margin:0;font-size:32px}
+.hm-grid.n1 .hm-tile b{align-self:end}.hm-grid.n1 .hm-tile span{align-self:start}
+.hm-tile.live{border-color:#1B7F6B;box-shadow:0 0 0 2px rgba(27,127,107,.35)}
+.hm-links{display:flex;flex-wrap:wrap;gap:8px;margin:2px 10px 14px}
+.hm-links button{flex:1 1 auto;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.55);color:var(--ink,#16302F);font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer}
+.hm-links button small{color:#B45309;font-weight:700}
+.hm-links button small:empty{display:none}
 </style>
 </head>
 <body>
@@ -602,14 +614,8 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
   <div id="hmTrack"></div>
   <div id="hmSafety"></div>
   <button class="sos-open" onclick="openSOS()"><span>🚨</span><div><b>Emergency</b><small>Hurt, in danger or need help? Tap here</small></div></button>
-  <div class="hm-grid">
-    <button class="hm-tile" onclick="openPunch()"><div class="ti">📸</div><b>Attendance</b><span>Punch in · out · meeting</span></button>
-    <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
-    <button class="hm-tile" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">Start or stop</span></button>
-    <button class="hm-tile" onclick="showLeavePanel()"><div class="ti">📋</div><b>Apply for leave</b><span id="hmLeaveSub">Balance below</span></button>
-    <button class="hm-tile" onclick="showFix()"><div class="ti">✏️</div><b>Fix a punch</b><span id="hmFixSub">Missed or wrong time</span></button>
-    <button class="hm-tile" onclick="showProfile()"><div class="ti">👤</div><b>My profile</b><span>Details &amp; password</span></button>
-  </div>
+  <div class="hm-grid" id="hmActs"></div>
+  <div class="hm-links" id="hmLinks"></div>
   <div class="card hm-card">
     <div class="hm-h">This month</div>
     <div class="hm-stats" id="hmStats"><div class="hm-stat"><b>…</b><span>Present</span></div></div>
@@ -926,11 +932,12 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <div class="add-form">
       <h3>➕ Add Employee</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Default password = Employee ID</p>
-      <div class="add-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
+      <div class="add-grid" style="display:grid;grid-template-columns:repeat(5,1fr) auto;gap:7px;align-items:end;margin-top:9px">
         <div><label style="margin:0 0 4px">ID</label><input type="text" id="nEmpId" placeholder="EMP021"></div>
         <div><label style="margin:0 0 4px">Full Name</label><input type="text" id="nEmpName" placeholder="Name"></div>
         <div><label style="margin:0 0 4px">Password</label><input type="password" id="nEmpPass" placeholder="Optional"></div>
         <div><label style="margin:0 0 4px">Department</label><select id="nEmpDept"></select></div>
+        <div><label style="margin:0 0 4px">Work type</label><select id="nEmpWT"><option value="office">Office staff</option><option value="sales">Sales / consultant</option><option value="site">Technician (site)</option><option value="">Everything</option></select></div>
         <div><button onclick="addEmployee()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
       </div>
       <div class="msg msg-error" id="empErr"></div>
@@ -1696,7 +1703,7 @@ async function fixNudge(emp,tok){
   try{
     const l=await api('getCorrections',{empId:emp.id}); if(tok!==homeTok) return;
     const p=(l||[]).filter(x=>x.status==='pending').length, s=document.getElementById('hmFixSub');
-    if(s) s.textContent=p?p+' request'+(p>1?'s':'')+' pending':'Missed or wrong time';
+    window._hmFixSub=p?p+' pending':''; if(s) s.textContent=window._hmFixSub;
   }catch(e){}
 }
 async function loadCorrectionsTab(){
@@ -2053,6 +2060,10 @@ async function removeDept(n){
   try{ const key='dept|'+n; if(USE_SHEETS) await api('saveSettings',{settings:{[key]:''}}); _D.settings=Object.assign({},_D.settings,{[key]:''}); saveCache(); loading(false); renderDeptList(); }
   catch(e){ loading(false); alert(e.message); }
 }
+async function setEmpWT(id,val){
+  try{ if(USE_SHEETS) await api('setWorkType',{id,workType:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.workType=val; saveCache(); }
+  catch(err){ alert('Error: '+err.message+(/Unknown action|Unknown work/i.test(err.message)?'\n(Update the Apps Script to the latest version.)':'')); renderEmpList(); }
+}
 async function setEmpDept(id,val){
   try{ if(USE_SHEETS) await api('setDepartment',{id,department:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.department=val; saveCache(); }
   catch(err){ alert('Error: '+err.message); renderEmpList(); }
@@ -2276,12 +2287,34 @@ function renderHomeToday(rec,dayOff){
     b=am?btn('🔙 I am back — confirm','btn-purple'):btn('📸 Punch Out','btn-blue');
   } else { title='Not punched in yet'; sub='Office starts at '+set.start; b=btn('📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
+  _hmRec=rec; _hmOff=dayOff; renderHomeActs();
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}`);
+}
+let _hmRec=null,_hmOff=null;
+const WORK_LABEL={'':'Everything (office + visits + site)',office:'Office staff',sales:'Sales / consultant (customer visits)',site:'Technician (site work)'};
+function renderHomeActs(){
+  const el=document.getElementById('hmActs'), lk=document.getElementById('hmLinks'); if(!el||!lk) return;
+  const rec=_hmRec, dayOff=_hmOff, me=curRec()||{}, wt=String(me.workType||'');
+  const inNow=!!(rec&&rec.punchIn&&!rec.punchOut), am=inNow&&getActiveMeeting(rec), sw=mySiteManual();
+  const T=[];
+  if(inNow&&!am){
+    if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
+    if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
+  }
+  el.className='hm-grid n'+T.length; el.innerHTML=T.join('');
+  const L=[];
+  if(!am){
+    L.push(`<button onclick="showLeavePanel()">📋 <span>Apply for leave</span><small id="hmLeaveSub"></small></button>`);
+    L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
+  }
+  L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
+  lk.innerHTML=L.join('');
+  if(window._hmLeaveSub) setHtml('hmLeaveSub',window._hmLeaveSub); if(window._hmFixSub) setHtml('hmFixSub',window._hmFixSub);
 }
 function renderHomeSite(){
   const sw=mySiteManual(), el=document.getElementById('hmSite'), sub=document.getElementById('hmSiteSub');
   if(el) el.innerHTML=sw?`<div class="hm-site" onclick="openPunch()"><span class="live-dot"></span><span>On site since ${String(fmt12(sw.startTime)).toUpperCase()} · ${sw.startArea||'Site'}</span></div>`:'';
-  if(sub) sub.textContent=sw?'Running · tap to view':'Start or stop';
+  renderHomeActs();
 }
 async function homeStats(emp,tok){
   const today=new Date(), t=todayStr(), ms=t.slice(0,7)+'-01';
@@ -2319,7 +2352,7 @@ async function homeLeave(emp,tok){
     if(tok!==homeTok) return;
     setHtml('hmLeave',balHtml(emp.id)); { const pl=document.getElementById('hmLeavePol'); if(pl) pl.textContent=policyText(); }
     const pend=leaves.filter(l=>l.status==='pending').length, sub=document.getElementById('hmLeaveSub');
-    if(sub) sub.textContent=pend?pend+' request'+(pend>1?'s':'')+' pending':'Balance below';
+    window._hmLeaveSub=pend?pend+' pending':''; if(sub) sub.textContent=window._hmLeaveSub;
   }catch(e){}
 }
 
@@ -3549,7 +3582,7 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${e.id}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${e.id}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${e.id}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${e.id}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -3567,7 +3600,7 @@ async function addEmployee(){
     if(existing.find(e=>e.id.toUpperCase()===id)){loading(false);err.textContent='ID "'+id+'" already exists.';err.classList.add('show');return;}
     const dept=(document.getElementById('nEmpDept')||{}).value||'';
     if(isDeptAdmin()&&!dept){loading(false);err.textContent='Choose a department.';err.classList.add('show');return;}
-    await addEmpStore({id,name,passHash:await hashPass(pass),department:dept});
+    await addEmpStore({id,name,passHash:await hashPass(pass),department:dept,workType:(document.getElementById('nEmpWT')||{}).value||''});
     ['nEmpId','nEmpName','nEmpPass'].forEach(i=>document.getElementById(i).value='');
     loading(false);ok.textContent='✅ '+name+' added. Password: '+pass;ok.classList.add('show');renderEmpList();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
