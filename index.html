@@ -4052,7 +4052,7 @@ function renderOrg(){
   const unassignedEmp=o.employees.filter(e=>!String(e.department||'').trim()).length;
   box.innerHTML=
    `<div class="org-tree">
-      <div class="org-node org-top"><div class="org-row"><div><b>👑 ${hx(sup?sup.name:'Super Admin')}</b> <span class="org-tag">Super Admin · sees and controls everything</span></div></div>
+      <div class="org-node org-top"><div class="org-row"><div><b>👑 ${hx(sup?sup.name:'Super Admin')}</b> <span class="org-tag">Super Admin · sees and controls everything</span>${sup?`<div style="font-size:11px;color:var(--soft);margin-top:3px">You · ID: ${hx(sup.username)}${sup.email?' · '+hx(sup.email):''}</div>`:''}</div></div>
         <div class="org-kids">
           ${o.legacyAdmin?`<div class="org-node"><div class="org-row"><div><b>📋 ${hx(o.legacyAdmin)}</b> <span class="org-tag">Admin · whole company</span></div><span style="font-size:11px;color:var(--soft)">existing admin login</span></div></div>`:''}
           ${dm.length?dm.map(m=>`<div class="org-node ${m.active==='0'?'org-off':''}">
@@ -4068,14 +4068,14 @@ function renderOrg(){
 function orgForm(m){
   const f=document.getElementById('orgForm'); if(!f) return;
   const have=(m&&m.departments)||[], all=_org.departments;
-  f.innerHTML=`<h3>${m?'✏️ Edit '+hx(m.name):'➕ Create a Department Admin'}</h3>
+  f.innerHTML=`<h3>${m?'✏️ Edit Department Admin: '+hx(m.name):'➕ Create a Department Admin (a different person, not you)'}</h3>
    <p style="font-size:11px;color:var(--soft);margin-top:2px">They sign in on the normal Admin login with this ID and password. They see and manage only the departments you tick.</p>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px">
-     <div><label style="margin:0 0 4px">Full name</label><input type="text" id="mgName" value="${hx(m?m.name:'')}"></div>
-     <div><label style="margin:0 0 4px">Login ID (username)</label><input type="text" id="mgUser" value="${hx(m?m.username:'')}" autocomplete="off"></div>
-     <div><label style="margin:0 0 4px">E-mail (SOS alerts for the department)</label><input type="text" id="mgMail" value="${hx(m?m.email:'')}"></div>
-     <div><label style="margin:0 0 4px">Phone</label><input type="text" id="mgPhone" value="${hx(m?m.phone:'')}"></div>
-     ${m?'':'<div style="grid-column:1/-1"><label style="margin:0 0 4px">Password (at least 6 characters)</label><input type="password" id="mgPass" autocomplete="new-password"></div>'}
+     <div><label style="margin:0 0 4px">Full name</label><input type="text" id="mgName" name="da-name" value="${hx(m?m.name:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
+     <div><label style="margin:0 0 4px">Login ID (username)</label><input type="text" id="mgUser" name="da-login" value="${hx(m?m.username:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
+     <div><label style="margin:0 0 4px">E-mail (SOS alerts for the department)</label><input type="text" id="mgMail" name="da-mail" value="${hx(m?m.email:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
+     <div><label style="margin:0 0 4px">Phone</label><input type="text" id="mgPhone" name="da-phone" value="${hx(m?m.phone:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
+     ${m?'':'<div style="grid-column:1/-1"><label style="margin:0 0 4px">Password (at least 6 characters)</label><input type="password" id="mgPass" name="da-pass" autocomplete="new-password" readonly onfocus="this.removeAttribute(\'readonly\')"></div>'}
    </div>
    <label style="margin:10px 0 4px">Departments this admin manages</label>
    <div id="mgDepts" style="display:flex;flex-wrap:wrap;gap:6px 14px">${all.map(d=>`<label style="display:flex;gap:5px;align-items:center;font-size:13px;margin:0"><input type="checkbox" value="${hx(d)}" ${have.some(x=>x.toLowerCase()===d.toLowerCase())?'checked':''} style="width:14px;height:14px"> ${hx(d)}</label>`).join('')||'<span style="font-size:12px;color:var(--soft)">No departments yet — type a new one below.</span>'}</div>
@@ -4091,6 +4091,10 @@ async function orgSave(id){
   const body={id:id||undefined,name:g('mgName').trim(),username:g('mgUser').trim(),email:g('mgMail').trim(),phone:g('mgPhone').trim(),departments:depts};
   const bad=m=>{err.textContent=m;err.classList.add('show');};
   if(!body.name) return bad('Enter a name.'); if(!body.username) return bad('Enter a login ID.'); if(!depts.length) return bad('Tick at least one department.');
+  { const su=(_org.managers||[]).find(x=>x.role==='super');
+    if(su&&String(su.id)!==String(id||'')){
+      if(body.username.toLowerCase()===String(su.username||'').toLowerCase()) return bad('That is your own Super Admin login ID. Give the Department Admin a different one.');
+      if(body.email&&body.email.toLowerCase()===String(su.email||'').toLowerCase()) return bad('That is your own e-mail. Use the Department Admin\'s e-mail.'); } }
   if(!id){ const p=g('mgPass'); if(p.length<6) return bad('Password must be at least 6 characters.'); body.passHash=await hashPass(p); }
   loading(true,'Saving…');
   try{ await api('saveManager',body); loading(false); await loadOrg(); const o=document.getElementById('mgOk'); if(o){o.textContent='✅ Saved.'; o.classList.add('show');} }
