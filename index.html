@@ -516,6 +516,13 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible,summary:focus-visi
 #adminScreen .tab-pane>.empty,#supervisorScreen .empty{color:var(--ink2)}
 #adminScreen .topbar h2,#adminScreen .topbar div{color:var(--ink)}
 @media(min-width:1024px){#adminScreen .tab-row{background:rgba(255,255,255,.55)}#adminScreen .tab-btn{background:rgba(255,255,255,.7)}#adminScreen .tab-btn.active{background:linear-gradient(180deg,#27968B,#1B7F6B)}}
+
+/* Source Serif 4 for names, headings and big numbers; everything you type into or scan in tables stays in the clean system sans */
+@font-face{font-family:'Source Serif 4';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-serif-4-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Source Serif 4';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-serif-4-latin-700-normal.woff2) format('woff2')}
+.logo h1,.topbar h2,.hm-nm,.hm-tt,.hm-big,.hm-h,.state-box h3,.stat .n,.modal-box h3,.hm-tile b,.add-form h3,.org-node>.org-row b,.leave-card b{
+  font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:-.005em}
+.hm-nm{font-size:21px}.hm-tt{font-size:17px}.logo h1{font-size:23px;font-weight:700}.topbar h2{font-size:19px}
 </style>
 </head>
 <body>
