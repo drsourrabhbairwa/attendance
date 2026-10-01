@@ -969,6 +969,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
         <input type="month" id="rptMonth" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit">
         <button onclick="loadReports()" style="padding:7px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">Show</button>
         <button onclick="exportReportCSV()" style="padding:7px 13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">⬇ CSV</button>
+        <button onclick="printReport()" style="padding:7px 13px;background:#B45309;color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">🖨 PDF</button>
       </div>
     </div>
     <div id="repContent"><div class="empty"><div class="eicon">📈</div>Pick a month and tap Show.</div></div>
@@ -1014,6 +1015,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
         <button onclick="payrollShow()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Show salary sheet</button>
         <button onclick="payrollCSV()" style="padding:9px 13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">⬇ Salary CSV</button>
+        <button onclick="payrollPrint()" style="padding:9px 13px;background:#B45309;color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">🖨 Salary PDF</button>
       </div>
       <div id="salContent"></div>
     </div>
@@ -3802,8 +3804,69 @@ async function loadReports(){
         return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days}${e.noOut?` <span style="color:var(--red);font-size:11px">(${e.noOut} no out)</span>`:''}</td><td>${e.late?`<span style="color:var(--amber);font-weight:700">${e.late}</span>`:0}</td><td>${e.full?fmtMins(e.mins/e.full):'—'}</td><td>${e.visits}</td><td>${e.km.toFixed(1)}</td><td>${set.rate?'₹'+Math.round(e.km*set.rate):'—'}</td><td>${e.siteMins?fmtMins(e.siteMins):'—'}</td><td>${pct}</td><td>${has?`<button onclick="showHonesty(${i})" style="border:none;background:none;cursor:pointer;padding:0">${sc(honesty(e))}</button>`:'—'}</td></tr>`; }).join('')
     }</tbody></table></div>
     <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after the office start + grace (${set.start} + ${set.grace} min, or the department's own hours). Approved leave days are left out of the attendance %. Km = straight line between recorded places. Tap a score to see how it was worked out.</div>`;
-    el.innerHTML=html;
+    el.innerHTML=html; _lastReport.html=html;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+/* ── Print / save as PDF (shared by the monthly report and the salary sheet) ── */
+function printShell(o){
+  let logo='none'; try{ const el=document.querySelector('.brand'); if(el) logo=getComputedStyle(el).backgroundImage; }catch(e){}
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${o.title}</title><style>
+@page{size:A4 ${o.orient||'landscape'};margin:12mm}
+:root{--soft:#5b6664;--border:#d8dedb;--surface:#fff;--surface2:#eef3f1;--green:#1f6b45;--greenBg:#dff1e6;--amber:#8a5a00;--amberBg:#fcefd0;--red:#a3271c;--redBg:#f9dcd8}
+*{box-sizing:border-box}body{font:12px/1.4 "Source Serif 4",Georgia,"Times New Roman",serif;color:#16302f;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0E5A52;padding-bottom:8px;margin-bottom:12px}
+.logo{height:20px;width:120px;background:${logo} left center/contain no-repeat}
+h1{margin:6px 0 0;font-size:20px;color:#0E3C3E}.sub{color:var(--soft);font-size:11px;text-align:right}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stat{border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;background:#f7faf9}
+.stat .n{font-size:22px;font-weight:700}.stat .l{font-size:10.5px;color:var(--soft);margin-top:2px}
+.c-green{color:#1f6b45}.c-purple{color:#6a3fa0}.c-blue{color:#1f4f9c}.c-orange{color:#b45309}
+.add-form{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px;page-break-inside:avoid}
+svg{max-width:100%;height:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#e4efec;text-align:left;padding:6px 7px;font-size:10px;border-bottom:1px solid var(--border)}
+td{padding:6px 7px;border-bottom:1px solid #e8eceb;vertical-align:top}
+thead{display:table-header-group}tr{page-break-inside:avoid}
+.score{display:inline-block;min-width:34px;text-align:center;border-radius:20px;padding:1px 7px;font-weight:700;font-size:11px}
+.note{font-size:10px;color:var(--soft);margin-top:8px}.rules{font-size:10px;color:var(--soft);margin:6px 0 0;padding-left:16px;columns:2}
+.sign{display:flex;gap:30px;margin-top:34px;page-break-inside:avoid}.sign div{flex:1;border-top:1px solid #16302f;padding-top:4px;font-size:10px;color:var(--soft);text-align:center}
+.ft{margin-top:14px;border-top:1px solid var(--border);padding-top:6px;font-size:10px;color:var(--soft);display:flex;justify-content:space-between}
+</style></head><body>
+<div class="hd"><div><div class="logo"></div><h1>${o.heading}</h1></div><div class="sub">${o.sub}</div></div>
+${o.body}
+<div class="ft"><span>Amitek · Staff Attendance</span><span>Generated ${new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})} by ${o.who}</span></div>
+</body></html>`;
+}
+function monthName(m){ return new Date(m+'-01T00:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}); }
+function scopeLabel(){ return (typeof isDeptAdmin==='function'&&isDeptAdmin())?'Departments: '+myDepts().join(', '):'All staff'; }
+function reportPrintHtml(r,who){
+  const mn=monthName(r.month);
+  const body=String(r.html).replace(/ Tap a score to see how it was worked out\./,'').replace(/onclick="[^"]*"/g,'')
+    +'<div class="note"><b>Honesty score</b> starts at 100 and loses points only for things that hide where someone really was:</div><ul class="rules">'+HONESTY_RULES.map(x=>'<li>'+x[1]+' <b>−'+x[2]+'</b></li>').join('')+'</ul>';
+  return printShell({title:'Amitek attendance report '+mn,heading:'Monthly Attendance Report · '+mn,sub:scopeLabel()+'<br>Office start '+r.set.start+' + '+r.set.grace+' min grace',body,who,orient:'landscape'});
+}
+function salaryPrintHtml(r,who){
+  const mn=monthName(r.month), R=r.R;
+  const rows=r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:10px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full+e.half}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td style="font-size:10px;color:var(--soft)">${(()=>{ const n=(e.notes||'').split(' · ').filter(Boolean); return n.length>10?(e.absent+' days absent'+(e.half?', '+e.half+' half':'')+' (dates are in the CSV)'):n.join(' · '); })()}</td></tr>`).join('');
+  const body=`<table><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th><th>Notes (day of month)</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="note">Counted up to ${r.end}. Sundays and holidays are paid. Approved leave is paid. Absences are unpaid. A half day counts as 0.5${R&&R.lateN>0?`. Every ${R.lateN} late marks cost half a day`:''}. Payable days = calendar days − unpaid days.</div>
+  <div class="sign"><div>Prepared by</div><div>Checked by</div><div>Approved by</div></div>`;
+  return printShell({title:'Amitek salary sheet '+mn,heading:'Salary-ready Sheet · '+mn,sub:scopeLabel()+'<br>Attendance counted up to '+r.end,body,who,orient:'landscape'});
+}
+function printHtmlNow(html){
+  const f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d=f.contentDocument; d.open(); d.write(html); d.close();
+  setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ alert('Printing is not available here. Open the app in Chrome on a computer and tap PDF.'); } setTimeout(()=>f.remove(),60000); },600);
+}
+const printWho=()=>(typeof _me!=='undefined'&&_me&&_me.name)||'Admin';
+function printReport(){
+  const r=_lastReport; if(!r||!r.html){ alert('Tap Show first, then print.'); return; }
+  printHtmlNow(reportPrintHtml(r,printWho()));
+}
+async function payrollPrint(){
+  try{ const r=await payrollBuild(); window._payroll=r; printHtmlNow(salaryPrintHtml(r,printWho())); }
+  catch(e){ alert(e.message); }
 }
 function showHonesty(i){
   const e=_lastReport&&_lastReport.list[i]; if(!e) return;
