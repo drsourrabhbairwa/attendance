@@ -346,6 +346,42 @@ textarea{min-height:72px;resize:vertical}
 .trk-note{margin:10px 16px 0;padding:9px 12px;border-radius:12px;background:var(--surface2);color:var(--soft);font-size:12px;line-height:1.45}
 .sal-wrap{overflow-x:auto;margin-top:10px}.sal-wrap table{font-size:12px;white-space:nowrap}
 .ru-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:9px}
+
+/* ── Safety: check now + SOS ── */
+.sos-open{display:flex;align-items:center;gap:12px;width:100%;background:#B3261E;color:#fff;border:none;border-radius:14px;padding:13px 15px;margin:0 0 14px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(179,38,30,.35)}
+.sos-open span{font-size:28px}.sos-open b{display:block;font-size:15px}.sos-open small{font-size:12px;opacity:.9}
+.sos-banner{border-radius:12px;padding:11px 13px;margin:0 0 12px;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:2px;background:var(--redBg);border:1.5px solid var(--red);color:var(--red)}
+.sos-banner.s-ack{background:var(--amberBg);border-color:var(--amber);color:var(--amber)}
+.sos-banner.s-aid,.sos-banner.s-resolved{background:var(--greenBg);border-color:var(--green);color:var(--green)}
+.sos-banner u{font-size:11px;opacity:.8}
+.chk-banner{background:var(--amberBg);border:1.5px solid var(--amber);color:var(--amber);border-radius:12px;padding:11px 13px;margin:0 0 12px;font-size:13px;font-weight:700;cursor:pointer}
+.sos-big{text-align:center;padding:6px 0}.sos-big h3{margin:4px 0;font-size:19px}.sos-big p{font-size:13px;color:var(--soft);margin:6px 0}
+.sos-big.s-open h3{color:var(--red)}.sos-big.s-ack h3{color:var(--amber)}.sos-big.s-aid h3,.sos-big.s-resolved h3{color:var(--green)}
+.sos-err{color:var(--red)!important;font-weight:700}
+#sosModal textarea{width:100%;border:1.5px solid var(--border2);border-radius:var(--rs);padding:9px;font-family:inherit;font-size:14px;margin-top:6px;resize:none;background:var(--surface);color:var(--ink)}
+.sos-hold{position:relative;overflow:hidden;display:block;width:100%;height:64px;margin-top:12px;border:none;border-radius:14px;background:#8f1d17;color:#fff;font-size:16px;font-weight:800;font-family:inherit;letter-spacing:.03em;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.sos-hold i{position:absolute;left:0;top:0;bottom:0;width:0;background:#e0392f}.sos-hold span{position:relative}
+.sos-calls{display:flex;gap:8px}.sos-calls .btn{text-align:center;text-decoration:none;margin-top:10px}
+.chk-ic{font-size:44px;text-align:center}#chkBody h3{text-align:center;margin:4px 0}#chkBody p{text-align:center;font-size:14px;margin:6px 0 4px}
+.chk-msg{display:none;border-radius:var(--rs);padding:9px 11px;font-size:13px;margin-top:8px;background:var(--surface2);color:var(--ink)}
+.chk-msg.show{display:block}.chk-msg.bad{background:var(--redBg);color:var(--red)}.chk-msg.ok{background:var(--greenBg);color:var(--green)}
+#sosBar{position:fixed;left:0;right:0;top:0;z-index:10000;background:#B3261E;color:#fff;padding:9px 12px;font-size:13px;display:none;align-items:center;gap:8px;flex-wrap:wrap;animation:sosPulse 1s infinite alternate}
+#sosBar.on{display:flex}#sosBar span{flex:1;min-width:140px;font-size:12px}#sosBar button{background:#fff;color:#B3261E;border:none;border-radius:8px;padding:6px 14px;font-weight:800;cursor:pointer;font-family:inherit}
+@keyframes sosPulse{from{background:#B3261E}to{background:#d93a2f}}
+.saf-alert{border:2px solid var(--red);background:var(--redBg);border-radius:12px;padding:12px;margin-bottom:10px}
+.saf-alert.s-ack{border-color:var(--amber);background:var(--amberBg)}.saf-alert.s-aid,.saf-alert.s-resolved{border-color:var(--green);background:var(--greenBg)}
+.saf-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.saf-chip{font-size:10px;font-weight:800;border-radius:20px;padding:3px 9px}
+.saf-meta{font-size:12px;color:var(--soft);margin-top:4px}.saf-note{font-size:13px;font-weight:600;margin-top:5px}
+.saf-in{width:100%;margin-top:8px;padding:8px 10px;border:1.5px solid var(--border2);border-radius:var(--rs);font-family:inherit;font-size:13px;background:var(--surface);color:var(--ink)}
+.saf-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sb{padding:8px 12px;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:none;color:#fff;background:var(--accent)}
+.sb.ack{background:var(--amber)}.sb.aid{background:var(--accent)}.sb.res{background:#486f8f}.sb.call{background:#333}.sb.chk{background:var(--accent)}.sb:disabled{opacity:.5;cursor:default}
+.saf-none{font-size:13px;color:var(--soft);padding:10px 0}
+.saf-emp{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)}
+.saf-done summary{cursor:pointer;font-size:13px;color:var(--soft);margin:6px 0}
+.saf-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(30px);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:10001;max-width:90%}
+body.sosOn{padding-top:46px}
+.saf-toast.show{opacity:1;transform:translateX(-50%)}.saf-toast.bad{background:var(--red)}
 </style>
 </head>
 <body>
@@ -417,6 +453,8 @@ textarea{min-height:72px;resize:vertical}
   <div id="hmNote"></div>
   <div id="hmBday"></div>
   <div id="hmTrack"></div>
+  <div id="hmSafety"></div>
+  <button class="sos-open" onclick="openSOS()"><span>🚨</span><div><b>Emergency</b><small>Hurt, in danger or need help? Tap here</small></div></button>
   <div class="hm-grid">
     <button class="hm-tile" onclick="openPunch()"><div class="ti">📸</div><b>Attendance</b><span>Punch in · out · meeting</span></button>
     <button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>
@@ -643,6 +681,7 @@ textarea{min-height:72px;resize:vertical}
     <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
     <button class="tab-btn" onclick="switchTab('corrections')">✏️ Corrections</button>
     <button class="tab-btn" onclick="switchTab('log')">🧾 Log</button>
+    <button class="tab-btn" onclick="switchTab('safety')">🚨 Safety</button>
   </div>
 
   <!-- ATTENDANCE TAB -->
@@ -829,6 +868,8 @@ textarea{min-height:72px;resize:vertical}
         <div><label style="margin:0 0 4px">Punch-out reminder at</label><input type="text" id="alOutAt" placeholder="07:30 PM"></div>
         <div><label style="margin:0 0 4px">“Not punched in” summary at</label><input type="text" id="alSumAt" placeholder="10:30 AM"></div>
         <div><label style="margin:0 0 4px">Site work silent alert after (min)</label><input type="number" id="alSilent" min="30" placeholder="90"></div>
+        <div><label style="margin:0 0 4px">Office phone (shown to staff in an emergency)</label><input type="text" id="alPhone" placeholder="+91 98xxxxxx"></div>
+        <div><label style="margin:0 0 4px">Emergency number (default 112)</label><input type="text" id="alSos" placeholder="112"></div>
       </div>
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
       <label class="al-chk"><input type="checkbox" id="alSite"> Alert me and the supervisor when a site check fails or goes silent</label>
@@ -859,6 +900,9 @@ textarea{min-height:72px;resize:vertical}
   </div>
 
   <!-- ACTIONS LOG TAB -->
+  <div id="tabSafety" class="tab-pane">
+    <div id="safetyContent"><div class="empty"><div class="eicon">🚨</div>Loading…</div></div>
+  </div>
   <div id="tabLog" class="tab-pane">
     <div class="filter-row" style="margin-bottom:8px">
       <input type="text" id="logFilter" placeholder="Search name, action, ID…" oninput="renderAudit()" style="margin-top:0">
@@ -910,6 +954,7 @@ textarea{min-height:72px;resize:vertical}
 
 <!-- ══ SUPERVISOR DASHBOARD ══ -->
 <div id="supervisorScreen" class="screen admin-wrap">
+<div class="card" id="supSafetyCard"><div id="supSafety"></div></div>
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
     <div><h2>🗺️ Site Monitor</h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="supDateLbl"></div>
@@ -925,6 +970,9 @@ textarea{min-height:72px;resize:vertical}
 </div>
 </div>
 
+<div id="sosBar"></div>
+<div class="modal-bg" id="sosModal"><div class="modal-box" id="sosBody"></div></div>
+<div class="modal-bg" id="chkModal"><div class="modal-box" id="chkBody"></div></div>
 <!-- Detail Modal -->
 <div class="modal-bg" id="detailModal" onclick="this.classList.remove('open')">
 <div class="modal-box" onclick="event.stopPropagation()">
@@ -1520,6 +1568,262 @@ async function adminBadges(){
 }
 
 /* ══════════════════════════════════════════════════════════════
+   SAFETY — "Check now" requests and Emergency SOS
+══════════════════════════════════════════════════════════════ */
+const hx=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let safetyEmpInt=null, safetyAdmInt=null, _saf={checks:[],alerts:[],now:''}, _safRole='', _knownAlerts=null;
+let _sos={alert:null,sending:false,err:'',note:'',dismissed:''}, _sosHoldT=null, _chkDone={}, _chkSnooze={}, _chkShown='', _chkPending=[];
+function hhmm(s){ const m=String(s||'').match(/T(\d\d):(\d\d)/); if(!m) return ''; const h=+m[1]; return (h%12||12)+':'+m[2]+' '+(h>=12?'PM':'AM'); }
+function agoText(s,now){ const a=Date.parse(s), n=Date.parse(now||''); if(isNaN(a)||isNaN(n)) return ''; const m=Math.max(0,Math.round((n-a)/60000)); return m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+' h '+(m%60)+' min ago'; }
+function sosNumber(){ return ((_D.settings||{}).sosNumber||'112').replace(/[^\d+]/g,'')||'112'; }
+function officePhone(){ return ((_D.settings||{}).adminPhone||'').replace(/[^\d+]/g,''); }
+let _ac=null;
+function beep(n){
+  try{
+    _ac=_ac||new (window.AudioContext||window.webkitAudioContext)(); if(_ac.state==='suspended') _ac.resume();
+    const o=_ac.createOscillator(), g=_ac.createGain(); o.type='square'; g.gain.value=.12; o.connect(g); g.connect(_ac.destination);
+    const t=_ac.currentTime; for(let i=0;i<n*2;i++) o.frequency.setValueAtTime(i%2?660:900,t+i*.22);
+    o.start(t); o.stop(t+n*.44);
+  }catch(e){}
+  try{ if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]); }catch(e){}
+}
+function safToast(msg,bad){
+  let t=document.getElementById('safToast'); if(!t){ t=document.createElement('div'); t.id='safToast'; document.body.appendChild(t); }
+  t.textContent=msg; t.className='saf-toast show'+(bad?' bad':''); clearTimeout(t._t); t._t=setTimeout(()=>t.className='saf-toast',3500);
+}
+function callBtns(){
+  const o=officePhone(); return `<div class="sos-calls"><a class="btn btn-outline" href="tel:${sosNumber()}">📞 Call ${sosNumber()}</a>${o?`<a class="btn btn-outline" href="tel:${o}">📞 Call the office</a>`:''}</div>`;
+}
+
+/* ── Employee: location-check prompt ── */
+function startEmpSafety(){ stopEmpSafety(); if(!USE_SHEETS) return; empSafetyPoll(); safetyEmpInt=setInterval(empSafetyPoll,60000); }
+function stopEmpSafety(){ clearInterval(safetyEmpInt); safetyEmpInt=null; _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; if(safetyEmpInt) empSafetyPoll(); if(safetyAdmInt) safetyAdminPoll(); });
+async function empSafetyPoll(){
+  const emp=currentEmp; if(!emp||!USE_SHEETS) return;
+  try{ const d=await api('pollEmp',{empId:emp.id}); if(currentEmp!==emp) return; handleEmpPoll(d||{}); }catch(e){}
+}
+function handleEmpPoll(d){
+  _chkPending=(d.checks||[]).filter(c=>!_chkDone[c.id]);
+  const due=_chkPending.filter(c=>!_chkSnooze[c.id]||Date.now()>_chkSnooze[c.id])[0];
+  if(due) showCheckPrompt(due); else if(!_chkPending.length) hideCheckPrompt();
+  if(!_sos.sending) _sos.alert=d.sos&&!(d.sos.status==='resolved'&&d.sos.id===_sos.dismissed)?d.sos:null;
+  renderEmpSafety();
+}
+function showCheckPrompt(c){
+  const m=document.getElementById('chkModal'); if(!m) return;
+  if(_chkShown!==c.id){ _chkShown=c.id; beep(4); }
+  document.getElementById('chkBody').innerHTML=`<div class="chk-ic">📍</div><h3>Please confirm your location</h3>
+    <p><b>${hx(c.requestedBy||'The office')}</b> asked for your location${c.note?': “'+hx(c.note)+'”':''}.</p>
+    <div id="chkMsg" class="chk-msg"></div>
+    <button class="btn" id="chkSend" style="background:var(--accent);color:#fff" onclick="answerMyCheck('${hx(c.id)}')">📍 Send my location</button>
+    <button class="btn btn-outline" onclick="snoozeCheck('${hx(c.id)}')">Later (5 min)</button>`;
+  m.classList.add('open');
+}
+function hideCheckPrompt(){ const m=document.getElementById('chkModal'); if(m) m.classList.remove('open'); }
+function snoozeCheck(id){ _chkSnooze[id]=Date.now()+5*60000; _chkShown=''; hideCheckPrompt(); renderEmpSafety(); }
+async function answerMyCheck(id){
+  const emp=currentEmp, msg=document.getElementById('chkMsg'), btn=document.getElementById('chkSend'); if(!emp||!msg) return;
+  btn.disabled=true; msg.className='chk-msg show'; msg.innerHTML='⏳ Getting your location…';
+  let pos=null, help=null; const bat=await batteryInfo();
+  try{ pos=await freshFix(); }catch(e){ help=gpsHelp(e); }
+  if(!pos){
+    msg.className='chk-msg show bad'; btn.disabled=false;
+    msg.innerHTML=`📍 ${hx(help.why)}. ${hx(help.tip)}<div style="margin-top:8px"><button class="btn btn-outline" style="margin-top:0" onclick="answerMyCheck('${hx(id)}')">Try again</button><button class="btn btn-outline" onclick="tellOfficeNoGps('${hx(id)}','${hx(help.why)}')">Tell the office my GPS is not working</button></div>`;
+    return;
+  }
+  const area=await reverseGeocode(pos.lat,pos.lng);
+  const p={id,empId:emp.id,date:todayStr(),time:nowTime(),lat:pos.lat.toFixed(6),lng:pos.lng.toFixed(6),area,accuracy:pos.acc,source:NATIVE?'app':'web'};
+  if(bat.battery!==undefined){ p.battery=bat.battery; p.charging=bat.charging; }
+  const sw=mySite();
+  if(sw&&sw.siteLat){
+    const dist=Math.round(distMeters(sw.siteLat,sw.siteLng,pos.lat,pos.lng)), status=dist<=SITE_RADIUS?'YES':dist-(pos.acc||0)>SITE_RADIUS?'NO':'ROUGH';
+    Object.assign(p,{siteId:sw.id,siteLat:sw.siteLat,siteLng:sw.siteLng,distMeters:dist,status,withinBound:status==='YES',mode:sw.mode||'site'});
+  }
+  try{ await api('answerCheck',p); }catch(e){ msg.className='chk-msg show bad'; btn.disabled=false; msg.textContent='⚠️ Could not send ('+e.message+'). Check your internet and try again.'; return; }
+  _chkDone[id]=1; _chkPending=_chkPending.filter(c=>c.id!==id);
+  msg.className='chk-msg show ok'; msg.innerHTML='✅ Location sent: '+hx(area||'received'); setTimeout(()=>{ hideCheckPrompt(); renderEmpSafety(); },1800);
+}
+async function tellOfficeNoGps(id,why){
+  const emp=currentEmp, msg=document.getElementById('chkMsg'); if(!emp) return;
+  try{ await api('answerCheck',{id,empId:emp.id,gps:false,area:why,date:todayStr(),time:nowTime(),source:NATIVE?'app':'web'}); _chkDone[id]=1; _chkPending=_chkPending.filter(c=>c.id!==id); msg.className='chk-msg show ok'; msg.textContent='✅ The office knows your GPS is not working.'; setTimeout(()=>{ hideCheckPrompt(); renderEmpSafety(); },2000); }
+  catch(e){ msg.className='chk-msg show bad'; msg.textContent='⚠️ Could not send ('+e.message+').'; }
+}
+
+/* ── Employee: Emergency SOS ── */
+function renderEmpSafety(){
+  const a=_sos.alert, parts=[];
+  if(a) parts.push(`<div class="sos-banner s-${hx(a.status)}" onclick="openSOS()"><b>${a.status==='resolved'?'✅ Emergency resolved':'🚨 Emergency sent'}</b><span>${sosStatusText(a)}</span><u>Tap for details</u></div>`);
+  _chkPending.filter(c=>_chkSnooze[c.id]&&Date.now()<_chkSnooze[c.id]).forEach(c=>parts.push(`<div class="chk-banner" onclick="_chkSnooze['${hx(c.id)}']=0;showCheckPrompt(_chkPending.find(x=>x.id==='${hx(c.id)}'))">📍 ${hx(c.requestedBy||'Office')} is waiting for your location — tap to send</div>`));
+  setHtml('hmSafety',parts.join(''));
+  const m=document.getElementById('sosModal'); if(m&&m.classList.contains('open')) renderSOS();
+}
+function sosNew(){ if(_sos.alert) _sos.dismissed=_sos.alert.id; _sos.alert=null; _sos.err=''; renderEmpSafety(); renderSOS(); }
+function sosStatusText(a){
+  if(a.status==='resolved') return hx(a.resolveNote||'Marked resolved by '+(a.resolvedBy||'the office'));
+  if(a.status==='aid') return '🚑 Help is on the way — '+hx(a.aidBy||'')+(a.aidNote?': '+hx(a.aidNote):'');
+  if(a.status==='ack') return '✋ '+hx(a.ackBy||'Someone')+' has seen it and is on it';
+  return 'Waiting for someone to answer… keep your phone with you';
+}
+function openSOS(){ document.getElementById('sosModal').classList.add('open'); renderSOS(); }
+function closeSOS(){ document.getElementById('sosModal').classList.remove('open'); }
+function renderSOS(){
+  const b=document.getElementById('sosBody'); if(!b) return; const a=_sos.alert;
+  const keep=document.getElementById('sosNote'); if(keep) _sos.note=keep.value;
+  if(a||_sos.sending){
+    b.innerHTML=`<div class="sos-big ${a?'s-'+hx(a.status):'s-open'}"><div style="font-size:42px">${a&&a.status==='resolved'?'✅':a&&a.status==='aid'?'🚑':'🚨'}</div>
+      <h3>${a?(a.status==='resolved'?'Emergency resolved':'Emergency sent'):'Sending your emergency…'}</h3>
+      <p>${a?sosStatusText(a):'Getting your location and alerting the office…'}</p>
+      ${_sos.err?`<p class="sos-err">${hx(_sos.err)}</p>`:''}
+      ${a&&a.area?`<p style="font-size:12px">📍 ${hx(a.area)}</p>`:''}</div>
+      ${a&&a.status!=='resolved'?'<button class="btn btn-outline" onclick="sosCancel()">I am OK — it was a mistake</button>':''}
+      ${a&&a.status==='resolved'?'<button class="btn btn-outline" onclick="sosNew()">Send a new emergency</button>':''}
+      ${callBtns()}<button class="btn btn-outline" onclick="closeSOS()">Close</button>`;
+    return;
+  }
+  b.innerHTML=`<div class="sos-big"><div style="font-size:42px">🚨</div><h3>Emergency</h3>
+    <p>Hurt, in danger, or someone on site is injured? <b>Press and hold</b> the red button. Your admin and supervisors are alerted at once with your phone number and location.</p></div>
+    <textarea id="sosNote" rows="2" maxlength="250" placeholder="What happened? (optional)">${hx(_sos.note)}</textarea>
+    <button class="sos-hold" id="sosHold" onpointerdown="sosHoldStart(event)" onpointerup="sosHoldEnd()" onpointerleave="sosHoldEnd()" onpointercancel="sosHoldEnd()" oncontextmenu="return false"><i id="sosFill"></i><span>HOLD TO SEND EMERGENCY</span></button>
+    <p style="font-size:11px;color:var(--soft);text-align:center;margin:6px 0">Hold for about 1 second so it cannot be sent by accident.</p>
+    ${callBtns()}<button class="btn btn-outline" onclick="closeSOS()">Cancel</button>`;
+}
+function sosHoldStart(e){
+  if(e&&e.preventDefault) e.preventDefault();
+  const f=document.getElementById('sosFill'); if(!f) return;
+  f.style.transition='width 1.1s linear'; f.style.width='100%';
+  clearTimeout(_sosHoldT); _sosHoldT=setTimeout(sosFire,1100);
+}
+function sosHoldEnd(){
+  clearTimeout(_sosHoldT); _sosHoldT=null;
+  const f=document.getElementById('sosFill'); if(f){ f.style.transition='width .2s'; f.style.width='0'; }
+}
+function sosFire(){
+  _sosHoldT=null; const n=document.getElementById('sosNote'); const note=n?n.value:_sos.note;
+  try{ if(navigator.vibrate) navigator.vibrate(250); }catch(e){}
+  _sos.sending=true; _sos.err=''; _sos.note=note; renderSOS(); sosTransmit(note);
+}
+async function sosTransmit(note){
+  const emp=currentEmp; if(!emp) return;
+  if(!USE_SHEETS){ _sos.sending=false; _sos.err='The emergency alert needs the online version. Please call now.'; renderSOS(); return; }
+  const fresh=freshFix().then(f=>f,()=>null);
+  let pos=await Promise.race([fresh,sleep(6000).then(()=>null)]), usedFresh=!!pos;
+  if(!pos&&capLat&&Date.now()-capAt<300000) pos={lat:+capLat,lng:+capLng,acc:capAcc||0};
+  const bat=await Promise.race([batteryInfo(),sleep(800).then(()=>({}))]);
+  const build=async p=>{
+    const area=p?await Promise.race([reverseGeocode(p.lat,p.lng),sleep(3000).then(()=>'')]):'';
+    const o={empId:emp.id,note,gps:!!p,area}; if(p){ o.lat=p.lat.toFixed(6); o.lng=p.lng.toFixed(6); o.accuracy=p.acc; }
+    if(bat.battery!==undefined) o.battery=bat.battery; return o;
+  };
+  for(let i=0;i<60&&currentEmp===emp&&_sos.sending;i++){
+    try{
+      const r=await api('sendSOS',await build(pos));
+      _sos.alert=r.alert; _sos.sending=false; _sos.err=''; renderEmpSafety(); renderSOS(); beep(2);
+      if(!usedFresh) fresh.then(async f=>{ if(f&&currentEmp===emp&&_sos.alert) { try{ await api('sendSOS',await build(f)); }catch(e){} } });
+      return;
+    }catch(e){ _sos.err='Not sent yet ('+e.message+'). Retrying… call now if you can.'; renderSOS(); await sleep(8000); }
+  }
+}
+async function sosCancel(){
+  const a=_sos.alert, emp=currentEmp; if(!a||!emp) return;
+  try{ await api('cancelSOS',{id:a.id,empId:emp.id}); _sos.dismissed=a.id; _sos.alert=null; _sos.sending=false; renderEmpSafety(); closeSOS(); safToast('Alarm cancelled. The office was told you are OK.'); }
+  catch(e){ _sos.err=e.message; renderSOS(); }
+}
+
+/* ── Admin / supervisor: alerts and "Check now" ── */
+function startSafetyWatch(role){ stopSafetyWatch(); _safRole=role; if(!USE_SHEETS) return; _knownAlerts=null; safetyAdminPoll(); safetyAdmInt=setInterval(safetyAdminPoll,30000); }
+function stopSafetyWatch(){ clearInterval(safetyAdmInt); safetyAdmInt=null; _safRole=''; _saf={checks:[],alerts:[],now:''}; const b=document.getElementById('sosBar'); if(b) b.classList.remove('on'); document.body.classList.remove('sosOn'); }
+async function safetyAdminPoll(){
+  if(!_safRole) return;
+  try{
+    const d=await api('getSafety',{}); if(!_safRole) return; _saf=d||_saf;
+    const open=(_saf.alerts||[]).filter(a=>a.status!=='resolved');
+    if(_knownAlerts&&open.some(a=>!_knownAlerts.has(a.id))) beep(8); else if(open.some(a=>a.status==='open')) beep(3);
+    _knownAlerts=new Set(open.map(a=>a.id));
+    renderSosBar(open); setTabBadge('safety',open.length); renderSafetyViews();
+  }catch(e){}
+}
+function renderSosBar(open){
+  const b=document.getElementById('sosBar'); if(!b) return;
+  document.body.classList.toggle('sosOn',!!open.length);
+  if(!open.length){ b.classList.remove('on'); return; }
+  const a=open[0];
+  b.innerHTML=`<b>🚨 EMERGENCY — ${hx(a.name)}</b> <span>${hx(a.area||'location not available')} · ${agoText(a.createdAt,_saf.now)}${open.length>1?' · +'+(open.length-1)+' more':''}</span><button onclick="openSafety()">Open</button>`;
+  b.classList.add('on');
+}
+function openSafety(){ if(_safRole==='admin') switchTab('safety'); else { const e=document.getElementById('supSafety'); if(e) e.scrollIntoView({behavior:'smooth'}); } }
+function renderSafetyViews(){
+  if(_safRole==='admin'&&document.getElementById('tabSafety').classList.contains('active')) renderSafety('safetyContent','admin');
+  if(_safRole==='sup') renderSafety('supSafety','sup');
+}
+async function loadSafety(role){
+  const el=document.getElementById(role==='sup'?'supSafety':'safetyContent'); if(!el) return;
+  if(!USE_SHEETS){ el.innerHTML='<div class="empty"><div class="eicon">🚨</div>Safety needs the online (Google Sheets) version.</div>'; return; }
+  try{ _saf=await api('getSafety',{})||_saf; }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; return; }
+  renderSafety(el.id,role);
+}
+function safEmps(role){
+  let l=(_D.employees||[]).slice();
+  if(role==='sup'&&currentSupervisor){ const as=(currentSupervisor.assignedEmp||'').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean); if(as.length) l=l.filter(e=>as.includes(String(e.id).toUpperCase())); }
+  return l.sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+}
+function checkLine(c){
+  const t=_saf.now, wait=agoText(c.requestedAt,t);
+  if(c.status==='answered'){
+    const r=c.result, col=r==='YES'||r==='LOCATED'?'var(--green)':r==='NO'||r==='NO GPS'||r==='FAKE GPS'?'var(--red)':'var(--amber)';
+    const txt={YES:'Inside the site',NO:'Outside the site'+(c.distMeters?' ('+c.distMeters+' m)':''),ROUGH:'Weak GPS — unclear','NO GPS':'GPS off / blocked ('+(c.area||'')+')','FAKE GPS':'Fake GPS app',LOCATED:'Location received'}[r]||r;
+    return `<span style="color:${col};font-weight:700">${hx(txt)}</span> · ${hhmm(c.answeredAt)}${c.lat?` · ${hx(c.area||'')} <a class="map-link" href="${mapsUrl(c.lat,c.lng)}" target="_blank">📍 Map</a>`:''}`;
+  }
+  if(c.status==='pending') return `<span style="color:var(--amber);font-weight:700">⏳ Waiting for answer</span> · asked ${wait}`;
+  return `<span style="color:var(--red);font-weight:700">❌ No answer</span> · asked ${hhmm(c.requestedAt)}`;
+}
+function renderSafety(elId,role){
+  const el=document.getElementById(elId); if(!el) return;
+  const flt=(document.getElementById('safFilter_'+role)||{}).value||'';
+  const alerts=_saf.alerts||[], live=alerts.filter(a=>a.status!=='resolved'), done=alerts.filter(a=>a.status==='resolved').slice(0,5), t=_saf.now;
+  const chip={open:['var(--redBg)','var(--red)','WAITING FOR HELP'],ack:['var(--amberBg)','var(--amber)','SOMEONE IS ON IT'],aid:['var(--greenBg)','var(--green)','AID SENT'],resolved:['var(--greenBg)','var(--green)','RESOLVED']};
+  const card=a=>{
+    const c=chip[a.status]||chip.open, id=hx(a.id), isLive=a.status!=='resolved';
+    return `<div class="saf-alert s-${hx(a.status)}"><div class="saf-top"><b>🚨 ${hx(a.name)} <small>(${hx(a.empId)})</small></b><span class="saf-chip" style="background:${c[0]};color:${c[1]}">${c[2]}</span></div>
+      <div class="saf-meta">${hhmm(a.createdAt)} · ${agoText(a.createdAt,t)}${a.battery!==''&&a.battery!==undefined?' · 🔋 '+hx(a.battery)+'%':''}</div>
+      ${a.note?`<div class="saf-note">“${hx(a.note)}”</div>`:''}
+      <div class="saf-meta">📍 ${hx(a.area||'Location not available')} ${a.lat?`<a class="map-link" href="${mapsUrl(a.lat,a.lng)}" target="_blank">Open map</a>`:''}</div>
+      ${a.phone?`<div class="saf-meta">📞 <a href="tel:${hx(a.phone)}">${hx(a.phone)}</a></div>`:''}
+      <div class="saf-meta">${a.ackBy?'✋ Seen by '+hx(a.ackBy)+' at '+hhmm(a.ackAt)+'. ':''}${a.aidBy?'🚑 Aid sent by '+hx(a.aidBy)+' at '+hhmm(a.aidAt)+(a.aidNote?' — '+hx(a.aidNote):'')+'. ':''}${a.resolvedBy?'✅ Closed by '+hx(a.resolvedBy)+' at '+hhmm(a.resolvedAt)+(a.resolveNote?' — '+hx(a.resolveNote):'')+'.':''}</div>
+      ${isLive?`<input type="text" id="an_${id}" class="saf-in" placeholder="Note (e.g. ambulance called, taking to hospital)">
+      <div class="saf-btns">${a.status==='open'?`<button class="sb ack" onclick="alertAct('${id}','ack')">✋ I am on it</button>`:''}<button class="sb aid" onclick="alertAct('${id}','aid')">🚑 Aid sent</button><button class="sb res" onclick="alertAct('${id}','resolved')">✅ Resolved</button>${a.phone?`<a class="sb call" href="tel:${hx(a.phone)}">📞 Call</a>`:''}</div>`:''}</div>`;
+  };
+  const emps=safEmps(role).filter(e=>!flt||(e.name+' '+e.id).toLowerCase().includes(flt.toLowerCase()));
+  const last={}; (_saf.checks||[]).forEach(c=>{ const k=String(c.empId).toUpperCase(); if(!last[k]) last[k]=c; });
+  const keepV={}, ae=document.activeElement; el.querySelectorAll('input.saf-in').forEach(i=>{ if(i.id.startsWith('an_')&&i.value) keepV[i.id]=i.value; });
+  const focusId=ae&&el.contains(ae)?ae.id:'';
+  el.innerHTML=`<h3 style="margin:0 0 8px;font-size:15px">🚨 Emergencies ${live.length?'<span class="viol-badge">'+live.length+' open</span>':''}</h3>
+    ${live.length?live.map(card).join(''):'<div class="saf-none">✅ No open emergency.</div>'}
+    ${done.length?`<details class="saf-done"><summary>Recently closed (${done.length})</summary>${done.map(card).join('')}</details>`:''}
+    <h3 style="margin:16px 0 4px;font-size:15px">📍 Check now</h3>
+    <div style="font-size:12px;color:var(--soft);margin-bottom:8px">Ask someone to confirm where they are. Their phone beeps and asks for a location; you see the answer here. No answer in 10 minutes → you are e-mailed.</div>
+    <input type="text" id="safFilter_${role}" class="saf-in" placeholder="Search name or ID…" value="${hx(flt)}" oninput="renderSafety('${elId}','${role}');var f=document.getElementById('safFilter_${role}');f.focus();f.setSelectionRange(f.value.length,f.value.length)">
+    ${emps.length?emps.map(e=>{ const c=last[String(e.id).toUpperCase()], pend=c&&c.status==='pending';
+      return `<div class="saf-emp"><div><b>${hx(e.name)}</b> <small>${hx(e.id)}</small><div class="saf-meta">${c?checkLine(c):'Never asked'}</div></div><button class="sb chk" ${pend?'disabled':''} onclick="askCheck('${hx(e.id)}')">${pend?'⏳ Asked':'📍 Check now'}</button></div>`; }).join(''):'<div class="saf-none">No staff found.</div>'}`;
+  Object.keys(keepV).forEach(k=>{ const i=document.getElementById(k); if(i) i.value=keepV[k]; });
+  if(focusId&&focusId.startsWith('an_')){ const i=document.getElementById(focusId); if(i) i.focus(); }
+}
+async function askCheck(empId){
+  if(!USE_SHEETS){ safToast('Check now needs the online version.',true); return; }
+  try{
+    const r=await api('requestCheck',{empId}); safToast(r&&r.already?'Already asked — waiting for the answer.':'Asked '+empNameOf(empId)+' to confirm their location.');
+    document.getElementById('detailModal').classList.remove('open');
+    if(_safRole) { _saf=await api('getSafety',{})||_saf; renderSafetyViews(); }
+  }catch(e){ safToast(e.message,true); }
+}
+async function alertAct(id,status){
+  const n=document.getElementById('an_'+id), note=n?n.value.trim():'';
+  try{ await api('updateAlert',{id,status,note}); safToast(status==='ack'?'Marked: you are on it.':status==='aid'?'Marked: aid sent.':'Marked resolved.'); await safetyAdminPoll(); }
+  catch(e){ safToast(e.message,true); safetyAdminPoll(); }
+}
+
+/* ══════════════════════════════════════════════════════════════
    ACTIONS LOG (admin)
 ══════════════════════════════════════════════════════════════ */
 let _audit=[];
@@ -1597,7 +1901,7 @@ async function setSupEmail(id,val){
 ══════════════════════════════════════════════════════════════ */
 function initAlerts(){
   const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('alMail')) return;
-  g('alMail').value=s.adminEmail||''; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90;
+  g('alMail').value=s.adminEmail||''; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90; g('alPhone').value=s.adminPhone||''; g('alSos').value=s.sosNumber||'';
   g('alRem').checked=s.reminders!=='0'; g('alSite').checked=s.alertsSite!=='0'; g('alDrive').checked=s.photosToDrive!=='0';
   g('alWeekly').checked=s.weeklyEmail!=='0'; g('alBday').checked=s.birthdayMail!=='0';
   refreshAlertStatus();
@@ -1614,7 +1918,7 @@ function alertSettings(){
   const mail=g('alMail').value.trim(), outAt=normTime(g('alOutAt').value), sumAt=normTime(g('alSumAt').value);
   if(mail&&!/^\S+@\S+\.\S+$/.test(mail)) return {error:'Your e-mail does not look right.'};
   if(!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
-  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
+  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),adminPhone:g('alPhone').value.trim(),sosNumber:g('alSos').value.replace(/[^\d+]/g,''),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
 }
 async function saveAlerts(quiet){
   const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
@@ -1762,7 +2066,7 @@ async function loadHome(){
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
   },30000);
   homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
-  trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
+  trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
   if(!dayOff&&USE_SHEETS){
     const fresh=await freshRecordToday(emp.id);
@@ -2334,7 +2638,7 @@ async function captureAndMark(){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -2687,10 +2991,10 @@ async function handleAdminLogin(){
     if(!cr||u!==cr.username||!(await verifyPass(p,cr.passHash))){loading(false);err.classList.add('show');return;}
     err.classList.remove('show'); _actor='Admin ('+u+')';
     document.getElementById('adminDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges();
+    loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges(); startSafetyWatch('admin');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function adminLogout(){ _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+function adminLogout(){ stopSafetyWatch(); _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -2708,16 +3012,16 @@ async function handleSupLogin(){
     err.classList.remove('show'); currentSupervisor=sup; _actor='Supervisor '+sup.name; loading(false);
     document.getElementById('supLabel').textContent=sup.name;
     document.getElementById('supDateLbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    showScreen('supervisorScreen'); refreshSiteMonitor('sup');
+    showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function supLogout(){ currentSupervisor=null; _actor=''; showScreen('loginScreen'); }
+function supLogout(){ stopSafetyWatch(); currentSupervisor=null; _actor=''; showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports','corrections','log'];
+  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports','corrections','log','safety'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
@@ -2730,6 +3034,7 @@ function switchTab(tab){
   if(tab==='reports') initReports();
   if(tab==='corrections') loadCorrectionsTab();
   if(tab==='log') loadAuditTab();
+  if(tab==='safety') loadSafety('admin');
   if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();const sm=document.getElementById('siteMonth');if(sm&&!sm.value)sm.value=todayStr().slice(0,7);refreshSiteMonitor('admin');renderSupList();}
 }
 
@@ -3367,6 +3672,7 @@ async function openSiteDetail(id){
     const stopHtml=s.stopTime?`<b>⏹ Stopped ${fmt12(s.stopTime)}</b><div>📍 ${s.stopArea||'—'}${acc(s.stopAcc)}</div><div>${mapA(s.stopLat,s.stopLng)}</div>`
       :running?(isToday?'<b style="color:var(--orange)">🟡 Still on site</b>':'<b style="color:var(--red)">⚠️ Never stopped</b>'):'—';
     body.innerHTML=`<div style="font-weight:700;font-size:14px">${s.name||''} <span style="font-weight:400;color:var(--soft)">· ${s.date||''}</span></div>
+      ${s.empId&&running&&isToday?`<button class="btn btn-outline" style="margin:8px 0" onclick="askCheck('${esc(s.empId)}')">📍 Check now — ask ${hx(s.name||'')} to confirm location</button>`:''}
       <div class="sd-block">${img(s.startPhoto)}<div><b>▶ Started ${fmt12(s.startTime)}</b><div>📍 ${s.startArea||'—'}${acc(s.startAcc)}</div><div>${mapA(s.startLat,s.startLng)}</div></div></div>
       <div class="sd-block">${img(s.stopPhoto)}<div>${stopHtml}</div></div>
       <div class="sd-sum">
