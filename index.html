@@ -523,6 +523,12 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible,summary:focus-visi
 .logo h1,.topbar h2,.hm-nm,.hm-tt,.hm-big,.hm-h,.state-box h3,.stat .n,.modal-box h3,.hm-tile b,.add-form h3,.org-node>.org-row b,.leave-card b{
   font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:-.005em}
 .hm-nm{font-size:21px}.hm-tt{font-size:17px}.logo h1{font-size:23px;font-weight:700}.topbar h2{font-size:19px}
+
+/* ── Photos: login backdrop, home hero, empty states ── */
+body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linear-gradient(180deg,rgba(8,36,40,.50) 0%,rgba(8,36,40,.72) 100%),url(img/login-campus.webp) center/cover fixed no-repeat #0E2A2E}
+.hm-hero{background:linear-gradient(135deg,rgba(10,46,50,.86) 0%,rgba(14,70,68,.62) 55%,rgba(14,70,68,.30) 100%),url(img/hero-site.webp) center/cover no-repeat #0E3C3E}
+.hm-hero,.hm-hero *{text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.eimg{display:block;width:92px;height:92px;object-fit:contain;margin:0 auto 6px;opacity:.92;border-radius:18px}
 </style>
 </head>
 <body>
@@ -847,7 +853,7 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible,summary:focus-visi
         <tbody id="attBody"></tbody>
       </table>
     </div>
-    <div class="empty" id="attEmpty" style="display:none"><div class="eicon">📭</div>No records.</div>
+    <div class="empty" id="attEmpty" style="display:none"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No records.</div>
   </div>
 
   <!-- MONTHLY TAB -->
@@ -1056,7 +1062,7 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible,summary:focus-visi
     </div>
     <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Who changed what, newest first (last 300). The name comes from the app, so treat it as a record, not proof.</div>
     <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th><th>Details</th></tr></thead><tbody id="logBody"></tbody></table></div>
-    <div class="empty" id="logEmpty" style="display:none"><div class="eicon">🧾</div>Nothing logged yet.</div>
+    <div class="empty" id="logEmpty" style="display:none"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">Nothing logged yet.</div>
   </div>
 
   <!-- SITE MONITOR TAB -->
@@ -1400,7 +1406,7 @@ function checkDayOff(ds){
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function nowTime(){ return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}); }
 function initials(n){ return (n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
-function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.body.dataset.screen=id; }
 function mapsUrl(a,b){ return 'https://www.google.com/maps?q='+a+','+b; }
 function loading(on,msg='Loading…'){ document.getElementById('loadOv').classList.toggle('on',on); document.getElementById('loadMsg').textContent=msg; }
 function esc(s){ return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
@@ -3278,7 +3284,7 @@ async function showAttDetail(name,date){
   const recs=await getAttRange(date,date);
   const rec=recs.find(r=>r.name===name||r.empId===name)||null;
   document.getElementById('modalTitle').textContent=name+' · '+date;
-  document.getElementById('modalBody').innerHTML=rec?buildTimeline(rec)+(calcTotalHrs(rec)?'<div class="total-hrs">⏱ In office: '+calcTotalHrs(rec)+'</div>':''):'<div class="empty"><div class="eicon">📭</div>No data.</div>';
+  document.getElementById('modalBody').innerHTML=rec?buildTimeline(rec)+(calcTotalHrs(rec)?'<div class="total-hrs">⏱ In office: '+calcTotalHrs(rec)+'</div>':''):'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No data.</div>';
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -3490,7 +3496,7 @@ async function loadLeaveHistory(){
     const leaves=await getLeaves(currentEmp.id);
     const hist=document.getElementById('lvHistory');
     const sorted=[...leaves].sort((a,b)=>new Date(b.requestedAt||0)-new Date(a.requestedAt||0));
-    if(!sorted.length){hist.innerHTML='<div class="empty"><div class="eicon">📋</div>No requests yet.</div>';return;}
+    if(!sorted.length){hist.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No requests yet.</div>';return;}
     const stC={pending:'var(--amber)',approved:'var(--green)',rejected:'var(--red)'};
     const stBg={pending:'var(--amberBg)',approved:'var(--greenBg)',rejected:'var(--redBg)'};
     hist.innerHTML=sorted.map(l=>`<div class="leave-card">
@@ -3539,7 +3545,7 @@ async function renderEmpList(){
   try{
     const emps=await getEmployees();loading(false);
     const list=document.getElementById('empList');
-    if(!emps.length){list.innerHTML='<div class="empty"><div class="eicon">👥</div>No employees yet.</div>';return;}
+    if(!emps.length){list.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No employees yet.</div>';return;}
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${e.id}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
@@ -3662,7 +3668,7 @@ async function openRoute(empId,name,date){
       <div id="routeMap"></div>
       ${url?`<a class="map-link" href="${url}" target="_blank" style="margin-bottom:6px">🧭 Open route in Google Maps (road distance)</a>`:''}
       ${stops.length?stops.map((p,i)=>`<div class="rt-stop"><div class="rt-num" style="background:${ROUTE_COLORS[p.kind]}">${i+1}</div>${p.photo?`<img src="${p.photo}" alt="">`:''}<div style="flex:1"><b>${fmt12(p.time)}</b> · ${p.label}<div style="color:var(--soft)">📍 ${p.area||'—'}${isFinite(p.lat)?` · <a href="${mapsUrl(p.lat,p.lng)}" target="_blank">map</a>`:''}</div></div></div>`).join('')
-        :'<div class="empty">Nothing recorded for this day.</div>'}
+        :'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">Nothing recorded for this day.</div>'}
       <div style="font-size:11px;color:var(--soft);margin-top:8px">Distance joins the recorded places with straight lines, so the road distance is usually 20–40% more. Use the Google Maps link to see it.</div>`;
     const pts=stops.filter(p=>isFinite(p.lat)&&isFinite(p.lng));
     const box=document.getElementById('routeMap');
@@ -3825,7 +3831,7 @@ async function refreshSiteMonitor(role){
     const done=data.filter(r=>r.status==='done').length;
     const viols=data.reduce((s,r)=>s+(parseInt(r.violations)||0),0);
     let html=`<div class="stats-grid"><div class="stat"><div class="n c-orange">${onSite}</div><div class="l">On Site</div></div><div class="stat"><div class="n c-green">${done}</div><div class="l">Finished</div></div><div class="stat"><div class="n c-purple">${data.length}</div><div class="l">Total</div></div><div class="stat"><div class="n c-red">${viols}</div><div class="l">⚠️ Violations</div></div></div>`;
-    if(!data.length){html+='<div class="empty"><div class="eicon">🏗️</div>No site work records for '+date+'.</div>';}
+    if(!data.length){html+='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No site work records for '+date+'.</div>';}
     else{
       html+=`<div class="site-wrap"><div class="site-row site-head"><div>Employee</div><div>Status</div><div>Started</div><div>Last Check</div><div>Distance</div><div>Map</div></div>`;
       data.forEach(r=>{
@@ -3896,7 +3902,7 @@ async function loadSiteSummary(){
   el.innerHTML='<div class="empty">⏳ Loading…</div>';
   try{
     const list=USE_SHEETS?(await api('siteReport',{start,end})||[]):[];
-    if(!list.length){ el.innerHTML='<div class="empty"><div class="eicon">🏗️</div>No site work in this month.</div>'; return; }
+    if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No site work in this month.</div>'; return; }
     const by={};
     list.forEach(s=>{
       const k=String(s.empId).toUpperCase();
@@ -3965,7 +3971,7 @@ async function updateSupAssigned(id,empId,checked){
 function renderSupList(){
   const el=document.getElementById('supList');if(!el) return;
   const sups=_D.supervisors||[],emps=_D.employees||[];
-  if(!sups.length){el.innerHTML='<div class="empty"><div class="eicon">👷</div>No supervisors yet.</div>';return;}
+  if(!sups.length){el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No supervisors yet.</div>';return;}
   el.innerHTML=sups.map(s=>{
     const assigned=(s.assignedEmp||'').split(',').map(e=>e.trim()).filter(Boolean);
     return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${s.name}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${s.id}')">✕</button></div>
