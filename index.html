@@ -541,6 +541,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .hm-links button{flex:1 1 auto;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.55);color:var(--ink,#16302F);font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer}
 .hm-links button small{color:#B45309;font-weight:700}
 .hm-links button small:empty{display:none}
+.hm-tile.blocked{opacity:.78;border-style:dashed}.hm-tile.blocked span{color:#B45309;font-weight:700}
 </style>
 </head>
 <body>
@@ -2299,7 +2300,8 @@ function renderHomeActs(){
   const inNow=!!(rec&&rec.punchIn&&!rec.punchOut), am=inNow&&getActiveMeeting(rec), sw=mySiteManual();
   const T=[];
   if(inNow&&!am){
-    T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
+    if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🚗</div><b>Going for meeting</b><span>⛔ Stop site work first</span></button>`);
+    else T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
@@ -2803,7 +2805,9 @@ function setCamMode(mode){
 }
 function switchToVisit(){ setCamMode('visit'); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; const vc=document.getElementById('visitCustomer'); if(vc) vc.focus(); }
 
-function switchToMeeting(){ stopCamera(); setCamMode('meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
+function switchToMeeting(){
+  if(mySiteManual()){ const ce=document.getElementById('camErr'); if(ce){ ce.textContent='Site work is running. Stop site work first, then go for the meeting.'; ce.classList.add('show'); } return; }
+  stopCamera(); setCamMode('meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
 
 async function captureAndMark(){
   const video=document.getElementById('videoFeed'),canvas=document.getElementById('snapCanvas'),btn=document.getElementById('captureBtn');
