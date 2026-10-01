@@ -2222,6 +2222,7 @@ async function openPunch(mode){
   if(!currentEmp) return;
   await loadCameraScreen();
   if(mode==='visit'&&punchMode==='out') switchToVisit();
+  if(mode==='meeting'&&punchMode==='out') switchToMeeting();
 }
 function setHtml(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
 async function loadHome(){
@@ -2250,7 +2251,7 @@ async function loadHome(){
   if(!dayOff&&USE_SHEETS){
     const fresh=await freshRecordToday(emp.id);
     if(fresh!==undefined&&tok===homeTok){
-      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.edited||'')):'';
+      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.edited||'')+'|'+(r.meetings||[]).map(m=>(m.outTime||'')+'-'+(m.backTime||'')).join(',')):'';
       if(sig(fresh)!==sig(rec)){ rec=fresh; checkSiteWork(!!(rec&&rec.punchOut)); renderHomeToday(rec,dayOff); homeNudge(emp,tok,rec,dayOff); }
       ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
     }
@@ -2298,6 +2299,7 @@ function renderHomeActs(){
   const inNow=!!(rec&&rec.punchIn&&!rec.punchOut), am=inNow&&getActiveMeeting(rec), sw=mySiteManual();
   const T=[];
   if(inNow&&!am){
+    T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
