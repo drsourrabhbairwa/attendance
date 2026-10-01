@@ -145,6 +145,16 @@ textarea{min-height:72px;resize:vertical}
 .tab-btn{padding:7px 13px;border:1.5px solid var(--border2);border-radius:var(--rs);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--soft);font-family:inherit;transition:all .15s;white-space:nowrap}
 .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .tab-pane{display:none}.tab-pane.active{display:block}
+body.rD .sa-only{display:none!important}
+#tabBtnOrg{display:none}body.rS #tabBtnOrg{display:inline-block}
+.role-chip{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--accent);color:#fff;margin-left:6px;vertical-align:middle}
+.org-tree{margin-top:10px}.org-node{border:1.5px solid var(--border2);border-radius:var(--r);background:var(--surface);padding:11px 13px;margin-bottom:9px}
+.org-node .org-kids{margin:9px 0 0 14px;padding-left:12px;border-left:3px solid var(--border2)}
+.org-top{border-color:var(--accent)}.org-off{opacity:.55}
+.org-row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.org-tag{display:inline-block;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:99px;padding:2px 8px;margin:2px 3px 0 0}
+.org-act{font-size:11px;font-weight:700;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);border-radius:var(--rs);padding:4px 9px;cursor:pointer;font-family:inherit}
+.org-act.red{color:#c0392b;border-color:#e6b0aa}
 /* Stats */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
@@ -668,20 +678,21 @@ body.sosOn{padding-top:46px}
 <div id="adminScreen" class="screen admin-wrap">
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
-    <div><h2>📋 Admin Dashboard</h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div><div id="sb2" class="sbadge sb-local" style="margin-top:4px">💾 Local Storage</div></div>
-    <button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button>
+    <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div><div id="sb2" class="sbadge sb-local" style="margin-top:4px">💾 Local Storage</div></div>
+    <div style="display:flex;gap:6px"><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
   </div>
   <div class="tab-row">
     <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
     <button class="tab-btn" onclick="switchTab('monthly')">📊 Monthly</button>
     <button class="tab-btn" onclick="switchTab('leaves')">📋 Leaves</button>
     <button class="tab-btn" onclick="switchTab('employees')">👥 Staff</button>
-    <button class="tab-btn" onclick="switchTab('holidays')">🗓 Holidays</button>
+    <button class="tab-btn sa-only" onclick="switchTab('holidays')">🗓 Holidays</button>
     <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
     <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
     <button class="tab-btn" onclick="switchTab('corrections')">✏️ Corrections</button>
-    <button class="tab-btn" onclick="switchTab('log')">🧾 Log</button>
+    <button class="tab-btn sa-only" onclick="switchTab('log')">🧾 Log</button>
     <button class="tab-btn" onclick="switchTab('safety')">🚨 Safety</button>
+    <button class="tab-btn" id="tabBtnOrg" onclick="switchTab('org')">👑 Managers &amp; Hierarchy</button>
   </div>
 
   <!-- ATTENDANCE TAB -->
@@ -778,10 +789,11 @@ body.sosOn{padding-top:46px}
     <div class="add-form">
       <h3>➕ Add Employee</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Default password = Employee ID</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
         <div><label style="margin:0 0 4px">ID</label><input type="text" id="nEmpId" placeholder="EMP021"></div>
         <div><label style="margin:0 0 4px">Full Name</label><input type="text" id="nEmpName" placeholder="Name"></div>
         <div><label style="margin:0 0 4px">Password</label><input type="password" id="nEmpPass" placeholder="Optional"></div>
+        <div><label style="margin:0 0 4px">Department</label><select id="nEmpDept"></select></div>
         <div><button onclick="addEmployee()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
       </div>
       <div class="msg msg-error" id="empErr"></div>
@@ -815,7 +827,7 @@ body.sosOn{padding-top:46px}
       </div>
     </div>
     <div id="repContent"><div class="empty"><div class="eicon">📈</div>Pick a month and tap Show.</div></div>
-    <div class="add-form" style="margin-top:18px">
+    <div class="add-form sa-only" style="margin-top:18px">
       <h3>⚙️ Report settings</h3>
       <div class="set-row" style="margin-top:9px">
         <div><label style="margin:0 0 4px">Office start</label><input type="text" id="setStart" placeholder="09:30 AM"></div>
@@ -825,7 +837,7 @@ body.sosOn{padding-top:46px}
       </div>
       <div class="msg msg-success" id="setOk"></div>
     </div>
-    <div class="add-form" style="margin-top:14px">
+    <div class="add-form sa-only" style="margin-top:14px">
       <h3>🏢 Departments &amp; office hours</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Give a group its own start time (for example site workers 07:00 AM). Assign people on the Staff tab; everyone else uses the company hours above.</p>
       <div id="deptList" style="margin-top:8px"></div>
@@ -837,7 +849,7 @@ body.sosOn{padding-top:46px}
       </div>
       <div class="msg msg-error" id="dpErr"></div><div class="msg msg-success" id="dpOk"></div>
     </div>
-    <div class="add-form" style="margin-top:14px">
+    <div class="add-form sa-only" style="margin-top:14px">
       <h3>⚖️ Attendance rules &amp; tracking</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">These rules feed the salary sheet below and the dashboard. Leave a field empty to switch that rule off.</p>
       <div class="ru-grid">
@@ -860,7 +872,7 @@ body.sosOn{padding-top:46px}
       </div>
       <div id="salContent"></div>
     </div>
-    <div class="add-form" style="margin-top:14px">
+    <div class="add-form sa-only" style="margin-top:14px">
       <h3>🔔 Alerts, reminders &amp; photos</h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Alerts go by e-mail to you and to the supervisor assigned to that employee. Reminders go to employees who have an e-mail in their profile.</p>
       <div class="al-grid">
@@ -903,6 +915,9 @@ body.sosOn{padding-top:46px}
   <div id="tabSafety" class="tab-pane">
     <div id="safetyContent"><div class="empty"><div class="eicon">🚨</div>Loading…</div></div>
   </div>
+  <div id="tabOrg" class="tab-pane">
+    <div id="orgContent"><div class="empty"><div class="eicon">👑</div>Loading…</div></div>
+  </div>
   <div id="tabLog" class="tab-pane">
     <div class="filter-row" style="margin-bottom:8px">
       <input type="text" id="logFilter" placeholder="Search name, action, ID…" oninput="renderAudit()" style="margin-top:0">
@@ -938,6 +953,7 @@ body.sosOn{padding-top:46px}
       <div class="add-form">
         <h3>➕ Add Supervisor</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
+          <div id="newSupDeptWrap" style="display:none;grid-column:1/-1"><label style="margin:0 0 4px">Department (the supervisor will look after everyone in it)</label><select id="newSupDept"></select></div>
           <div><label style="margin:0 0 4px">Name</label><input type="text" id="newSupName" placeholder="Supervisor name"></div>
           <div><label style="margin:0 0 4px">Password</label><input type="password" id="newSupPass" placeholder="Set password"></div>
           <div><label style="margin:0 0 4px">E-mail (alerts)</label><input type="text" id="newSupEmail" placeholder="optional"></div>
@@ -1000,7 +1016,7 @@ const _D = {
   quotas:{}, customHolidays:{}, supervisors:[], siteActive:[], settings:{}, loadedAt:null
 };
 const CACHE_KEY = 'att_v2';
-function saveCache(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
+function saveCache(){ if(_tok) return; try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
@@ -1028,17 +1044,35 @@ function loadCache(){
 /* ══════════════════════════════════════════════════════════════
    API
 ══════════════════════════════════════════════════════════════ */
-let _actor='';   // who is using the app (written to the actions log)
+let _actor='';   // who is using the app (the server writes the real name from the sign-in)
+let _tok='', _me=null;   // sign-in token (managers & supervisors) and who they are: {role:'S'|'A'|'D'|'V', name, departments}
+const _OPT={getAll:1,getAttendance:1,getLeaves:1,getCorrections:1,getQuotas:1};
 async function api(action, params={}){
+  const body={action, secret:API_SECRET, actor:_actor, ...params};
+  if(_tok) body.token=_tok;
+  else if(_OPT[action] && typeof currentEmp!=='undefined' && currentEmp && !body.empId) body.empId=currentEmp.id;   // staff may only ask for their own records
   const res = await fetch(SCRIPT_URL, {
     method:'POST', redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({action, secret:API_SECRET, actor:_actor, ...params})
+    body: JSON.stringify(body)
   });
   if(!res.ok) throw new Error('Network error '+res.status);
   const j = await res.json();
-  if(!j.ok) throw new Error(j.error||'API error');
+  if(!j.ok){
+    if(/Session expired/i.test(j.error||'') && _tok){ endManagerSession(true); }
+    throw new Error(j.error||'API error');
+  }
   return j.data;
+}
+function isSuper(){ return !!_me && _me.role==='S'; }
+function isDeptAdmin(){ return !!_me && _me.role==='D'; }
+function myDepts(){ return (_me&&_me.departments)||[]; }
+/* Leave a manager / supervisor session: forget the token, wipe the cached admin data, start clean */
+function endManagerSession(expired){
+  _tok=''; _me=null; _actor='';
+  try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+  if(expired) alert('Your session ended. Please sign in again.');
+  location.reload();
 }
 
 /* Data accessors — read from _D, write to API+_D */
@@ -1171,7 +1205,7 @@ function updateMeetingCache(empId,date,dir,punch,seq){
   saveCache();
   return result;
 }
-async function getAdminStore(){ return _D.admin; }
+function hasAdmin(){ return !!(_D.admin||_D.setupDone); }
 async function saveAdminStore(c){
   if(USE_SHEETS) await api('saveAdmin',{creds:c}); else localStorage.setItem('att_admin',JSON.stringify(c));
   _D.admin=c; saveCache();
@@ -1297,7 +1331,7 @@ async function init(){
   if(swAll().length){ swAll().forEach(s=>{ if(!nativeRunning(s)) nativeStart(s); }); startSiteTimer(); siteTick(); }   // site work on this phone is checked even before anyone signs in
   const apk=document.getElementById('apkLink'); if(apk&&APK_URL&&!NATIVE){ apk.href=APK_URL; apk.style.display='block'; }
   const auto=hasCached&&autoLogin();   // remembered employee goes straight to the dashboard
-  if(auto){} else if(hasCached&&_D.admin) showScreen('loginScreen');
+  if(auto){} else if(hasCached&&hasAdmin()) showScreen('loginScreen');
   else loading(true,'Starting up…');
   if(!USE_SHEETS&&!(_D.employees&&_D.employees.length)){
     const l=[];
@@ -1309,7 +1343,7 @@ async function init(){
       loading(true,hasCached?'Refreshing…':'Loading…');
       const fresh=await api('getAll',{date:todayStr()});
       Object.assign(_D,fresh,{loadedAt:Date.now()}); saveCache(); loading(false);
-      if(!_D.admin) showScreen('setupScreen');
+      if(!hasAdmin()) showScreen('setupScreen');
       else if(!hasCached&&!currentEmp) showScreen('loginScreen');
       syncLogin();
     }catch(e){
@@ -1323,7 +1357,7 @@ async function init(){
     _D.quotas=JSON.parse(localStorage.getItem('att_quotas')||'{}');
     _D.customHolidays=JSON.parse(localStorage.getItem('att_hols')||'{}');
     loading(false);
-    if(!_D.admin) showScreen('setupScreen');
+    if(!hasAdmin()) showScreen('setupScreen');
     else if(!hasCached&&!currentEmp) showScreen('loginScreen');
     syncLogin();
   }
@@ -1344,9 +1378,6 @@ async function completeSetup(){
   if(p!==c){e.textContent='Passwords do not match.';e.classList.add('show');return;}
   loading(true,'Saving…');
   try{
-    if(USE_SHEETS&&!(_D.employees&&_D.employees.length)){
-      for(const[id,name]of DEF_EMPS) await addEmpStore({id,name,passHash:await hashPass(id)});
-    }
     await saveAdminStore({username:u,passHash:await hashPass(p)});
     loading(false); e.classList.remove('show'); showScreen('loginScreen');
   }catch(err){loading(false);e.textContent='Error: '+err.message;e.classList.add('show');}
@@ -2985,16 +3016,37 @@ async function handleAdminLogin(){
   const u=document.getElementById('adminUser').value.trim();
   const p=document.getElementById('adminPass').value;
   const err=document.getElementById('adminErr');
+  err.textContent='Incorrect username or password.';
   loading(true,'Verifying…');
   try{
-    const cr=await getAdminStore();
-    if(!cr||u!==cr.username||!(await verifyPass(p,cr.passHash))){loading(false);err.classList.add('show');return;}
-    err.classList.remove('show'); _actor='Admin ('+u+')';
+    if(!USE_SHEETS){
+      const cr=_D.admin;
+      if(!cr||u!==cr.username||!(await verifyPass(p,cr.passHash))){loading(false);err.classList.add('show');return;}
+      _me={role:'A',name:u,departments:[]};
+    } else {
+      let r;
+      try{ r=await api('login',{kind:'manager',username:u,passHash:await hashPass(p)}); }
+      catch(e){ loading(false); err.textContent=/wait|switched off|Too many/i.test(e.message)?e.message:'Incorrect username or password.'; err.classList.add('show'); return; }
+      _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[]};
+      const fresh=await api('getAll',{date:todayStr()});     // only what this person may see
+      Object.assign(_D,{employees:[],attendance:[],leaves:[],quotas:{},supervisors:[]},fresh,{loadedAt:Date.now()});
+    }
+    err.classList.remove('show'); _actor=(isSuper()?'Super Admin':isDeptAdmin()?'Dept Admin':'Admin')+' ('+_me.name+')';
     document.getElementById('adminDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    applyRoleUI();
     loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges(); startSafetyWatch('admin');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function adminLogout(){ stopSafetyWatch(); _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+/* Show the panel that matches who signed in */
+function applyRoleUI(){
+  document.body.classList.remove('rS','rD','rA'); document.body.classList.add('r'+_me.role);
+  const t=document.getElementById('adminTitle'), c=document.getElementById('roleChip');
+  t.textContent=isSuper()?'👑 Super Admin':isDeptAdmin()?'🏢 Department Admin':'📋 Admin Dashboard';
+  c.style.display=isDeptAdmin()?'inline-block':'none'; c.textContent=myDepts().join(', ');
+  document.getElementById('myPwBtn').style.display=(isSuper()||isDeptAdmin())?'inline-block':'none';
+  fillEmpDeptSelect();
+}
+function adminLogout(){ stopSafetyWatch(); if(_tok){ endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -3006,22 +3058,30 @@ async function handleSupLogin(){
   const err=document.getElementById('supErr');
   loading(true,'Verifying…');
   try{
-    if(USE_SHEETS&&!(_D.supervisors&&_D.supervisors.length)){try{const f=await api('getSupervisors');if(f){_D.supervisors=f;saveCache();}}catch(e){}}
-    const sup=(_D.supervisors||[]).find(s=>s.name===name);
-    if(!sup||!(await verifyPass(pass,sup.passHash))){loading(false);err.classList.add('show');return;}
+    let sup;
+    if(USE_SHEETS){
+      let r;
+      try{ r=await api('login',{kind:'supervisor',name,passHash:await hashPass(pass)}); }
+      catch(e){ loading(false); err.textContent=/wait|Too many/i.test(e.message)?e.message:'Incorrect supervisor credentials.'; err.classList.add('show'); return; }
+      _tok=r.token; _me={role:'V',name:r.name,id:r.id,departments:[]};
+      sup={id:r.id,name:r.name,assignedEmp:r.assignedEmp||'',email:r.email||''};
+    } else {
+      sup=(_D.supervisors||[]).find(s=>s.name===name);
+      if(!sup||!(await verifyPass(pass,sup.passHash))){loading(false);err.classList.add('show');return;}
+    }
     err.classList.remove('show'); currentSupervisor=sup; _actor='Supervisor '+sup.name; loading(false);
     document.getElementById('supLabel').textContent=sup.name;
     document.getElementById('supDateLbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function supLogout(){ stopSafetyWatch(); currentSupervisor=null; _actor=''; showScreen('loginScreen'); }
+function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endManagerSession(false); return; } _actor=''; showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports','corrections','log','safety'];
+  const tabs=['attendance','monthly','leaves','employees','holidays','site','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
@@ -3035,6 +3095,7 @@ function switchTab(tab){
   if(tab==='corrections') loadCorrectionsTab();
   if(tab==='log') loadAuditTab();
   if(tab==='safety') loadSafety('admin');
+  if(tab==='org') loadOrg();
   if(tab==='site'){const sd=document.getElementById('siteDate');if(sd)sd.value=todayStr();const sm=document.getElementById('siteMonth');if(sm&&!sm.value)sm.value=todayStr().slice(0,7);refreshSiteMonitor('admin');renderSupList();}
 }
 
@@ -3349,7 +3410,7 @@ async function renderEmpList(){
     if(!emps.length){list.innerHTML='<div class="empty"><div class="eicon">👥</div>No employees yet.</div>';return;}
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
-      const sel=depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
+      const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${e.id}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
       return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${e.name}</div><div style="font-size:12px;color:var(--soft)">${e.id}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${e.id}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
@@ -3366,7 +3427,9 @@ async function addEmployee(){
   try{
     const existing=await getEmployees();
     if(existing.find(e=>e.id.toUpperCase()===id)){loading(false);err.textContent='ID "'+id+'" already exists.';err.classList.add('show');return;}
-    await addEmpStore({id,name,passHash:await hashPass(pass)});
+    const dept=(document.getElementById('nEmpDept')||{}).value||'';
+    if(isDeptAdmin()&&!dept){loading(false);err.textContent='Choose a department.';err.classList.add('show');return;}
+    await addEmpStore({id,name,passHash:await hashPass(pass),department:dept});
     ['nEmpId','nEmpName','nEmpPass'].forEach(i=>document.getElementById(i).value='');
     loading(false);ok.textContent='✅ '+name+' added. Password: '+pass;ok.classList.add('show');renderEmpList();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
@@ -3735,8 +3798,14 @@ async function addSupervisor(){
     const id='sup-'+Date.now(),ph=await hashPass(pass);
     const email=(document.getElementById('newSupEmail').value||'').trim();
     if(email&&!/^\S+@\S+\.\S+$/.test(email)){ loading(false); err.textContent='That e-mail does not look right.'; err.classList.add('show'); return; }
-    if(USE_SHEETS) await api('addSupervisor',{id,name,passHash:ph,assignedEmp:'',email});
-    (_D.supervisors=_D.supervisors||[]).push({id,name,passHash:ph,assignedEmp:'',email});
+    let assignedEmp='', department='';
+    if(isDeptAdmin()){
+      department=(document.getElementById('newSupDept')||{}).value||myDepts()[0]||'';
+      assignedEmp=(_D.employees||[]).filter(e=>String(e.department||'').toLowerCase()===department.toLowerCase()).map(e=>e.id).join(',');
+      if(!assignedEmp){ loading(false); err.textContent='Add staff to '+department+' first — a supervisor must look after at least one person.'; err.classList.add('show'); return; }
+    }
+    if(USE_SHEETS) await api('addSupervisor',{id,name,passHash:ph,assignedEmp,email,department});
+    (_D.supervisors=_D.supervisors||[]).push({id,name,assignedEmp,email,department});
     document.getElementById('newSupEmail').value='';
     saveCache();
     document.getElementById('newSupName').value='';document.getElementById('newSupPass').value='';
@@ -3773,6 +3842,103 @@ function renderSupList(){
       <div style="margin-top:8px;max-height:160px;overflow-y:auto">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${s.id}','${emp.id}',this.checked)" style="width:14px;height:14px"> ${emp.name} <span style="color:var(--soft);font-size:11px">${emp.id}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
       </details></div>`;
   }).join('');
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ROLE HELPERS, MANAGERS & HIERARCHY (Super Admin)
+══════════════════════════════════════════════════════════════ */
+function fillEmpDeptSelect(){
+  const sel=document.getElementById('nEmpDept'); if(!sel) return;
+  const names=isDeptAdmin()?myDepts():deptList().map(d=>d.name);
+  sel.innerHTML=(isDeptAdmin()?'':'<option value="">Company hours</option>')+names.map(n=>`<option value="${hx(n)}">${hx(n)}</option>`).join('');
+  const w=document.getElementById('newSupDeptWrap'), ss=document.getElementById('newSupDept');
+  if(w&&ss){ w.style.display=isDeptAdmin()&&myDepts().length>1?'block':'none'; ss.innerHTML=myDepts().map(n=>`<option value="${hx(n)}">${hx(n)}</option>`).join(''); }
+}
+let _org=null;
+async function loadOrg(){
+  const box=document.getElementById('orgContent'); if(!isSuper()){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="empty"><div class="eicon">⏳</div>Loading…</div>';
+  try{ _org=await api('getOrg'); renderOrg(); }
+  catch(e){ box.innerHTML='<div class="msg msg-error show">'+hx(e.message)+'</div>'; }
+}
+function renderOrg(){
+  const o=_org, box=document.getElementById('orgContent');
+  const empBy=d=>o.employees.filter(e=>String(e.department||'').toLowerCase()===d.toLowerCase());
+  const supBy=d=>o.supervisors.filter(s=>String(s.department||'').toLowerCase()===d.toLowerCase());
+  const dm=o.managers.filter(m=>m.role!=='super'), sup=o.managers.find(m=>m.role==='super');
+  const covered={}; dm.forEach(m=>(m.departments||[]).forEach(d=>covered[d.toLowerCase()]=1));
+  const noDept=o.departments.filter(d=>!covered[d.toLowerCase()]);
+  const deptBlock=d=>{ const es=empBy(d), ss=supBy(d);
+    return `<div class="org-node" style="margin-bottom:6px"><div class="org-row"><b>🏷️ ${hx(d)}</b><span style="font-size:12px;color:var(--soft)">${es.length} staff</span></div>`
+      +(ss.length?`<div style="margin-top:6px;font-size:12px">${ss.map(x=>`<span class="org-tag">👷 ${hx(x.name)}</span>`).join('')}</div>`:'<div style="margin-top:6px;font-size:12px;color:var(--soft)">No supervisor yet</div>')+'</div>'; };
+  const unassignedEmp=o.employees.filter(e=>!String(e.department||'').trim()).length;
+  box.innerHTML=
+   `<div class="org-tree">
+      <div class="org-node org-top"><div class="org-row"><div><b>👑 ${hx(sup?sup.name:'Super Admin')}</b> <span class="org-tag">Super Admin · sees and controls everything</span></div></div>
+        <div class="org-kids">
+          ${o.legacyAdmin?`<div class="org-node"><div class="org-row"><div><b>📋 ${hx(o.legacyAdmin)}</b> <span class="org-tag">Admin · whole company</span></div><span style="font-size:11px;color:var(--soft)">existing admin login</span></div></div>`:''}
+          ${dm.length?dm.map(m=>`<div class="org-node ${m.active==='0'?'org-off':''}">
+              <div class="org-row"><div><b>🏢 ${hx(m.name)}</b> <span class="org-tag">Department Admin</span>${m.active==='0'?'<span class="org-tag" style="color:#c0392b">switched off</span>':''}<div style="font-size:11px;color:var(--soft);margin-top:3px">ID: ${hx(m.username)}${m.email?' · '+hx(m.email):''}${m.phone?' · '+hx(m.phone):''}${m.lastLogin?' · last sign-in '+hx(String(m.lastLogin).replace('T',' ').slice(0,16)):' · never signed in'}</div></div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap"><button class="org-act" onclick="orgEdit('${hx(m.id)}')">✏️ Edit</button><button class="org-act" onclick="orgReset('${hx(m.id)}')">🔑 New password</button><button class="org-act" onclick="orgToggle('${hx(m.id)}',${m.active==='0'?'true':'false'})">${m.active==='0'?'▶ Switch on':'⏸ Switch off'}</button><button class="org-act red" onclick="orgRemove('${hx(m.id)}')">🗑</button></div></div>
+              <div class="org-kids">${(m.departments||[]).map(deptBlock).join('')||'<div style="font-size:12px;color:var(--soft)">No department</div>'}</div></div>`).join(''):'<div style="font-size:12px;color:var(--soft);margin:4px 0 8px">No department admins yet. Create one below.</div>'}
+          ${noDept.length?`<div class="org-node"><div class="org-row"><b>📂 Departments with no admin yet</b><span style="font-size:11px;color:var(--soft)">you and the existing admin handle these</span></div><div class="org-kids">${noDept.map(deptBlock).join('')}</div></div>`:''}
+          ${unassignedEmp?`<div style="font-size:12px;color:var(--soft)">${unassignedEmp} staff not placed in any department (company hours).</div>`:''}
+        </div></div></div>
+    <div class="add-form" style="margin-top:14px" id="orgForm"></div>`;
+  orgForm(null);
+}
+function orgForm(m){
+  const f=document.getElementById('orgForm'); if(!f) return;
+  const have=(m&&m.departments)||[], all=_org.departments;
+  f.innerHTML=`<h3>${m?'✏️ Edit '+hx(m.name):'➕ Create a Department Admin'}</h3>
+   <p style="font-size:11px;color:var(--soft);margin-top:2px">They sign in on the normal Admin login with this ID and password. They see and manage only the departments you tick.</p>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px">
+     <div><label style="margin:0 0 4px">Full name</label><input type="text" id="mgName" value="${hx(m?m.name:'')}"></div>
+     <div><label style="margin:0 0 4px">Login ID (username)</label><input type="text" id="mgUser" value="${hx(m?m.username:'')}" autocomplete="off"></div>
+     <div><label style="margin:0 0 4px">E-mail (SOS alerts for the department)</label><input type="text" id="mgMail" value="${hx(m?m.email:'')}"></div>
+     <div><label style="margin:0 0 4px">Phone</label><input type="text" id="mgPhone" value="${hx(m?m.phone:'')}"></div>
+     ${m?'':'<div style="grid-column:1/-1"><label style="margin:0 0 4px">Password (at least 6 characters)</label><input type="password" id="mgPass" autocomplete="new-password"></div>'}
+   </div>
+   <label style="margin:10px 0 4px">Departments this admin manages</label>
+   <div id="mgDepts" style="display:flex;flex-wrap:wrap;gap:6px 14px">${all.map(d=>`<label style="display:flex;gap:5px;align-items:center;font-size:13px;margin:0"><input type="checkbox" value="${hx(d)}" ${have.some(x=>x.toLowerCase()===d.toLowerCase())?'checked':''} style="width:14px;height:14px"> ${hx(d)}</label>`).join('')||'<span style="font-size:12px;color:var(--soft)">No departments yet — type a new one below.</span>'}</div>
+   <input type="text" id="mgNewDept" placeholder="Or a new department name (comma-separate several)" style="margin-top:8px">
+   <div style="display:flex;gap:8px;margin-top:10px"><button class="org-act" style="background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 14px;font-size:13px" onclick="orgSave(${m?`'${hx(m.id)}'`:'null'})">${m?'Save changes':'Create admin'}</button>${m?'<button class="org-act" style="padding:9px 14px;font-size:13px" onclick="orgForm(null)">Cancel</button>':''}</div>
+   <div class="msg msg-error" id="mgErr"></div><div class="msg msg-success" id="mgOk"></div>`;
+}
+function orgEdit(id){ orgForm(_org.managers.find(m=>m.id===id)); document.getElementById('orgForm').scrollIntoView({behavior:'smooth',block:'center'}); }
+async function orgSave(id){
+  const g=i=>(document.getElementById(i)||{}).value||'', err=document.getElementById('mgErr'), ok=document.getElementById('mgOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  const depts=[...document.querySelectorAll('#mgDepts input:checked')].map(x=>x.value).concat(g('mgNewDept').split(',').map(x=>x.trim()).filter(Boolean));
+  const body={id:id||undefined,name:g('mgName').trim(),username:g('mgUser').trim(),email:g('mgMail').trim(),phone:g('mgPhone').trim(),departments:depts};
+  const bad=m=>{err.textContent=m;err.classList.add('show');};
+  if(!body.name) return bad('Enter a name.'); if(!body.username) return bad('Enter a login ID.'); if(!depts.length) return bad('Tick at least one department.');
+  if(!id){ const p=g('mgPass'); if(p.length<6) return bad('Password must be at least 6 characters.'); body.passHash=await hashPass(p); }
+  loading(true,'Saving…');
+  try{ await api('saveManager',body); loading(false); await loadOrg(); const o=document.getElementById('mgOk'); if(o){o.textContent='✅ Saved.'; o.classList.add('show');} }
+  catch(e){ loading(false); bad(e.message); }
+}
+async function orgReset(id){
+  const m=_org.managers.find(x=>x.id===id); if(!m) return;
+  const p=prompt('New password for '+m.name+' (at least 6 characters).\nThey are signed out at once.'); if(p===null) return;
+  if(p.length<6){ alert('At least 6 characters.'); return; }
+  loading(true,'Saving…');
+  try{ await api('saveManager',{id,name:m.name,username:m.username,email:m.email,phone:m.phone,departments:m.departments,passHash:await hashPass(p)}); loading(false); alert('Done. Tell '+m.name+' the new password.'); loadOrg(); }
+  catch(e){ loading(false); alert(e.message); }
+}
+async function orgToggle(id,on){ loading(true,'Saving…'); try{ await api('setManagerActive',{id,active:on}); loading(false); loadOrg(); }catch(e){ loading(false); alert(e.message); } }
+async function orgRemove(id){
+  const m=_org.managers.find(x=>x.id===id); if(!m||!confirm('Remove the department admin "'+m.name+'"?\nTheir login stops working at once. Staff and supervisors are not touched.')) return;
+  loading(true,'Removing…'); try{ await api('removeManager',{id}); loading(false); loadOrg(); }catch(e){ loading(false); alert(e.message); }
+}
+async function openMyPassword(){
+  const o=prompt('Your CURRENT password:'); if(o===null) return;
+  const n=prompt('Your NEW password (at least 6 characters):'); if(n===null) return;
+  if(n.length<6){ alert('At least 6 characters.'); return; }
+  loading(true,'Saving…');
+  try{ const r=await api('changeMyPassword',{oldHash:await hashPass(o),newHash:await hashPass(n)}); if(r&&r.token) _tok=r.token; loading(false); alert('✅ Password changed.'); }
+  catch(e){ loading(false); alert(e.message); }
 }
 
 /* ══════════════════════════════════════════════════════════════
