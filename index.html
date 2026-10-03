@@ -542,6 +542,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .hm-links button small{color:#B45309;font-weight:700}
 .hm-links button small:empty{display:none}
 .hm-tile.blocked{opacity:.78;border-style:dashed}.hm-tile.blocked span{color:#B45309;font-weight:700}
+.chip{padding:7px 11px;border-radius:999px;border:1px solid #B45309;background:rgba(255,255,255,.75);color:#8a4a07;font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;min-height:38px}
 </style>
 </head>
 <body>
@@ -705,6 +706,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <div class="state-box box-done"><div class="icon">✅</div><h3>Attendance complete for today!</h3></div>
     <div id="doneTimeline"></div>
     <div class="total-hrs" id="doneTotalHrs" style="display:none"></div>
+    <button class="btn btn-purple" onclick="openPunch('resume')" style="margin-top:10px">↩ Came back? Resume work</button>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px">Sign out</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
   </div>
@@ -714,8 +716,9 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <div class="punch-bar" id="punchBar"><span id="punchTxt">—</span></div>
     <!-- Meeting note box (only in meeting_out mode) -->
     <div class="note-box" id="meetNoteBox">
-      <label style="margin:0 0 5px;font-size:12px">📝 Meeting Note <span style="font-weight:400;color:var(--soft)">(optional)</span></label>
+      <label id="meetNoteLbl" style="margin:0 0 5px;font-size:12px">📝 Meeting Note <span style="font-weight:400;color:var(--soft)">(optional)</span></label>
       <textarea id="meetNote" rows="2" placeholder="e.g. Client visit – Acme Corp, Jodhpur…"></textarea>
+      <div id="reasonChips" style="display:none;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="chip" onclick="pickReason('Bank work')">🏦 Bank</button><button type="button" class="chip" onclick="pickReason('Family emergency')">👨‍👩‍👧 Family</button><button type="button" class="chip" onclick="pickReason('Medical')">🏥 Medical</button><button type="button" class="chip" onclick="pickReason('Vehicle problem')">🚗 Vehicle</button><button type="button" class="chip" onclick="pickReason('Urgent personal work')">📌 Other</button></div>
     </div>
     <!-- Customer visit details (only in visit mode) -->
     <div class="note-box" id="visitBox">
@@ -741,6 +744,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     </div>
     <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
+    <button class="btn btn-outline" id="personalBtn" style="display:none;color:#B45309;border-color:#B45309" onclick="switchToMeeting('personal')">🏃 Urgent personal work</button>
     <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
     <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="loadCameraScreen()">✖ Cancel</button>
     <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
@@ -1289,14 +1293,14 @@ async function storePunchOut(empId,date,punch){
   updateLocalCache(empId,null,date,'punchOut',punch);
 }
 async function storeMeetingOut(empId,name,date,punch){
-  if(USE_SHEETS) return api('saveMeetingOut',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||'',note:punch.note||''});
+  if(USE_SHEETS) return api('saveMeetingOut',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||'',note:punch.note||'',kind:punch.kind||''});
   else{
     const all=JSON.parse(localStorage.getItem('att_rec')||'[]');
     const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
     if(idx!==-1){
       if(!all[idx].meetings) all[idx].meetings=[];
       const seq=all[idx].meetings.length+1;
-      all[idx].meetings.push({seq,outTime:punch.time,outPhoto:punch.photo||null,outLat:punch.lat,outLng:punch.lng,outArea:punch.area||'',note:punch.note||'',backTime:null,backPhoto:null,backLat:null,backLng:null,backArea:null});
+      all[idx].meetings.push({seq,outTime:punch.time,outPhoto:punch.photo||null,outLat:punch.lat,outLng:punch.lng,outArea:punch.area||'',note:punch.note||'',kind:punch.kind||'',backTime:null,backPhoto:null,backLat:null,backLng:null,backArea:null});
       localStorage.setItem('att_rec',JSON.stringify(all));
       return {seq};
     }
@@ -1308,6 +1312,27 @@ async function storeVisit(v){
   const row={id:'vs-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,date:todayStr(),time:v.time,customer:v.customer,note:v.note||'',photo:v.photo,lat:v.lat,lng:v.lng,area:v.area||'',accuracy:v.accuracy===null||v.accuracy===undefined?'':v.accuracy};
   if(USE_SHEETS) await api('saveVisit',row);
   else{ const l=lsGet('att_visits')||[]; l.push(row); lsSet('att_visits',l); }
+}
+/* Came back after punching out: the gap becomes a personal-work absence and the day is open again */
+async function storeResume(empId,name,date,punch){
+  if(USE_SHEETS) return api('resumeWork',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||'',note:punch.note||''});
+  const all=JSON.parse(localStorage.getItem('att_rec')||'[]'), idx=all.findIndex(r=>r.empId===empId&&r.date===date);
+  if(idx!==-1&&all[idx].punchOut){
+    const r=all[idx], po=r.punchOut; if(!r.meetings) r.meetings=[];
+    r.meetings.push({seq:r.meetings.length+1,kind:'personal',outTime:po.time,outPhoto:po.photo||null,outLat:po.lat,outLng:po.lng,outArea:po.area||'',note:punch.note||'Punched out, then came back',backTime:punch.time,backPhoto:punch.photo||null,backLat:punch.lat,backLng:punch.lng,backArea:punch.area||''});
+    r.punchOut=null; localStorage.setItem('att_rec',JSON.stringify(all));
+  }
+}
+function updateResumeCache(empId,date,punch){
+  const eid=String(empId).toUpperCase(), ck='pc_'+eid+'_'+date;
+  const fromD=(_D.attendance||[]).find(r=>String(r.empId).toUpperCase()===eid&&r.date===date);
+  const rec=fromD?JSON.parse(JSON.stringify(fromD)):lsGet(ck); if(!rec||!rec.punchOut) return;
+  const po=rec.punchOut; if(!rec.meetings) rec.meetings=[];
+  rec.meetings.push({seq:rec.meetings.length+1,kind:'personal',outTime:po.time,outPhoto:po.photo||null,outLat:po.lat,outLng:po.lng,outArea:po.area||'',note:punch.note||'Punched out, then came back',backTime:punch.time,backPhoto:punch.photo||null,backLat:punch.lat,backLng:punch.lng,backArea:punch.area||''});
+  rec.punchOut=null; lsSet(ck,rec);
+  const idx=(_D.attendance||[]).findIndex(r=>String(r.empId).toUpperCase()===eid&&r.date===date);
+  if(idx!==-1) _D.attendance[idx]=rec; else (_D.attendance=_D.attendance||[]).push(rec);
+  saveCache();
 }
 async function storeMeetingBack(empId,date,seq,punch){
   if(USE_SHEETS) return api('saveMeetingBack',{empId,date,seq,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,area:punch.area||''});
@@ -1339,7 +1364,7 @@ function updateMeetingCache(empId,date,dir,punch,seq){
   let result=null;
   if(dir==='out'){
     activeMeetingSeq=seq||(rec.meetings.length+1);
-    if(!rec.meetings.some(m=>Number(m.seq)===Number(activeMeetingSeq))) rec.meetings.push({seq:activeMeetingSeq,outTime:punch.time,outPhoto:punch.photo||null,outLat:punch.lat,outLng:punch.lng,outArea:punch.area||'',note:punch.note||'',backTime:null,backPhoto:null,backLat:null,backLng:null,backArea:null});
+    if(!rec.meetings.some(m=>Number(m.seq)===Number(activeMeetingSeq))) rec.meetings.push({seq:activeMeetingSeq,outTime:punch.time,outPhoto:punch.photo||null,outLat:punch.lat,outLng:punch.lng,outArea:punch.area||'',note:punch.note||'',kind:punch.kind||'',backTime:null,backPhoto:null,backLat:null,backLng:null,backArea:null});
     result={seq:activeMeetingSeq};
   } else {
     const useSeq=seq||activeMeetingSeq;
@@ -1453,6 +1478,12 @@ function updateBadges(){
   const cls=USE_SHEETS?'sbadge sb-sheets':'sbadge sb-local';
   const txt=USE_SHEETS?'✅ Google Sheets':'💾 Local Storage';
   ['sb0','sb1','sb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.className=cls;el.textContent=txt;}});
+}
+/* Minutes spent away, by kind ('personal' or '' for meetings); an absence still open counts up to now */
+function awayMins(rec,kind){
+  let t=0; (rec&&rec.meetings||[]).forEach(m=>{ if(!m.outTime||(m.kind==='personal')!==(kind==='personal')) return;
+    t+=m.backTime?calcMins(m.outTime,m.backTime):(rec.punchOut?0:Math.max(0,nowMins()-parseTimeMins(m.outTime))); });
+  return Math.max(0,Math.round(t));
 }
 function getActiveMeeting(rec){
   if(!rec||!rec.meetings) return null;
@@ -2223,9 +2254,10 @@ function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
 function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
 async function openPunch(mode){
   if(!currentEmp) return;
-  await loadCameraScreen();
+  await loadCameraScreen(mode==='resume'?'resume':undefined);
   if(mode==='visit'&&punchMode==='out') switchToVisit();
   if(mode==='meeting'&&punchMode==='out') switchToMeeting();
+  if(mode==='personal'&&punchMode==='out') switchToMeeting('personal');
 }
 function setHtml(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
 async function loadHome(){
@@ -2281,10 +2313,10 @@ function renderHomeToday(rec,dayOff){
     const th=calcTotalHrs(rec); ico='✅'; title='Day complete';
     sub='In '+fmt12(rec.punchIn.time)+' · Out '+fmt12(rec.punchOut.time);
     if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
-    b=btn('View today','btn-outline');
+    b=btn('View today','btn-outline')+`<button class="btn btn-purple" style="margin-top:8px" onclick="openPunch('resume')">↩ Came back? Resume work</button>`;
   } else if(rec&&rec.punchIn){
     const am=getActiveMeeting(rec), half=isHalfDay(rec), late=!half&&parseTimeMins(rec.punchIn.time)>limit;
-    ico=am?'🚗':'🟢'; title=(am?'In a meeting':'You are punched in')+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
+    const pers=!!(am&&am.kind==='personal'); ico=am?(pers?'🏃':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':'In a meeting'):'You are punched in')+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
     extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
@@ -2304,6 +2336,8 @@ function renderHomeActs(){
   if(inNow&&!am){
     if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🚗</div><b>Going for meeting</b><span>⛔ Stop site work first</span></button>`);
     else T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
+    if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🏃</div><b>Urgent personal work</b><span>⛔ Stop site work first</span></button>`);
+    else T.push(`<button class="hm-tile" onclick="openPunch('personal')"><div class="ti">🏃</div><b>Urgent personal work</b><span>Step out · time kept separate</span></button>`);
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
@@ -2716,7 +2750,7 @@ function compressPhoto(video){
 ══════════════════════════════════════════════════════════════ */
 let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
-async function loadCameraScreen(){
+async function loadCameraScreen(opts){
   showScreen('cameraScreen');
   fillAv('empAvatar',curRec()||currentEmp);
   document.getElementById('empName').textContent=currentEmp.name;
@@ -2737,7 +2771,7 @@ async function loadCameraScreen(){
   let rec; try{rec=await getRecordToday(currentEmp.id);}catch(e){rec=null;}
   loading(false);
 
-  if(rec&&rec.punchIn&&rec.punchOut){
+  if(rec&&rec.punchIn&&rec.punchOut&&opts!=='resume'){
     document.getElementById('doneTimeline').innerHTML=buildTimeline(rec);
     const th=calcTotalHrs(rec);
     const tDiv=document.getElementById('doneTotalHrs');
@@ -2748,7 +2782,8 @@ async function loadCameraScreen(){
   }
 
   const activeMeet=getActiveMeeting(rec);
-  if(activeMeet){ activeMeetingSeq=activeMeet.seq; setCamMode('meeting_back'); }
+  if(rec&&rec.punchIn&&rec.punchOut) setCamMode('resume');
+  else if(activeMeet){ activeMeetingSeq=activeMeet.seq; setCamMode('meeting_back',activeMeet.kind); }
   else if(rec&&rec.punchIn){ setCamMode('out'); }
   else{ setCamMode('in'); }
 
@@ -2773,19 +2808,27 @@ async function loadCameraScreen(){
   startCamera(); startLocWatch();
 }
 
-function setCamMode(mode){
+function setCamMode(mode,kind){
   punchMode=mode;
   const bar=document.getElementById('punchBar'),btn=document.getElementById('captureBtn');
   const meetBtn=document.getElementById('meetingBtn');
   const noteBox=document.getElementById('meetNoteBox');
   const visitBtn=document.getElementById('visitBtn'), visitBox=document.getElementById('visitBox'), cancelBtn=document.getElementById('cancelModeBtn');
   if(meetBtn) meetBtn.style.display='none';
+  const persBtn=document.getElementById('personalBtn'); if(persBtn) persBtn.style.display='none';
   if(visitBtn) visitBtn.style.display=mode==='out'?'block':'none';
-  if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out')?'block':'none';
+  if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out'||mode==='personal_out'||mode==='resume')?'block':'none';
   if(visitBox) visitBox.classList.toggle('show',mode==='visit');
   if(mode==='visit'){ const vc=document.getElementById('visitCustomer'), vn=document.getElementById('visitNote'); if(vc) vc.value=''; if(vn) vn.value=''; }
-  if(noteBox) noteBox.classList.toggle('show',mode==='meeting_out');
-  if(mode==='meeting_out'&&document.getElementById('meetNote')) document.getElementById('meetNote').value='';
+  const noteModes=mode==='meeting_out'||mode==='personal_out'||mode==='resume';
+  if(noteBox) noteBox.classList.toggle('show',noteModes);
+  if(noteModes){
+    const lb=document.getElementById('meetNoteLbl'), ta=document.getElementById('meetNote'), ch=document.getElementById('reasonChips'), opt='<span style="font-weight:400;color:var(--soft)">(optional)</span>';
+    if(ta) ta.value='';
+    if(mode==='personal_out'){ if(lb) lb.innerHTML='🏃 Reason for stepping out <span style="font-weight:400;color:var(--soft)">(required)</span>'; if(ta) ta.placeholder='e.g. Bank work, family emergency…'; if(ch) ch.style.display='flex'; }
+    else if(mode==='resume'){ if(lb) lb.innerHTML='📝 Why did you leave? '+opt; if(ta) ta.placeholder='e.g. Had to go home urgently'; if(ch) ch.style.display='none'; }
+    else { if(lb) lb.innerHTML='📝 Meeting Note '+opt; if(ta) ta.placeholder='e.g. Client visit – Acme Corp, Jodhpur…'; if(ch) ch.style.display='none'; }
+  }
   btn.disabled=!(capLat&&capLng);
   if(mode==='in'){
     bar.className='punch-bar bar-green'; document.getElementById('punchTxt').textContent='🟢 Mark Your Arrival';
@@ -2794,22 +2837,30 @@ function setCamMode(mode){
     bar.className='punch-bar bar-blue'; document.getElementById('punchTxt').textContent='🔵 End of Day — Punch Out';
     btn.className='btn btn-blue'; btn.textContent='📸 Punch Out';
     if(meetBtn) meetBtn.style.display='block';
+    if(persBtn) persBtn.style.display='block';
   } else if(mode==='meeting_out'){
     bar.className='punch-bar bar-orange'; document.getElementById('punchTxt').textContent='🚗 Going Out for Meeting';
     btn.className='btn btn-orange'; btn.textContent='📸 Confirm Departure';
   } else if(mode==='meeting_back'){
-    bar.className='punch-bar bar-purple'; document.getElementById('punchTxt').textContent='🔙 Back from Meeting';
+    bar.className='punch-bar bar-purple'; document.getElementById('punchTxt').textContent=kind==='personal'?'🔙 Back from Personal Work':'🔙 Back from Meeting';
     btn.className='btn btn-purple'; btn.textContent='📸 Confirm Return';
   } else if(mode==='visit'){
     bar.className='punch-bar bar-teal'; document.getElementById('punchTxt').textContent='🤝 Customer Visit — photo at the customer';
     btn.className='btn btn-teal'; btn.textContent='📸 Save Visit';
+  } else if(mode==='personal_out'){
+    bar.className='punch-bar bar-orange'; document.getElementById('punchTxt').textContent='🏃 Urgent personal work — stepping out';
+    btn.className='btn btn-orange'; btn.textContent='📸 Confirm Departure';
+  } else if(mode==='resume'){
+    bar.className='punch-bar bar-purple'; document.getElementById('punchTxt').textContent='↩ Back at work — resume today';
+    btn.className='btn btn-purple'; btn.textContent='📸 Resume Work';
   }
 }
+function pickReason(t){ const ta=document.getElementById('meetNote'); if(ta){ ta.value=t; ta.focus(); } }
 function switchToVisit(){ setCamMode('visit'); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; const vc=document.getElementById('visitCustomer'); if(vc) vc.focus(); }
 
-function switchToMeeting(){
-  if(mySiteManual()){ const ce=document.getElementById('camErr'); if(ce){ ce.textContent='Site work is running. Stop site work first, then go for the meeting.'; ce.classList.add('show'); } return; }
-  stopCamera(); setCamMode('meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
+function switchToMeeting(kind){
+  if(mySiteManual()){ const ce=document.getElementById('camErr'); if(ce){ ce.textContent='Site work is running. Stop site work first, then '+(kind==='personal'?'step out.':'go for the meeting.'); ce.classList.add('show'); } return; }
+  stopCamera(); setCamMode(kind==='personal'?'personal_out':'meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
 
 async function captureAndMark(){
   const video=document.getElementById('videoFeed'),canvas=document.getElementById('snapCanvas'),btn=document.getElementById('captureBtn');
@@ -2818,9 +2869,10 @@ async function captureAndMark(){
   if(!video.srcObject){camErr.textContent='Camera not ready.';camErr.classList.add('show');return;}
   const customer=(document.getElementById('visitCustomer')?.value||'').trim(), vnote=(document.getElementById('visitNote')?.value||'').trim();
   if(punchMode==='visit'&&!customer){camErr.textContent='Enter the customer or company name.';camErr.classList.add('show');document.getElementById('visitCustomer').focus();return;}
+  if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
   const photo=compressPhoto(video);
-  const note=punchMode==='meeting_out'?(document.getElementById('meetNote')?.value?.trim()||''):'';
+  const note=(punchMode==='meeting_out'||punchMode==='personal_out'||punchMode==='resume')?(document.getElementById('meetNote')?.value?.trim()||''):'';
   const lat=capLat, lng=capLng, time=nowTime();
   const punch={time,photo,lat,lng,area:capArea||await reverseGeocode(lat,lng)};
   let extra='';
@@ -2832,11 +2884,12 @@ async function captureAndMark(){
   try{
     if(punchMode==='in') await storePunchIn(currentEmp.id,currentEmp.name,todayStr(),punch);
     else if(punchMode==='out'){ await storePunchOut(currentEmp.id,todayStr(),punch); const _sw=mySite(); if(_sw&&await stopSiteWork(true,photo)&&_sw.mode!=='auto') extra=' · 🏗️ Site work stopped'; }
-    else if(punchMode==='meeting_out'){ punch.note=note; const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch); updateMeetingCache(currentEmp.id,todayStr(),'out',punch,(r&&r.seq)?r.seq:null); }
+    else if(punchMode==='meeting_out'||punchMode==='personal_out'){ punch.note=note; if(punchMode==='personal_out') punch.kind='personal'; const r=await storeMeetingOut(currentEmp.id,currentEmp.name,todayStr(),punch); updateMeetingCache(currentEmp.id,todayStr(),'out',punch,(r&&r.seq)?r.seq:null); }
+    else if(punchMode==='resume'){ punch.note=note; await storeResume(currentEmp.id,currentEmp.name,todayStr(),punch); updateResumeCache(currentEmp.id,todayStr(),punch); }
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
     else if(punchMode==='visit'){ await storeVisit(Object.assign({},punch,{customer,note:vnote,accuracy:capAcc})); extra=' · '+customer; }
     loading(false);
-    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',visit:'🤝 Visit saved at '};
+    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',personal_out:'🏃 Stepped out at ',resume:'↩ Back at work at ',visit:'🤝 Visit saved at '};
     document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+punch.area+extra;
     document.getElementById('camOk').classList.add('show');
     setTimeout(()=>loadHome(),2200);
@@ -2856,13 +2909,14 @@ function buildTimeline(rec){
   const photoEl=(src,label)=>src?`<img class="tl-photo" src="${src}" onclick="openModal('${esc(rec.name)}','${label}','${esc(src)}','','','')">`:'<div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>';
   if(rec.punchIn) html+=`<div class="tl-item">${photoEl(rec.punchIn.photo,'Punch In')}<div><div class="tl-label">🟢 Punch In</div><div class="tl-time">${fmt12(rec.punchIn.time)}</div>${rec.punchIn.area?'<div class="tl-area">📍 '+rec.punchIn.area+'</div>':''}</div></div>`;
   (rec.meetings||[]).forEach((m,i)=>{
-    if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">🚗 Out for Meeting ${i+1}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+m.outArea+'</div>':''}${m.note?'<div class="tl-note">"'+m.note+'"</div>':''}</div></div>`;
-    if(m.backTime){const d=calcHrs(m.outTime,m.backTime);html+=`<div class="tl-item">${photoEl(m.backPhoto,'Meeting Back')}<div><div class="tl-label">🔙 Back from Meeting ${i+1}</div><div class="tl-time">${fmt12(m.backTime)}${d?' · <span style="color:var(--soft);font-size:12px">Away: '+d.label+'</span>':''}</div>${m.backArea?'<div class="tl-area">📍 '+m.backArea+'</div>':''}</div></div>`;}
+    if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">${m.kind==='personal'?'🏃 Out · personal work':'🚗 Out for Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+m.outArea+'</div>':''}${m.note?'<div class="tl-note">"'+m.note+'"</div>':''}</div></div>`;
+    if(m.backTime){const d=calcHrs(m.outTime,m.backTime);html+=`<div class="tl-item">${photoEl(m.backPhoto,'Meeting Back')}<div><div class="tl-label">${m.kind==='personal'?'🔙 Back from personal work':'🔙 Back from Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.backTime)}${d?' · <span style="color:var(--soft);font-size:12px">Away: '+d.label+'</span>':''}</div>${m.backArea?'<div class="tl-area">📍 '+m.backArea+'</div>':''}</div></div>`;}
   });
   if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+rec.punchOut.area+'</div>':''}</div></div>`;
+  { const pm=awayMins(rec,'personal'); if(pm>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">🏃 Personal away: ${fmtMins(pm)}</div>`; }
   return html;
 }
-/* Time in office = punch-in to punch-out, minus time out on meetings */
+/* Time in office = punch-in to punch-out, minus time out on meetings and personal work */
 function officeMins(rec){
   if(!rec||!rec.punchIn||!rec.punchOut) return 0;
   let m=calcMins(rec.punchIn.time,rec.punchOut.time);
@@ -3308,12 +3362,12 @@ async function loadAttTab(){
     tbody.innerHTML=rows.map(r=>{
       const hasPi=r.punchIn&&r.punchIn.time,hasPo=r.punchOut&&r.punchOut.time;
       const am=getActiveMeeting(r),mCnt=(r.meetings||[]).length;
-      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">Out/Meeting</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':'<span class="badge b-absent">Absent</span>';
+      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':'<span class="badge b-absent">Absent</span>';
       const hrs=(hasPi&&hasPo)?(calcTotalHrs(r)||'—'):'—';
       const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${r.punchIn.photo}" onclick="openModal('${esc(r.name)}','Punch In','${r.punchIn.photo}','${r.punchIn.lat||''}','${r.punchIn.lng||''}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
-      const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">🚗 ${mCnt}</button>`:'—';
+      const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${r.date}')">🗺️ Route</button>`:'—';
       return`<tr><td>${photo}</td><td style="font-weight:600">${r.name}</td><td style="color:var(--soft)">${r.empId}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':''):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':''):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
@@ -3332,8 +3386,8 @@ async function showAttDetail(name,date){
 function exportCSV(){
   const recs=window._lastAtt||[];
   if(!recs.length){alert('Load the attendance tab first.');return;}
-  const hdr=['ID','Name','Date','Punch In','Punch Out','Hours','Meetings','Lat','Lng'];
-  const rows=recs.map(r=>[r.empId,r.name,r.date,r.punchIn?fmt12(r.punchIn.time):'',r.punchOut?fmt12(r.punchOut.time):'',calcTotalHrs(r)||'',(r.meetings||[]).length,r.punchIn&&r.punchIn.lat?r.punchIn.lat:'',r.punchIn&&r.punchIn.lng?r.punchIn.lng:''].join(','));
+  const hdr=['ID','Name','Date','Punch In','Punch Out','Hours','Meetings','Personal away (min)','Lat','Lng'];
+  const rows=recs.map(r=>[r.empId,r.name,r.date,r.punchIn?fmt12(r.punchIn.time):'',r.punchOut?fmt12(r.punchOut.time):'',calcTotalHrs(r)||'',(r.meetings||[]).filter(x=>x.kind!=='personal').length,awayMins(r,'personal'),r.punchIn&&r.punchIn.lat?r.punchIn.lat:'',r.punchIn&&r.punchIn.lng?r.punchIn.lng:''].join(','));
   const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'attendance-'+todayStr()+'.csv'});
   a.click();
 }
@@ -3378,7 +3432,7 @@ async function generateReport(){
       counted.forEach(ds=>{
         const rec=byKey[String(emp.id).toUpperCase()+'|'+ds];
         if(!rec||!rec.punchIn){ if(leaveOn(emp.id,ds)) leave++; return; }
-        present++;totalMeet+=(rec.meetings||[]).length;
+        present++;totalMeet+=(rec.meetings||[]).filter(x=>x.kind!=='personal').length;
         if(rec.punchOut){complete++;totalMins+=officeMins(rec);}
         else if(ds<today) missed++;
       });
@@ -3660,8 +3714,8 @@ function routeStops(att,visits,checks){
   if(att){
     if(att.punchIn) add('in',att.punchIn.time,att.punchIn.lat,att.punchIn.lng,'Punch in',att.punchIn.area,att.punchIn.photo);
     (att.meetings||[]).forEach((m,i)=>{
-      add('meet',m.outTime,m.outLat,m.outLng,'Left for meeting '+(i+1)+(m.note?' — '+m.note:''),m.outArea,m.outPhoto);
-      add('back',m.backTime,m.backLat,m.backLng,'Back from meeting '+(i+1),m.backArea,m.backPhoto);
+      add('meet',m.outTime,m.outLat,m.outLng,(m.kind==='personal'?'Left for personal work':'Left for meeting '+(i+1))+(m.note?' — '+m.note:''),m.outArea,m.outPhoto);
+      add('back',m.backTime,m.backLat,m.backLng,(m.kind==='personal'?'Back from personal work':'Back from meeting '+(i+1)),m.backArea,m.backPhoto);
     });
     if(att.punchOut) add('out',att.punchOut.time,att.punchOut.lat,att.punchOut.lng,'Punch out',att.punchOut.area,att.punchOut.photo);
   }
