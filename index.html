@@ -559,6 +559,25 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .pl-chk input{width:auto;margin:0;flex:none}
 #geoHint{margin-top:6px;border-radius:var(--rs);padding:7px 11px;font-size:12px;font-weight:600;line-height:1.4}
 </style>
+<style id="otCss">
+.ot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+#supervisorScreen .ot-card{background:rgba(255,255,255,.82)}
+.ot-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.ot-hrs{font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
+.ot-cap{font-size:11px;font-weight:700;margin-top:3px}
+.ot-flag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin:6px 5px 0 0;background:var(--amberBg);color:var(--amber)}
+.ot-flag.bad{background:var(--redBg);color:var(--red)}
+.ot-photos{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;align-items:flex-end}
+.ot-photos figure{margin:0;text-align:center;font-size:10px;color:var(--soft)}
+.ot-photos img{width:76px;height:76px;object-fit:cover;border-radius:8px;cursor:pointer;display:block;margin-bottom:2px}
+.ot-act{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.ot-act input{margin:0;padding:7px 10px;font-size:13px;width:84px;flex:none}
+.ot-act input.note{flex:1;min-width:130px;width:auto}
+#otChips{display:flex;flex-wrap:wrap;gap:6px}
+#otChips .chip.on{background:#B45309;color:#fff}
+.ot-mine{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ot-mine small{display:block;color:var(--soft);font-size:11px;margin-top:2px}
+</style>
 </head>
 <body>
 <div id="loadOv"><div class="load-spin"></div><div style="font-size:13px;color:var(--soft);font-weight:700" id="loadMsg">Loading…</div></div>
@@ -742,6 +761,13 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
       <label style="margin:10px 0 5px;font-size:12px">📝 Note <span style="font-weight:400;color:var(--soft)">(what happened)</span></label>
       <textarea id="visitNote" rows="2" placeholder="e.g. Showed samples, quotation needed for 2,000 sq ft"></textarea>
     </div>
+    <!-- Overtime: why (only in overtime-start mode) -->
+    <div class="note-box" id="otBox">
+      <label style="margin:0 0 6px;font-size:12px">⏱ Why are you working extra? <span style="font-weight:400;color:var(--soft)">(required)</span></label>
+      <div id="otChips"><button type="button" class="chip" data-r="Urgent client work" onclick="otPick(this)">🤝 Urgent client work</button><button type="button" class="chip" data-r="Site work" onclick="otPick(this)">🏗️ Site work</button><button type="button" class="chip" data-r="Delivery pending" onclick="otPick(this)">📦 Delivery pending</button><button type="button" class="chip" data-r="Other" onclick="otPick(this)">✏️ Other</button></div>
+      <input type="text" id="otOther" placeholder="Tell your admin what the work is" style="display:none;margin-top:8px" autocomplete="off">
+      <div style="font-size:11px;color:var(--soft);margin-top:8px;line-height:1.5">Your admin approves the hours afterwards, and only approved hours count. Stop it with a photo when you finish.</div>
+    </div>
     <div id="cameraBox"><video id="videoFeed" autoplay playsinline muted></video><canvas id="snapCanvas"></canvas><div class="cam-ring"></div></div>
     <div class="loc-bar" id="locBar"><div class="spin-sm" id="locSpin"></div><span id="locTxt">Getting location…</span></div>
     <div id="geoHint" style="display:none"></div>
@@ -762,7 +788,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
     <button class="btn btn-outline" id="personalBtn" style="display:none;color:#B45309;border-color:#B45309" onclick="switchToMeeting('personal')">🏃 Urgent personal work</button>
     <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
-    <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="loadCameraScreen()">✖ Cancel</button>
+    <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="cancelCam()">✖ Cancel</button>
     <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
     <button class="btn btn-outline" onclick="logout()">Sign out</button>
     <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
@@ -849,6 +875,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
     <button class="tab-btn" onclick="switchTab('monthly')">📊 Monthly</button>
     <button class="tab-btn" onclick="switchTab('leaves')">📋 Leaves</button>
+    <button class="tab-btn" onclick="switchTab('overtime')">⏱ Overtime</button>
     <button class="tab-btn" onclick="switchTab('employees')">👥 Staff</button>
     <button class="tab-btn" onclick="switchTab('places')">📍 Places</button>
     <button class="tab-btn sa-only" onclick="switchTab('holidays')">🗓 Holidays</button>
@@ -999,6 +1026,15 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <div id="placeList"></div>
   </div>
 
+  <!-- OVERTIME TAB -->
+  <div id="tabOvertime" class="tab-pane">
+    <div class="add-form">
+      <div class="pl-row"><label class="pl-lab">Show <select id="otFilter" onchange="loadOtTab()"><option value="pending">Waiting for a decision</option><option value="approved">Approved</option><option value="rejected">Not approved</option><option value="">Everything (last 45 days)</option></select></label><button class="pl-btn ghost" onclick="loadOtTab()">🔄 Refresh</button></div>
+      <div class="pl-tip">Staff start and stop overtime with a photo and their location, after office hours or on a Sunday / holiday. <b>Only approved hours count.</b> You can approve fewer hours than recorded. “Not needed” has no effect on the honesty score; “Not genuine” lowers it by 10.</div>
+    </div>
+    <div id="otList"></div>
+  </div>
+
   <!-- REPORTS TAB -->
   <div id="tabReports" class="tab-pane">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px">
@@ -1040,6 +1076,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
         <div><label style="margin:0 0 4px">Half day if punch-in after</label><input type="text" id="ruHalf" placeholder="11:00 AM"></div>
         <div><label style="margin:0 0 4px">Late marks that cost a half day</label><input type="number" id="ruLateN" min="0" placeholder="3 (0 = off)"></div>
         <div><label style="margin:0 0 4px">Location tracking stops at</label><input type="text" id="ruEnd" placeholder="07:30 PM"></div>
+        <div><label style="margin:0 0 4px">Office ends at <span style="font-weight:400;color:var(--soft)">(overtime can start after)</span></label><input type="text" id="ruOffEnd" placeholder="06:30 PM"></div>
         <div><label style="margin:0 0 4px">Low battery alert at (%)</label><input type="number" id="ruBatt" min="5" max="50" placeholder="15"></div>
         <div><label style="margin:0 0 4px">Phone silent alert after (min)</label><input type="number" id="ruSilent" min="60" placeholder="150"></div>
       </div>
@@ -1156,6 +1193,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 <!-- ══ SUPERVISOR DASHBOARD ══ -->
 <div id="supervisorScreen" class="screen admin-wrap">
 <div class="card" id="supSafetyCard"><div id="supSafety"></div></div>
+<div class="card" id="supOtCard" style="display:none"><div id="supOt"></div></div>
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
     <div><h2>🗺️ Site Monitor</h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="supDateLbl"></div>
@@ -1477,7 +1515,7 @@ function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.get
 function nowTime(){ return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}); }
 function initials(n){ return (n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.body.dataset.screen=id; }
-function mapsUrl(a,b){ return 'https://www.google.com/maps?q='+a+','+b; }
+function mapsUrl(a,b){ return 'https://www.google.com/maps?q='+encodeURIComponent(a)+','+encodeURIComponent(b); }
 function loading(on,msg='Loading…'){ document.getElementById('loadOv').classList.toggle('on',on); document.getElementById('loadMsg').textContent=msg; }
 /* ── Places: offices and factories with a boundary (same rules as the server) ── */
 function placeIds(e){ return String((e&&e.places)||'').split(',').map(x=>x.trim()).filter(Boolean); }
@@ -1502,12 +1540,12 @@ function geoBlockMsg(g){   // '' = allowed
 function geoHintUpdate(){
   const el=document.getElementById('geoHint'), btn=document.getElementById('captureBtn'); if(!el) return;
   el.style.display='none';
-  if(!(punchMode==='in'||punchMode==='out')||!currentEmp||!capLat) return;
+  if(!(punchMode==='in'||punchMode==='out'||punchMode==='ot_start'||punchMode==='ot_stop')||!currentEmp||!capLat) return;
   const g=geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc); if(!g) return;
   let c=['var(--greenBg)','var(--green)'], t='';
   if(g.status==='YES') t='✅ Inside '+g.place+' ('+g.dist+' m from the centre)';
-  else if(g.strict){ c=['var(--redBg)','var(--red)']; t='🚫 '+(g.status==='NO'?g.dist+' m from '+g.place+'. Move inside the '+g.radius+' m boundary to punch.':g.status==='ROUGH'?'GPS is too weak to confirm you are at '+g.place+'. Step into the open.':'Location is required at '+g.place+'.'); if(btn) btn.disabled=true; }
-  else{ c=['var(--amberBg)','var(--amber)']; t=g.status==='NO'?'⚠️ '+g.dist+' m from '+g.place+' (boundary '+g.radius+' m). You can punch, your admin will be told.':'📍 Weak GPS near '+g.place+'. Move into the open if you can.'; }
+  else if(g.strict&&punchMode!=='ot_stop'){ c=['var(--redBg)','var(--red)']; t='🚫 '+(g.status==='NO'?g.dist+' m from '+g.place+'. Move inside the '+g.radius+' m boundary to continue.':g.status==='ROUGH'?'GPS is too weak to confirm you are at '+g.place+'. Step into the open.':'Location is required at '+g.place+'.'); if(btn) btn.disabled=true; }
+  else{ c=['var(--amberBg)','var(--amber)']; t=g.status==='NO'?'⚠️ '+g.dist+' m from '+g.place+' (boundary '+g.radius+' m). You can go ahead, your admin will be told.':'📍 Weak GPS near '+g.place+'. Move into the open if you can.'; }
   el.style.cssText='display:block;background:'+c[0]+';color:'+c[1]; el.textContent=t;
 }
 function geoFlag(pt){ return pt&&pt.geo==='NO'?'<div style="font-size:10px;color:var(--red);font-weight:700" title="Punched outside the boundary">📍 '+hx(pt.dist||'')+' m outside '+hx(pt.place||'')+'</div>':''; }
@@ -1846,6 +1884,7 @@ async function adminBadges(){
     if(l){ _D.leaves=l; saveCache(); }
     setTabBadge('corrections',(c||[]).filter(x=>x.status==='pending').length);
     setTabBadge('leaves',(l||[]).filter(x=>x.status==='pending').length);
+    try{ const o=await api('listOvertime',{}); setTabBadge('overtime',(o||[]).filter(x=>x.status==='pending').length); }catch(e){}
   }catch(e){}
 }
 
@@ -2234,7 +2273,7 @@ function payRules(){ const s=_D.settings||{}; return {halfAfter:s.halfDayAfter?p
 function isHalfDay(r){ const x=payRules(); return x.halfAfter!==null&&!!(r&&r.punchIn)&&parseTimeMins(r.punchIn.time)>x.halfAfter; }
 function initRules(){
   const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('ruHalf')) return;
-  g('ruHalf').value=s.halfDayAfter||''; g('ruLateN').value=s.lateToHalf||''; g('ruEnd').value=s.trackEnd||'07:30 PM';
+  g('ruHalf').value=s.halfDayAfter||''; g('ruLateN').value=s.lateToHalf||''; g('ruEnd').value=s.trackEnd||'07:30 PM'; if(g('ruOffEnd')) g('ruOffEnd').value=s.officeEnd||'06:30 PM';
   g('ruBatt').value=s.lowBattery||15; g('ruSilent').value=s.silentMinsAll||150; g('ruTrack').checked=s.trackAll!=='0';
 }
 async function saveRules(){
@@ -2242,7 +2281,9 @@ async function saveRules(){
   const half=g('ruHalf').value.trim(), hn=half?normTime(half):'', end=normTime(g('ruEnd').value);
   if(half&&!hn){ err.textContent='Half-day time like 11:00 AM (or leave empty).'; err.classList.add('show'); return; }
   if(!end){ err.textContent='Tracking stop time like 07:30 PM.'; err.classList.add('show'); return; }
-  const settings={halfDayAfter:hn,lateToHalf:String(Math.max(0,parseInt(g('ruLateN').value)||0)),trackEnd:end,lowBattery:String(Math.min(50,Math.max(5,parseInt(g('ruBatt').value)||15))),silentMinsAll:String(Math.max(60,parseInt(g('ruSilent').value)||150)),trackAll:g('ruTrack').checked?'1':'0'};
+  const offEnd=g('ruOffEnd')?normTime(g('ruOffEnd').value):'06:30 PM';
+  if(!offEnd){ err.textContent='Office end time like 06:30 PM.'; err.classList.add('show'); return; }
+  const settings={halfDayAfter:hn,lateToHalf:String(Math.max(0,parseInt(g('ruLateN').value)||0)),trackEnd:end,officeEnd:offEnd,lowBattery:String(Math.min(50,Math.max(5,parseInt(g('ruBatt').value)||15))),silentMinsAll:String(Math.max(60,parseInt(g('ruSilent').value)||150)),trackAll:g('ruTrack').checked?'1':'0'};
   loading(true,'Saving…');
   try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); ok.textContent='✅ Saved.'; ok.classList.add('show'); }
   catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
@@ -2258,6 +2299,7 @@ async function payrollBuild(){
   const byEmp={}; (d.attendance||[]).forEach(r=>{ if(r.punchIn) (byEmp[key(r.empId)]=byEmp[key(r.empId)]||{})[r.date]=r; });
   await syncLeaves(true);
   const emps=await getEmployees(); let pendDays=0;
+  const otBy={}; (d.overtime||[]).forEach(o=>{ if(o.status==='approved') otBy[key(o.empId)]=(otBy[key(o.empId)]||0)+(o.approvedMins||0); });
   const list=emps.map(e=>{
     const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
     let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[];
@@ -2270,7 +2312,7 @@ async function payrollBuild(){
       else{ absent++; notes.push(ds.slice(8)+' absent'); }
     }
     const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
-    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,notes:notes.join(' · ')};
+    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,ot:otBy[key(e.id)]||0,notes:notes.join(' · ')};
   }).sort((a,b)=>a.name<b.name?-1:1);
   return {month:mv,end,list,R,pendDays};
 }
@@ -2279,15 +2321,15 @@ async function payrollShow(){
   const el=document.getElementById('salContent'); el.innerHTML='<div class="empty">⏳ Working it out…</div>';
   try{
     const r=await payrollBuild(); window._payroll=r;
-    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>${r.pendDays?`<div class="msg msg-error show" style="margin-top:8px">⚠️ ${r.pendDays} day${r.pendDays>1?'s':''} of leave still waiting for approval are counted as absent. Approve or reject them in the Leaves tab, then press Show again.</div>`:''}`;
+    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th><th>OT hrs</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td>${e.ot?fmtMins(e.ot):''}</td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>${r.pendDays?`<div class="msg msg-error show" style="margin-top:8px">⚠️ ${r.pendDays} day${r.pendDays>1?'s':''} of leave still waiting for approval are counted as absent. Approve or reject them in the Leaves tab, then press Show again.</div>`:''}`;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">'+e.message+'</div>'; }
 }
 async function payrollCSV(){
   try{
     const r=await payrollBuild(); window._payroll=r;
     const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
-    const hdr=['ID','Name','Department','Calendar days','Working days','Full days present','Half days','Late marks','Late deduction (days)','Approved leave days','Absent days','Unpaid days','Payable days','Notes (day of month)'];
-    const rows=r.list.map(e=>[e.id,q(e.name),q(e.dept),e.cal,e.work,e.full,e.half,e.late,e.ded,e.leave,e.absent,fmtD(e.unpaid),fmtD(e.payable),q(e.notes)].join(','));
+    const hdr=['ID','Name','Department','Calendar days','Working days','Full days present','Half days','Late marks','Late deduction (days)','Approved leave days','Absent days','Unpaid days','Payable days','Approved overtime hours','Notes (day of month)'];
+    const rows=r.list.map(e=>[e.id,q(e.name),q(e.dept),e.cal,e.work,e.full,e.half,e.late,e.ded,e.leave,e.absent,fmtD(e.unpaid),fmtD(e.payable),e.ot?(e.ot/60).toFixed(2):'',q(e.notes)].join(','));
     const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'salary-'+r.month+'.csv'}); a.click();
   }catch(e){ alert(e.message); }
 }
@@ -2335,11 +2377,26 @@ async function openPunch(mode){
   if(mode==='personal'&&punchMode==='out') switchToMeeting('personal');
 }
 function setHtml(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
+/* The places and "works at" list are read when the app loads; a boundary an admin changed since then reaches this phone here */
+let _geoAt=0;
+async function refreshMyGeo(force){
+  if(!USE_SHEETS||!currentEmp) return;
+  if(!force&&Date.now()-_geoAt<60000) return;
+  _geoAt=Date.now();
+  try{
+    const emp=currentEmp, r=await api('getMyGeo',{empId:emp.id});
+    if(!r||!Array.isArray(r.places)||!currentEmp||String(currentEmp.id)!==String(emp.id)) return;
+    _D.places=r.places;
+    await updateEmpLocal(emp.id,{places:String(r.mine||'')});
+    try{ geoHintUpdate(); }catch(e){}
+  }catch(e){ /* offline or an older backend: keep what this phone already has */ }
+}
 async function loadHome(){
   if(!currentEmp) return;
   const tok=++homeTok, emp=currentEmp;
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); clearInterval(homeTimerInt);
   showScreen('homeScreen');
+  refreshMyGeo();
   const now=new Date(), h=now.getHours();
   document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   document.getElementById('hmName').textContent=emp.name;
@@ -2354,7 +2411,9 @@ async function loadHome(){
   homeTimerInt=setInterval(()=>{
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
+    otTick();
   },30000);
+  otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
   trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
@@ -2416,12 +2475,16 @@ function renderHomeActs(){
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
+  { const o=otOpenRow(); _otShown=otSig();
+    if(o) T.push(`<button class="hm-tile live" onclick="openOvertime('stop')"><div class="ti">⏱</div><b>Stop overtime</b><span>Since ${otClock(o.startTime)} · <span id="hmOtSub">${otRunTxt(o)}</span></span></button>`);
+    else if(_otShown==='start') T.push(`<button class="hm-tile" onclick="openOvertime('start')"><div class="ti">⏱</div><b>Start overtime</b><span>Working extra · your admin approves</span></button>`); }
   el.className='hm-grid n'+T.length; el.innerHTML=T.join('');
   const L=[];
   if(!am){
     L.push(`<button onclick="showLeavePanel()">📋 <span>Apply for leave</span><small id="hmLeaveSub"></small></button>`);
     L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
   }
+  if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   lk.innerHTML=L.join('');
   if(window._hmLeaveSub) setHtml('hmLeaveSub',window._hmLeaveSub); if(window._hmFixSub) setHtml('hmFixSub',window._hmFixSub);
@@ -2828,6 +2891,7 @@ let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
 async function loadCameraScreen(opts){
   showScreen('cameraScreen');
+  refreshMyGeo();
   fillAv('empAvatar',curRec()||currentEmp);
   document.getElementById('empName').textContent=currentEmp.name;
   document.getElementById('empIdLbl').textContent=currentEmp.id;
@@ -2893,7 +2957,8 @@ function setCamMode(mode,kind){
   if(meetBtn) meetBtn.style.display='none';
   const persBtn=document.getElementById('personalBtn'); if(persBtn) persBtn.style.display='none';
   if(visitBtn) visitBtn.style.display=mode==='out'?'block':'none';
-  if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out'||mode==='personal_out'||mode==='resume')?'block':'none';
+  if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out'||mode==='personal_out'||mode==='resume'||mode==='ot_start'||mode==='ot_stop')?'block':'none';
+  { const ob=document.getElementById('otBox'); if(ob) ob.classList.toggle('show',mode==='ot_start'); if(mode==='ot_start') otReset(); }
   if(visitBox) visitBox.classList.toggle('show',mode==='visit');
   if(mode==='visit'){ const vc=document.getElementById('visitCustomer'), vn=document.getElementById('visitNote'); if(vc) vc.value=''; if(vn) vn.value=''; }
   const noteModes=mode==='meeting_out'||mode==='personal_out'||mode==='resume';
@@ -2929,6 +2994,12 @@ function setCamMode(mode,kind){
   } else if(mode==='resume'){
     bar.className='punch-bar bar-purple'; document.getElementById('punchTxt').textContent='↩ Back at work — resume today';
     btn.className='btn btn-purple'; btn.textContent='📸 Resume Work';
+  } else if(mode==='ot_start'){
+    bar.className='punch-bar bar-teal'; document.getElementById('punchTxt').textContent='⏱ Start overtime — photo where you are working';
+    btn.className='btn btn-teal'; btn.textContent='📸 Start Overtime';
+  } else if(mode==='ot_stop'){
+    bar.className='punch-bar bar-orange'; document.getElementById('punchTxt').textContent='⏹ Stop overtime — photo before you leave';
+    btn.className='btn btn-orange'; btn.textContent='📸 Stop Overtime';
   }
 }
 function pickReason(t){ const ta=document.getElementById('meetNote'); if(ta){ ta.value=t; ta.focus(); } }
@@ -2944,9 +3015,12 @@ async function captureAndMark(){
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
   if(!video.srcObject){camErr.textContent='Camera not ready.';camErr.classList.add('show');return;}
   if(punchMode==='in'||punchMode==='out'){ const bm=geoBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; } }
+  if(punchMode==='ot_start'){ const bm=otBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; }
+    if(!otReasonText()){ camErr.textContent='Pick why you are working extra (and say what it is if you choose Other).'; camErr.classList.add('show'); return; } }
   const customer=(document.getElementById('visitCustomer')?.value||'').trim(), vnote=(document.getElementById('visitNote')?.value||'').trim();
   if(punchMode==='visit'&&!customer){camErr.textContent='Enter the customer or company name.';camErr.classList.add('show');document.getElementById('visitCustomer').focus();return;}
   if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
+  const btnLabel=btn.textContent;
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
   const photo=compressPhoto(video);
   const note=(punchMode==='meeting_out'||punchMode==='personal_out'||punchMode==='resume')?(document.getElementById('meetNote')?.value?.trim()||''):'';
@@ -2965,15 +3039,27 @@ async function captureAndMark(){
     else if(punchMode==='resume'){ punch.note=note; await storeResume(currentEmp.id,currentEmp.name,todayStr(),punch); updateResumeCache(currentEmp.id,todayStr(),punch); }
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
     else if(punchMode==='visit'){ await storeVisit(Object.assign({},punch,{customer,note:vnote,accuracy:capAcc})); extra=' · '+customer; }
-    if((punchMode==='in'||punchMode==='out')&&punch.geo&&punch.geo.status==='NO') extra+=' · ⚠️ '+punch.geo.dist+' m from '+punch.geo.place+' (boundary '+punch.geo.radius+' m). Your admin is told.';
+    else if(punchMode==='ot_start'||punchMode==='ot_stop'){
+      if(!USE_SHEETS) throw new Error('Overtime needs the Google Sheet connection.');
+      const r=await api(punchMode==='ot_start'?'startOvertime':'stopOvertime',{empId:currentEmp.id,name:currentEmp.name,photo,lat:String(lat),lng:String(lng),accuracy:capAcc,area:punch.area,reason:punchMode==='ot_start'?otReasonText():''});
+      if(r&&r.time) punch.time=otClock(r.time);
+      if(punchMode==='ot_stop'&&r&&r.minutes!==undefined) extra=' · '+fmtMins(r.minutes)+' recorded, sent to your admin to approve';
+      if(punchMode==='ot_start'&&r&&r.already) extra=' · it was already running';
+      punch.geo=r&&r.geo; await otRefresh();
+    }
+    if((punchMode==='in'||punchMode==='out'||punchMode==='ot_start'||punchMode==='ot_stop')&&punch.geo&&punch.geo.status==='NO') extra+=' · ⚠️ '+punch.geo.dist+' m from '+punch.geo.place+' (boundary '+punch.geo.radius+' m). Your admin is told.';
     loading(false);
-    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',personal_out:'🏃 Stepped out at ',resume:'↩ Back at work at ',visit:'🤝 Visit saved at '};
+    const labels={in:'✅ Punched In at ',out:'✅ Punched Out at ',meeting_out:'🚗 Left for meeting at ',meeting_back:'🔙 Returned at ',personal_out:'🏃 Stepped out at ',resume:'↩ Back at work at ',visit:'🤝 Visit saved at ',ot_start:'⏱ Overtime started at ',ot_stop:'⏹ Overtime stopped at '};
     document.getElementById('camOk').textContent=(labels[punchMode]||'✅ ')+punch.time+' · 📍 '+punch.area+extra;
     document.getElementById('camOk').classList.add('show');
     setTimeout(()=>loadHome(),2200);
   }catch(e){
     loading(false); camErr.textContent='Error: '+e.message; camErr.classList.add('show');
-    btn.disabled=false;
+    // the camera and GPS were switched off while saving: bring them back so the person can try again straight away
+    btn.textContent=btnLabel; btn.disabled=true;
+    document.getElementById('videoFeed').style.display='block'; canvas.style.display='none';
+    startCamera(); startLocWatch();
+    refreshMyGeo(true);   // a refusal is often a boundary the admin changed meanwhile: the next hint then matches the server
   }
 }
 
@@ -2984,13 +3070,13 @@ function logout(){ stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(of
 function buildTimeline(rec){
   if(!rec) return '';
   let html='';
-  const photoEl=(src,label)=>src?`<img class="tl-photo" src="${src}" onclick="openModal('${esc(rec.name)}','${label}','${esc(src)}','','','')">`:'<div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>';
-  if(rec.punchIn) html+=`<div class="tl-item">${photoEl(rec.punchIn.photo,'Punch In')}<div><div class="tl-label">🟢 Punch In</div><div class="tl-time">${fmt12(rec.punchIn.time)}</div>${rec.punchIn.area?'<div class="tl-area">📍 '+rec.punchIn.area+'</div>':''}</div></div>`;
+  const photoEl=(src,label)=>src?`<img class="tl-photo" src="${hx(src)}" onclick="openModal('${esc(rec.name)}','${label}','${esc(src)}','','','')">`:'<div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>';
+  if(rec.punchIn) html+=`<div class="tl-item">${photoEl(rec.punchIn.photo,'Punch In')}<div><div class="tl-label">🟢 Punch In</div><div class="tl-time">${fmt12(rec.punchIn.time)}</div>${rec.punchIn.area?'<div class="tl-area">📍 '+hx(rec.punchIn.area)+'</div>':''}</div></div>`;
   (rec.meetings||[]).forEach((m,i)=>{
-    if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">${m.kind==='personal'?'🏃 Out · personal work':'🚗 Out for Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+m.outArea+'</div>':''}${m.note?'<div class="tl-note">"'+m.note+'"</div>':''}</div></div>`;
-    if(m.backTime){const d=calcHrs(m.outTime,m.backTime);html+=`<div class="tl-item">${photoEl(m.backPhoto,'Meeting Back')}<div><div class="tl-label">${m.kind==='personal'?'🔙 Back from personal work':'🔙 Back from Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.backTime)}${d?' · <span style="color:var(--soft);font-size:12px">Away: '+d.label+'</span>':''}</div>${m.backArea?'<div class="tl-area">📍 '+m.backArea+'</div>':''}</div></div>`;}
+    if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">${m.kind==='personal'?'🏃 Out · personal work':'🚗 Out for Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+hx(m.outArea)+'</div>':''}${m.note?'<div class="tl-note">"'+hx(m.note)+'"</div>':''}</div></div>`;
+    if(m.backTime){const d=calcHrs(m.outTime,m.backTime);html+=`<div class="tl-item">${photoEl(m.backPhoto,'Meeting Back')}<div><div class="tl-label">${m.kind==='personal'?'🔙 Back from personal work':'🔙 Back from Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.backTime)}${d?' · <span style="color:var(--soft);font-size:12px">Away: '+d.label+'</span>':''}</div>${m.backArea?'<div class="tl-area">📍 '+hx(m.backArea)+'</div>':''}</div></div>`;}
   });
-  if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+rec.punchOut.area+'</div>':''}</div></div>`;
+  if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+hx(rec.punchOut.area)+'</div>':''}</div></div>`;
   { const pm=awayMins(rec,'personal'); if(pm>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">🏃 Personal away: ${fmtMins(pm)}</div>`; }
   return html;
 }
@@ -3004,7 +3090,7 @@ function officeMins(rec){
 function calcTotalHrs(rec){ const m=officeMins(rec); return m>0?fmtMins(m):null; }
 function openModal(name,label,src,lat,lng,area){
   document.getElementById('modalTitle').textContent=name+' — '+label;
-  document.getElementById('modalBody').innerHTML=`<img src="${src}" style="width:100%;border-radius:10px;margin-bottom:8px">${area?'<div style="font-size:13px;color:var(--soft)">📍 '+area+'</div>':''}${lat?`<div style="margin-top:8px"><a class="map-link" href="${mapsUrl(lat,lng)}" target="_blank">📍 View on Google Maps</a></div>`:''}`;
+  document.getElementById('modalBody').innerHTML=`<img src="${hx(src)}" style="width:100%;border-radius:10px;margin-bottom:8px">${area?'<div style="font-size:13px;color:var(--soft)">📍 '+hx(area)+'</div>':''}${lat?`<div style="margin-top:8px"><a class="map-link" href="${mapsUrl(lat,lng)}" target="_blank">📍 View on Google Maps</a></div>`:''}`;
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -3054,8 +3140,9 @@ async function ensureAutoTrack(emp,rec){
     autoBusy=true;
     let lat=parseFloat(rec.punchIn.lat), lng=parseFloat(rec.punchIn.lng), area=rec.punchIn.area||'';
     if(!isFinite(lat)||!isFinite(lng)){ const f=await freshFix().catch(()=>null); if(!f) return; lat=f.lat; lng=f.lng; area=await reverseGeocode(lat,lng); }
-    // someone who belongs to an office/factory is watched against THAT boundary (not their punch-in spot)
-    let pl=null; { const g=geoVerdict(me,lat,lng,0); if(g&&g.placeId) pl=placesNow().find(x=>x.id===g.placeId)||null; }
+    // someone who belongs to ONE office/factory is watched against that boundary (not their punch-in spot);
+    // someone who works at several is not tied to one of them, so walking between them is never counted as "away"
+    let pl=null; { const mine=placesFor(me); if(mine.length===1) pl=mine[0]; }
     if(pl){ lat=pl.lat; lng=pl.lng; area=pl.name; }
     const id='sw-'+Date.now(), startTime=nowTime(), date=todayStr();
     let sw={id,empId:emp.id,empName:emp.name,startTime,siteLat:lat,siteLng:lng,startArea:area,date,nextCheckAt:0,mode:'auto',placeId:pl?pl.id:'',radius:pl?pl.radius:SITE_RADIUS};
@@ -3395,7 +3482,7 @@ function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endMa
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','employees','places','holidays','site','reports','corrections','log','safety','org'];
+  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
@@ -3404,6 +3491,7 @@ function switchTab(tab){
   if(tab==='attendance') loadAttTab();
   if(tab==='monthly')    initMonthly();
   if(tab==='leaves')     loadLeavesTab();
+  if(tab==='overtime')   loadOtTab();
   if(tab==='employees')  renderEmpList();
   if(tab==='places')     { renderPlaces(); if(canEditPlaces()) plInitMap(); }
   if(tab==='holidays')   renderHolList();
@@ -3447,7 +3535,7 @@ async function loadAttTab(){
       const am=getActiveMeeting(r),mCnt=(r.meetings||[]).length;
       const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':leaveOn(r.empId,fd,['pending'])?'<span class="badge b-partial" title="Leave applied, waiting for approval">Leave pending</span>':dayOff?'<span class="badge b-leave" style="background:var(--surface2);color:var(--soft)">'+dayOff.type+'</span>':'<span class="badge b-absent">Absent</span>';
       const hrs=(hasPi&&hasPo)?(calcTotalHrs(r)||'—'):'—';
-      const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${r.punchIn.photo}" onclick="openModal('${esc(r.name)}','Punch In','${r.punchIn.photo}','${r.punchIn.lat||''}','${r.punchIn.lng||''}','${esc(r.punchIn.area||'')}')">`:
+      const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${hx(r.punchIn.photo)}" onclick="openModal('${esc(r.name)}','Punch In','${esc(String(r.punchIn.photo))}','${esc(String(r.punchIn.lat||''))}','${esc(String(r.punchIn.lng||''))}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
@@ -3845,7 +3933,7 @@ async function openRoute(empId,name,date){
       </div>
       <div id="routeMap"></div>
       ${url?`<a class="map-link" href="${url}" target="_blank" style="margin-bottom:6px">🧭 Open route in Google Maps (road distance)</a>`:''}
-      ${stops.length?stops.map((p,i)=>`<div class="rt-stop"><div class="rt-num" style="background:${ROUTE_COLORS[p.kind]}">${i+1}</div>${p.photo?`<img src="${p.photo}" alt="">`:''}<div style="flex:1"><b>${fmt12(p.time)}</b> · ${p.label}<div style="color:var(--soft)">📍 ${p.area||'—'}${isFinite(p.lat)?` · <a href="${mapsUrl(p.lat,p.lng)}" target="_blank">map</a>`:''}</div></div></div>`).join('')
+      ${stops.length?stops.map((p,i)=>`<div class="rt-stop"><div class="rt-num" style="background:${ROUTE_COLORS[p.kind]}">${i+1}</div>${p.photo?`<img src="${hx(p.photo)}" alt="">`:''}<div style="flex:1"><b>${fmt12(p.time)}</b> · ${hx(p.label)}<div style="color:var(--soft)">📍 ${hx(p.area||'—')}${isFinite(p.lat)?` · <a href="${mapsUrl(p.lat,p.lng)}" target="_blank">map</a>`:''}</div></div></div>`).join('')
         :'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">Nothing recorded for this day.</div>'}
       <div style="font-size:11px;color:var(--soft);margin-top:8px">Distance joins the recorded places with straight lines, so the road distance is usually 20–40% more. Use the Google Maps link to see it.</div>`;
     const pts=stops.filter(p=>isFinite(p.lat)&&isFinite(p.lng));
@@ -3996,6 +4084,123 @@ async function eplSave(){
   catch(x){ loading(false); err.textContent=placeApiErr(x); err.classList.add('show'); }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   OVERTIME — staff start / stop it, the admin or supervisor decides the hours
+══════════════════════════════════════════════════════════════ */
+let _otMine=[], _otOff=false, _otShown='', _otReason='';
+const officeEndMins=()=>parseTimeMins((_D.settings||{}).officeEnd||'06:30 PM');
+const otOpenRow=()=>_otMine.find(r=>r.status==='open')||null;
+const otClock=t=>String(fmt12(t)).replace(/:\d\d (AM|PM)/i,' $1').replace(/^0/,'');
+const otHM=m=>{ m=Math.round(+m||0); return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
+const otWhen=r=>new Date(r.date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+const otApiErr=e=>/Unknown action/i.test(e.message)?'The server script is still an old version. Paste the new code in Apps Script and Deploy a New version.':e.message;
+function otParse(v){ v=String(v||'').trim(); if(!v) return NaN; const a=v.match(/^(\d+):(\d{1,2})$/); if(a) return (+a[1])*60+(+a[2]); const n=parseFloat(v.replace(',','.')); return isFinite(n)?Math.round(n*60):NaN; }
+function otRunTxt(o){ if(!o||o.date!==todayStr()) return 'running'; return fmtMins(Math.max(0,nowMins()-parseTimeMins(o.startTime))); }
+async function otRefresh(){
+  if(!currentEmp||!USE_SHEETS) return;
+  try{ _otMine=(await api('getMyOvertime',{empId:currentEmp.id}))||[]; _otOff=false; }
+  catch(e){ if(/Unknown action/i.test(e.message)){ _otOff=true; _otMine=[]; } }
+}
+/* The tile appears only after the normal day: punched out and past office end, or on a Sunday / holiday */
+function otCanStart(){
+  if(_otOff||!USE_SHEETS||!currentEmp||otOpenRow()) return false;
+  if(_hmOff) return true;
+  const r=_hmRec; return !!(r&&r.punchIn&&r.punchOut)&&nowMins()>=officeEndMins();
+}
+const otSig=()=>otOpenRow()?'open':otCanStart()?'start':'';
+function otTick(){
+  if(!document.getElementById('hmActs')) return;
+  if(otSig()!==_otShown) renderHomeActs();
+  const el=document.getElementById('hmOtSub'), o=otOpenRow(); if(el&&o) el.textContent=otRunTxt(o);
+}
+function otReset(){ _otReason=''; document.querySelectorAll('#otChips .chip').forEach(b=>b.classList.remove('on')); const o=document.getElementById('otOther'); if(o){ o.value=''; o.style.display='none'; } }
+function otPick(b){ _otReason=b.dataset.r; document.querySelectorAll('#otChips .chip').forEach(x=>x.classList.toggle('on',x===b)); const o=document.getElementById('otOther'); o.style.display=_otReason==='Other'?'block':'none'; if(_otReason==='Other') o.focus(); }
+function otReasonText(){ if(!_otReason) return ''; if(_otReason!=='Other') return _otReason; const t=(document.getElementById('otOther').value||'').trim(); return t?'Other: '+t:''; }
+function otBlockMsg(g){   // '' = fine (same rule as the server: a Strict place only lets overtime START from inside)
+  if(!g||!g.strict||g.status==='YES') return '';
+  if(g.status==='NO') return 'You are '+g.dist+' m from '+g.place+'. Start overtime only from inside the '+g.radius+' m boundary.';
+  if(g.status==='ROUGH') return 'GPS is too weak to confirm you are at '+g.place+'. Step into the open and try again.';
+  return 'Location is required at '+g.place+'. Turn on GPS, allow location and try again.';
+}
+function cancelCam(){ if(/^ot_/.test(punchMode)) loadHome(); else loadCameraScreen(); }
+async function openOvertime(kind){
+  if(!currentEmp) return;
+  if(!USE_SHEETS){ alert('Overtime needs the Google Sheet connection.'); return; }
+  showScreen('cameraScreen');
+  refreshMyGeo();
+  fillAv('empAvatar',curRec()||currentEmp);
+  document.getElementById('empName').textContent=currentEmp.name; document.getElementById('empIdLbl').textContent=currentEmp.id;
+  ['stHoliday','stDone'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('loginBar').classList.remove('show'); clearInterval(officeTimerInt);
+  const sb=document.getElementById('siteWorkBar'); if(sb) sb.style.display='none';
+  setCamMode(kind==='stop'?'ot_stop':'ot_start');
+  document.getElementById('camErr').classList.remove('show'); document.getElementById('camOk').classList.remove('show');
+  document.getElementById('videoFeed').style.display='block'; document.getElementById('snapCanvas').style.display='none';
+  document.getElementById('stCamera').style.display='block';
+  startCamera(); startLocWatch();
+}
+async function showMyOvertime(){
+  document.getElementById('modalTitle').textContent='⏱ My overtime';
+  document.getElementById('modalBody').innerHTML='<div class="empty">⏳ Loading…</div>'; document.getElementById('detailModal').classList.add('open');
+  await otRefresh();
+  const mo=todayStr().slice(0,7), ok=_otMine.filter(r=>r.status==='approved'&&String(r.date).slice(0,7)===mo).reduce((a,r)=>a+(+r.approvedMins||0),0);
+  const st=r=>{ const rec=+r.minutes||0;
+    if(r.status==='open') return '<b style="color:var(--amber)">Running</b>';
+    if(r.status==='pending') return r.autoClosed==='1'?'<b style="color:var(--amber)">Never stopped</b><small>Your admin will decide the hours.</small>':'<b style="color:var(--amber)">Waiting for approval</b><small>'+fmtMins(rec)+' recorded</small>';
+    if(r.status==='approved') return '<b style="color:var(--green)">✅ Approved '+fmtMins(+r.approvedMins||0)+'</b>'+((+r.approvedMins||0)<rec?'<small>You recorded '+fmtMins(rec)+'</small>':'');
+    return '<b style="color:var(--red)">Not approved</b>'; };
+  document.getElementById('modalBody').innerHTML=(_otMine.length?`<div class="ot-mine" style="border:none;padding-top:0"><span>Approved this month</span><b>${fmtMins(ok)}</b></div>`+_otMine.map(r=>`<div class="ot-mine"><div><b>${otWhen(r)}</b><small>${otClock(r.startTime)}${r.stopTime?' → '+otClock(r.stopTime):''} · ${hx(r.reason)}</small>${r.note?`<small>Note: ${hx(r.note)}</small>`:''}</div><div style="text-align:right">${st(r)}</div></div>`).join(''):'<div class="empty" style="padding:14px 0">No overtime yet.</div>')+'<div style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5">Overtime can be started after the office closes ('+hx((_D.settings||{}).officeEnd||'06:30 PM')+') or on a Sunday / holiday. Only approved hours count.</div>';
+}
+/* ── admin / supervisor side ── */
+function otFlags(r){
+  const f=[], bad=t=>f.push('<span class="ot-flag bad">'+t+'</span>'), warn=t=>f.push('<span class="ot-flag">'+t+'</span>');
+  if(r.autoClosed==='1') bad('⛔ Never stopped — no hours recorded');
+  if(r.startGeo==='NO') bad('📍 Started '+hx(r.startDist)+' m outside '+hx(r.startPlace)); else if(r.startGeo==='ROUGH') warn('Weak GPS at start');
+  if(r.stopGeo==='NO') bad('📍 Stopped '+hx(r.stopDist)+' m outside '+hx(r.stopPlace));
+  if(String(r.startLat||'')==='') bad('No location at start');
+  if(r.status!=='open'&&r.autoClosed!=='1'&&String(r.stopLat||'')==='') bad('No location at stop');
+  return f.join('');
+}
+function otCard(r,mode){
+  const id=r.id, rec=+r.minutes||0, never=r.autoClosed==='1', st=r.status;
+  const photo=(k,label)=>/^(data:image|https?:)/.test(r[k+'Photo']||'')?`<figure><img src="${hx(r[k+'Photo'])}" alt="" onclick="otShowPhoto('${id}','${k}')"><figcaption>${label}</figcaption></figure>`:'';
+  const map=(k,label)=>r[k+'Lat']?`<a class="map-link" href="${mapsUrl(r[k+'Lat'],r[k+'Lng'])}" target="_blank">📍 ${label}</a> `:'';
+  const badge=st==='pending'?'<span style="color:var(--amber)">Waiting for a decision</span>':st==='approved'?'<span style="color:var(--green)">✅ Approved '+fmtMins(+r.approvedMins||0)+'</span>':st==='rejected'?'<span style="color:var(--red)">Not approved'+(r.rejectKind==='notgenuine'?' · not genuine':'')+'</span>':'<span style="color:var(--amber)">Running</span>';
+  let act='';
+  if(st==='pending') act=`<div class="ot-act"><input id="otH_${id}" value="${never?'':otHM(rec)}" placeholder="h:mm" title="Hours to approve, like 1:30" inputmode="text"><button class="pl-btn" onclick="otDecide('${id}','approved','','${mode}')">✅ Approve</button><button class="pl-btn ghost" onclick="otDecide('${id}','rejected','notneeded','${mode}')">Not needed</button><button class="pl-btn ghost" style="color:var(--red)" onclick="otDecide('${id}','rejected','notgenuine','${mode}')">🚫 Not genuine</button><input class="note" id="otN_${id}" placeholder="Note (optional)"></div>`;
+  else if(st!=='open'&&(r.decidedBy||r.note)) act=`<div style="font-size:11px;color:var(--soft);margin-top:8px">${r.decidedBy?'Decided by '+hx(r.decidedBy):''}${r.note?' · “'+hx(r.note)+'”':''}</div>`;
+  return `<div class="ot-card" id="otc_${id}"><div class="ot-top"><div><div style="font-weight:700">${hx(r.name)} <span style="color:var(--soft);font-weight:400;font-size:12px">${hx(r.empId)}</span></div><div style="font-size:12px;color:var(--soft)">${otWhen(r)} · ${otClock(r.startTime)} → ${never?'never stopped':r.stopTime?otClock(r.stopTime):'running'}</div><div style="font-size:12px;margin-top:3px">“${hx(r.reason)}”</div></div><div style="text-align:right"><div class="ot-hrs">${never||st==='open'?'—':fmtMins(rec)}</div><div class="ot-cap">${badge}</div></div></div>${otFlags(r)}<div class="ot-photos">${photo('start','Start')}${photo('stop','Stop')}<div style="font-size:12px">${map('start','start')}${map('stop','stop')}</div></div>${act}</div>`;
+}
+function otShowPhoto(id,k){
+  const r=(window._otAdm||[]).find(x=>x.id===id); if(!r) return;
+  openModal(r.name,(k==='start'?'Overtime start ':'Overtime stop ')+(k==='start'?otClock(r.startTime):otClock(r.stopTime)),r[k+'Photo'],r[k+'Lat'],r[k+'Lng'],r[k+'Area']);
+}
+async function loadOtTab(){
+  const el=document.getElementById('otList'); if(!el) return;
+  el.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{
+    const st=document.getElementById('otFilter').value, rows=(await api('listOvertime',{photos:true,status:st}))||[]; window._otAdm=rows;
+    if(st==='pending') setTabBadge('overtime',rows.length);
+    el.innerHTML=rows.length?rows.map(r=>otCard(r,'tab')).join(''):'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">'+(st==='pending'?'Nothing is waiting for a decision.':'No overtime here yet.')+'</div>';
+  }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(otApiErr(e))+'</div>'; }
+}
+async function loadOtSup(){
+  const card=document.getElementById('supOtCard'), box=document.getElementById('supOt'); if(!card) return;
+  try{
+    const rows=(await api('listOvertime',{photos:true,status:'pending'}))||[]; window._otAdm=rows;
+    if(!rows.length){ card.style.display='none'; return; }
+    card.style.display='block'; box.innerHTML='<h3 style="font-size:15px;margin:0 0 10px">⏱ Overtime waiting for your decision ('+rows.length+')</h3>'+rows.map(r=>otCard(r,'sup')).join('');
+  }catch(e){ card.style.display='none'; }
+}
+async function otDecide(id,status,kind,mode){
+  const h=document.getElementById('otH_'+id), n=document.getElementById('otN_'+id), body={id,status,note:n?n.value.trim():''};
+  if(status==='approved'){ const m=otParse(h&&h.value); if(!(m>0)){ alert('Enter the hours to approve, like 1:30.'); return; } body.approvedMins=m; }
+  else{ body.rejectKind=kind; if(kind==='notgenuine'&&!confirm('Mark this overtime as NOT GENUINE? It lowers the employee\'s honesty score by 10 points.')) return; }
+  loading(true,'Saving…');
+  try{ await api('decideOvertime',body); loading(false); if(mode==='sup') loadOtSup(); else{ loadOtTab(); adminBadges(); } }
+  catch(e){ loading(false); alert(otApiErr(e)); }
+}
+
 /* ── Reports tab ── */
 function initReports(){
   const rm=document.getElementById('rptMonth'); if(rm&&!rm.value) rm.value=todayStr().slice(0,7);
@@ -4013,7 +4218,7 @@ async function saveReportSettings(){
   catch(e){ loading(false); alert('Error: '+e.message); }
 }
 /* Honesty score: starts at 100; points off only for things that hide where someone really was */
-const HONESTY_RULES=[['outside','Site check outside the site',5],['noGps','GPS off / blocked at a check',5],['fake','Fake GPS app detected',25],['open','Site work never stopped',10],['silent','Site work with no check for over 90 min',5],['noOut','Day with no punch out',5],['outPunch','Punched in or out outside the assigned office/factory',5],['awayEp','Away from the assigned office/factory at two checks in a row',5]];
+const HONESTY_RULES=[['outside','Site check outside the site',5],['noGps','GPS off / blocked at a check',5],['fake','Fake GPS app detected',25],['open','Site work never stopped',10],['silent','Site work with no check for over 90 min',5],['noOut','Day with no punch out',5],['outPunch','Punched in or out outside the assigned office/factory',5],['awayEp','Away from the assigned office/factory at two checks in a row',5],['otNoGps','Overtime started or stopped with no location',5],['otOut','Overtime started or stopped outside the assigned office/factory',5],['otOpen','Overtime started and never stopped',10],['otBad','Overtime rejected as not genuine',10]];
 function honesty(e){ let s=100; HONESTY_RULES.forEach(([k,,p])=>s-=p*(e[k]||0)); return Math.max(0,s); }
 let _lastReport=null;
 async function loadReports(){
@@ -4030,8 +4235,8 @@ async function loadReports(){
     const set=settingsNow(), startM=parseTimeMins(set.start)+set.grace;
     const emps=await getEmployees(), key=id=>String(id).toUpperCase();
     const by={};
-    emps.forEach(e=>by[key(e.id)]={id:e.id,name:e.name,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0,outPunch:0,awayEp:0});
-    const get=(id,name)=>by[key(id)]||(by[key(id)]={id,name:name||id,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0,outPunch:0,awayEp:0});
+    emps.forEach(e=>by[key(e.id)]={id:e.id,name:e.name,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0,outPunch:0,awayEp:0,otMins:0,otNoGps:0,otOut:0,otOpen:0,otBad:0});
+    const get=(id,name)=>by[key(id)]||(by[key(id)]={id,name:name||id,days:0,full:0,late:0,noOut:0,mins:0,visits:0,km:0,siteMins:0,checks:0,inside:0,outside:0,noGps:0,fake:0,open:0,silent:0,outPunch:0,awayEp:0,otMins:0,otNoGps:0,otOut:0,otOpen:0,otBad:0});
     // daily trend: people punched in, and late, per day
     const perDay={}; for(let i=1;i<=last;i++) perDay[y+'-'+p2(mo)+'-'+p2(i)]={present:0,late:0};
     (d.attendance||[]).forEach(r=>{
@@ -4042,6 +4247,7 @@ async function loadReports(){
       if(r.punchOut){ e.full++; e.mins+=officeMins(r); } else if(r.date<today) e.noOut++;
     });
     (d.visits||[]).forEach(v=>get(v.empId,v.name).visits++);
+    (d.overtime||[]).forEach(o=>{ const e=get(o.empId); e.otNoGps+=o.noGps||0; e.otOut+=o.out||0; e.otOpen+=o.open||0; e.otBad+=o.bad||0; if(o.status==='approved') e.otMins+=o.approvedMins||0; });
     (d.sites||[]).forEach(s=>{
       const e=get(s.empId,s.name); if(s.mode!=='auto') e.siteMins+=s.minutes||0; e.checks+=s.checks||0; e.inside+=s.inside||0;
       e.outside+=(s.outside||0)-(s.fake||0); e.noGps+=s.noGps||0; e.fake+=s.fake||0;
@@ -4069,11 +4275,11 @@ async function loadReports(){
       <div class="stat"><div class="n c-orange">${avgScore===null?'—':avgScore}</div><div class="l">Avg honesty score</div></div></div>`;
     html+=trendSvg(perDay,list.length,today);
     const sc=v=>{ const c=v>=85?['var(--greenBg)','var(--green)']:v>=60?['var(--amberBg)','var(--amber)']:['var(--redBg)','var(--red)']; return `<span class="score" style="background:${c[0]};color:${c[1]}">${v}</span>`; };
-    html+=`<div style="overflow-x:auto;margin-top:14px"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Late</th><th>Avg hrs</th><th>Visits</th><th>Km</th><th>Travel ₹</th><th>Site hrs</th><th>Inside site</th><th>Outside place</th><th>Honesty</th></tr></thead><tbody>${
+    html+=`<div style="overflow-x:auto;margin-top:14px"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Late</th><th>Avg hrs</th><th>Visits</th><th>Km</th><th>Travel ₹</th><th>Site hrs</th><th>Inside site</th><th>Outside place</th><th>OT hrs</th><th>Honesty</th></tr></thead><tbody>${
       list.map((e,i)=>{ const pct=e.checks?Math.round(100*e.inside/e.checks)+'%':'—', has=e.days||e.checks||e.visits;
-        return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days}${e.noOut?` <span style="color:var(--red);font-size:11px">(${e.noOut} no out)</span>`:''}</td><td>${e.late?`<span style="color:var(--amber);font-weight:700">${e.late}</span>`:0}</td><td>${e.full?fmtMins(e.mins/e.full):'—'}</td><td>${e.visits}</td><td>${e.km.toFixed(1)}</td><td>${set.rate?'₹'+Math.round(e.km*set.rate):'—'}</td><td>${e.siteMins?fmtMins(e.siteMins):'—'}</td><td>${pct}</td><td>${(e.outPunch||e.awayEp)?`<span style="color:var(--red);font-weight:700" title="${e.outPunch} punch(es) outside · ${e.awayEp} time(s) away">${e.outPunch+e.awayEp}</span>`:'—'}</td><td>${has?`<button onclick="showHonesty(${i})" style="border:none;background:none;cursor:pointer;padding:0">${sc(honesty(e))}</button>`:'—'}</td></tr>`; }).join('')
+        return `<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}</div></td><td>${e.days}${e.noOut?` <span style="color:var(--red);font-size:11px">(${e.noOut} no out)</span>`:''}</td><td>${e.late?`<span style="color:var(--amber);font-weight:700">${e.late}</span>`:0}</td><td>${e.full?fmtMins(e.mins/e.full):'—'}</td><td>${e.visits}</td><td>${e.km.toFixed(1)}</td><td>${set.rate?'₹'+Math.round(e.km*set.rate):'—'}</td><td>${e.siteMins?fmtMins(e.siteMins):'—'}</td><td>${pct}</td><td>${(e.outPunch||e.awayEp)?`<span style="color:var(--red);font-weight:700" title="${e.outPunch} punch(es) outside · ${e.awayEp} time(s) away">${e.outPunch+e.awayEp}</span>`:'—'}</td><td>${e.otMins?fmtMins(e.otMins):'—'}</td><td>${has?`<button onclick="showHonesty(${i})" style="border:none;background:none;cursor:pointer;padding:0">${sc(honesty(e))}</button>`:'—'}</td></tr>`; }).join('')
     }</tbody></table></div>
-    <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after the office start + grace (${set.start} + ${set.grace} min, or the department's own hours). Approved leave days are left out of the attendance %. Km = straight line between recorded places. Tap a score to see how it was worked out.</div>`;
+    <div style="font-size:11px;color:var(--soft);margin-top:6px">Late = punch in after the office start + grace (${set.start} + ${set.grace} min, or the department's own hours). Approved leave days are left out of the attendance %. Km = straight line between recorded places. OT hrs = approved overtime only (information; not added to pay). Tap a score to see how it was worked out.</div>`;
     el.innerHTML=html; _lastReport.html=html;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
@@ -4117,9 +4323,9 @@ function reportPrintHtml(r,who){
 }
 function salaryPrintHtml(r,who){
   const mn=monthName(r.month), R=r.R;
-  const rows=r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:10px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full+e.half}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td style="font-size:10px;color:var(--soft)">${(()=>{ const n=(e.notes||'').split(' · ').filter(Boolean); return n.length>10?(e.absent+' days absent'+(e.half?', '+e.half+' half':'')+' (dates are in the CSV)'):n.join(' · '); })()}</td></tr>`).join('');
-  const body=`<table><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th><th>Notes (day of month)</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="note">Counted up to ${r.end}. Sundays and holidays are paid. Approved leave is paid. Absences are unpaid. A half day counts as 0.5${R&&R.lateN>0?`. Every ${R.lateN} late marks cost half a day`:''}. Payable days = calendar days − unpaid days.</div>${r.pendDays?`<div class="note"><b>Note:</b> ${r.pendDays} leave day${r.pendDays>1?'s are':' is'} still pending approval and counted as absent here.</div>`:''}
+  const rows=r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:10px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full+e.half}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td>${e.ot?fmtMins(e.ot):''}</td><td style="font-size:10px;color:var(--soft)">${(()=>{ const n=(e.notes||'').split(' · ').filter(Boolean); return n.length>10?(e.absent+' days absent'+(e.half?', '+e.half+' half':'')+' (dates are in the CSV)'):n.join(' · '); })()}</td></tr>`).join('');
+  const body=`<table><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th><th>OT hrs</th><th>Notes (day of month)</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="note">Counted up to ${r.end}. Sundays and holidays are paid. Approved leave is paid. Absences are unpaid. A half day counts as 0.5${R&&R.lateN>0?`. Every ${R.lateN} late marks cost half a day`:''}. Payable days = calendar days − unpaid days. OT hrs = approved overtime, shown for information only; it is not added to payable days.</div>${r.pendDays?`<div class="note"><b>Note:</b> ${r.pendDays} leave day${r.pendDays>1?'s are':' is'} still pending approval and counted as absent here.</div>`:''}
   <div class="sign"><div>Prepared by</div><div>Checked by</div><div>Approved by</div></div>`;
   return printShell({title:'Amitek salary sheet '+mn,heading:'Salary-ready Sheet · '+mn,sub:scopeLabel()+'<br>Attendance counted up to '+r.end,body,who,orient:'landscape'});
 }
@@ -4165,8 +4371,8 @@ function trendSvg(perDay,staff,today){
 }
 function exportReportCSV(){
   const r=_lastReport; if(!r){ alert('Tap Show first.'); return; }
-  const hdr=['ID','Name','Days present','No punch out','Late days','Avg hours','Visits','Km (straight line)','Travel Rs','Site hours','Site checks','Inside site %','Punches outside place','Times away from place','Honesty score'];
-  const rows=r.list.map(e=>[e.id,'"'+String(e.name).replace(/"/g,'""')+'"',e.days,e.noOut,e.late,e.full?(e.mins/e.full/60).toFixed(2):'',e.visits,e.km.toFixed(1),r.set.rate?Math.round(e.km*r.set.rate):'',(e.siteMins/60).toFixed(2),e.checks,e.checks?Math.round(100*e.inside/e.checks):'',e.outPunch,e.awayEp,(e.days||e.checks||e.visits)?honesty(e):''].join(','));
+  const hdr=['ID','Name','Days present','No punch out','Late days','Avg hours','Visits','Km (straight line)','Travel Rs','Site hours','Site checks','Inside site %','Punches outside place','Times away from place','OT hours (approved)','Honesty score'];
+  const rows=r.list.map(e=>[e.id,'"'+String(e.name).replace(/"/g,'""')+'"',e.days,e.noOut,e.late,e.full?(e.mins/e.full/60).toFixed(2):'',e.visits,e.km.toFixed(1),r.set.rate?Math.round(e.km*r.set.rate):'',(e.siteMins/60).toFixed(2),e.checks,e.checks?Math.round(100*e.inside/e.checks):'',e.outPunch,e.awayEp,e.otMins?(e.otMins/60).toFixed(2):'',(e.days||e.checks||e.visits)?honesty(e):''].join(','));
   const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[hdr.join(','),...rows].join('\n')],{type:'text/csv'})),download:'report-'+r.month+'.csv'});
   a.click();
 }
@@ -4191,6 +4397,7 @@ async function refreshSiteMonitor(role){
   const elId=role==='sup'?'supContent':'siteContent';
   const el=document.getElementById(elId);
   if(!el) return;
+  if(role==='sup') loadOtSup();
   const date=role==='sup'?todayStr():(document.getElementById('siteDate')?.value||todayStr());
   el.innerHTML='<div class="empty"><div class="eicon">⏳</div>Loading…</div>';
   try{
