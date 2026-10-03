@@ -1653,6 +1653,12 @@ function leaveProblem(empId,type,from,to){
   return '';
 }
 function leaveOn(empId,ds,statuses){ statuses=statuses||['approved']; const e=String(empId).toUpperCase(); return (_D.leaves||[]).find(l=>l.fromDate&&statuses.includes(l.status)&&String(l.empId).toUpperCase()===e&&l.fromDate<=ds&&ds<=(l.toDate||l.fromDate))||null; }
+let _lvSync=0;
+async function syncLeaves(force){   // admin screens: re-read leaves so a leave approved elsewhere is never shown as Absent
+  if(!USE_SHEETS||!_tok) return;
+  if(!force&&Date.now()-_lvSync<5000) return;
+  try{ const l=await api('getLeaves',{}); if(l){ _D.leaves=l; _lvSync=Date.now(); saveCache(); } }catch(e){}
+}
 function leaveSpan(l){ if(!l.fromDate) return ''; const f=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); const n=leaveDays(l); return f(l.fromDate)+(l.toDate&&l.toDate!==l.fromDate?' → '+f(l.toDate):'')+' · '+n+' day'+(n>1?'s':''); }
 async function refreshMyLeaves(empId){
   if(!USE_SHEETS) return;
@@ -2183,7 +2189,8 @@ async function payrollBuild(){
   if(end<start) throw new Error('Nothing to count yet for that month.');
   const d=await api('monthReport',{start,end:endFull})||{}, R=payRules(), key=id=>String(id).toUpperCase();
   const byEmp={}; (d.attendance||[]).forEach(r=>{ if(r.punchIn) (byEmp[key(r.empId)]=byEmp[key(r.empId)]||{})[r.date]=r; });
-  const emps=await getEmployees();
+  await syncLeaves(true);
+  const emps=await getEmployees(); let pendDays=0;
   const list=emps.map(e=>{
     const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
     let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[];
@@ -2192,19 +2199,20 @@ async function payrollBuild(){
       const r=(byEmp[key(e.id)]||{})[ds];
       if(r){ const m=parseTimeMins(r.punchIn.time); if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); } else{ full++; if(m>lateLim) late++; } }
       else if(leaveOn(e.id,ds)) leave++;
+      else if(leaveOn(e.id,ds,['pending'])){ absent++; pendDays++; notes.push(ds.slice(8)+' absent (leave pending)'); }
       else{ absent++; notes.push(ds.slice(8)+' absent'); }
     }
     const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
     return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,notes:notes.join(' · ')};
   }).sort((a,b)=>a.name<b.name?-1:1);
-  return {month:mv,end,list,R};
+  return {month:mv,end,list,R,pendDays};
 }
 const fmtD=n=>Number.isInteger(n)?String(n):n.toFixed(1);
 async function payrollShow(){
   const el=document.getElementById('salContent'); el.innerHTML='<div class="empty">⏳ Working it out…</div>';
   try{
     const r=await payrollBuild(); window._payroll=r;
-    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>`;
+    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:11px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>${r.pendDays?`<div class="msg msg-error show" style="margin-top:8px">⚠️ ${r.pendDays} day${r.pendDays>1?'s':''} of leave still waiting for approval are counted as absent. Approve or reject them in the Leaves tab, then press Show again.</div>`:''}`;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">'+e.message+'</div>'; }
 }
 async function payrollCSV(){
@@ -3340,7 +3348,7 @@ async function loadAttTab(){
   const fn=(document.getElementById('filterName').value||'').toLowerCase();
   loading(true,'Loading attendance…');
   try{
-    const[dayRecs,emps]=await Promise.all([getAttRange(fd,fd),getEmployees()]);
+    const[dayRecs,emps]=await Promise.all([getAttRange(fd,fd),getEmployees(),syncLeaves()]);
     loading(false);
     const presIds=dayRecs.map(r=>String(r.empId).toUpperCase());
     let present=0,partial=0,meetOut=0;
@@ -3348,8 +3356,8 @@ async function loadAttTab(){
     document.getElementById('sTotal').textContent=emps.length;
     document.getElementById('sPresent').textContent=present;
     document.getElementById('sPartial').textContent=partial+meetOut;
-    document.getElementById('sAbsent').textContent=emps.filter(e=>!presIds.includes(String(e.id).toUpperCase())&&!leaveOn(e.id,fd)).length;
     const dayOff=checkDayOff(fd);
+    document.getElementById('sAbsent').textContent=dayOff?0:emps.filter(e=>!presIds.includes(String(e.id).toUpperCase())&&!leaveOn(e.id,fd)&&!leaveOn(e.id,fd,['pending'])).length;
     const ban=document.getElementById('holBanner');
     if(dayOff){ban.textContent=dayOff.icon+' '+fd+' is a '+dayOff.type+': '+dayOff.name;ban.style.display='block';}
     else ban.style.display='none';
@@ -3362,7 +3370,7 @@ async function loadAttTab(){
     tbody.innerHTML=rows.map(r=>{
       const hasPi=r.punchIn&&r.punchIn.time,hasPo=r.punchOut&&r.punchOut.time;
       const am=getActiveMeeting(r),mCnt=(r.meetings||[]).length;
-      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':'<span class="badge b-absent">Absent</span>';
+      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':leaveOn(r.empId,fd,['pending'])?'<span class="badge b-partial" title="Leave applied, waiting for approval">Leave pending</span>':dayOff?'<span class="badge b-leave" style="background:var(--surface2);color:var(--soft)">'+dayOff.type+'</span>':'<span class="badge b-absent">Absent</span>';
       const hrs=(hasPi&&hasPo)?(calcTotalHrs(r)||'—'):'—';
       const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${r.punchIn.photo}" onclick="openModal('${esc(r.name)}','Punch In','${r.punchIn.photo}','${r.punchIn.lat||''}','${r.punchIn.lng||''}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
@@ -3421,7 +3429,7 @@ async function generateReport(){
   const mStr=year+'-'+pad(month),dim=new Date(year,month,0).getDate(),today=todayStr();
   loading(true,'Generating report…');
   try{
-    const[allRecs,emps]=await Promise.all([getAttRange(mStr+'-01',mStr+'-'+pad(dim)),getEmployees()]);
+    const[allRecs,emps]=await Promise.all([getAttRange(mStr+'-01',mStr+'-'+pad(dim)),getEmployees(),syncLeaves()]);
     loading(false);
     // Working days are counted only up to today, so days that haven't happened yet aren't "absent"
     let wDays=0,oDays=0;const counted=[];
@@ -3811,6 +3819,7 @@ async function loadReports(){
   const start=y+'-'+p2(mo)+'-01', end=y+'-'+p2(mo)+'-'+p2(last), today=todayStr();
   el.innerHTML='<div class="empty">⏳ Loading…</div>';
   try{
+    await syncLeaves();
     const d=await api('monthReport',{start,end})||{};
     const set=settingsNow(), startM=parseTimeMins(set.start)+set.grace;
     const emps=await getEmployees(), key=id=>String(id).toUpperCase();
@@ -3903,7 +3912,7 @@ function salaryPrintHtml(r,who){
   const mn=monthName(r.month), R=r.R;
   const rows=r.list.map(e=>`<tr><td><b>${e.name}</b><div style="color:var(--soft);font-size:10px">${e.id}${e.dept?' · '+e.dept:''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full+e.half}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td style="font-size:10px;color:var(--soft)">${(()=>{ const n=(e.notes||'').split(' · ').filter(Boolean); return n.length>10?(e.absent+' days absent'+(e.half?', '+e.half+' half':'')+' (dates are in the CSV)'):n.join(' · '); })()}</td></tr>`).join('');
   const body=`<table><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th><th>Notes (day of month)</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="note">Counted up to ${r.end}. Sundays and holidays are paid. Approved leave is paid. Absences are unpaid. A half day counts as 0.5${R&&R.lateN>0?`. Every ${R.lateN} late marks cost half a day`:''}. Payable days = calendar days − unpaid days.</div>
+  <div class="note">Counted up to ${r.end}. Sundays and holidays are paid. Approved leave is paid. Absences are unpaid. A half day counts as 0.5${R&&R.lateN>0?`. Every ${R.lateN} late marks cost half a day`:''}. Payable days = calendar days − unpaid days.</div>${r.pendDays?`<div class="note"><b>Note:</b> ${r.pendDays} leave day${r.pendDays>1?'s are':' is'} still pending approval and counted as absent here.</div>`:''}
   <div class="sign"><div>Prepared by</div><div>Checked by</div><div>Approved by</div></div>`;
   return printShell({title:'Amitek salary sheet '+mn,heading:'Salary-ready Sheet · '+mn,sub:scopeLabel()+'<br>Attendance counted up to '+r.end,body,who,orient:'landscape'});
 }
