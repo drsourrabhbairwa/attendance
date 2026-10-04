@@ -234,7 +234,9 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .modal-close{width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;margin-top:12px;font-size:14px;font-family:inherit}
 /* Hol tag */
 .tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px}
-.tag-nat{background:var(--blueBg);color:var(--blue)}.tag-cust{background:var(--amberBg);color:var(--amber)}
+.tag-nat{background:var(--blueBg);color:var(--blue)}.tag-cust{background:var(--amberBg);color:var(--amber)}.tag-off{background:var(--redBg);color:var(--red)}
+.restore-btn{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:12px;padding:4px 10px}
+.hol-head{font-size:11px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;margin:14px 2px 6px}
 /* Note box */
 .note-box{background:var(--surface2);border-radius:var(--rs);padding:10px;margin-bottom:6px;display:none}
 .note-box.show{display:block}
@@ -1024,6 +1026,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
         <button onclick="addHoliday()" style="padding:8px 15px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button>
       </div>
     </div>
+    <p style="font-size:12px;color:var(--soft);margin:0 2px 8px">Tap ✕ on any holiday, national ones too, to cancel it: that day then becomes a normal working day. Cancelled holidays are listed at the top and can be restored.</p>
     <div id="holList" style="max-height:380px;overflow-y:auto"></div>
   </div>
 
@@ -1256,7 +1259,7 @@ const APK_URL = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/
 ══════════════════════════════════════════════════════════════ */
 const _D = {
   admin:null, employees:[], attendance:[], leaves:[],
-  quotas:{}, customHolidays:{}, supervisors:[], siteActive:[], settings:{}, places:[], loadedAt:null
+  quotas:{}, customHolidays:{}, cancelledHolidays:{}, supervisors:[], siteActive:[], settings:{}, places:[], loadedAt:null
 };
 const CACHE_KEY = 'att_v2';
 function saveCache(){ if(_tok) return; try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
@@ -1477,8 +1480,19 @@ async function saveAdminStore(c){
 }
 async function getCustomHols(){ return _D.customHolidays||{}; }
 async function addHolStore(date,name){
-  if(USE_SHEETS) await api('addHoliday',{date,name}); else{const c=_D.customHolidays||{};c[date]=name;localStorage.setItem('att_hols',JSON.stringify(c));}
-  _D.customHolidays=_D.customHolidays||{}; _D.customHolidays[date]=name; saveCache();
+  if(USE_SHEETS) await api('addHoliday',{date,name}); else{const c=_D.customHolidays||{};c[date]=name;localStorage.setItem('att_hols',JSON.stringify(c));setCancelledLocal(date,false);}
+  _D.customHolidays=_D.customHolidays||{}; _D.customHolidays[date]=name;   // a holiday added on a cancelled date lifts the cancellation
+  if(_D.cancelledHolidays) delete _D.cancelledHolidays[date]; saveCache();
+}
+function setCancelledLocal(date,on){ const c=JSON.parse(localStorage.getItem('att_hols_cx')||'{}'); if(on) c[date]=1; else delete c[date]; localStorage.setItem('att_hols_cx',JSON.stringify(c)); }
+// National holidays the company does not give: the day becomes a normal working day (a custom holiday on that date goes too). Restore brings it back.
+async function cancelHolStore(date){
+  if(USE_SHEETS) await api('cancelHoliday',{date}); else{ setCancelledLocal(date,true); const h=_D.customHolidays||{}; delete h[date]; localStorage.setItem('att_hols',JSON.stringify(h)); }
+  _D.cancelledHolidays=Object.assign({},_D.cancelledHolidays,{[date]:1}); if(_D.customHolidays) delete _D.customHolidays[date]; saveCache();
+}
+async function restoreHolStore(date){
+  if(USE_SHEETS) await api('restoreHoliday',{date}); else setCancelledLocal(date,false);
+  if(_D.cancelledHolidays) delete _D.cancelledHolidays[date]; saveCache();
 }
 async function removeHolStore(date){
   if(USE_SHEETS) await api('removeHoliday',{date}); else{const c=_D.customHolidays||{};delete c[date];localStorage.setItem('att_hols',JSON.stringify(c));}
@@ -1520,7 +1534,7 @@ const NAT_HOLS={
   '2026-04-03':'Good Friday','2026-04-14':'Dr. Ambedkar Jayanti','2026-08-15':'Independence Day',
   '2026-10-02':'Gandhi Jayanti','2026-11-14':'Diwali','2026-12-25':'Christmas',
 };
-function allHols(){ return Object.assign({},NAT_HOLS,_D.customHolidays||{}); }
+function allHols(){ const cx=_D.cancelledHolidays||{}, o={}; Object.keys(NAT_HOLS).forEach(d=>{ if(!cx[d]) o[d]=NAT_HOLS[d]; }); return Object.assign(o,_D.customHolidays||{}); }   // cancelled national holidays are working days
 function checkDayOff(ds){
   const d=new Date(ds+'T12:00:00');
   if(d.getDay()===0) return{type:'Sunday',name:'Sunday – Office Closed',icon:'😴'};
@@ -1660,6 +1674,7 @@ async function init(){
     _D.leaves=JSON.parse(localStorage.getItem('att_leaves')||'[]');
     _D.quotas=JSON.parse(localStorage.getItem('att_quotas')||'{}');
     _D.customHolidays=JSON.parse(localStorage.getItem('att_hols')||'{}');
+    _D.cancelledHolidays=JSON.parse(localStorage.getItem('att_hols_cx')||'{}');
     loading(false);
     if(!hasAdmin()) showScreen('setupScreen');
     else if(!hasCached&&!currentEmp) showScreen('loginScreen');
@@ -3868,18 +3883,26 @@ async function removeEmployee(id){
 /* ══════════════════════════════════════════════════════════════
    HOLIDAYS TAB
 ══════════════════════════════════════════════════════════════ */
+const HOL_DL=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 async function renderHolList(){
   loading(true,'Loading…');
   try{
-    const custom=await getCustomHols();loading(false);
-    const all=Object.entries(Object.assign({},NAT_HOLS,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
-    document.getElementById('holList').innerHTML=all.map(([date,name])=>{
-      const isCust=!!custom[date];
-      const dl=new Date(date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-      return`<div class="hol-item"><div><span style="font-weight:600">${name}</span><span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${dl}</div></div>${isCust?`<button class="del-btn" onclick="removeHoliday('${date}')">✕</button>`:''}</div>`;
+    const custom=await getCustomHols(), cx=_D.cancelledHolidays||{};loading(false);
+    const live=Object.assign({},NAT_HOLS); Object.keys(cx).forEach(d=>{ delete live[d]; });
+    const all=Object.entries(Object.assign(live,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
+    let html=all.map(([date,name])=>{
+      const isCust=!!custom[date], isNat=!!NAT_HOLS[date];
+      const btn=isNat?`<button class="del-btn" title="Cancel this holiday: the company works that day" aria-label="Cancel holiday ${hx(name)}" onclick="cancelHoliday('${date}')">✕</button>`
+                      :`<button class="del-btn" title="Remove this holiday" aria-label="Remove holiday ${hx(name)}" onclick="removeHoliday('${date}')">✕</button>`;
+      return`<div class="hol-item"><div><span style="font-weight:600">${hx(name)}</span><span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div>${btn}</div>`;
     }).join('');
+    const gone=Object.keys(cx).filter(d=>NAT_HOLS[d]).sort();
+    if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(NAT_HOLS[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${date}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
+    const box=document.getElementById('holList'); box.innerHTML=html; box.scrollTop=0;
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
+const HOL_OLD_BACKEND='Your Google Apps Script is an older version and does not know how to cancel a holiday yet.\n\nOpen Extensions → Apps Script, paste the latest backend file (v21), Save, then Deploy → Manage deployments → Edit → New version → Deploy. After that, try again.';
+const holErr=e=>/Unknown action/i.test(e.message||'')?HOL_OLD_BACKEND:'Error: '+e.message;
 
 async function addHoliday(){
   const date=document.getElementById('hDate').value,name=document.getElementById('hName').value.trim();
@@ -3892,6 +3915,19 @@ async function addHoliday(){
 async function removeHoliday(date){
   loading(true,'Removing…');
   try{await removeHolStore(date);loading(false);renderHolList();}catch(e){loading(false);alert('Error: '+e.message);}
+}
+async function cancelHoliday(date){
+  const cust=(_D.customHolidays||{})[date], name=cust||NAT_HOLS[date]||date;
+  if(!confirm('Cancel "'+name+'" ('+HOL_DL(date)+')?\n\nThat day becomes a normal working day for everyone: staff who do not punch in will be marked absent unless they have approved leave.'
+    +(cust&&NAT_HOLS[date]?'\nYour own holiday on this date is removed too.':'')
+    +(date<todayStr()?'\n\nThis date has already passed, so attendance and leave counts for that day change as well: people who did not come will now show as absent.':'')
+    +'\n\nYou can bring it back at any time with Restore.')) return;
+  loading(true,'Cancelling…');
+  try{await cancelHolStore(date);loading(false);renderHolList();}catch(e){loading(false);alert(holErr(e));}
+}
+async function restoreHoliday(date){
+  loading(true,'Restoring…');
+  try{await restoreHolStore(date);loading(false);renderHolList();}catch(e){loading(false);alert(holErr(e));}
 }
 
 /* ══════════════════════════════════════════════════════════════
