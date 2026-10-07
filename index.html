@@ -555,6 +555,9 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .tl-cal td{height:42px;border-radius:9px;background:var(--surface2);text-align:center;vertical-align:middle;font-size:12px;cursor:pointer;padding:0}
 .tl-cal td.e{background:transparent;cursor:default}
 .tl-cal td.off{color:var(--soft);opacity:.6}
+.tl-cal td.hol{opacity:1;background:var(--redBg);color:var(--red);font-weight:700}
+.tl-hols{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.tl-hol{font-size:11px;padding:3px 8px;border-radius:9px;background:var(--redBg);color:var(--red);overflow-wrap:anywhere}
 .tl-cal td.has{background:var(--amberBg);color:var(--amber);font-weight:700}
 .tl-cal td.tdy{box-shadow:inset 0 0 0 2px var(--accent)}
 .tl-cal td.sel{outline:2px solid var(--accent);outline-offset:-1px}
@@ -596,6 +599,103 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 #otChips .chip.on{background:#B45309;color:#fff}
 .ot-mine{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
 .ot-mine small{display:block;color:var(--soft);font-size:11px;margin-top:2px}
+</style>
+<style id="layoutSafety">
+/* ═══════════════════════════════════════════════════════════════════
+   v22 — LAYOUT SAFETY + ONE GLASS SYSTEM (loaded after every other style block)
+   1. Nothing may be wider than its box: long names, ids, links and reasons wrap instead of spilling.
+   2. The glass look is one system: shared tokens, darker small text, 44 px tap targets, solid fallback.
+   Checked by scan_zero.js: zero spill / clip / off-screen / small-tap / low-contrast at 360 and 390 px on every screen.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 0. Tokens (one place to change the look) ── */
+:root{
+  --glass-blur:blur(16px) saturate(1.5);
+  --btn-grad:linear-gradient(180deg,#1D8272,#166A5A);
+  --btn-shadow:0 6px 16px rgba(18,96,79,.32),inset 0 1px 0 rgba(255,255,255,.3);
+  --tap:44px;
+  /* darker small text and status colours so they read on frosted panels outdoors (all ≥ 4.5:1) */
+  --soft:#3B5451;
+  --accent:#17705F;--accent2:#0F5444;
+  --amber:#795117;--green:#26663C;--orange:#884712;--warn:#8F4607;
+}
+.card,.topbar,.modal-box,.hm-today,#adminScreen .tab-row{-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  :root{--surface:rgba(255,255,255,.96);--surface2:rgba(244,249,248,.96)}}
+@media (prefers-reduced-transparency:reduce){.card,.topbar,.modal-box,.hm-today,#adminScreen .tab-row{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* Every filled green control uses the same gradient */
+.btn-primary,.filter-row button,.modal-close,.role-btn.active,.tab-btn.active,#adminScreen .tab-btn.active{background:var(--btn-grad);color:#fff}
+.btn-primary,.filter-row button,.modal-close{box-shadow:var(--btn-shadow)}
+.btn-primary:hover,.filter-row button:hover{background:linear-gradient(180deg,#22907F,#14604F)}
+.avatar,.hm-av{background:linear-gradient(145deg,#1D8272,#0F5444)}
+.logo-icon{background:linear-gradient(145deg,#1D8272,#0F5444)}
+.pl-btn,.sb,.sb.chk,.sb.aid{background:var(--accent)}
+/* The pane behind admin and supervisor content is more solid so small text on it always has enough contrast */
+#adminScreen>.card,#supervisorScreen>.card{background:rgba(255,255,255,.82)}
+/* Days off and empty cells: quiet, but still readable */
+.tl-cal td.off,.tl-cal th.off,.lc .off,.lc th.off,.hm-dot.off{opacity:1;color:var(--soft)}
+.tl-cal td.off,.lc .off,.hm-dot.off{background:rgba(16,70,74,.09)}
+.tl-cal td.off{color:var(--ink2)}
+.tl-cal td.hol,.tl-cal td.off.hol{background:var(--redBg);color:var(--red)}
+
+/* ── 1. Layout safety ── */
+body{overflow-wrap:break-word}                          /* a word that cannot fit breaks instead of pushing the box wider */
+.hm-nm,.tl-hol,.fx-card,.leave-card,.sup-card,.list-item,.hol-item,.ot-card{overflow-wrap:anywhere}
+.leave-card div,.list-item div,.hol-item div,.sup-card div,.org-node div,.fx-card div,.ot-card div,.ot-mine div,.tl-row div,.hm-rec div,.pl-item div{min-width:0}
+.list-item{flex-wrap:wrap;gap:8px 10px}
+.list-item>.ph-row{flex:1 1 200px;min-width:0}
+.ph-row>div:not(.avatar){min-width:0}
+.emp-acts{flex-wrap:wrap;margin-left:auto;justify-content:flex-end;max-width:100%}
+.dept-sel{max-width:100%}
+.hol-item{gap:8px;align-items:center}
+.hol-item>div:first-child,.pl-item>div:first-child{flex:1 1 0;min-width:0}
+.hol-item>button,.pl-item .emp-acts{flex:none}
+.pl-item>div:first-child{flex:1 1 220px}
+.tl-row{align-items:flex-start}
+.tl-row>*:first-child{min-width:0;flex:1 1 auto}
+.tl-row small{flex:none;max-width:55%}
+.ot-top>*{min-width:0}
+/* fields never wider than their column */
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=month],input[type=number],select,textarea{min-width:0;max-width:100%}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.g2>*{min-width:0}
+.filter-row input[type=date],.filter-row input[type=month]{min-width:150px}
+/* short labels never break in the middle of a word */
+.badge,.tag,.hm-chip,.sbadge,.ot-flag,.b-leave{white-space:nowrap;flex:none;overflow-wrap:normal}
+button,.btn,select{overflow-wrap:normal;word-break:normal}
+/* the small round-trip buttons keep their size and their words on one line */
+.btn-sm,.key-btn,.filter-row button,.hm-out,.hm-back,.pl-btn,.sb,.org-act,.map-link,.tab-btn{white-space:nowrap;flex-shrink:0}
+/* Hero: a long name gets its own full-width line and the two buttons drop underneath */
+.hm-nm{overflow-wrap:anywhere}
+.hm-top.long{flex-wrap:wrap;row-gap:10px}
+.hm-top.long>div:nth-child(2){flex:1 1 calc(100% - 70px)}
+.hm-top.long .hm-tools{width:100%;margin-left:0;justify-content:flex-end}
+.hm-date{overflow-wrap:anywhere}
+/* Leave calendar: long names are cut with … (the full name is the tooltip) and the name column stays solid while the days scroll */
+.lc .nm{max-width:132px;overflow:hidden;text-overflow:ellipsis;background:#EEF4F3}
+.lc th.nm{background:#E4EEEC}
+.lc tfoot td.nm{background:#E4EEEC}
+
+/* ── 2. Tap targets: 44 px on phones and touch screens ── */
+@media (max-width:700px),(pointer:coarse){
+  button,[role=button],select,input[type=date],input[type=month],input[type=time]{min-height:var(--tap)}
+  button{min-width:var(--tap)}
+  .btn-sm,.org-act,.btn-approve,.btn-reject,.sb,.pl-btn,.pf-small,.chip,.tab-btn{min-height:var(--tap)}
+  .tab-btn{padding-top:10px;padding-bottom:10px}
+  .key-btn,.hm-out,.tl-nav button,.per-bar>button.sq{min-height:var(--tap);min-width:var(--tap)}
+  .del-btn{min-width:var(--tap);min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+  .map-link{min-height:var(--tap);min-width:var(--tap);justify-content:center;padding:0 12px;font-size:12px}
+  .help-link{display:flex;align-items:center;justify-content:center;min-height:var(--tap)}
+  .al-chk,.pl-lab,.pl-chk{min-height:var(--tap);display:flex;align-items:center}
+  label:has(>input[type=checkbox]),label:has(>input[type=radio]){min-height:var(--tap);display:flex;align-items:center}   /* its own rule: a browser without :has() drops only this one */
+  .per-bar select,.per-bar input{min-height:var(--tap)}
+  .pl-item .emp-acts button,.emp-acts button{min-height:var(--tap)}
+}
+
+/* Buttons and chips that sit straight on the dark floor: nearly solid white so their small text reads */
+.hm-links button,.btn-outline,.chip{background:rgba(255,255,255,.9)}
+.hm-links button small,.hm-tile.blocked span,.chip{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -832,7 +932,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
     <select id="lvType"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option></select>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="g2">
       <div><label>From</label><input type="date" id="lvFrom" oninput="lvDatesChanged()"></div>
       <div><label>To</label><input type="date" id="lvTo" oninput="lvDatesChanged()"></div>
     </div>
@@ -1259,7 +1359,7 @@ const APK_URL = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/
 ══════════════════════════════════════════════════════════════ */
 const _D = {
   admin:null, employees:[], attendance:[], leaves:[],
-  quotas:{}, customHolidays:{}, cancelledHolidays:{}, supervisors:[], siteActive:[], settings:{}, places:[], loadedAt:null
+  quotas:{}, customHolidays:{}, cancelledHolidays:{}, nationalHolidays:{}, supervisors:[], siteActive:[], settings:{}, places:[], loadedAt:null
 };
 const CACHE_KEY = 'att_v2';
 function saveCache(){ if(_tok) return; try{ localStorage.setItem(CACHE_KEY, JSON.stringify(_D)); }catch(e){} }
@@ -1525,16 +1625,44 @@ async function verifyPass(p,h){return (await hashPass(p))===h;}
 /* ══════════════════════════════════════════════════════════════
    HOLIDAYS
 ══════════════════════════════════════════════════════════════ */
+// Official Central Government gazetted holidays 2026 and 2027 (DoPT). The backend sends the same list (nationalHolidays); this copy is only a fallback for an older backend.
 const NAT_HOLS={
-  '2025-01-26':'Republic Day','2025-02-26':'Maha Shivratri','2025-03-17':'Holi',
-  '2025-03-31':'Eid ul-Fitr','2025-04-14':'Dr. Ambedkar Jayanti','2025-04-18':'Good Friday',
-  '2025-08-15':'Independence Day','2025-08-16':'Janmashtami','2025-10-02':'Gandhi Jayanti',
-  '2025-10-20':'Diwali','2025-11-05':'Guru Nanak Jayanti','2025-12-25':'Christmas',
-  '2026-01-26':'Republic Day','2026-03-06':'Holi','2026-03-20':'Eid ul-Fitr',
-  '2026-04-03':'Good Friday','2026-04-14':'Dr. Ambedkar Jayanti','2026-08-15':'Independence Day',
-  '2026-10-02':'Gandhi Jayanti','2026-11-14':'Diwali','2026-12-25':'Christmas',
+  '2026-01-26':'Republic Day',
+  '2026-03-04':'Holi',
+  '2026-03-21':'Id-ul-Fitr',
+  '2026-03-26':'Ram Navami',
+  '2026-03-31':'Mahavir Jayanti',
+  '2026-04-03':'Good Friday',
+  '2026-05-01':'Buddha Purnima',
+  '2026-05-27':'Id-ul-Zuha (Bakrid)',
+  '2026-06-26':'Muharram',
+  '2026-08-15':'Independence Day',
+  '2026-08-26':'Id-e-Milad',
+  '2026-09-04':'Janmashtami',
+  '2026-10-02':'Gandhi Jayanti',
+  '2026-10-20':'Dussehra',
+  '2026-11-08':'Diwali',
+  '2026-11-24':'Guru Nanak Jayanti',
+  '2026-12-25':'Christmas',
+  '2027-01-26':'Republic Day',
+  '2027-03-10':'Id-ul-Fitr',
+  '2027-03-23':'Holi',
+  '2027-03-26':'Good Friday',
+  '2027-04-15':'Ram Navami',
+  '2027-04-19':'Mahavir Jayanti',
+  '2027-05-17':'Id-ul-Zuha (Bakrid)',
+  '2027-05-20':'Buddha Purnima',
+  '2027-06-16':'Muharram',
+  '2027-08-15':'Independence Day · Id-e-Milad',
+  '2027-08-25':'Janmashtami',
+  '2027-10-02':'Gandhi Jayanti',
+  '2027-10-09':'Dussehra',
+  '2027-10-29':'Diwali',
+  '2027-11-14':'Guru Nanak Jayanti',
+  '2027-12-25':'Christmas',
 };
-function allHols(){ const cx=_D.cancelledHolidays||{}, o={}; Object.keys(NAT_HOLS).forEach(d=>{ if(!cx[d]) o[d]=NAT_HOLS[d]; }); return Object.assign(o,_D.customHolidays||{}); }   // cancelled national holidays are working days
+function natHols(){ const n=_D.nationalHolidays; return n&&Object.keys(n).length?n:NAT_HOLS; }   // the list the backend sends, else the built-in copy
+function allHols(){ const cx=_D.cancelledHolidays||{}, N=natHols(), o={}; Object.keys(N).forEach(d=>{ if(!cx[d]) o[d]=N[d]; }); return Object.assign(o,_D.customHolidays||{}); }   // cancelled national holidays are working days
 function checkDayOff(ds){
   const d=new Date(ds+'T12:00:00');
   if(d.getDay()===0) return{type:'Sunday',name:'Sunday – Office Closed',icon:'😴'};
@@ -1817,11 +1945,11 @@ async function renderLeaveCal(){
   const inp=document.getElementById('lvCalMonth'); if(!inp.value) inp.value=todayStr().slice(0,7);
   const[y,m]=inp.value.split('-').map(Number), dim=new Date(y,m,0).getDate(), p2=n=>String(n).padStart(2,'0'), today=todayStr();
   const emps=await getEmployees(); if(!emps.length){ box.innerHTML='<div class="empty" style="padding:14px">No employees yet.</div>'; return; }
-  const days=[]; for(let d=1;d<=dim;d++){ const ds=y+'-'+p2(m)+'-'+p2(d); days.push({d,ds,dow:new Date(ds+'T12:00:00').getDay(),off:!!checkDayOff(ds)}); }
+  const days=[]; for(let d=1;d<=dim;d++){ const ds=y+'-'+p2(m)+'-'+p2(d); days.push({d,ds,dow:new Date(ds+'T12:00:00').getDay(),off:!!checkDayOff(ds),hol:allHols()[ds]||''}); }
   const count=days.map(()=>0);
-  let html='<table class="lc"><thead><tr><th class="nm">Employee</th>'+days.map(x=>`<th class="${x.off?'off':''}${x.ds===today?' tdy':''}">${x.d}<br><span style="font-weight:400">${'SMTWTFS'[x.dow]}</span></th>`).join('')+'</tr></thead><tbody>';
+  let html='<table class="lc"><thead><tr><th class="nm">Employee</th>'+days.map(x=>`<th class="${x.off?'off':''}${x.ds===today?' tdy':''}"${x.hol?` title="${hx(x.hol)}"`:''}>${x.d}<br><span style="font-weight:400">${'SMTWTFS'[x.dow]}</span></th>`).join('')+'</tr></thead><tbody>';
   emps.forEach(e=>{
-    html+=`<tr><td class="nm">${hx(e.name)}</td>`+days.map((x,i)=>{
+    html+=`<tr><td class="nm" title="${hx(e.name)}">${hx(e.name)}</td>`+days.map((x,i)=>{
       const a=leaveOn(e.id,x.ds), p=!a&&leaveOn(e.id,x.ds,['pending']), tip=(a||p)?` title="${(e.name+' · '+(a||p).type+' · '+leaveSpan(a||p)+(p?' (waiting)':'')).replace(/"/g,'&quot;')}"`:'';
       if(a&&!x.off){ count[i]++; return `<td class="${a.type}${x.ds===today?' tdy':''}"${tip}>${a.type[0]}</td>`; }
       if(p&&!x.off) return `<td class="pend${x.ds===today?' tdy':''}"${tip}>?</td>`;
@@ -1829,6 +1957,7 @@ async function renderLeaveCal(){
     }).join('')+'</tr>';
   });
   html+='</tbody><tfoot><tr><td class="nm">On leave</td>'+count.map(c=>`<td>${c||''}</td>`).join('')+'</tr></tfoot></table>';
+  const hl=days.filter(x=>x.hol); if(hl.length) html+=`<div class="tl-hols" style="position:sticky;left:0">${hl.map(x=>`<span class="tl-hol"><b>${x.d}</b> ${'SMTWTFS'[x.dow]} · ${hx(x.hol)}</span>`).join('')}</div>`;
   box.innerHTML=html;
   const tt=box.querySelector('th.tdy'); if(tt) box.scrollLeft=Math.max(0,tt.offsetLeft-150);
 }
@@ -2435,7 +2564,7 @@ async function loadHome(){
   refreshMyGeo();
   const now=new Date(), h=now.getHours();
   document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  document.getElementById('hmName').textContent=emp.name;
+  document.getElementById('hmName').textContent=emp.name; document.querySelector('.hm-top').classList.toggle('long',String(emp.name||'').length>18);
   fillAv('hmAv',curRec()||emp);
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
   const dayOff=checkDayOff(todayStr());
@@ -3888,16 +4017,16 @@ async function renderHolList(){
   loading(true,'Loading…');
   try{
     const custom=await getCustomHols(), cx=_D.cancelledHolidays||{};loading(false);
-    const live=Object.assign({},NAT_HOLS); Object.keys(cx).forEach(d=>{ delete live[d]; });
+    const N=natHols(), live=Object.assign({},N); Object.keys(cx).forEach(d=>{ delete live[d]; });
     const all=Object.entries(Object.assign(live,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
     let html=all.map(([date,name])=>{
-      const isCust=!!custom[date], isNat=!!NAT_HOLS[date];
+      const isCust=!!custom[date], isNat=!!N[date];
       const btn=isNat?`<button class="del-btn" title="Cancel this holiday: the company works that day" aria-label="Cancel holiday ${hx(name)}" onclick="cancelHoliday('${date}')">✕</button>`
                       :`<button class="del-btn" title="Remove this holiday" aria-label="Remove holiday ${hx(name)}" onclick="removeHoliday('${date}')">✕</button>`;
       return`<div class="hol-item"><div><span style="font-weight:600">${hx(name)}</span><span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div>${btn}</div>`;
     }).join('');
-    const gone=Object.keys(cx).filter(d=>NAT_HOLS[d]).sort();
-    if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(NAT_HOLS[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${date}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
+    const gone=Object.keys(cx).filter(d=>N[d]).sort();
+    if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(N[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${date}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
     const box=document.getElementById('holList'); box.innerHTML=html; box.scrollTop=0;
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
@@ -3917,9 +4046,9 @@ async function removeHoliday(date){
   try{await removeHolStore(date);loading(false);renderHolList();}catch(e){loading(false);alert('Error: '+e.message);}
 }
 async function cancelHoliday(date){
-  const cust=(_D.customHolidays||{})[date], name=cust||NAT_HOLS[date]||date;
+  const N=natHols(), cust=(_D.customHolidays||{})[date], name=cust||N[date]||date;
   if(!confirm('Cancel "'+name+'" ('+HOL_DL(date)+')?\n\nThat day becomes a normal working day for everyone: staff who do not punch in will be marked absent unless they have approved leave.'
-    +(cust&&NAT_HOLS[date]?'\nYour own holiday on this date is removed too.':'')
+    +(cust&&N[date]?'\nYour own holiday on this date is removed too.':'')
     +(date<todayStr()?'\n\nThis date has already passed, so attendance and leave counts for that day change as well: people who did not come will now show as absent.':'')
     +'\n\nYou can bring it back at any time with Restore.')) return;
   loading(true,'Cancelling…');
@@ -4295,23 +4424,26 @@ function renderTeamLeave(ym,leaves){
   const [y,m]=ym.split('-').map(Number), dim=new Date(y,m,0).getDate(), p2=n=>String(n).padStart(2,'0'), t=todayStr();
   const first=(new Date(y,m-1,1).getDay()+6)%7;   // weeks start on Monday
   const mn=new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-  const sel=_tl.sel&&_tl.sel.slice(0,7)===ym?_tl.sel:(t.slice(0,7)===ym?t:'');
+  const sel=_tl.sel&&_tl.sel.slice(0,7)===ym?_tl.sel:(t.slice(0,7)===ym?t:''), HOLS=allHols();
   let cells='<tr>'+'MTWTFSS'.split('').map(x=>'<th>'+x+'</th>').join('')+'</tr><tr>'+'<td class="e"></td>'.repeat(first);
   for(let d=1;d<=dim;d++){
     const ds=ym+'-'+p2(d), n=tlNames(leaves,ds).length, off=!!checkDayOff(ds);
-    const cl=[off?'off':'',n&&!off?'has':'',ds===t?'tdy':'',ds===sel?'sel':''].filter(Boolean).join(' ');
-    cells+=`<td class="${cl}" onclick="tlPick('${ds}')">${d}${n&&!off?'<b>'+n+'</b>':''}</td>`;
+    const hn=HOLS[ds], hol=!!hn;
+    const cl=[off?'off':'',hol?'hol':'',n&&!off?'has':'',ds===t?'tdy':'',ds===sel?'sel':''].filter(Boolean).join(' ');
+    cells+=`<td class="${cl}" onclick="tlPick('${ds}')"${hol?` title="${hx(hn)}"`:''}>${d}${n&&!off?'<b>'+n+'</b>':hol?'<b>●</b>':''}</td>`;
     if((first+d)%7===0&&d<dim) cells+='</tr><tr>';
   }
   const rest=(first+dim)%7; if(rest) cells+='<td class="e"></td>'.repeat(7-rest);
   cells+='</tr>';
   const dayTxt=ds=>new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-  const who=ds=>{ const n=checkDayOff(ds)?[]:tlNames(leaves,ds); return n.length?n.map(hx).join(', '):'nobody is on leave'; };
+  const who=ds=>{ if(HOLS[ds]) return '🎉 '+hx(HOLS[ds])+' (holiday)'; if(checkDayOff(ds)) return 'Sunday'; const n=tlNames(leaves,ds); return n.length?n.map(hx).join(', '):'nobody is on leave'; };
+  const hols=[]; for(let d=1;d<=dim;d++){ const ds=ym+'-'+p2(d); if(HOLS[ds]) hols.push(`<span class="tl-hol"><b>${d}</b> ${new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short'})} · ${hx(HOLS[ds])}</span>`); }
   const people=leaves.slice().sort((a,b)=>a.fromDate<b.fromDate?-1:a.fromDate>b.fromDate?1:String(a.name)<String(b.name)?-1:1);
   document.getElementById('modalBody').innerHTML=
     `<div class="tl-nav"><button onclick="showTeamLeave('${isoMonthAdd(ym,-1)}')" aria-label="Previous month">‹</button><b>${mn}</b><button onclick="showTeamLeave('${isoMonthAdd(ym,1)}')" aria-label="Next month">›</button></div>
      <table class="tl-cal">${cells}</table>
-     <div style="font-size:11px;color:var(--soft)">The number on a day is how many people are on leave. Tap a day to see who.</div>
+     <div style="font-size:11px;color:var(--soft)">The number on a day is how many people are on leave. Tap a day to see who. ● marks a holiday.</div>
+     ${hols.length?`<div class="tl-hols">${hols.join('')}</div>`:''}
      <div style="margin:10px 0 2px;font-size:13px;min-height:20px">${sel?'<b>'+dayTxt(sel)+'</b> · '+who(sel):''}</div>
      <div style="font-weight:700;font-size:11px;margin:12px 0 2px;color:var(--soft);letter-spacing:.05em">ALL LEAVE IN ${mn.toUpperCase()}</div>
      ${people.length?people.map(l=>`<div class="tl-row"><b>${hx(l.name)}</b><small>${hx(leaveSpan(l))}</small></div>`).join(''):'<div class="empty" style="padding:12px 0">Nobody is on leave this month.</div>'}`;
@@ -4850,7 +4982,7 @@ function orgForm(m){
   const have=(m&&m.departments)||[], all=_org.departments;
   f.innerHTML=`<h3>${m?'✏️ Edit Department Admin: '+hx(m.name):'➕ Create a Department Admin (a different person, not you)'}</h3>
    <p style="font-size:11px;color:var(--soft);margin-top:2px">They sign in on the normal Admin login with this ID and password. They see and manage only the departments you tick.</p>
-   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px">
+   <div class="g2" style="margin-top:9px">
      <div><label style="margin:0 0 4px">Full name</label><input type="text" id="mgName" name="da-name" value="${hx(m?m.name:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
      <div><label style="margin:0 0 4px">Login ID (username)</label><input type="text" id="mgUser" name="da-login" value="${hx(m?m.username:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
      <div><label style="margin:0 0 4px">E-mail (SOS alerts for the department)</label><input type="text" id="mgMail" name="da-mail" value="${hx(m?m.email:'')}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"></div>
