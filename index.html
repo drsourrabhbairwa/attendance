@@ -601,6 +601,10 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .ot-mine small{display:block;color:var(--soft);font-size:11px;margin-top:2px}
 </style>
 <style id="layoutSafety">
+/* the emergency bar is as tall as its text needs: the page and the sticky tab strip use its real height */
+body.sosOn{padding-top:var(--sosH,46px)}
+@media (min-width:1024px){#adminScreen .tab-row{top:calc(16px + var(--sosH,0px))}}
+@media (max-width:1023px){#adminScreen .tab-row{top:calc(6px + var(--sosH,0px))}}
 /* ═══════════════════════════════════════════════════════════════════
    v22 — LAYOUT SAFETY + ONE GLASS SYSTEM (loaded after every other style block)
    1. Nothing may be wider than its box: long names, ids, links and reasons wrap instead of spilling.
@@ -1393,17 +1397,28 @@ function loadCache(){
 let _actor='';   // who is using the app (the server writes the real name from the sign-in)
 let _tok='', _me=null;   // sign-in token (managers & supervisors) and who they are: {role:'S'|'A'|'D'|'V', name, departments}
 const _OPT={getAll:1,getAttendance:1,getLeaves:1,getCorrections:1,getQuotas:1};
-async function api(action, params={}){
+const API_TIMEOUT_MS=90000;   // a photo upload or a big report can take a while; beyond this the connection is considered lost
+async function api(action, params={}, opts={}){
   const body={action, secret:API_SECRET, actor:_actor, ...params};
   if(_tok) body.token=_tok;
   else if(_OPT[action] && typeof currentEmp!=='undefined' && currentEmp && !body.empId) body.empId=currentEmp.id;   // staff may only ask for their own records
-  const res = await fetch(SCRIPT_URL, {
-    method:'POST', redirect:'follow',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(body)
-  });
-  if(!res.ok) throw new Error('Network error '+res.status);
-  const j = await res.json();
+  const ctl=typeof AbortController==='function'?new AbortController():null, timer=ctl?setTimeout(()=>ctl.abort(),opts.timeout||API_TIMEOUT_MS):0;
+  let j;
+  try{
+    const res = await fetch(SCRIPT_URL, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(body),
+      signal: ctl?ctl.signal:undefined
+    });
+    if(!res.ok) throw new Error('Network error '+res.status);
+    try{ j = await res.json(); }
+    catch(e){ if(e&&e.name==='AbortError') throw e; throw new Error('The server sent an unexpected reply. It may be busy: please try again in a minute.'); }
+  }catch(e){
+    if(e&&e.name==='AbortError') throw new Error('The server is taking too long to answer. Check your internet connection and try again.');
+    if(e instanceof TypeError) throw new Error('No connection to the server. Check your internet connection and try again.');
+    throw e;
+  }finally{ if(timer) clearTimeout(timer); }
   if(!j.ok){
     if(/Session expired/i.test(j.error||'') && _tok){ endManagerSession(true); }
     throw new Error(j.error||'API error');
@@ -2029,7 +2044,7 @@ async function loadCorrectionsTab(){
       <div style="font-size:13px;margin-top:5px">${fxWhat(r)}</div>
       <div style="font-size:13px;margin-top:4px">“${String(r.reason||'').replace(/</g,'&lt;')}”</div>
       <div style="font-size:11px;color:var(--soft);margin-top:4px">asked ${safeDateStr(r.requestedAt)}${r.decidedBy?' · decided by '+String(r.decidedBy).replace(/</g,'&lt;'):''}</div>
-      ${r.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideFix('${r.id}','approved')">✅ Approve &amp; correct</button><button class="btn-reject" onclick="decideFix('${r.id}','rejected')">❌ Reject</button></div>`:''}</div>`).join(''):'<div class="empty"><div class="eicon">✏️</div>'+(f==='pending'?'No pending requests.':'No records.')+'</div>';
+      ${r.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideFix('${esc(r.id)}','approved')">✅ Approve &amp; correct</button><button class="btn-reject" onclick="decideFix('${esc(r.id)}','rejected')">❌ Reject</button></div>`:''}</div>`).join(''):'<div class="empty"><div class="eicon">✏️</div>'+(f==='pending'?'No pending requests.':'No records.')+'</div>';
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
 async function decideFix(id,status){
@@ -2038,7 +2053,7 @@ async function decideFix(id,status){
   catch(e){ loading(false); alert(e.message); }
 }
 function setTabBadge(tab,n){
-  const b=document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`); if(!b) return;
+  const b=document.querySelector(`.tab-btn[onclick="switchTab('${esc(tab)}')"]`); if(!b) return;
   if(!b.dataset.l) b.dataset.l=b.textContent.replace(/\s*\(\d+\)$/,'');
   b.textContent=b.dataset.l+(n?' ('+n+')':'');
 }
@@ -2103,8 +2118,8 @@ function showCheckPrompt(c){
   document.getElementById('chkBody').innerHTML=`<div class="chk-ic">📍</div><h3>Please confirm your location</h3>
     <p><b>${hx(c.requestedBy||'The office')}</b> asked for your location${c.note?': “'+hx(c.note)+'”':''}.</p>
     <div id="chkMsg" class="chk-msg"></div>
-    <button class="btn" id="chkSend" style="background:var(--accent);color:#fff" onclick="answerMyCheck('${hx(c.id)}')">📍 Send my location</button>
-    <button class="btn btn-outline" onclick="snoozeCheck('${hx(c.id)}')">Later (5 min)</button>`;
+    <button class="btn" id="chkSend" style="background:var(--accent);color:#fff" onclick="answerMyCheck('${esc(c.id)}')">📍 Send my location</button>
+    <button class="btn btn-outline" onclick="snoozeCheck('${esc(c.id)}')">Later (5 min)</button>`;
   m.classList.add('open');
 }
 function hideCheckPrompt(){ const m=document.getElementById('chkModal'); if(m) m.classList.remove('open'); }
@@ -2116,7 +2131,7 @@ async function answerMyCheck(id){
   try{ pos=await freshFix(); }catch(e){ help=gpsHelp(e); }
   if(!pos){
     msg.className='chk-msg show bad'; btn.disabled=false;
-    msg.innerHTML=`📍 ${hx(help.why)}. ${hx(help.tip)}<div style="margin-top:8px"><button class="btn btn-outline" style="margin-top:0" onclick="answerMyCheck('${hx(id)}')">Try again</button><button class="btn btn-outline" onclick="tellOfficeNoGps('${hx(id)}','${hx(help.why)}')">Tell the office my GPS is not working</button></div>`;
+    msg.innerHTML=`📍 ${hx(help.why)}. ${hx(help.tip)}<div style="margin-top:8px"><button class="btn btn-outline" style="margin-top:0" onclick="answerMyCheck('${esc(id)}')">Try again</button><button class="btn btn-outline" onclick="tellOfficeNoGps('${esc(id)}','${esc(help.why)}')">Tell the office my GPS is not working</button></div>`;
     return;
   }
   const area=await reverseGeocode(pos.lat,pos.lng);
@@ -2141,7 +2156,7 @@ async function tellOfficeNoGps(id,why){
 function renderEmpSafety(){
   const a=_sos.alert, parts=[];
   if(a) parts.push(`<div class="sos-banner s-${hx(a.status)}" onclick="openSOS()"><b>${a.status==='resolved'?'✅ Emergency resolved':'🚨 Emergency sent'}</b><span>${sosStatusText(a)}</span><u>Tap for details</u></div>`);
-  _chkPending.filter(c=>_chkSnooze[c.id]&&Date.now()<_chkSnooze[c.id]).forEach(c=>parts.push(`<div class="chk-banner" onclick="_chkSnooze['${hx(c.id)}']=0;showCheckPrompt(_chkPending.find(x=>x.id==='${hx(c.id)}'))">📍 ${hx(c.requestedBy||'Office')} is waiting for your location — tap to send</div>`));
+  _chkPending.filter(c=>_chkSnooze[c.id]&&Date.now()<_chkSnooze[c.id]).forEach(c=>parts.push(`<div class="chk-banner" onclick="_chkSnooze['${esc(c.id)}']=0;showCheckPrompt(_chkPending.find(x=>x.id==='${esc(c.id)}'))">📍 ${hx(c.requestedBy||'Office')} is waiting for your location — tap to send</div>`));
   setHtml('hmSafety',parts.join(''));
   const m=document.getElementById('sosModal'); if(m&&m.classList.contains('open')) renderSOS();
 }
@@ -2204,7 +2219,7 @@ async function sosTransmit(note){
   };
   for(let i=0;i<60&&currentEmp===emp&&_sos.sending;i++){
     try{
-      const r=await api('sendSOS',await build(pos));
+      const r=await api('sendSOS',await build(pos),{timeout:20000});
       _sos.alert=r.alert; _sos.sending=false; _sos.err=''; renderEmpSafety(); renderSOS(); beep(2);
       if(!usedFresh) fresh.then(async f=>{ if(f&&currentEmp===emp&&_sos.alert) { try{ await api('sendSOS',await build(f)); }catch(e){} } });
       return;
@@ -2219,7 +2234,7 @@ async function sosCancel(){
 
 /* ── Admin / supervisor: alerts and "Check now" ── */
 function startSafetyWatch(role){ stopSafetyWatch(); _safRole=role; if(!USE_SHEETS) return; _knownAlerts=null; safetyAdminPoll(); safetyAdmInt=setInterval(safetyAdminPoll,30000); }
-function stopSafetyWatch(){ clearInterval(safetyAdmInt); safetyAdmInt=null; _safRole=''; _saf={checks:[],alerts:[],now:''}; const b=document.getElementById('sosBar'); if(b) b.classList.remove('on'); document.body.classList.remove('sosOn'); }
+function stopSafetyWatch(){ clearInterval(safetyAdmInt); safetyAdmInt=null; _safRole=''; _saf={checks:[],alerts:[],now:''}; const b=document.getElementById('sosBar'); if(b) b.classList.remove('on'); document.body.classList.remove('sosOn'); document.documentElement.style.removeProperty('--sosH'); }
 async function safetyAdminPoll(){
   if(!_safRole) return;
   try{
@@ -2233,11 +2248,14 @@ async function safetyAdminPoll(){
 function renderSosBar(open){
   const b=document.getElementById('sosBar'); if(!b) return;
   document.body.classList.toggle('sosOn',!!open.length);
-  if(!open.length){ b.classList.remove('on'); return; }
+  if(!open.length){ b.classList.remove('on'); document.documentElement.style.removeProperty('--sosH'); return; }
   const a=open[0];
   b.innerHTML=`<b>🚨 EMERGENCY — ${hx(a.name)}</b> <span>${hx(a.area||'location not available')} · ${agoText(a.createdAt,_saf.now)}${open.length>1?' · +'+(open.length-1)+' more':''}</span><button onclick="openSafety()">Open</button>`;
   b.classList.add('on');
+  syncSosH();
 }
+function syncSosH(){ const b=document.getElementById('sosBar'); if(b&&b.classList.contains('on')) document.documentElement.style.setProperty('--sosH',b.offsetHeight+'px'); }
+window.addEventListener('resize',syncSosH);
 function openSafety(){ if(_safRole==='admin') switchTab('safety'); else { const e=document.getElementById('supSafety'); if(e) e.scrollIntoView({behavior:'smooth'}); } }
 function renderSafetyViews(){
   if(_safRole==='admin'&&document.getElementById('tabSafety').classList.contains('active')) renderSafety('safetyContent','admin');
@@ -2278,7 +2296,7 @@ function renderSafety(elId,role){
       ${a.phone?`<div class="saf-meta">📞 <a href="tel:${hx(a.phone)}">${hx(a.phone)}</a></div>`:''}
       <div class="saf-meta">${a.ackBy?'✋ Seen by '+hx(a.ackBy)+' at '+hhmm(a.ackAt)+'. ':''}${a.aidBy?'🚑 Aid sent by '+hx(a.aidBy)+' at '+hhmm(a.aidAt)+(a.aidNote?' — '+hx(a.aidNote):'')+'. ':''}${a.resolvedBy?'✅ Closed by '+hx(a.resolvedBy)+' at '+hhmm(a.resolvedAt)+(a.resolveNote?' — '+hx(a.resolveNote):'')+'.':''}</div>
       ${isLive?`<input type="text" id="an_${id}" class="saf-in" placeholder="Note (e.g. ambulance called, taking to hospital)">
-      <div class="saf-btns">${a.status==='open'?`<button class="sb ack" onclick="alertAct('${id}','ack')">✋ I am on it</button>`:''}<button class="sb aid" onclick="alertAct('${id}','aid')">🚑 Aid sent</button><button class="sb res" onclick="alertAct('${id}','resolved')">✅ Resolved</button>${a.phone?`<a class="sb call" href="tel:${hx(a.phone)}">📞 Call</a>`:''}</div>`:''}</div>`;
+      <div class="saf-btns">${a.status==='open'?`<button class="sb ack" onclick="alertAct('${esc(id)}','ack')">✋ I am on it</button>`:''}<button class="sb aid" onclick="alertAct('${esc(id)}','aid')">🚑 Aid sent</button><button class="sb res" onclick="alertAct('${esc(id)}','resolved')">✅ Resolved</button>${a.phone?`<a class="sb call" href="tel:${hx(a.phone)}">📞 Call</a>`:''}</div>`:''}</div>`;
   };
   const emps=safEmps(role).filter(e=>!flt||(e.name+' '+e.id).toLowerCase().includes(flt.toLowerCase()));
   const last={}; (_saf.checks||[]).forEach(c=>{ const k=String(c.empId).toUpperCase(); if(!last[k]) last[k]=c; });
@@ -2289,9 +2307,9 @@ function renderSafety(elId,role){
     ${done.length?`<details class="saf-done"><summary>Recently closed (${done.length})</summary>${done.map(card).join('')}</details>`:''}
     <h3 style="margin:16px 0 4px;font-size:15px">📍 Check now</h3>
     <div style="font-size:12px;color:var(--soft);margin-bottom:8px">Ask someone to confirm where they are. Their phone beeps and asks for a location; you see the answer here. No answer in 10 minutes → you are e-mailed.</div>
-    <input type="text" id="safFilter_${role}" class="saf-in" placeholder="Search name or ID…" value="${hx(flt)}" oninput="renderSafety('${elId}','${role}');var f=document.getElementById('safFilter_${role}');f.focus();f.setSelectionRange(f.value.length,f.value.length)">
+    <input type="text" id="safFilter_${role}" class="saf-in" placeholder="Search name or ID…" value="${hx(flt)}" oninput="renderSafety('${esc(elId)}','${esc(role)}');var f=document.getElementById('safFilter_${role}');f.focus();f.setSelectionRange(f.value.length,f.value.length)">
     ${emps.length?emps.map(e=>{ const c=last[String(e.id).toUpperCase()], pend=c&&c.status==='pending';
-      return `<div class="saf-emp"><div><b>${hx(e.name)}</b> <small>${hx(e.id)}</small><div class="saf-meta">${c?checkLine(c):'Never asked'}</div></div><button class="sb chk" ${pend?'disabled':''} onclick="askCheck('${hx(e.id)}')">${pend?'⏳ Asked':'📍 Check now'}</button></div>`; }).join(''):'<div class="saf-none">No staff found.</div>'}`;
+      return `<div class="saf-emp"><div><b>${hx(e.name)}</b> <small>${hx(e.id)}</small><div class="saf-meta">${c?checkLine(c):'Never asked'}</div></div><button class="sb chk" ${pend?'disabled':''} onclick="askCheck('${esc(e.id)}')">${pend?'⏳ Asked':'📍 Check now'}</button></div>`; }).join(''):'<div class="saf-none">No staff found.</div>'}`;
   Object.keys(keepV).forEach(k=>{ const i=document.getElementById(k); if(i) i.value=keepV[k]; });
   if(focusId&&focusId.startsWith('an_')){ const i=document.getElementById(focusId); if(i) i.focus(); }
 }
@@ -2348,7 +2366,7 @@ function limitFor(empId){
 function renderDeptList(){
   const el=document.getElementById('deptList'); if(!el) return;
   const l=deptList();
-  el.innerHTML=l.length?l.map(d=>`<div class="dept-row"><div><b>${d.name.replace(/</g,'&lt;')}</b> <span style="color:var(--soft)">· starts ${d.start} · late after ${d.grace===null?settingsNow().grace:d.grace} min · ${(_D.employees||[]).filter(e=>e.department===d.name).length} people</span></div><button class="del-btn" onclick="removeDept('${d.name.replace(/'/g,"\\'")}')">✕</button></div>`).join(''):'<div style="font-size:12px;color:var(--soft)">No departments yet — everyone follows the company hours.</div>';
+  el.innerHTML=l.length?l.map(d=>`<div class="dept-row"><div><b>${d.name.replace(/</g,'&lt;')}</b> <span style="color:var(--soft)">· starts ${d.start} · late after ${d.grace===null?settingsNow().grace:d.grace} min · ${(_D.employees||[]).filter(e=>e.department===d.name).length} people</span></div><button class="del-btn" onclick="removeDept('${esc(d.name)}')">✕</button></div>`).join(''):'<div style="font-size:12px;color:var(--soft)">No departments yet — everyone follows the company hours.</div>';
 }
 async function addDept(){
   const n=document.getElementById('dpName').value.trim(), st=document.getElementById('dpStart').value.trim(), g=document.getElementById('dpGrace').value;
@@ -2492,9 +2510,9 @@ async function payrollShow(){
 async function payrollCSV(){
   try{
     const r=await payrollBuild(); window._payroll=r;
-    const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+    const q=csvCell;
     const hdr=['ID','Name','Department','Calendar days','Working days','Full days present','Half days','Late marks','Late deduction (days)','Approved leave days','Absent days','Unpaid days','Payable days','Approved overtime hours','Notes (day of month)'];
-    const rows=r.list.map(e=>[e.id,q(e.name),q(e.dept),e.cal,e.work,e.full,e.half,e.late,e.ded,e.leave,e.absent,fmtD(e.unpaid),fmtD(e.payable),e.ot?(e.ot/60).toFixed(2):'',q(e.notes)].join(','));
+    const rows=r.list.map(e=>[e.id,e.name,e.dept,e.cal,e.work,e.full,e.half,e.late,e.ded,e.leave,e.absent,fmtD(e.unpaid),fmtD(e.payable),e.ot?(e.ot/60).toFixed(2):'',e.notes].map(q).join(','));
     saveTextFile('salary-'+r.month+'.csv',[hdr.join(','),...rows].join('\n'));
   }catch(e){ alert(e.message); }
 }
@@ -2529,7 +2547,8 @@ function syncLogin(){   // after fresh data arrives from the sheet
 /* ══════════════════════════════════════════════════════════════
    EMPLOYEE HOME DASHBOARD
 ══════════════════════════════════════════════════════════════ */
-let homeTok=0, homeTimerInt=null;
+let homeTok=0, homeTimerInt=null, homeDay='';
+document.addEventListener('visibilitychange',()=>{ try{ if(!document.hidden&&currentEmp&&homeDay&&homeDay!==todayStr()&&document.getElementById('homeScreen').classList.contains('active')) loadHome(); }catch(e){} });
 const _p2=n=>String(n).padStart(2,'0');
 function dstr(d){ return d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'+_p2(d.getDate()); }
 function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
@@ -2559,6 +2578,7 @@ async function refreshMyGeo(force){
 async function loadHome(){
   if(!currentEmp) return;
   const tok=++homeTok, emp=currentEmp;
+  homeDay=todayStr();
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); clearInterval(homeTimerInt);
   showScreen('homeScreen');
   refreshMyGeo();
@@ -2575,6 +2595,7 @@ async function loadHome(){
   renderHomeSite();
   homeTimerInt=setInterval(()=>{
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
+    if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
     otTick();
   },30000);
@@ -2714,6 +2735,7 @@ function showProfile(){
   document.getElementById('pfHead').textContent=r.name; document.getElementById('pfId').textContent=r.id;
   { const s=settingsFor(r); document.getElementById('pfDept').textContent=(r.department?'Department: '+r.department+' · ':'')+'Office starts '+s.start+' (late after '+s.grace+' min)'; }
   Object.keys(PF_MAP).forEach(k=>document.getElementById(k).value=r[PF_MAP[k]]||'');
+  { const j=document.getElementById('pfJoined'), lock=!!r.joined; j.disabled=lock; const lb=j.previousElementSibling; if(lb) lb.textContent='Joined Amitek on'+(lock?' (saved: ask your admin to change it)':''); }
   ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>document.getElementById(i).classList.remove('show'));
   ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
   showScreen('profileScreen');
@@ -3027,17 +3049,23 @@ function preciseFix(goodAcc,maxMs){
   });
 }
 
+let camTok=0;
 async function startCamera(){
+  capBusy=false;   // a new camera session always starts with a working Save button (a finished save stays locked only until the person leaves the camera screen)
+  stopCamera(); const my=camTok;
   try{
-    videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:640},audio:false});
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:640},audio:false});
+    if(my!==camTok){ s.getTracks().forEach(t=>t.stop()); return; }   // the screen was left, or a newer start took over, while the permission was being answered
+    videoStream=s;
     document.getElementById('videoFeed').srcObject=videoStream;
   }catch(e){
+    if(my!==camTok) return;
     const er=document.getElementById('camErr');
     er.textContent='⚠ Camera access denied. Please allow camera permission.';
     er.classList.add('show'); document.getElementById('captureBtn').disabled=true;
   }
 }
-function stopCamera(){ if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} }
+function stopCamera(){ camTok++; if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} }
 
 function compressPhoto(video){
   const c=document.createElement('canvas'); c.width=120; c.height=120;
@@ -3056,6 +3084,7 @@ function compressPhoto(video){
 let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
 async function loadCameraScreen(opts){
+  capBusy=false;
   showScreen('cameraScreen');
   refreshMyGeo();
   fillAv('empAvatar',curRec()||currentEmp);
@@ -3175,7 +3204,9 @@ function switchToMeeting(kind){
   if(mySiteManual()){ const ce=document.getElementById('camErr'); if(ce){ ce.textContent='Site work is running. Stop site work first, then '+(kind==='personal'?'step out.':'go for the meeting.'); ce.classList.add('show'); } return; }
   stopCamera(); setCamMode(kind==='personal'?'personal_out':'meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
 
+let capBusy=false;
 async function captureAndMark(){
+  if(capBusy) return;   // already saving: a second tap must not send the same punch / visit again
   const video=document.getElementById('videoFeed'),canvas=document.getElementById('snapCanvas'),btn=document.getElementById('captureBtn');
   const camErr=document.getElementById('camErr');
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
@@ -3187,6 +3218,7 @@ async function captureAndMark(){
   if(punchMode==='visit'&&!customer){camErr.textContent='Enter the customer or company name.';camErr.classList.add('show');document.getElementById('visitCustomer').focus();return;}
   if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
   const btnLabel=btn.textContent;
+  capBusy=true;
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
   const photo=compressPhoto(video);
   const note=(punchMode==='meeting_out'||punchMode==='personal_out'||punchMode==='resume')?(document.getElementById('meetNote')?.value?.trim()||''):'';
@@ -3220,6 +3252,7 @@ async function captureAndMark(){
     document.getElementById('camOk').classList.add('show');
     setTimeout(()=>loadHome(),2200);
   }catch(e){
+    capBusy=false;
     loading(false); camErr.textContent='Error: '+e.message; camErr.classList.add('show');
     // the camera and GPS were switched off while saving: bring them back so the person can try again straight away
     btn.textContent=btnLabel; btn.disabled=true;
@@ -3236,7 +3269,7 @@ function logout(){ stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(of
 function buildTimeline(rec){
   if(!rec) return '';
   let html='';
-  const photoEl=(src,label)=>src?`<img class="tl-photo" src="${hx(src)}" onclick="openModal('${esc(rec.name)}','${label}','${esc(src)}','','','')">`:'<div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>';
+  const photoEl=(src,label)=>src?`<img class="tl-photo" src="${hx(src)}" onclick="openModal('${esc(rec.name)}','${esc(label)}','${esc(src)}','','','')">`:'<div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>';
   if(rec.punchIn) html+=`<div class="tl-item">${photoEl(rec.punchIn.photo,'Punch In')}<div><div class="tl-label">🟢 Punch In</div><div class="tl-time">${fmt12(rec.punchIn.time)}</div>${rec.punchIn.area?'<div class="tl-area">📍 '+hx(rec.punchIn.area)+'</div>':''}</div></div>`;
   (rec.meetings||[]).forEach((m,i)=>{
     if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">${m.kind==='personal'?'🏃 Out · personal work':'🚗 Out for Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+hx(m.outArea)+'</div>':''}${m.note?'<div class="tl-note">"'+hx(m.note)+'"</div>':''}</div></div>`;
@@ -3704,8 +3737,8 @@ async function loadAttTab(){
       const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${hx(r.punchIn.photo)}" onclick="openModal('${esc(r.name)}','Punch In','${esc(String(r.punchIn.photo))}','${esc(String(r.punchIn.lat||''))}','${esc(String(r.punchIn.lng||''))}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
-      const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${r.date}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
-      const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${r.date}')">🗺️ Route</button>`:'—';
+      const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
+      const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'—';
       return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
@@ -3724,7 +3757,7 @@ function exportCSV(){
   const recs=window._lastAtt||[];
   if(!recs.length){alert('Load the attendance tab first.');return;}
   const hdr=['ID','Name','Date','Punch In','Punch Out','Hours','Meetings','Personal away (min)','Lat','Lng'];
-  const rows=recs.map(r=>[r.empId,r.name,r.date,r.punchIn?fmt12(r.punchIn.time):'',r.punchOut?fmt12(r.punchOut.time):'',calcTotalHrs(r)||'',(r.meetings||[]).filter(x=>x.kind!=='personal').length,awayMins(r,'personal'),r.punchIn&&r.punchIn.lat?r.punchIn.lat:'',r.punchIn&&r.punchIn.lng?r.punchIn.lng:''].join(','));
+  const rows=recs.map(r=>[r.empId,r.name,r.date,r.punchIn?fmt12(r.punchIn.time):'',r.punchOut?fmt12(r.punchOut.time):'',calcTotalHrs(r)||'',(r.meetings||[]).filter(x=>x.kind!=='personal').length,awayMins(r,'personal'),r.punchIn&&r.punchIn.lat?r.punchIn.lat:'',r.punchIn&&r.punchIn.lng?r.punchIn.lng:''].map(csvCell).join(','));
   saveTextFile('attendance-'+todayStr()+'.csv',[hdr.join(','),...rows].join('\n'));
 }
 
@@ -3795,7 +3828,7 @@ function exportMonthlyCSV(){
   const r=window._lastReport;if(!r){alert('Generate the report first.');return;}
   const mName=new Date(r.year,r.month-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
   const hdr=['Name','ID','Working Days','Present','Absent','On leave','Missed Punch-out','Meetings','Attendance%','Avg Hrs/Day'];
-  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const q=csvCell;
   const rows=r.stats.map(e=>[e.name,e.id,r.wDays,e.present,e.absent,e.leave||0,e.missed,e.totalMeet,e.pct+'%',e.avgH+'h'].map(q).join(','));
   const title='Month: '+mName+(r.inProgress?' (up to '+r.today+')':'');
   saveTextFile('monthly-'+r.year+'-'+String(r.month).padStart(2,'0')+'.csv',[q(title),hdr.join(','),...rows].join('\n'));
@@ -3846,7 +3879,7 @@ async function loadLeavesTab(){
           </div>
           <div style="font-size:12px;color:var(--soft);margin-top:3px">${hx(l.empId)} · ${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
           <div style="font-size:13px;color:var(--ink);margin-top:6px">"${hx(l.reason||'—')}"</div>
-          ${l.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideLeave('${l.id}','approved')">✅ Approve</button><button class="btn-reject" onclick="decideLeave('${l.id}','rejected')">❌ Reject</button></div>`:''}
+          ${l.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideLeave('${esc(l.id)}','approved')">✅ Approve</button><button class="btn-reject" onclick="decideLeave('${esc(l.id)}','rejected')">❌ Reject</button></div>`:''}
         </div>`).join('');
     }
     renderLeaveCal();
@@ -3860,7 +3893,7 @@ async function loadLeavesTab(){
         <div style="font-size:10px;font-weight:700;color:var(--red);text-align:center">ML</div>
       </div>`+emps.map(emp=>{
         const q=quotas[emp.id.toUpperCase()]||DEFAULT_QUOTA;
-        return`<div class="quota-grid"><div style="font-size:13px;font-weight:600">${hx(emp.name)}</div>${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="-100" max="100" value="${+q[t]||0}" onchange="updateQuota('${emp.id}','${t}',this.value)">`).join('')}</div>`;
+        return`<div class="quota-grid"><div style="font-size:13px;font-weight:600">${hx(emp.name)}</div>${['CL','VL','ML'].map(t=>`<input class="quota-input" type="number" min="-100" max="100" value="${+q[t]||0}" onchange="updateQuota('${esc(emp.id)}','${esc(t)}',this.value)">`).join('')}</div>`;
       }).join('');
     }
   }catch(e){list.innerHTML=`<div class="msg msg-error show">⚠️ Error: ${e.message}<br><button onclick="loadLeavesTab()" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
@@ -3940,7 +3973,12 @@ async function loadLeaveHistory(){
   }catch(e){}
 }
 
+let lvBusy=false;
 async function submitLeave(){
+  if(lvBusy) return; lvBusy=true;
+  try{ await submitLeaveNow(); } finally{ lvBusy=false; }
+}
+async function submitLeaveNow(){
   const type=document.getElementById('lvType').value;
   const reason=document.getElementById('lvReason').value.trim();
   const err=document.getElementById('lvErr'),ok=document.getElementById('lvOk');
@@ -3978,8 +4016,8 @@ async function renderEmpList(){
     if(!emps.length){list.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No employees yet.</div>';return;}
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
-      const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${e.id}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${e.id}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${e.id}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${e.id}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${e.id}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${e.id}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${e.id}')">✕</button></div></div>`; }).join('');
+      const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${esc(e.id)}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${esc(e.id)}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -4021,12 +4059,12 @@ async function renderHolList(){
     const all=Object.entries(Object.assign(live,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
     let html=all.map(([date,name])=>{
       const isCust=!!custom[date], isNat=!!N[date];
-      const btn=isNat?`<button class="del-btn" title="Cancel this holiday: the company works that day" aria-label="Cancel holiday ${hx(name)}" onclick="cancelHoliday('${date}')">✕</button>`
-                      :`<button class="del-btn" title="Remove this holiday" aria-label="Remove holiday ${hx(name)}" onclick="removeHoliday('${date}')">✕</button>`;
+      const btn=isNat?`<button class="del-btn" title="Cancel this holiday: the company works that day" aria-label="Cancel holiday ${hx(name)}" onclick="cancelHoliday('${esc(date)}')">✕</button>`
+                      :`<button class="del-btn" title="Remove this holiday" aria-label="Remove holiday ${hx(name)}" onclick="removeHoliday('${esc(date)}')">✕</button>`;
       return`<div class="hol-item"><div><span style="font-weight:600">${hx(name)}</span><span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div>${btn}</div>`;
     }).join('');
     const gone=Object.keys(cx).filter(d=>N[d]).sort();
-    if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(N[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${date}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
+    if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(N[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${esc(date)}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
     const box=document.getElementById('holList'); box.innerHTML=html; box.scrollTop=0;
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
@@ -4154,7 +4192,7 @@ async function renderPlaces(){
   if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No offices or factories yet.'+(canEditPlaces()?' Add the first one above.':' The Super Admin adds them.')+'</div>'; return; }
   el.innerHTML=list.map(p=>{ const n=staffAt(p.id).length;
     return `<div class="list-item pl-item"><div><div style="font-weight:700">${PLACE_ICON[p.type]||'📍'} ${hx(p.name)}${p.active===false?' <span class="tag tag-nat">off</span>':''}</div><div style="font-size:12px;color:var(--soft)">${p.radius} m boundary · ${p.strict?'<b style="color:var(--red)">Strict</b> (no punch from outside)':'flag only'} · ${n} staff</div></div>
-      <div class="emp-acts"><button class="key-btn" onclick="openPlaceStaff('${p.id}')">👥 Staff (${n})</button>${canEditPlaces()?`<button class="key-btn" onclick="editPlace('${p.id}')">✏️ Edit</button><button class="del-btn" title="Remove this place" onclick="deletePlace('${p.id}')">✕</button>`:''}</div></div>`; }).join('');
+      <div class="emp-acts"><button class="key-btn" onclick="openPlaceStaff('${esc(p.id)}')">👥 Staff (${n})</button>${canEditPlaces()?`<button class="key-btn" onclick="editPlace('${esc(p.id)}')">✏️ Edit</button><button class="del-btn" title="Remove this place" onclick="deletePlace('${esc(p.id)}')">✕</button>`:''}</div></div>`; }).join('');
 }
 /* ── map picker ── */
 let plMapObj=null, plMarker=null, plCircle=null;
@@ -4235,7 +4273,7 @@ function openPlaceStaff(pid){
 function plsDraw(){
   if(!_pls) return; const q=_pls.q||'';
   const list=(_D.employees||[]).filter(e=>!q||(e.name+' '+e.id).toLowerCase().includes(q)).sort((a,b)=>a.name<b.name?-1:1);
-  document.getElementById('plsList').innerHTML=list.map(e=>`<label class="pl-chk"><input type="checkbox" ${_pls.sel.has(String(e.id))?'checked':''} onchange="plsTick('${hx(e.id)}',this.checked)"><span><b>${hx(e.name)}</b> <span style="color:var(--soft);font-size:11px">${hx(e.id)}${e.department?' · '+hx(e.department):''}</span></span></label>`).join('')||'<div class="empty" style="padding:14px">Nobody found.</div>';
+  document.getElementById('plsList').innerHTML=list.map(e=>`<label class="pl-chk"><input type="checkbox" ${_pls.sel.has(String(e.id))?'checked':''} onchange="plsTick('${esc(e.id)}',this.checked)"><span><b>${hx(e.name)}</b> <span style="color:var(--soft);font-size:11px">${hx(e.id)}${e.department?' · '+hx(e.department):''}</span></span></label>`).join('')||'<div class="empty" style="padding:14px">Nobody found.</div>';
   const c=document.getElementById('plsCnt'); if(c) c.textContent='('+_pls.sel.size+' selected)';
 }
 function plsTick(id,on){ on?_pls.sel.add(String(id)):_pls.sel.delete(String(id)); const c=document.getElementById('plsCnt'); if(c) c.textContent='('+_pls.sel.size+' selected)'; }
@@ -4257,7 +4295,7 @@ function openEmpPlaces(id){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
   _epl={id:e.id,sel:new Set(placeIds(e))};
   document.getElementById('modalTitle').textContent='📍 '+e.name+' · works at';
-  document.getElementById('modalBody').innerHTML=`<div>${placesNow().filter(p=>p.active!==false||_epl.sel.has(p.id)).map(p=>`<label class="pl-chk"><input type="checkbox" ${_epl.sel.has(p.id)?'checked':''} onchange="this.checked?_epl.sel.add('${p.id}'):_epl.sel.delete('${p.id}')"><span>${PLACE_ICON[p.type]||'📍'} <b>${hx(p.name)}</b> <span style="color:var(--soft);font-size:11px">${p.radius} m${p.strict?' · strict':''}</span></span></label>`).join('')||'<div class="empty" style="padding:14px">No places yet.</div>'}</div>
+  document.getElementById('modalBody').innerHTML=`<div>${placesNow().filter(p=>p.active!==false||_epl.sel.has(p.id)).map(p=>`<label class="pl-chk"><input type="checkbox" ${_epl.sel.has(p.id)?'checked':''} onchange="this.checked?_epl.sel.add('${esc(p.id)}'):_epl.sel.delete('${esc(p.id)}')"><span>${PLACE_ICON[p.type]||'📍'} <b>${hx(p.name)}</b> <span style="color:var(--soft);font-size:11px">${p.radius} m${p.strict?' · strict':''}</span></span></label>`).join('')||'<div class="empty" style="padding:14px">No places yet.</div>'}</div>
     <div class="msg msg-error" id="eplErr"></div><div class="pl-row"><button class="pl-btn" onclick="eplSave()">Save</button></div>
     <div class="pl-tip">Tick every office or factory this person works at. Leave all empty for staff who are not tied to one place (sales, site technicians).</div>`;
   document.getElementById('detailModal').classList.add('open');
@@ -4348,11 +4386,11 @@ function otFlags(r){
 }
 function otCard(r,mode){
   const id=r.id, rec=+r.minutes||0, never=r.autoClosed==='1', st=r.status;
-  const photo=(k,label)=>/^(data:image|https?:)/.test(r[k+'Photo']||'')?`<figure><img src="${hx(r[k+'Photo'])}" alt="" onclick="otShowPhoto('${id}','${k}')"><figcaption>${label}</figcaption></figure>`:'';
+  const photo=(k,label)=>/^(data:image|https?:)/.test(r[k+'Photo']||'')?`<figure><img src="${hx(r[k+'Photo'])}" alt="" onclick="otShowPhoto('${esc(id)}','${esc(k)}')"><figcaption>${label}</figcaption></figure>`:'';
   const map=(k,label)=>r[k+'Lat']?`<a class="map-link" href="${mapsUrl(r[k+'Lat'],r[k+'Lng'])}" target="_blank">📍 ${label}</a> `:'';
   const badge=st==='pending'?'<span style="color:var(--amber)">Waiting for a decision</span>':st==='approved'?'<span style="color:var(--green)">✅ Approved '+fmtMins(+r.approvedMins||0)+'</span>':st==='rejected'?'<span style="color:var(--red)">Not approved'+(r.rejectKind==='notgenuine'?' · not genuine':'')+'</span>':'<span style="color:var(--amber)">Running</span>';
   let act='';
-  if(st==='pending') act=`<div class="ot-act"><input id="otH_${id}" value="${never?'':otHM(rec)}" placeholder="h:mm" title="Hours to approve, like 1:30" inputmode="text"><button class="pl-btn" onclick="otDecide('${id}','approved','','${mode}')">✅ Approve</button><button class="pl-btn ghost" onclick="otDecide('${id}','rejected','notneeded','${mode}')">Not needed</button><button class="pl-btn ghost" style="color:var(--red)" onclick="otDecide('${id}','rejected','notgenuine','${mode}')">🚫 Not genuine</button><input class="note" id="otN_${id}" placeholder="Note (optional)"></div>`;
+  if(st==='pending') act=`<div class="ot-act"><input id="otH_${id}" value="${never?'':otHM(rec)}" placeholder="h:mm" title="Hours to approve, like 1:30" inputmode="text"><button class="pl-btn" onclick="otDecide('${esc(id)}','approved','','${esc(mode)}')">✅ Approve</button><button class="pl-btn ghost" onclick="otDecide('${esc(id)}','rejected','notneeded','${esc(mode)}')">Not needed</button><button class="pl-btn ghost" style="color:var(--red)" onclick="otDecide('${esc(id)}','rejected','notgenuine','${esc(mode)}')">🚫 Not genuine</button><input class="note" id="otN_${id}" placeholder="Note (optional)"></div>`;
   else if(st!=='open'&&(r.decidedBy||r.note)) act=`<div style="font-size:11px;color:var(--soft);margin-top:8px">${r.decidedBy?'Decided by '+hx(r.decidedBy):''}${r.note?' · “'+hx(r.note)+'”':''}</div>`;
   return `<div class="ot-card" id="otc_${id}"><div class="ot-top"><div><div style="font-weight:700">${hx(r.name)} <span style="color:var(--soft);font-weight:400;font-size:12px">${hx(r.empId)}</span></div><div style="font-size:12px;color:var(--soft)">${otWhen(r)} · ${otClock(r.startTime)} → ${never?'never stopped':r.stopTime?otClock(r.stopTime):'running'}</div><div style="font-size:12px;margin-top:3px">“${hx(r.reason)}”</div></div><div style="text-align:right"><div class="ot-hrs">${never||st==='open'?'—':fmtMins(rec)}</div><div class="ot-cap">${badge}</div></div></div>${otFlags(r)}<div class="ot-photos">${photo('start','Start')}${photo('stop','Stop')}<div style="font-size:12px">${map('start','start')}${map('stop','stop')}</div></div>${act}</div>`;
 }
@@ -4430,7 +4468,7 @@ function renderTeamLeave(ym,leaves){
     const ds=ym+'-'+p2(d), n=tlNames(leaves,ds).length, off=!!checkDayOff(ds);
     const hn=HOLS[ds], hol=!!hn;
     const cl=[off?'off':'',hol?'hol':'',n&&!off?'has':'',ds===t?'tdy':'',ds===sel?'sel':''].filter(Boolean).join(' ');
-    cells+=`<td class="${cl}" onclick="tlPick('${ds}')"${hol?` title="${hx(hn)}"`:''}>${d}${n&&!off?'<b>'+n+'</b>':hol?'<b>●</b>':''}</td>`;
+    cells+=`<td class="${cl}" onclick="tlPick('${esc(ds)}')"${hol?` title="${hx(hn)}"`:''}>${d}${n&&!off?'<b>'+n+'</b>':hol?'<b>●</b>':''}</td>`;
     if((first+d)%7===0&&d<dim) cells+='</tr><tr>';
   }
   const rest=(first+dim)%7; if(rest) cells+='<td class="e"></td>'.repeat(7-rest);
@@ -4440,7 +4478,7 @@ function renderTeamLeave(ym,leaves){
   const hols=[]; for(let d=1;d<=dim;d++){ const ds=ym+'-'+p2(d); if(HOLS[ds]) hols.push(`<span class="tl-hol"><b>${d}</b> ${new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short'})} · ${hx(HOLS[ds])}</span>`); }
   const people=leaves.slice().sort((a,b)=>a.fromDate<b.fromDate?-1:a.fromDate>b.fromDate?1:String(a.name)<String(b.name)?-1:1);
   document.getElementById('modalBody').innerHTML=
-    `<div class="tl-nav"><button onclick="showTeamLeave('${isoMonthAdd(ym,-1)}')" aria-label="Previous month">‹</button><b>${mn}</b><button onclick="showTeamLeave('${isoMonthAdd(ym,1)}')" aria-label="Next month">›</button></div>
+    `<div class="tl-nav"><button onclick="showTeamLeave('${esc(isoMonthAdd(ym,-1))}')" aria-label="Previous month">‹</button><b>${mn}</b><button onclick="showTeamLeave('${esc(isoMonthAdd(ym,1))}')" aria-label="Next month">›</button></div>
      <table class="tl-cal">${cells}</table>
      <div style="font-size:11px;color:var(--soft)">The number on a day is how many people are on leave. Tap a day to see who. ● marks a holiday.</div>
      ${hols.length?`<div class="tl-hols">${hols.join('')}</div>`:''}
@@ -4463,13 +4501,13 @@ function periodInit(pfx){
   box.innerHTML=`<div style="font-weight:700;font-size:15px">📄 Daily &amp; weekly attendance sheet</div>
     <div style="font-size:12px;color:var(--soft);margin:2px 0 10px">${pfx==='sup'?'Your team':'The staff you manage'}: who was in, late, absent or on leave. Download it as CSV or PDF.</div>
     <div class="per-bar" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
-      <select id="perMode_${pfx}" onchange="perRun('${pfx}')"><option value="day">Day</option><option value="week">Week (Mon–Sun)</option></select>
-      <button class="sq" onclick="perShift('${pfx}',-1)" aria-label="Earlier">‹</button>
-      <input type="date" id="perDate_${pfx}" onchange="perRun('${pfx}')">
-      <button class="sq" onclick="perShift('${pfx}',1)" aria-label="Later">›</button>
-      <button onclick="perRun('${pfx}')" style="${bs};background:var(--accent)">Show</button>
-      <button onclick="perCSV('${pfx}')" style="${bs};background:var(--green)">⬇ CSV</button>
-      <button onclick="perPrint('${pfx}')" style="${bs};background:#B45309">🖨 PDF</button>
+      <select id="perMode_${pfx}" onchange="perRun('${esc(pfx)}')"><option value="day">Day</option><option value="week">Week (Mon–Sun)</option></select>
+      <button class="sq" onclick="perShift('${esc(pfx)}',-1)" aria-label="Earlier">‹</button>
+      <input type="date" id="perDate_${pfx}" onchange="perRun('${esc(pfx)}')">
+      <button class="sq" onclick="perShift('${esc(pfx)}',1)" aria-label="Later">›</button>
+      <button onclick="perRun('${esc(pfx)}')" style="${bs};background:var(--accent)">Show</button>
+      <button onclick="perCSV('${esc(pfx)}')" style="${bs};background:var(--green)">⬇ CSV</button>
+      <button onclick="perPrint('${esc(pfx)}')" style="${bs};background:#B45309">🖨 PDF</button>
     </div><div id="perOut_${pfx}" style="margin-top:12px"><div class="empty" style="padding:14px 0">Pick a day or a week and tap Show.</div></div>`;
   document.getElementById('perDate_'+pfx).value=todayStr();
 }
@@ -4683,6 +4721,15 @@ function salaryPrintHtml(r,who){
   <div class="sign"><div>Prepared by</div><div>Checked by</div><div>Approved by</div></div>`;
   return printShell({title:'Amitek salary sheet '+mn,heading:'Salary-ready Sheet · '+mn,sub:scopeLabel()+'<br>Attendance counted up to '+r.end,body,who,orient:'landscape'});
 }
+/* One CSV cell. A plain number stays a number; text is quoted, and text that starts with = + - @ (a spreadsheet formula) gets a ' in front so Excel and Sheets show it as text. */
+function csvCell(v){
+  if(v===undefined||v===null) v='';
+  if(typeof v==='number') return isFinite(v)?String(v):'';
+  let t=String(v);
+  if(/^-?(0|[1-9]\d*)(\.\d+)?$/.test(t)) return t;
+  if(/^[=+\-@\t\r]/.test(t)) t="'"+t;
+  return '"'+t.replace(/"/g,'""')+'"';
+}
 function saveTextFile(name,text,mime){
   mime=mime||'text/csv'; text=String(text);
   if(/csv/.test(mime)&&text.charCodeAt(0)!==0xFEFF) text='\uFEFF'+text;   // so Excel reads Hindi and other names correctly
@@ -4744,7 +4791,7 @@ function trendSvg(perDay,staff,today){
 function exportReportCSV(){
   const r=_lastReport; if(!r){ alert('Tap Show first.'); return; }
   const hdr=['ID','Name','Days present','No punch out','Late days','Avg hours','Visits','Km (straight line)','Travel Rs','Site hours','Site checks','Inside site %','Punches outside place','Times away from place','OT hours (approved)','Honesty score'];
-  const rows=r.list.map(e=>[e.id,'"'+String(e.name).replace(/"/g,'""')+'"',e.days,e.noOut,e.late,e.full?(e.mins/e.full/60).toFixed(2):'',e.visits,e.km.toFixed(1),r.set.rate?Math.round(e.km*r.set.rate):'',(e.siteMins/60).toFixed(2),e.checks,e.checks?Math.round(100*e.inside/e.checks):'',e.outPunch,e.awayEp,e.otMins?(e.otMins/60).toFixed(2):'',(e.days||e.checks||e.visits)?honesty(e):''].join(','));
+  const rows=r.list.map(e=>[e.id,e.name,e.days,e.noOut,e.late,e.full?(e.mins/e.full/60).toFixed(2):'',e.visits,e.km.toFixed(1),r.set.rate?Math.round(e.km*r.set.rate):'',(e.siteMins/60).toFixed(2),e.checks,e.checks?Math.round(100*e.inside/e.checks):'',e.outPunch,e.awayEp,e.otMins?(e.otMins/60).toFixed(2):'',(e.days||e.checks||e.visits)?honesty(e):''].map(csvCell).join(','));
   saveTextFile('report-'+r.month+'.csv',[hdr.join(','),...rows].join('\n'));
 }
 
@@ -4801,7 +4848,7 @@ async function refreshSiteMonitor(role){
       html+='</div><div style="font-size:11px;color:var(--soft);margin:-4px 0 8px">Tap a row to see every check, the start and stop photos, and time on site.</div>';
     }
     el.innerHTML=html;
-  }catch(e){el.innerHTML=`<div class="msg msg-error show">⚠️ ${e.message}<br><button onclick="refreshSiteMonitor('${role}')" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
+  }catch(e){el.innerHTML=`<div class="msg msg-error show">⚠️ ${e.message}<br><button onclick="refreshSiteMonitor('${esc(role)}')" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
 }
 /* One site session: start/stop photos and places, every check, time on site, longest silence */
 async function openSiteDetail(id){
@@ -4925,10 +4972,10 @@ function renderSupList(){
   if(!sups.length){el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No supervisors yet.</div>';return;}
   el.innerHTML=sups.map(s=>{
     const assigned=(s.assignedEmp||'').split(',').map(e=>e.trim()).filter(Boolean);
-    return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${hx(s.name)}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${s.id}')">✕</button></div>
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:12px">📧</span><input type="text" value="${(s.email||'').replace(/"/g,'&quot;')}" placeholder="E-mail for alerts (optional)" onchange="setSupEmail('${s.id}',this.value)" style="margin:0;padding:6px 9px;font-size:12px"></div>
+    return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${hx(s.name)}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${esc(s.id)}')">✕</button></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:12px">📧</span><input type="text" value="${(s.email||'').replace(/"/g,'&quot;')}" placeholder="E-mail for alerts (optional)" onchange="setSupEmail('${esc(s.id)}',this.value)" style="margin:0;padding:6px 9px;font-size:12px"></div>
       <details><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none">▼ Assign Employees</summary>
-      <div style="margin-top:8px;max-height:160px;overflow-y:auto">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${s.id}','${emp.id}',this.checked)" style="width:14px;height:14px"> ${hx(emp.name)} <span style="color:var(--soft);font-size:11px">${hx(emp.id)}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
+      <div style="margin-top:8px;max-height:160px;overflow-y:auto">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${esc(s.id)}','${esc(emp.id)}',this.checked)" style="width:14px;height:14px"> ${hx(emp.name)} <span style="color:var(--soft);font-size:11px">${hx(emp.id)}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
       </details></div>`;
   }).join('');
 }
@@ -4969,7 +5016,7 @@ function renderOrg(){
           ${o.legacyAdmin?`<div class="org-node"><div class="org-row"><div><b>📋 ${hx(o.legacyAdmin)}</b> <span class="org-tag">Admin · whole company</span></div><span style="font-size:11px;color:var(--soft)">existing admin login</span></div></div>`:''}
           ${dm.length?dm.map(m=>`<div class="org-node ${m.active==='0'?'org-off':''}">
               <div class="org-row"><div><b>🏢 ${hx(m.name)}</b> <span class="org-tag">Department Admin</span>${m.active==='0'?'<span class="org-tag" style="color:#c0392b">switched off</span>':''}<div style="font-size:11px;color:var(--soft);margin-top:3px">ID: ${hx(m.username)}${m.email?' · '+hx(m.email):''}${m.phone?' · '+hx(m.phone):''}${m.lastLogin?' · last sign-in '+hx(String(m.lastLogin).replace('T',' ').slice(0,16)):' · never signed in'}</div></div>
-                <div style="display:flex;gap:5px;flex-wrap:wrap"><button class="org-act" onclick="orgEdit('${hx(m.id)}')">✏️ Edit</button><button class="org-act" onclick="orgReset('${hx(m.id)}')">🔑 New password</button><button class="org-act" onclick="orgToggle('${hx(m.id)}',${m.active==='0'?'true':'false'})">${m.active==='0'?'▶ Switch on':'⏸ Switch off'}</button><button class="org-act red" onclick="orgRemove('${hx(m.id)}')">🗑</button></div></div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap"><button class="org-act" onclick="orgEdit('${esc(m.id)}')">✏️ Edit</button><button class="org-act" onclick="orgReset('${esc(m.id)}')">🔑 New password</button><button class="org-act" onclick="orgToggle('${esc(m.id)}',${m.active==='0'?'true':'false'})">${m.active==='0'?'▶ Switch on':'⏸ Switch off'}</button><button class="org-act red" onclick="orgRemove('${esc(m.id)}')">🗑</button></div></div>
               <div class="org-kids">${(m.departments||[]).map(deptBlock).join('')||'<div style="font-size:12px;color:var(--soft)">No department</div>'}</div></div>`).join(''):'<div style="font-size:12px;color:var(--soft);margin:4px 0 8px">No department admins yet. Create one below.</div>'}
           ${noDept.length?`<div class="org-node"><div class="org-row"><b>📂 Departments with no admin yet</b><span style="font-size:11px;color:var(--soft)">you and the existing admin handle these</span></div><div class="org-kids">${noDept.map(deptBlock).join('')}</div></div>`:''}
           ${unassignedEmp?`<div style="font-size:12px;color:var(--soft)">${unassignedEmp} staff not placed in any department (company hours).</div>`:''}
@@ -4992,7 +5039,7 @@ function orgForm(m){
    <label style="margin:10px 0 4px">Departments this admin manages</label>
    <div id="mgDepts" style="display:flex;flex-wrap:wrap;gap:6px 14px">${all.map(d=>`<label style="display:flex;gap:5px;align-items:center;font-size:13px;margin:0"><input type="checkbox" value="${hx(d)}" ${have.some(x=>x.toLowerCase()===d.toLowerCase())?'checked':''} style="width:14px;height:14px"> ${hx(d)}</label>`).join('')||'<span style="font-size:12px;color:var(--soft)">No departments yet — type a new one below.</span>'}</div>
    <input type="text" id="mgNewDept" placeholder="Or a new department name (comma-separate several)" style="margin-top:8px">
-   <div style="display:flex;gap:8px;margin-top:10px"><button class="org-act" style="background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 14px;font-size:13px" onclick="orgSave(${m?`'${hx(m.id)}'`:'null'})">${m?'Save changes':'Create admin'}</button>${m?'<button class="org-act" style="padding:9px 14px;font-size:13px" onclick="orgForm(null)">Cancel</button>':''}</div>
+   <div style="display:flex;gap:8px;margin-top:10px"><button class="org-act" style="background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 14px;font-size:13px" onclick="orgSave(${m?`'${esc(m.id)}'`:'null'})">${m?'Save changes':'Create admin'}</button>${m?'<button class="org-act" style="padding:9px 14px;font-size:13px" onclick="orgForm(null)">Cancel</button>':''}</div>
    <div class="msg msg-error" id="mgErr"></div><div class="msg msg-success" id="mgOk"></div>`;
 }
 function orgEdit(id){ orgForm(_org.managers.find(m=>m.id===id)); document.getElementById('orgForm').scrollIntoView({behavior:'smooth',block:'center'}); }
