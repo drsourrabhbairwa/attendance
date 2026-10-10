@@ -2260,8 +2260,8 @@ async function sosTransmit(note){
   for(let i=0;i<60&&currentEmp===emp&&_sos.sending;i++){
     try{
       const r=await api('sendSOS',await build(pos),{timeout:20000});
-      _sos.alert=r.alert; _sos.sending=false; _sos.err=''; renderEmpSafety(); renderSOS(); beep(2);
-      if(!usedFresh) fresh.then(async f=>{ if(f&&currentEmp===emp&&_sos.alert) { try{ await api('sendSOS',await build(f)); }catch(e){} } });
+      _sos.alert=r.alert||_sos.alert||{id:'',empId:emp.id,status:'open',note:note||'',area:''}; _sos.sending=false; _sos.err=''; renderEmpSafety(); renderSOS(); beep(2);   // a signed-out retry is told only "already sent"
+      if(!usedFresh) fresh.then(async f=>{ if(f&&currentEmp===emp&&_sos.alert) { try{ await api('sendSOS',Object.assign(await build(f),{id:_sos.alert.id})); }catch(e){} } });   // the alert id shows the server this is the same person's alert
       return;
     }catch(e){ _sos.err='Not sent yet ('+e.message+'). Retrying… call now if you can.'; renderSOS(); await sleep(8000); }
   }
@@ -2574,8 +2574,9 @@ const ME_KEY='att_me';
 function empTokSave(id,tok){
   _empTok=tok||'';
   try{ localStorage.setItem(ME_KEY,JSON.stringify({id:String(id),tok:_empTok})); }catch(e){}
-  try{ if(window.AndroidTracker&&typeof AndroidTracker.setToken==='function') AndroidTracker.setToken(_empTok); }catch(e){}   // the site tracker uses the same sign-in
+  try{ if(window.AndroidTracker&&typeof AndroidTracker.setToken==='function'&&swAll().some(s=>String(s.empId).toUpperCase()===String(id).toUpperCase())) AndroidTracker.setToken(_empTok); }catch(e){}   // the site tracker of this same person uses the new sign-in; someone else's running site work keeps its own
 }
+function trackerTok(empId){ const me=meLoad(); return (_empTok&&me&&String(me.id).toUpperCase()===String(empId).toUpperCase())?_empTok:''; }   // a site tracker only ever gets the sign-in of its own person
 function empTokLoad(){ const me=meLoad(); _empTok=(me&&me.tok)||''; return _empTok; }
 function meSave(emp){ if(_empTok) empTokSave(emp.id,_empTok); }
 function meLoad(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||'null'); }catch(e){ return null; } }
@@ -2585,14 +2586,17 @@ function meMatch(){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(me.id)); if(!e) return null;
   return (me.tok||(me.ph&&e.passHash===me.ph))?e:null;   // a token needs no hash check; an older {id, ph} login is still checked against the cached list until it is migrated
 }
+function signInStaffLocal(id,hash,list){   // phone-only copy, or a backend that has not been updated yet: checked here against the list, as before
+  const u=String(id).trim().toUpperCase(), l=list||_D.employees||[]; let e=l.find(x=>String(x.id).toUpperCase()===u); if(!e&&/^\d+$/.test(u)) e=l.find(x=>/^\d+$/.test(String(x.id))&&Number(x.id)===Number(u));
+  if(!e||e.passHash!==hash) throw new Error('Wrong ID or password');
+  try{ localStorage.setItem(ME_KEY,JSON.stringify({id:e.id,ph:e.passHash})); }catch(_){}
+  return {employee:e,requireEmpToken:false};
+}
 async function signInStaff(id,hash){   // the server checks the password and hands out the token and this person's own record
-  if(!USE_SHEETS){   // phone-only copy (no server address): checked here, as before
-    const u=String(id).trim().toUpperCase(), l=_D.employees||[]; let e=l.find(x=>String(x.id).toUpperCase()===u); if(!e&&/^\d+$/.test(u)) e=l.find(x=>/^\d+$/.test(String(x.id))&&Number(x.id)===Number(u));
-    if(!e||e.passHash!==hash) throw new Error('Wrong ID or password');
-    try{ localStorage.setItem(ME_KEY,JSON.stringify({id:e.id,ph:e.passHash})); }catch(_){}
-    return {employee:e,requireEmpToken:false};
-  }
-  const r=await api('login',{kind:'employee',username:String(id),passHash:hash});
+  if(!USE_SHEETS) return signInStaffLocal(id,hash);
+  let r;
+  try{ r=await api('login',{kind:'employee',username:String(id),passHash:hash}); }
+  catch(e){ if(/^Unknown sign-in type/i.test(e.message)) return signInStaffLocal(id,hash,await api('getEmployees')); throw e; }   // the backend is older than this page: it still sends the list with hashes
   empTokSave(r.id,r.token);
   return {employee:r.employee,requireEmpToken:!!r.requireEmpToken};
 }
@@ -2903,7 +2907,11 @@ async function changeMyPassword(){
   loading(true,'Saving…');
   try{
     const newHash=await hashPass(n);
-    if(USE_SHEETS){ const res=await api('changePassword',{id:r.id,oldHash:await hashPass(o),newHash}); empTokSave(r.id,res.token); await updateEmpLocal(r.id,{defaultPass:false}); }   // every other phone signed in as this person is signed out by the server
+    if(USE_SHEETS){
+      const res=await api('changePassword',{id:r.id,oldHash:await hashPass(o),newHash});
+      if(res&&res.token){ empTokSave(r.id,res.token); await updateEmpLocal(r.id,{defaultPass:false}); }   // every other phone signed in as this person is signed out by the server
+      else{ try{ localStorage.setItem(ME_KEY,JSON.stringify({id:r.id,ph:newHash})); }catch(_){} await updateEmpLocal(r.id,{passHash:newHash,defaultPass:false}); }   // an older backend: the remembered login follows the new password
+    }
     else await updateEmpLocal(r.id,{passHash:newHash});
     loading(false);
     ['pwOld','pwNew','pwConf'].forEach(i=>document.getElementById(i).value='');
@@ -3016,7 +3024,7 @@ async function requestCode(purpose){
     document.getElementById('codeGo').style.display=_codeFor==='reset'?'none':'block';
     document.getElementById('codeInput').value=''; codeWait(60);
     try{ document.getElementById('codeInput').focus(); }catch(e){}
-  }catch(e){ loading(false); codeSay(e.message); }
+  }catch(e){ loading(false); codeSay(/^Unknown action/i.test(e.message)?'E-mail codes are not available yet. Ask your admin to update the backend.':e.message); }
 }
 async function signInWithCode(id,purpose,code,newHash){
   const r=await api('verifyOtp',{id,purpose,code,newHash});
@@ -3591,7 +3599,7 @@ function nativeStart(sw){
   if(!NATIVE||!USE_SHEETS||!sw) return false;
   try{
     return window.AndroidTracker.start(JSON.stringify({endMin:sw.mode==='auto'?trackEndMins():0,scriptUrl:SCRIPT_URL,secret:API_SECRET,siteId:String(sw.id),empId:sw.empId,
-      name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:sw.radius||SITE_RADIUS,minGap:CHECK_MIN,maxGap:CHECK_MAX,retry:RETRY_MINS,token:_empTok||''}));
+      name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:sw.radius||SITE_RADIUS,minGap:CHECK_MIN,maxGap:CHECK_MAX,retry:RETRY_MINS,token:trackerTok(sw.empId)}));
   }catch(e){ return false; }
 }
 function nativeStop(id){ try{ if(NATIVE) window.AndroidTracker.stop(String(id||'')); }catch(e){} }
@@ -4147,10 +4155,12 @@ async function loadStaffSignIn(){
   let s; try{ s=await api('staffSignInStatus'); }catch(e){ _ssc=null; el.innerHTML=''; return; }   // an older backend has no counter: no card
   _ssc=s;
   const total=+s.total||0, seen=+s.seen||0, ns=s.notSeen||[], pct=total?Math.round(seen*100/total):0, on=!!s.requireEmpToken, canSwitch=isSuper()||(_me&&_me.role==='A');
+  const bare=s.bare||[];
   el.innerHTML=`<div class="add-form"><h3>Private sign-in: ${seen} of ${total} staff</h3>`
     +`<p class="ssc-sub">Staff who signed in on the new sign-in in the last ${+s.windowDays||14} days.</p>`
     +`<div class="ssc-bar" aria-hidden="true"><i style="width:${pct}%"></i></div>`
     +(ns.length?`<details class="ssc-list"${ns.length<=10?' open':''}><summary>Not signed in yet (${ns.length})</summary><div class="ssc-names">${ns.map(x=>`<span class="ssc-chip">${hx(x.name)}<small>${hx(x.id)}</small></span>`).join('')}</div></details>`:'<p class="ssc-sub">Everyone has signed in.</p>')
+    +(bare.length?`<details class="ssc-list" open><summary>Site phones still on the old app (${bare.length})</summary><div class="ssc-names">${bare.map(x=>`<span class="ssc-chip">${hx(x.name)}<small>${hx(x.id)}</small></span>`).join('')}</div></details><p class="ssc-sub">Their background tracker sends no private sign-in. Install the new Android app on these phones before turning the switch on, or their site pings are refused.</p>`:'')
     +(canSwitch?`<label class="ssc-sw"><input type="checkbox" id="reqTokenSw"${on?' checked':''} onchange="toggleRequireToken(this.checked)"><span>Require private sign-in</span></label><p class="ssc-note">When on, a phone that has not signed in on the new sign-in is asked to update and sign in again. Turn it off to go back to how it was.</p>`:'')
     +`</div>`;
 }
@@ -4159,7 +4169,8 @@ async function toggleRequireToken(on){
   if(on){
     const total=(_ssc&&_ssc.total)||0, ns=((_ssc&&_ssc.notSeen)||[]).length;
     const msg=ns?ns+' of '+total+' staff have not signed in on the new sign-in yet. Once this is on they cannot punch or use the app until they update it and sign in again.\n\nTurn on private sign-in?':'All '+total+' staff have signed in on the new sign-in.\n\nTurn on private sign-in?';
-    if(!confirm(msg)){ if(cb) cb.checked=false; return; }
+    const bare=(_ssc&&_ssc.bare)||[], extra=bare.length?'\n\n'+bare.length+(bare.length>1?' phones still send':' phone still sends')+' site pings without the new sign-in ('+bare.map(x=>x.name).join(', ')+'). Those pings are refused until the Android app on that phone is updated.':'';
+    if(!confirm(msg.replace(/\n\nTurn on private sign-in\?$/,extra+'\n\nTurn on private sign-in?'))){ if(cb) cb.checked=false; return; }
   }
   loading(true,'Saving…');
   try{ await api('saveSettings',{settings:{requireEmpToken:on?'1':'0'}}); _D.settings=Object.assign({},_D.settings,{requireEmpToken:on?'1':'0'}); loading(false); loadStaffSignIn(); }
