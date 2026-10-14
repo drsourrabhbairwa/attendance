@@ -1376,7 +1376,24 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 /* ══════════════════════════════════════════════════════════════
    CONFIG — paste your Apps Script URL and secret here
 ══════════════════════════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';  // ← https://script.google.com/macros/s/.../exec
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';  // the old server (Google Apps Script + Sheet)
+const FIREBASE_URL = 'https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';   // the new server (Firebase)
+const DEFAULT_BACKEND = 'appsscript';   // cut-over day: change this one word to 'firebase' (and back to 'appsscript' to roll back)
+/* Open the page with ?backend=firebase to try the new server on this device only; ?backend=appsscript goes back. Everyone else keeps DEFAULT_BACKEND. */
+const BACKEND = (function(){
+  let b = DEFAULT_BACKEND;
+  try{
+    const q = new URLSearchParams(location.search).get('backend');
+    if(q==='firebase'||q==='appsscript'){ if(q===DEFAULT_BACKEND) localStorage.removeItem('amk_backend'); else localStorage.setItem('amk_backend', q); }
+    const k = localStorage.getItem('amk_backend');
+    if(k==='firebase'||k==='appsscript') b = k;
+  }catch(e){}
+  return b;
+})();
+const SCRIPT_URL = BACKEND==='firebase' ? FIREBASE_URL : APPS_SCRIPT_URL;
+if(BACKEND!==DEFAULT_BACKEND){   // a visible reminder on a device that is not using the normal server
+  document.addEventListener('DOMContentLoaded',function(){ const d=document.createElement('div'); d.textContent='TEST SERVER: '+BACKEND; d.style.cssText='position:fixed;left:50%;top:0;transform:translateX(-50%);z-index:99999;background:#b45309;color:#fff;font:600 11px system-ui,sans-serif;padding:2px 10px;border-radius:0 0 8px 8px;pointer-events:none'; document.body.appendChild(d); });
+}
 const API_SECRET = 'CHANGE_THIS_SECRET';  // ← must match SECRET_KEY in Apps Script
 const USE_SHEETS = SCRIPT_URL.length > 0;
 const APK_URL = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/download/amitek-attendance.apk';     // ← optional: download link of the Android app (shown on the sign-in page)
