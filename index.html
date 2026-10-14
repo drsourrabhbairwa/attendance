@@ -2138,12 +2138,17 @@ function callBtns(){
 }
 
 /* ── Employee: location-check prompt ── */
-function startEmpSafety(){ stopEmpSafety(); if(!USE_SHEETS) return; empSafetyPoll(); safetyEmpInt=setInterval(empSafetyPoll,60000); }
-function stopEmpSafety(){ clearInterval(safetyEmpInt); safetyEmpInt=null; _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; if(safetyEmpInt) empSafetyPoll(); if(safetyAdmInt) safetyAdminPoll(); });
+function startEmpSafety(){ stopEmpSafety(true); if(!USE_SHEETS) return; empSafetyPoll(); safetyEmpInt=setInterval(empSafetyPoll,60000); }
+function stopEmpSafety(keepPoll){ clearInterval(safetyEmpInt); safetyEmpInt=null; if(!keepPoll) _empPoll=0;   /* a re-render of Home keeps the poll in flight; signing out forgets it */ _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; const t=Date.now(); if(safetyEmpInt&&t-_empPollAt>POLL_RESUME_GAP) empSafetyPoll(); if(safetyAdmInt&&t-_admPollAt>POLL_RESUME_GAP) safetyAdminPoll(); });
+/* One poll at a time per phone: a slow reply must never let the next timer tick or an app-resume pile another request on top (the server runs them one by one). */
+let _empPoll=0, _empPollN=0, _empPollAt=0, _admPoll=0, _admPollN=0, _admPollAt=0;
+const POLL_RESUME_GAP=15000;   // coming back to the app within 15 s of a finished poll does not poll again
 async function empSafetyPoll(){
-  const emp=currentEmp; if(!emp||!USE_SHEETS) return;
+  const emp=currentEmp; if(!emp||!USE_SHEETS||_empPoll) return;
+  const id=_empPoll=++_empPollN;
   try{ const d=await api('pollEmp',{empId:emp.id}); if(currentEmp!==emp) return; handleEmpPoll(d||{}); }catch(e){}
+  finally{ if(_empPoll===id){ _empPoll=0; _empPollAt=Date.now(); } }
 }
 function handleEmpPoll(d){
   _chkPending=(d.checks||[]).filter(c=>!_chkDone[c.id]);
@@ -2273,10 +2278,11 @@ async function sosCancel(){
 }
 
 /* ── Admin / supervisor: alerts and "Check now" ── */
-function startSafetyWatch(role){ stopSafetyWatch(); _safRole=role; if(!USE_SHEETS) return; _knownAlerts=null; safetyAdminPoll(); safetyAdmInt=setInterval(safetyAdminPoll,30000); }
-function stopSafetyWatch(){ clearInterval(safetyAdmInt); safetyAdmInt=null; _safRole=''; _saf={checks:[],alerts:[],now:''}; const b=document.getElementById('sosBar'); if(b) b.classList.remove('on'); document.body.classList.remove('sosOn'); document.documentElement.style.removeProperty('--sosH'); }
+function startSafetyWatch(role){ stopSafetyWatch(true); _safRole=role; if(!USE_SHEETS) return; _knownAlerts=null; safetyAdminPoll(); safetyAdmInt=setInterval(safetyAdminPoll,30000); }
+function stopSafetyWatch(keepPoll){ clearInterval(safetyAdmInt); safetyAdmInt=null; if(!keepPoll) _admPoll=0; _safRole=''; _saf={checks:[],alerts:[],now:''}; const b=document.getElementById('sosBar'); if(b) b.classList.remove('on'); document.body.classList.remove('sosOn'); document.documentElement.style.removeProperty('--sosH'); }
 async function safetyAdminPoll(){
-  if(!_safRole) return;
+  if(!_safRole||_admPoll) return;
+  const id=_admPoll=++_admPollN;
   try{
     const d=await api('getSafety',{}); if(!_safRole) return; _saf=d||_saf;
     const open=(_saf.alerts||[]).filter(a=>a.status!=='resolved');
@@ -2284,6 +2290,7 @@ async function safetyAdminPoll(){
     _knownAlerts=new Set(open.map(a=>a.id));
     renderSosBar(open); setTabBadge('safety',open.length); renderSafetyViews();
   }catch(e){}
+  finally{ if(_admPoll===id){ _admPoll=0; _admPollAt=Date.now(); } }
 }
 function renderSosBar(open){
   const b=document.getElementById('sosBar'); if(!b) return;
