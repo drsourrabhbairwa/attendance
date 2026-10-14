@@ -1378,7 +1378,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 ══════════════════════════════════════════════════════════════ */
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';  // the old server (Google Apps Script + Sheet)
 const FIREBASE_URL = 'https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';   // the new server (Firebase)
-const DEFAULT_BACKEND = 'appsscript';   // cut-over day: change this one word to 'firebase' (and back to 'appsscript' to roll back)
+const DEFAULT_BACKEND = 'firebase';   // cut-over day: change this one word to 'firebase' (and back to 'appsscript' to roll back)
 /* Open the page with ?backend=firebase to try the new server on this device only; ?backend=appsscript goes back. Everyone else keeps DEFAULT_BACKEND. */
 const BACKEND = (function(){
   let b = DEFAULT_BACKEND;
