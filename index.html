@@ -2759,7 +2759,8 @@ function renderHomeToday(rec,dayOff){
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
-  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}`);
+  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
+  planLoad();
 }
 let _hmRec=null,_hmOff=null;
 const WORK_LABEL={'':'Everything (office + visits + site)',office:'Office staff',sales:'Sales / consultant (customer visits)',site:'Technician (site work)'};
@@ -5374,6 +5375,14 @@ init();
 <script src="notify.js"></script>
 <style>
 
+.pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
+.pl-card h4{font-size:13px;margin-bottom:6px}
+.pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.pl-row:first-of-type{border-top:0}.pl-row small{display:block;color:var(--soft);font-size:11.5px}
+.pl-row a{font-size:19px;text-decoration:none;margin-left:6px}
+.pl-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--greenBg);color:var(--green)}
+.pl-chip.od{background:var(--amberBg);color:var(--red)}
+
 /* ── Leads (admin) ── */
 .ld-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .ld-glass{padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2)}
@@ -5554,14 +5563,38 @@ async function ldOpen(id){
   document.getElementById('modalTitle').textContent='🤝 Customer';
   body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open');
   try{
-    const r=await api('customerDetail',{id:id}), c=r.customer;
+    const r=await api('customerDetail',{id:id}), c=r.customer, emps=await getEmployees();
     const hist=r.meetings.length?r.meetings.map(x=>`<div><b>${hx(x.date)}</b> · ${hx(x.empName)}<br>${hx(x.reason||'Meeting')}${x.startTime?' · '+fmt12(x.startTime)+(x.endTime?' → '+fmt12(x.endTime):''):''}<br>${x.result?'<b>'+hx(x.result)+'</b>':'<small>No result recorded</small>'}${x.vertical?' · '+hx(x.vertical):''}${x.expectedValue?' · '+ldRs(x.expectedValue):''}${x.followUpDate?'<br><small>Follow-up '+hx(x.followUpDate)+'</small>':''}${x.note?'<br><small>'+hx(x.note)+'</small>':''}</div>`).join(''):'<div class="empty" style="padding:10px">No meetings logged yet.</div>';
     body.innerHTML=`<div class="ld-glass"><div style="font-weight:700;font-size:15px">${hx(c.name)} <span class="ld-pill">${hx(c.stage||'New')}</span></div>
       <div style="font-size:13px;margin-top:6px">${c.phone?'📞 <a href="tel:'+hx(c.phone)+'">'+hx(c.phone)+'</a>':''}${c.address?'<br>📍 '+hx(c.address)+(c.lat?' <a class="map-link" href="'+mapsUrl(c.lat,c.lng)+'" target="_blank">Map</a>':''):''}</div>
       <div class="sd-sum" style="margin-top:10px"><div><b>${r.meetings.length}</b>Meetings</div><div><b>${c.expectedValue?ldRs(c.expectedValue):'—'}</b>Expected value</div><div><b>${hx(r.lastResult||'—')}</b>Last result</div><div><b>${hx(r.nextFollowUp||'—')}</b>Next follow-up</div></div>
       ${c.stage==='Lost'&&c.lostReason?'<div style="font-size:12px;color:var(--red)">Lost: '+hx(c.lostReason)+'</div>':''}</div>
+      ${c.stage==='Won'||c.stage==='Lost'?'':`<div class="ld-glass" style="margin-top:10px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Plan a visit</div><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="ldPlanEmp" style="flex:1;min-width:130px;margin:0"><option value="">Employee…</option>${emps.map(e=>`<option value="${hx(e.id)}">${hx(e.name)}</option>`).join('')}</select><input type="date" id="ldPlanDate" value="${todayStr()}" style="margin:0;width:auto"><button class="btn btn-primary" style="width:auto;margin:0;padding:8px 14px" onclick="ldPlan('${esc(c.id)}')">Plan</button></div><div id="ldPlanMsg" style="font-size:12px;margin-top:6px;color:var(--soft)"></div></div>`}
       <div style="font-weight:700;font-size:13px;margin:12px 0 2px">Meeting history</div><div class="ld-hist">${hist}</div>`;
   }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
+}
+
+/* ── Today's plan (employee home) ── */
+let _plan={at:0,day:'',items:[]};
+async function planLoad(force){
+  const el=document.getElementById('hmPlan'); if(!el) return;
+  const me=curRec()||{}, wt=String(me.workType||'');
+  if(_hmOff||!(wt===''||wt==='sales')){ el.innerHTML=''; return; }
+  const day=todayStr();
+  if(force||_plan.day!==day||Date.now()-_plan.at>300000){
+    try{ const r=await api('myPlan',{empId:me.id,date:day}); _plan={at:Date.now(),day:day,items:r.items||[]}; }catch(e){ return; }
+  }
+  const el2=document.getElementById('hmPlan'); if(!el2) return;
+  const it=_plan.items;
+  el2.innerHTML=it.length?`<div class="pl-card"><h4>📋 Today's plan · ${it.length} customer${it.length===1?'':'s'}</h4>`+it.map(c=>`<div class="pl-row"><div><b>${hx(c.name)}</b> <span class="pl-chip ${c.due==='overdue'?'od':''}">${c.due==='overdue'?'Overdue':c.due==='planned'?'Planned':'Follow-up today'}</span><small>${hx(c.address||'')}${c.followUpDate&&c.due!=='planned'?(c.address?' · ':'')+'due '+hx(c.followUpDate):''}</small></div><div>${c.phone?'<a href="tel:'+hx(c.phone)+'">📞</a>':''}${c.lat?'<a href="'+mapsUrl(c.lat,c.lng)+'" target="_blank">📍</a>':''}</div></div>`).join('')+'</div>':'';
+}
+/* admin: plan a visit for an employee, from the customer page */
+async function ldPlan(id){
+  const emp=document.getElementById('ldPlanEmp').value, date=document.getElementById('ldPlanDate').value, msg=document.getElementById('ldPlanMsg');
+  if(!emp||!date){ msg.textContent='Choose an employee and a date.'; return; }
+  msg.textContent='Saving…';
+  try{ await api('planCustomer',{id:id,empId:emp,date:date}); msg.textContent='✅ Planned. The employee has been notified.'; }
+  catch(e){ msg.textContent='⚠️ '+e.message; }
 }
 </script>
 </body>
