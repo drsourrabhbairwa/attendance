@@ -5026,6 +5026,15 @@ async function refreshSiteMonitor(role){
       const assigned=(currentSupervisor.assignedEmp||'').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
       if(assigned.length) data=data.filter(r=>assigned.includes(String(r.empId).toUpperCase()));
     }
+    // one row per person: a stop and restart on the same day is one person's day, not two employees
+    const byEmp=new Map();
+    data.forEach(r=>{const k=String(r.empId).toUpperCase(), g=byEmp.get(k);
+      if(!g){byEmp.set(k,Object.assign({},r,{_n:1}));return;}
+      const later=String(r.startTime||'')>String(g.startTime||'')||parseTimeMins(r.startTime)>parseTimeMins(g.startTime);
+      const first=later?g.startTime:r.startTime, lp=[g.latestPing,r.latestPing].filter(Boolean).sort((x,y)=>parseTimeMins(y.time)-parseTimeMins(x.time))[0];
+      const keep=(r.status==='working')?r:(g.status==='working'?g:(later?r:g));
+      byEmp.set(k,Object.assign({},keep,{startTime:first,latestPing:lp||keep.latestPing,lastFix:keep.lastFix||g.lastFix||r.lastFix,pingCount:(parseInt(g.pingCount||0,10)+parseInt(r.pingCount||0,10)),violations:(parseInt(g.violations||0,10)+parseInt(r.violations||0,10)),status:(r.status==='working'||g.status==='working')?'working':keep.status,_n:g._n+1}));});
+    data=Array.from(byEmp.values());
     const today=date===todayStr();
     const onSite=data.filter(r=>r.status==='working'&&today).length;
     const done=data.filter(r=>r.status==='done').length;
