@@ -5029,12 +5029,13 @@ async function refreshSiteMonitor(role){
     // one row per person: a stop and restart on the same day is one person's day, not two employees
     const byEmp=new Map();
     data.forEach(r=>{const k=String(r.empId).toUpperCase(), g=byEmp.get(k);
-      if(!g){byEmp.set(k,Object.assign({},r,{_n:1}));return;}
+      if(!g){byEmp.set(k,Object.assign({},r,{_n:1,_ids:[r.id]}));return;}
       const later=String(r.startTime||'')>String(g.startTime||'')||parseTimeMins(r.startTime)>parseTimeMins(g.startTime);
       const first=later?g.startTime:r.startTime, lp=[g.latestPing,r.latestPing].filter(Boolean).sort((x,y)=>parseTimeMins(y.time)-parseTimeMins(x.time))[0];
       const keep=(r.status==='working')?r:(g.status==='working'?g:(later?r:g));
-      byEmp.set(k,Object.assign({},keep,{startTime:first,latestPing:lp||keep.latestPing,lastFix:keep.lastFix||g.lastFix||r.lastFix,pingCount:(parseInt(g.pingCount||0,10)+parseInt(r.pingCount||0,10)),violations:(parseInt(g.violations||0,10)+parseInt(r.violations||0,10)),status:(r.status==='working'||g.status==='working')?'working':keep.status,_n:g._n+1}));});
+      byEmp.set(k,Object.assign({},keep,{startTime:first,latestPing:lp||keep.latestPing,lastFix:keep.lastFix||g.lastFix||r.lastFix,pingCount:(parseInt(g.pingCount||0,10)+parseInt(r.pingCount||0,10)),violations:(parseInt(g.violations||0,10)+parseInt(r.violations||0,10)),status:(r.status==='working'||g.status==='working')?'working':keep.status,_n:g._n+1,_ids:g._ids.concat([r.id])}));});
     data=Array.from(byEmp.values());
+    data.forEach(r=>{ if(r._ids&&r._ids.length>1){ r._ids=r._ids.slice().sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true})); } });
     const today=date===todayStr();
     const onSite=data.filter(r=>r.status==='working'&&today).length;
     const done=data.filter(r=>r.status==='done').length;
@@ -5054,7 +5055,7 @@ async function refreshSiteMonitor(role){
           if(mins>GAP_MINS) gap='<div style="margin-top:3px"><span class="viol-badge" style="display:inline-block;line-height:1.35">⚠️ No check for '+fmtMins(mins)+'</span></div>';
         }
         const mapEl=fx?`<a class="map-link" href="${mapsUrl(fx.lat,fx.lng)}" target="_blank" onclick="event.stopPropagation()">📍</a>`:'—';
-        html+=`<div class="site-row clickable" onclick="openSiteDetail('${esc(r.id)}')"><div style="font-weight:600">${hx(r.name)}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}<div>${n} check${n===1?'':'s'}</div></div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+hx(lp.area||''):'—'}${lp&&battBadge(lp)?'<div>'+battBadge(lp)+'</div>':''}${gap}</div><div>${siteResult(lp)}</div><div>${mapEl}</div></div>`;
+        html+=`<div class="site-row clickable" onclick="openSiteDetail('${esc(r.id)}'${r._ids&&r._ids.length>1?",'"+esc(r._ids.join(','))+"'":''})"><div style="font-weight:600">${hx(r.name)}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}<div>${n} check${n===1?'':'s'}</div></div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+hx(lp.area||''):'—'}${lp&&battBadge(lp)?'<div>'+battBadge(lp)+'</div>':''}${gap}</div><div>${siteResult(lp)}</div><div>${mapEl}</div></div>`;
       });
       html+='</div><div style="font-size:11px;color:var(--soft);margin:-4px 0 8px">Tap a row to see every check, the start and stop photos, and time on site.</div>';
     }
@@ -5070,13 +5071,51 @@ function battBadge(p){
   return `<span style="font-size:11px;font-weight:600;color:${n<=low&&!ch?'var(--red)':'var(--soft)'}">🔋 ${n}%${ch?' ⚡':''}</span>`;
 }
 /* One site session: start/stop photos and places, every check, time on site, longest silence */
-async function openSiteDetail(id){
+async function openSiteDetail(id,idsCsv,tab){
   const m=document.getElementById('detailModal'), body=document.getElementById('modalBody');
   document.getElementById('modalTitle').textContent='🏗️ Site work details';
-  body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open');
+  const ids=idsCsv?String(idsCsv).split(','):[id];
+  if(tab===undefined) window._sd=null;   // a fresh tap always reloads
+  if(!window._sd||window._sd.key!==ids.join(',')){ body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open'); }
   try{
-    const d=await api('getSiteSession',{id})||{};
-    const s=d.session||{}, checks=d.checks||[];
+    if(!window._sd||window._sd.key!==ids.join(',')){
+      const all=await Promise.all(ids.map(i=>api('getSiteSession',{id:i}).then(d=>d||{})));
+      window._sd={key:ids.join(','),all:all};
+    }
+    const all=window._sd.all, many=all.length>1;
+    const cur=tab===undefined?(many?'sum':0):tab;
+    const nav=many?`<div class="sd-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">`+[['sum','Today']].concat(all.map((d,i)=>[i,(d.session&&d.session.status==='working'&&d.session.date===todayStr())?'Site '+(i+1)+' · Current':'Site '+(i+1)])).map(t=>`<button class="btn ${String(t[0])===String(cur)?'btn-primary':'btn-outline'}" style="padding:6px 12px;font-size:12px" onclick="openSiteDetail('${esc(id)}','${esc(ids.join(','))}',${t[0]==='sum'?"'sum'":t[0]})">${hx(t[1])}</button>`).join('')+`</div>`:'';
+    body.innerHTML=nav+(cur==='sum'?siteSummaryHtml(all):siteBodyHtml(all[cur]||{}));
+  }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
+}
+/* the whole day for one person across all their site sessions */
+function siteSummaryHtml(all){
+  const nowM=new Date().getHours()*60+new Date().getMinutes(), isToday=(all[0].session||{}).date===todayStr();
+  let tot=0,checks=0,inn=0,out=0,rough=0,nog=0,fake=0,longest=0;
+  const rows=all.map((d,i)=>{
+    const s=d.session||{}, ck=d.checks||[], run=s.status==='working';
+    const a=parseTimeMins(s.startTime), b=s.stopTime?parseTimeMins(s.stopTime):(run&&isToday?nowM:a);
+    tot+=Math.max(0,b-a); checks+=ck.length;
+    const c=k=>ck.filter(x=>String(x.withinBound).toUpperCase()===k).length;
+    inn+=c('YES')+c('TRUE'); out+=c('NO')+c('FALSE'); rough+=c('ROUGH'); nog+=c('NO GPS'); fake+=c('FAKE GPS');
+    const mk=[a].concat(ck.map(x=>parseTimeMins(x.time))).concat(s.stopTime||(run&&isToday)?[b]:[]);
+    for(let k=1;k<mk.length;k++) longest=Math.max(longest,mk[k]-mk[k-1]);
+    return `<div class="sd-check"><div><b>Site ${i+1}</b>${run&&isToday?' · <span style="color:var(--orange)">Current</span>':''}<div style="color:var(--soft)">${fmt12(s.startTime)} → ${s.stopTime?fmt12(s.stopTime):'now'} · ${hx(s.startArea||'')}</div></div><div style="text-align:right">${fmtMins(Math.max(0,b-a))}<div style="color:var(--soft)">${ck.length} checks</div></div></div>`;
+  }).join('');
+  const s0=all[0].session||{};
+  return `<div style="font-weight:700;font-size:14px">${hx(s0.name||'')} <span style="font-weight:400;color:var(--soft)">· ${hx(s0.date||'')} · ${all.length} sites</span></div>
+    ${s0.empId&&isToday&&all.some(d=>(d.session||{}).status==='working')?`<button class="btn btn-outline" style="margin:8px 0" onclick="askCheck('${esc(s0.empId)}')">📍 Check now — ask ${hx(s0.name||'')} to confirm location</button>`:''}
+    <div class="sd-sum">
+      <div><b>${fmtMins(tot)}</b>Time on site</div><div><b>${checks}</b>Location checks</div>
+      <div><b style="color:var(--green)">${inn}</b>Inside ${SITE_RADIUS} m</div><div><b style="color:var(--red)">${out}</b>Outside the site</div>
+      <div><b style="color:var(--amber)">${rough}</b>Unclear (weak GPS)</div><div><b style="color:var(--red)">${nog}</b>GPS off / blocked</div>
+      <div style="grid-column:1/-1"><b style="color:${fake?'var(--red)':'var(--ink)'}">${fake}</b>Fake GPS app detected</div>
+      <div style="grid-column:1/-1"><b style="color:${longest>GAP_MINS?'var(--red)':'var(--ink)'}">${fmtMins(longest)}</b>Longest time with no check</div>
+    </div>
+    <div style="font-weight:700;font-size:13px;margin-top:4px">Sites today</div>${rows}`;
+}
+function siteBodyHtml(d){
+  const s=d.session||{}, checks=d.checks||[];
     const running=s.status==='working', isToday=s.date===todayStr();
     const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
     const startM=parseTimeMins(s.startTime), endM=s.stopTime?parseTimeMins(s.stopTime):(running&&isToday?nowM:null);
@@ -5089,7 +5128,7 @@ async function openSiteDetail(id){
     const mapA=(a,b)=>a?` <a class="map-link" href="${mapsUrl(a,b)}" target="_blank">📍 Map</a>`:'';
     const stopHtml=s.stopTime?`<b>⏹ Stopped ${fmt12(s.stopTime)}</b><div>📍 ${hx(s.stopArea||'—')}${acc(s.stopAcc)}</div><div>${mapA(s.stopLat,s.stopLng)}</div>`
       :running?(isToday?'<b style="color:var(--orange)">🟡 Still on site</b>':'<b style="color:var(--red)">⚠️ Never stopped</b>'):'—';
-    body.innerHTML=`<div style="font-weight:700;font-size:14px">${hx(s.name||'')} <span style="font-weight:400;color:var(--soft)">· ${hx(s.date||'')}</span></div>
+    return `<div style="font-weight:700;font-size:14px">${hx(s.name||'')} <span style="font-weight:400;color:var(--soft)">· ${hx(s.date||'')}</span></div>
       ${s.empId&&running&&isToday?`<button class="btn btn-outline" style="margin:8px 0" onclick="askCheck('${esc(s.empId)}')">📍 Check now — ask ${hx(s.name||'')} to confirm location</button>`:''}
       <div class="sd-block">${img(s.startPhoto)}<div><b>▶ Started ${fmt12(s.startTime)}</b><div>📍 ${hx(s.startArea||'—')}${acc(s.startAcc)}</div><div>${mapA(s.startLat,s.startLng)}</div></div></div>
       <div class="sd-block">${img(s.stopPhoto)}<div>${stopHtml}</div></div>
@@ -5106,7 +5145,6 @@ async function openSiteDetail(id){
       <div style="font-weight:700;font-size:13px;margin-top:4px">All checks</div>
       ${checks.length?checks.map(c=>`<div class="sd-check"><div><b>${fmt12(c.time)}</b>${c.source==='app'?' <span style="font-size:10px;color:var(--soft)">📱 app</span>':''}<div style="color:var(--soft)">${hx(c.area||'')}</div>${battBadge(c)?'<div>'+battBadge(c)+'</div>':''}</div><div style="text-align:right">${siteResult(c,true)}${c.lat?`<div style="margin-top:3px">${mapA(c.lat,c.lng)}</div>`:''}</div></div>`).join('')
         :'<div class="empty" style="padding:14px">No location checks were received for this site work.</div>'}`;
-  }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
 /* Month summary per employee: days and hours on site, share of checks inside the site, problems */
 async function loadSiteSummary(){
