@@ -57,14 +57,14 @@ Push is sent with Firebase Cloud Messaging through the Firebase Admin SDK from t
 
 - Firebase Messaging service: high-priority data push. Channel `alarm` (sound = alarm tone, bypasses silent where Android allows, full-screen intent for location checks) and channel `reminders` (default sound).
 - Token goes to `registerPushToken` after sign-in.
-- Guided "keep the app alive" screen on first run: battery optimization exemption (permission already declared), plus vendor autostart steps for Xiaomi, Oppo, Vivo, Realme and Samsung with a button to open the right settings page.
+- Background behaviour is the normal one for any push app: FCM high-priority push reaches the phone even when the app is closed. No extra "keep alive" screen, no permanent notification. (Owner decision 2026-10-15: keep this like a typical app's notifications.)
 - Update: on app start and every 6 hours the app reads `version.json` (`latestBuild`, `apkUrl`, `notes`, `minBuild`). If newer, it shows a notification and an in-app card. "Update" downloads the APK to the app's own storage and opens the system installer. Needs `REQUEST_INSTALL_PACKAGES`; the first time Android asks the staff member to allow installs from this app. `minBuild` forces the card to stay until updated.
 - The APK file is hosted on GitHub Releases (free).
 - Each staff member installs this first new APK by hand once. After that updates come from inside the app.
 
 ## Limits stated plainly
 
-- No Android app can be guaranteed to never stop in the background. Push (which wakes a closed app), battery exemption and autostart setup is the strongest available. A permanent notification would cost battery and still not be a guarantee, so it is not used.
+- Push delivery is as reliable as in any normal app. On some phones (Xiaomi, Oppo, Vivo) aggressive battery saving can still delay it; if staff report that, a one-time settings guide can be added later.
 - Silent updates need Play Store or a company-managed phone. Here, staff tap "Install" once per update.
 - iPhone has no APK; it gets web push only from a Home Screen install.
 
