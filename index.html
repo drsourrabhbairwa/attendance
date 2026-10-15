@@ -2726,6 +2726,7 @@ async function freshRecordToday(empId){
   }catch(e){ return undefined; }
 }
 function renderHomeToday(rec,dayOff){
+  window._fmSeen=false;
   const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
   const btn=(l,c)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch()">${l}</button>`;
   let ico='⏰', title='', sub='', extra='', b='';
@@ -2742,9 +2743,11 @@ function renderHomeToday(rec,dayOff){
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
     extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
+    fmWatchSync(am&&!pers?am:null);
     b=am?(pers?'':fmCardHtml(am))+btn('🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline'):btn('📸 Punch Out','btn-blue');
   } else { title='Not punched in yet'; sub='Office starts at '+set.start; b=btn('📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
+  if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}`);
 }
@@ -5386,7 +5389,8 @@ init();
 const FM_REASONS=['Quotation','Demo','Site visit','Payment','Follow-up','Complaint','Other'];
 const FM_RESULTS=['Interested','Quotation asked','Order','Follow-up','Not interested'];
 const FM_VERTICALS=['Seamless Floorings','Waterproofing','Road Marking Paint','Home Automation'];
-let _fm={seq:0,id:'',reason:'',result:'',vertical:'',lat:'',lng:'',busy:false,t:null};
+let _fm={seq:0,id:'',reason:'',result:'',vertical:'',busy:false,t:null,arrived:{}};
+let _fmW={id:null,seq:0};
 function fmCust(m){ return m.customerName?`<div class="fm-cust"><div><b>${hx(m.customerName)}</b><span>${hx(m.reason||'')}${m.address?' · '+hx(m.address):''}</span></div>${m.phone?`<a href="tel:${hx(m.phone)}" title="Call">📞</a>`:''}</div>`:''; }
 function fmCardHtml(m){
   const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
@@ -5410,7 +5414,7 @@ async function fmPlace(){
   return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
 }
 async function fmStart(seq){
-  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
+  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r) await fmRefresh(); }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the meeting.'); }
 }
 async function fmNext(){
@@ -5420,11 +5424,10 @@ async function fmNext(){
 function fmChoose(seq){
   _fm=Object.assign(_fm,{seq:seq,id:'',reason:'',lat:'',lng:''});
   fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
-    <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (filled from your location)">
+    <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)">
     <div class="fm-lbl">Reason for the meeting</div><div id="fmReason">${fmChips(FM_REASONS,'', 'fmReasonPick')}</div><div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
   fmSearch();
-  fmPlace().then(p=>{ _fm.lat=p.lat; _fm.lng=p.lng; const a=document.getElementById('fmAddr'); if(a&&!a.value) a.value=p.area; }).catch(()=>{});
 }
 function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(FM_REASONS,r,'fmReasonPick'); }
 function fmSearch(){
@@ -5443,7 +5446,7 @@ async function fmSaveCustomer(){
   if(!_fm.reason) return fmErr('Choose the reason for the meeting.');
   fmErr('Saving…');
   try{
-    const body={seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr,lat:_fm.lat,lng:_fm.lng};
+    const body={seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
     const r=await fmCall('setMeetingCustomer',body);
     if(r){ fmClose(); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
@@ -5466,6 +5469,27 @@ async function fmFinish(){
     const r=await fmCall('endMeetingVisit',{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()});
     if(r){ fmClose(); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
+}
+/* Arrival prompt: while a meeting is "on the way" to a customer whose place is known, tell the person when they are within 150 m */
+function fmWatchStop(){ if(_fmW.id!==null) clearInterval(_fmW.id); _fmW.id=null; }
+function fmWatchSync(m){
+  window._fmSeen=true;
+  const want=m&&m.kind!=='personal'&&m.customerId&&m.custLat&&m.custLng&&m.state!=='in_meeting'&&m.state!=='done'&&!m.backTime;
+  if(!want||!navigator.geolocation){ fmWatchStop(); return; }
+  if(_fmW.id!==null&&_fmW.seq===m.seq) return;
+  fmWatchStop(); _fmW.seq=m.seq;
+  // a fresh reading every 40 s while the app is open (a second live watch would hold back the camera screen's own readings)
+  const look=async()=>{
+    if(document.hidden||_fm.busy||_fm.arrived[m.seq]||document.getElementById('fmSheet')) return;
+    try{ const f=await freshFix(), d=distMeters(f.lat,f.lng,+m.custLat,+m.custLng); if(d<=150&&(f.acc||0)<=120) fmArrived(m,Math.round(d)); }catch(e){}
+  };
+  _fmW.id=setInterval(look,40000); setTimeout(look,1500);
+}
+function fmArrived(m,d){
+  if(_fm.arrived[m.seq]) return; _fm.arrived[m.seq]=nowTime();
+  try{ if(window.AmkNotify&&AmkNotify.chime) AmkNotify.chime(); }catch(e){}
+  try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('You reached '+m.customerName,{body:'Open the app and tap Start meeting.'}); }catch(e){}
+  fmSheet(`<h3>📍 You reached ${hx(m.customerName)}</h3><p style="margin:0 0 12px;color:var(--soft)">About ${d} m from the saved place. Start the meeting now?</p><button class="btn btn-green" style="width:100%" onclick="fmClose();fmStart(${m.seq})">▶ Start meeting</button><button class="fm-link" style="display:block;margin:10px auto 0" onclick="fmClose()">Not yet</button>`);
 }
 </script>
 </body>
