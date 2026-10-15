@@ -5664,7 +5664,7 @@ function trRender(){
   const r=_tr, box=document.getElementById('trBody'); if(!r) return;
   if(!r.emps.length){ box.innerHTML='<div class="empty"><div class="eicon">🚗</div>No attendance in these dates.</div>'; return; }
   const tot=r.emps.reduce((a,e)=>a+e.km,0);
-  box.innerHTML=`<div class="ld-glass" style="margin-bottom:10px"><b style="font-size:18px">${tot.toFixed(1)} km</b> <span style="color:var(--soft);font-size:12px">total · ${r.emps.length} people · ${hx(r.start)} to ${hx(r.end)}</span></div>`+
+  box.innerHTML=`<div class="ld-glass" style="margin-bottom:10px"><b style="font-size:18px">${tot.toFixed(1)} km</b> <span style="color:var(--soft);font-size:12px">total · ${r.emps.length} ${r.emps.length===1?'person':'people'} · ${hx(r.start)} to ${hx(r.end)}</span></div>`+
    r.emps.map(e=>{ const open=_trOpen===e.empId;
      const days=open?r.days.filter(d=>d.empId===e.empId).map(d=>`<div class="ld-row"><div>${hx(d.date)}<small>${d.points} GPS point${d.points===1?'':'s'}${d.meetings?' · '+d.meetings+' meeting'+(d.meetings===1?'':'s'):''}${d.points<4&&d.km===0?' · too few points to measure':''}</small></div><div style="text-align:right"><b>${d.km.toFixed(1)} km</b></div></div>`).join(''):'';
      return `<div class="ld-cust" style="display:block" onclick="trToggle('${esc(e.empId)}')"><div style="display:flex;justify-content:space-between;gap:10px"><div><b>${hx(e.name)}</b><span>${e.days} day${e.days===1?'':'s'} with travel${e.days?' · avg '+e.avgKm.toFixed(1)+' km/day':''}${e.meetings?' · '+e.meetings+' meetings':''}</span></div><div style="text-align:right"><b style="font-size:16px">${e.km.toFixed(1)} km</b></div></div>${open?'<div style="margin-top:8px" onclick="event.stopPropagation()">'+days+'</div>':''}</div>`; }).join('');
