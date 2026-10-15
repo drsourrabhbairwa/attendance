@@ -1323,7 +1323,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 
   <div id="tabTasks" class="tab-pane">
     <div class="ld-top">
-      <div><div style="font-weight:700;font-size:15px">Tasks</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Give work to staff, check it, verify it.</div></div>
+      <div><div style="font-weight:700;font-size:15px">Tasks</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Every task in the company: who gave it, who is doing it, what is late.</div></div>
       <div style="display:flex;gap:8px"><button class="btn btn-outline" style="width:auto;margin:0;padding:8px 14px" onclick="tkLoad()">🔄 Refresh</button><button class="btn btn-primary" style="width:auto;margin:0;padding:8px 14px" onclick="tkForm('')">➕ New task</button></div>
     </div>
     <div id="tkBody"><div class="empty"><div class="eicon">✅</div>Loading…</div></div>
@@ -2796,7 +2796,7 @@ function renderHomeActs(){
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
-  T.push(`<button class="hm-tile" onclick="tkOpen()"><div class="ti">✅</div><b>My Tasks</b><span id="hmTkSub">${hx(_tk.sub||'Work given to you')}</span></button>`);
+  T.push(`<button class="hm-tile" onclick="tkOpen()"><div class="ti">✅</div><b>Tasks</b><span id="hmTkSub">${hx(_tk.sub||'Give or get work')}</span></button>`);
   { const o=otOpenRow(); _otShown=otSig();
     if(o) T.push(`<button class="hm-tile live" onclick="openOvertime('stop')"><div class="ti">⏱</div><b>Stop overtime</b><span>Since ${otClock(o.startTime)} · <span id="hmOtSub">${otRunTxt(o)}</span></span></button>`);
     else if(_otShown==='start') T.push(`<button class="hm-tile" onclick="openOvertime('start')"><div class="ti">⏱</div><b>Start overtime</b><span>Working extra · your admin approves</span></button>`); }
@@ -5427,15 +5427,33 @@ init();
 .ld-hist{border-left:2px solid var(--border);margin:8px 0 0 6px;padding-left:12px}
 .ld-hist>div{margin-bottom:10px;font-size:12.5px}
 .ld-hist small{color:var(--soft)}
-.tk-card{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;padding:11px 12px;margin-bottom:8px;border-radius:14px;background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.8)}
-.tk-card b{font-size:14px}.tk-card small{display:block;color:var(--soft);font-size:12px;margin-top:3px}
-.tk-row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.tk-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.85);border:1px solid var(--border);white-space:nowrap}
-.tk-pill.Done{background:#FEF3C7;border-color:#F59E0B}.tk-pill.Verified{background:#DCFCE7;border-color:#22C55E}.tk-pill.High{background:#FEE2E2;border-color:#EF4444}
-.tk-ck{display:flex;gap:9px;align-items:center;padding:7px 0;font-size:14px}.fm-sheet .tk-ck input{width:22px;height:22px;margin:0;flex:none;padding:0}.tk-ck span{flex:1;text-align:left}.fm-sheet .fm-link{margin-right:16px;display:inline-block;padding:8px 0}
-.tk-ph{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0}.tk-ph img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
-.tk-cm{font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)}.tk-cm small{color:var(--soft)}
-.fm-sheet select{width:100%;box-sizing:border-box;margin:5px 0;padding:11px 12px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;color:var(--ink)}
+.tk-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.tk-top h3{margin:0}
+.tk-new{border:0;border-radius:999px;padding:9px 15px;font:inherit;font-weight:700;font-size:13px;color:#fff;background:var(--accent);cursor:pointer}
+.tk-big{display:flex;flex-direction:column;height:92vh;overflow:hidden}.tk-scroll{flex:1;overflow:auto;padding-bottom:6px}
+.tk-tabs{display:flex;gap:6px;margin-bottom:10px;padding:4px;border-radius:999px;background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.7)}
+.tk-tab{flex:1;border:0;border-radius:999px;padding:8px 4px;font:inherit;font-size:12.5px;color:var(--ink);background:transparent;cursor:pointer}.tk-tab.on{background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(20,40,40,.14);font-weight:700}
+.tk-card{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;padding:12px;margin-bottom:9px;border-radius:18px;background:rgba(255,255,255,.58);border:1px solid rgba(255,255,255,.8);box-shadow:0 6px 20px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.tk-card b{font-size:14.5px}.tk-last{display:block;color:var(--soft);font-size:12px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk-row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.tk-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:7px}
+.tk-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#EF4444;margin-right:6px}
+.tk-av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-style:normal;font-size:10px;font-weight:700;background:rgba(27,127,107,.18);color:#0f5f50;border:1px solid rgba(255,255,255,.9);margin-right:-4px}
+.tk-pill,.tk-due{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.8);border:1px solid var(--border);white-space:nowrap}
+.tk-pill.Done{background:#FEF3C7;border-color:#F59E0B}.tk-pill.Verified{background:#DCFCE7;border-color:#22C55E}.tk-pill.High{background:#FEE2E2;border-color:#EF4444}.tk-pill.In{background:#E0F2FE}
+.tk-due.late{background:#FEE2E2;border-color:#EF4444;color:#991B1B}.tk-due.today{background:#FEF3C7;border-color:#F59E0B}
+.tk-glass{padding:10px 12px;border-radius:18px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);margin-bottom:8px;max-height:42vh;overflow:auto}
+.tk-det{font-size:13.5px;margin:7px 0}.tk-person{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 0;border-top:1px solid rgba(255,255,255,.7);font-size:13.5px}.tk-person span{flex:1;min-width:90px}
+.tk-mini{border:1px solid var(--border2);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;background:rgba(255,255,255,.85);cursor:pointer;color:var(--ink)}.tk-mini.go{background:var(--accent);border-color:var(--accent);color:#fff}
+.tk-msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:4px 2px}
+.tk-b{max-width:82%;align-self:flex-start;padding:8px 11px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.9);font-size:14px;word-break:break-word}
+.tk-b.me{align-self:flex-end;border-radius:16px 16px 4px 16px;background:rgba(27,127,107,.2);border-color:rgba(27,127,107,.3)}
+.tk-b small{display:block;font-size:10.5px;color:var(--soft);margin-bottom:2px}.tk-b img{display:block;max-width:100%;border-radius:10px;margin-top:5px}
+.tk-sys{align-self:center;text-align:center;font-size:11.5px;color:var(--soft);padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.45)}
+.tk-comp{display:flex;gap:7px;align-items:center;margin-top:8px}.tk-comp input[type=text],.tk-comp #tkIn{flex:1;margin:0}
+.tk-cam{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.8);border:1px solid var(--border2);cursor:pointer;flex:none}.tk-cam.on{background:#DCFCE7;border-color:#22C55E}.tk-cam input{display:none}
+.tk-send{border:0;border-radius:999px;padding:11px 16px;font:inherit;font-weight:700;color:#fff;background:var(--accent);cursor:pointer}
+.tk-ppl{display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow:auto;margin:4px 0}
+.tk-ck{display:flex;gap:9px;align-items:center;padding:6px 0;font-size:14px}.fm-sheet .tk-ck input{width:22px;height:22px;margin:0;flex:none;padding:0}.tk-ck span{flex:1;text-align:left}
+.fm-sheet .fm-link{margin-right:16px;display:inline-block;padding:8px 0}
 
 
 /* ── Field meetings (glass look) ── */
@@ -5707,117 +5725,157 @@ async function checkAppUpdate(btn){
   setTimeout(()=>{ sm.textContent=was; },3500);
 }
 
-/* ── Tasks: admin gives work, staff does it, admin verifies ── */
-let _tk={mine:[],all:[],f:'Active',at:0,sub:''};
-const TK_PILLS={'Open':'Open for anyone','To do':'To do','In progress':'In progress','Done':'Waiting for check','Verified':'Verified','Cancelled':'Cancelled'};
-const tkPill=t=>`<span class="tk-pill ${hx(t.status)}">${hx(TK_PILLS[t.status]||t.status)}</span>`;
-const tkProg=t=>t.checklist&&t.checklist.length?` · ☑ ${t.checklist.filter(c=>c.d).length}/${t.checklist.length}`:'';
-const tkCoin=t=>t.coins?` · 🪙 ${t.coins}`:'';
-function tkDue(t){ if(!t.due) return ''; const od=t.due<todayStr()&&t.status!=='Done'&&t.status!=='Verified'; return ` · <span${od?' style="color:#B91C1C;font-weight:700"':''}>due ${hx(t.due)}${od?' (late)':''}</span>`; }
-function tkCom(t){ return (t.comments||[]).map(c=>`<div class="tk-cm"><b>${hx(c.by)}</b> <small>${hx(String(c.at||'').slice(0,16))}</small><br>${hx(c.t)}</div>`).join(''); }
-function tkPhotos(t){ return (t.proof||[]).length?`<div class="tk-ph">${t.proof.map(p=>`<img src="${hx(p)}" alt="proof">`).join('')}</div>`:''; }
+/* ── Tasks: a messenger for work. Anyone gives a task to one or more people, each does their part, the giver verifies. ── */
+let _tk={mine:[],all:[],f:'Active',tab:'me',at:0,sub:'',cur:null,names:{},photo:'',timer:0,ppl:[]};
+const tkIsAdmin=()=>typeof _tok!=='undefined'&&!!_tok;
+const tkMe=()=>tkIsAdmin()?'ADMIN':String(currentEmp.id);
+const tkSame=(a,b)=>String(a).toUpperCase()===String(b).toUpperCase();
+const tkApi=(a,b)=>api(a,tkIsAdmin()?(b||{}):Object.assign({empId:currentEmp.id},b||{}));
+const tkNm=id=>(_tk.names[String(id).toUpperCase()])||String(id);
+const tkIni=n=>String(n).split(/\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase();
+const TK_ST={'To do':'To do','In progress':'In progress','Done':'Waiting for check','Verified':'Verified'};
+const tkPill=(s,cls)=>`<span class="tk-pill ${hx(cls||s)}">${hx(TK_ST[s]||s)}</span>`;
+function tkDue(t){
+  if(!t.due) return ''; const d=todayStr(), live=t.status==='Open';
+  const cls=live&&t.due<d?'late':live&&t.due===d?'today':'';
+  return `<span class="tk-due ${cls}">⏰ ${hx(t.due===d?'Today':t.due)}${cls==='late'?' · late':''}</span>`;
+}
+function tkProg(t){ const n=t.assignees.length, k=t.assignees.filter(i=>{ const s=(t.states[i]||{}).s; return s==='Done'||s==='Verified'; }).length; return n>1?`<span class="tk-due">👥 ${k}/${n} done</span>`:''; }
+function tkWho(t){ return t.assignees.slice(0,4).map(i=>`<i class="tk-av" title="${hx(tkNm(i))}">${hx(tkIni(tkNm(i)))}</i>`).join('')+(t.assignees.length>4?`<i class="tk-av">+${t.assignees.length-4}</i>`:''); }
+async function tkNames(){ try{ if(!_tk.dir) _tk.dir=(await tkApi('taskPeople'))||[]; _tk.dir.forEach(e=>{ _tk.names[String(e.id).toUpperCase()]=e.name; }); }catch(e){} _tk.names.ADMIN='Admin'; }
+function tkBig(html){ fmSheet(html); const s=document.querySelector('#fmSheet .fm-sheet'); if(s) s.classList.add('tk-big'); }
+function tkCard(t){
+  const mineS=(t.states[tkMe()]||{}).s;
+  return `<button class="tk-card" onclick="tkThread('${esc(t.id)}')"><div class="tk-row"><b>${t.unread?'<span class="tk-dot"></span>':''}${hx(t.title)}</b>${t.priority==='High'?'<span class="tk-pill High">High</span>':''}</div>
+    <div class="tk-meta">${tkWho(t)}${tkDue(t)}${tkProg(t)}${mineS?tkPill(mineS):''}${t.status==='Closed'?'<span class="tk-pill Verified">Closed</span>':''}${t.status==='Cancelled'?'<span class="tk-pill">Cancelled</span>':''}</div>
+    ${t.lastMsg?`<small class="tk-last">${hx(tkNm(t.lastMsgBy))}: ${hx(t.lastMsg)}</small>`:`<small class="tk-last">From ${hx(tkNm(t.empId))}</small>`}</button>`;
+}
 
-/* employee side */
+/* staff: the tile and the list */
 async function tkBadge(){
-  if(Date.now()-_tk.at<120000) return;
-  try{ const me=curRec()||currentEmp; const r=await api('myTasks',{empId:me.id}); _tk.mine=r||[]; _tk.at=Date.now();
-    const n=_tk.mine.filter(t=>t.status==='To do'||t.status==='In progress').length;
-    _tk.sub=n?n+' to do':'Nothing pending'; setHtml('hmTkSub',hx(_tk.sub)); }catch(e){}
+  if(Date.now()-_tk.at<90000) return;
+  try{ const r=await tkApi('myTasks'); _tk.mine=r||[]; _tk.at=Date.now();
+    const me=tkMe(), n=_tk.mine.filter(t=>t.status==='Open'&&['To do','In progress'].indexOf((t.states[me]||{}).s)>=0).length, u=_tk.mine.filter(t=>t.unread).length;
+    _tk.sub=(n?n+' to do':'Nothing pending')+(u?' · '+u+' new message'+(u>1?'s':''):''); setHtml('hmTkSub',hx(_tk.sub)); }catch(e){}
 }
-async function tkOpen(){ fmSheet('<h3>✅ My Tasks</h3><div id="tkMine">Loading…</div><button class="fm-link" onclick="fmClose()">Close</button>'); await tkMineLoad(); }
+async function tkOpen(tab){
+  if(tab) _tk.tab=tab;
+  tkBig(`<div class="tk-top"><h3>✅ Tasks</h3><button class="tk-new" onclick="tkForm('')">➕ New task</button></div><div class="tk-tabs" id="tkTabs"></div><div id="tkMine" class="tk-scroll">Loading…</div><button class="fm-link" onclick="fmClose()">Close</button>`);
+  await tkNames(); await tkMineLoad();
+}
 async function tkMineLoad(){
-  const el=document.getElementById('tkMine');
-  try{ const r=await api('myTasks',{empId:currentEmp.id}); _tk.mine=r||[]; _tk.at=Date.now(); tkMineRender(); }
-  catch(e){ if(el) el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
-}
-function tkMineRender(){
   const el=document.getElementById('tkMine'); if(!el) return;
-  const a=_tk.mine;
-  el.innerHTML=a.length?a.map(t=>`<button class="tk-card" onclick="tkMineOpen('${esc(t.id)}')"><div class="tk-row"><b>${hx(t.title)}</b>${tkPill(t)}</div><small>${t.priority==='High'?'🔴 High · ':''}${hx(t.customerName||t.place||'')}${tkDue(t)}${tkProg(t)}${tkCoin(t)}</small></button>`).join(''):'<div class="empty" style="padding:14px">No tasks right now.</div>';
+  try{ _tk.mine=(await tkApi('myTasks'))||[]; _tk.at=Date.now(); tkMineRender(); }
+  catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
 }
-function tkMineOpen(id){
-  const t=_tk.mine.filter(x=>x.id===id)[0]; if(!t){ tkOpen(); return; }
-  const edit=t.status==='To do'||t.status==='In progress';
-  fmSheet(`<h3>${hx(t.title)}</h3><div style="margin-bottom:6px">${tkPill(t)}<small style="color:var(--soft)">${t.priority==='High'?' · 🔴 High':''}${tkDue(t)}${tkCoin(t)}</small></div>
-    ${t.detail?`<div style="font-size:13.5px;margin:6px 0">${hx(t.detail)}</div>`:''}${t.customerName||t.place?`<div style="font-size:12.5px;color:var(--soft)">📍 ${hx([t.customerName,t.place].filter(Boolean).join(' · '))}</div>`:''}
-    ${t.checklist.length?`<div class="fm-lbl">Checklist</div><div id="tkCk">${t.checklist.map(c=>`<label class="tk-ck"><input type="checkbox" ${c.d?'checked':''} ${edit?'':'disabled'} onchange="tkCheck('${esc(id)}')"><span>${hx(c.t)}</span></label>`).join('')}</div>`:''}
-    <div class="fm-lbl">Photos</div>${tkPhotos(t)}${edit&&t.proof.length<3?`<input type="file" accept="image/*" capture="environment" onchange="tkPhoto('${esc(id)}',this)">`:''}
-    ${t.comments.length?`<div class="fm-lbl">Notes</div>${tkCom(t)}`:''}
-    ${edit?`<input id="tkNote" placeholder="Add a note (optional)"><button class="fm-link" onclick="tkNoteSave('${esc(id)}')">Save note</button>`:''}
-    <div class="fm-err" id="fmErr"></div>
-    ${t.status==='To do'?`<button class="btn btn-blue" style="width:100%" onclick="tkSet('${esc(id)}','In progress')">▶ Start</button>`:''}
-    ${edit?`<button class="btn btn-green" style="width:100%" onclick="tkSet('${esc(id)}','Done')">✔ Mark done</button>`:''}
-    ${t.status==='Done'?'<div style="font-size:13px;color:var(--soft);margin-top:8px">Done — waiting for your admin to check it.</div>':''}
-    <button class="fm-link" onclick="tkOpen()">← All tasks</button>`);
+function tkTab(t){ _tk.tab=t; tkMineRender(); }
+function tkMineRender(){
+  const el=document.getElementById('tkMine'), tb=document.getElementById('tkTabs'); if(!el) return;
+  const me=tkMe(), A=_tk.mine, open=t=>t.status==='Open';
+  const forMe=A.filter(t=>open(t)&&t.assignees.some(i=>tkSame(i,me))&&(t.states[me]||{}).s!=='Verified'), given=A.filter(t=>open(t)&&tkSame(t.empId,me)), done=A.filter(t=>!open(t)||(t.states[me]||{}).s==='Verified');
+  const tabs=[['me','For me',forMe],['given','Given by me',given],['done','Finished',done]];
+  tb.innerHTML=tabs.map(x=>`<button class="tk-tab${_tk.tab===x[0]?' on':''}" onclick="tkTab('${x[0]}')">${x[1]} <b>${x[2].length}</b></button>`).join('');
+  const list=tabs.filter(x=>x[0]===_tk.tab)[0][2];
+  el.innerHTML=list.length?list.map(tkCard).join(''):'<div class="empty" style="padding:18px">Nothing here.</div>';
 }
-async function tkSave(id,extra){
-  try{ const r=await api('taskUpdate',Object.assign({empId:currentEmp.id,id:id},extra)); const i=_tk.mine.findIndex(x=>x.id===id); if(i>=0) _tk.mine[i]=r.task; _tk.at=0; tkMineOpen(id); tkBadge(); return true; }
-  catch(e){ fmErr(e.message); return false; }
+
+/* the task itself: details + chat */
+async function tkThread(id){
+  tkBig(`<div class="tk-top"><button class="fm-link" onclick="${tkIsAdmin()?'fmClose()':'tkOpen()'}">← Back</button><span id="tkHdr"></span></div><div id="tkInfo"></div><div id="tkMsgs" class="tk-msgs"></div>
+    <div class="tk-comp"><label class="tk-cam">📷<input type="file" accept="image/*" capture="environment" onchange="tkPick(this)"></label><input id="tkIn" placeholder="Write a message…" onkeydown="if(event.key==='Enter')tkSend('${esc(id)}')"><button class="tk-send" onclick="tkSend('${esc(id)}')">Send</button></div><div class="fm-err" id="fmErr"></div><div id="tkThread" data-id="${hx(id)}"></div>`);
+  _tk.photo=''; await tkNames(); await tkRefresh(id,false);
+  clearInterval(_tk.timer); _tk.timer=setInterval(()=>{ if(!document.getElementById('tkThread')){ clearInterval(_tk.timer); return; } tkRefresh(id,true); },12000);
 }
-function tkCheck(id){ const c=Array.from(document.querySelectorAll('#tkCk input')).map(x=>x.checked); tkSave(id,{checked:c}); }
-function tkSet(id,status){
-  if(status==='Done'){ const t=_tk.mine.filter(x=>x.id===id)[0]; if(t&&t.checklist.some(c=>!c.d)&&!confirm('Some checklist items are not ticked. Mark done anyway?')) return; }
-  tkSave(id,{status:status});
+async function tkRefresh(id,quiet){
+  try{ const r=await tkApi('taskThread',{id:id}); Object.assign(_tk.names,Object.fromEntries(Object.entries(r.names||{}))); _tk.cur=r; tkPaint(quiet); _tk.at=0; }
+  catch(e){ if(!quiet) fmErr(e.message); }
 }
-function tkNoteSave(id){ const v=(document.getElementById('tkNote')||{}).value||''; if(v.trim()) tkSave(id,{comment:v}); }
-function tkPhoto(id,inp){
-  const f=inp.files&&inp.files[0]; if(!f) return; fmErr('Adding photo…');
-  const img=new Image(), u=URL.createObjectURL(f);
-  img.onload=()=>{ const k=Math.min(1,900/Math.max(img.width,img.height)), c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); tkSave(id,{proof:c.toDataURL('image/jpeg',0.6)}); };
+function tkPaint(quiet){
+  const r=_tk.cur, t=r.task, me=tkMe(), isGiver=tkSame(t.empId,me)||tkIsAdmin(), live=t.status==='Open';
+  const hdr=document.getElementById('tkHdr'), info=document.getElementById('tkInfo'), box=document.getElementById('tkMsgs'); if(!info||!box) return;
+  hdr.innerHTML=`<b style="font-size:16px">${hx(t.title)}</b>`;
+  const rows=t.assignees.map(i=>{ const s=(t.states[i]||{}).s||'To do', mine=tkSame(i,me);
+    return `<div class="tk-person"><i class="tk-av">${hx(tkIni(tkNm(i)))}</i><span>${hx(tkNm(i))}${mine?' (you)':''}</span>${tkPill(s)}
+      ${mine&&live&&s==='To do'?`<button class="tk-mini" onclick="tkSet('${esc(t.id)}','In progress')">▶ Start</button>`:''}
+      ${mine&&live&&(s==='To do'||s==='In progress')?`<button class="tk-mini go" onclick="tkSet('${esc(t.id)}','Done')">✔ Done</button>`:''}
+      ${mine&&live&&s==='Done'?`<button class="tk-mini" onclick="tkSet('${esc(t.id)}','In progress')">Undo</button>`:''}
+      ${isGiver&&live&&s==='Done'?`<button class="tk-mini go" onclick="tkVerify('${esc(t.id)}','${esc(i)}',true)">✅ Verify</button><button class="tk-mini" onclick="tkVerify('${esc(t.id)}','${esc(i)}',false)">↩ Send back</button>`:''}</div>`; }).join('');
+  const anyDone=isGiver&&live&&t.assignees.some(i=>((t.states[i]||{}).s)==='Done');
+  info.innerHTML=`<div class="tk-glass"><div class="tk-meta">${t.priority==='High'?'<span class="tk-pill High">High</span>':''}${tkDue(t)}${t.status==='Closed'?'<span class="tk-pill Verified">Closed</span>':''}${t.status==='Cancelled'?'<span class="tk-pill">Cancelled</span>':''}<span class="tk-due">From ${hx(tkNm(t.empId))}</span>${t.coins?`<span class="tk-due">🪙 ${t.coins}</span>`:''}</div>
+    ${t.detail?`<div class="tk-det">${hx(t.detail)}</div>`:''}${t.place?`<div class="tk-det">📍 ${hx(t.place)}</div>`:''}
+    ${rows}${anyDone?'<input id="tkWhy" placeholder="If sending back: what needs to be redone?">':''}
+    ${t.checklist.length?`<div id="tkCk" style="margin-top:6px">${t.checklist.map(c=>`<label class="tk-ck"><input type="checkbox" ${c.d?'checked':''} ${live?'':'disabled'} onchange="tkCheck('${esc(t.id)}')"><span>${hx(c.t)}</span></label>`).join('')}</div>`:''}
+    ${isGiver&&live?`<div style="margin-top:6px"><button class="fm-link" onclick="tkForm('${esc(t.id)}')">✏️ Edit</button><button class="fm-link" onclick="tkCancel('${esc(t.id)}')">🗑 Cancel task</button></div>`:''}</div>`;
+  const stick=box.scrollTop+box.clientHeight>=box.scrollHeight-40;
+  box.innerHTML=r.msgs.map(m=>m.kind==='sys'?`<div class="tk-sys">${hx(m.text)}</div>`:`<div class="tk-b${tkSame(m.empId,me)?' me':''}"><small>${hx(tkNm(m.empId))} · ${hx(String(m.createdAt).slice(11,16))}</small>${m.text?hx(m.text):''}${m.photo?`<img src="${hx(m.photo)}" alt="photo">`:''}</div>`).join('')||'<div class="tk-sys">No messages yet. Say something.</div>';
+  if(!quiet||stick) box.scrollTop=box.scrollHeight;
+  const cmp=document.querySelector('.tk-comp'); if(cmp) cmp.style.display=live?'flex':'none';
+}
+async function tkSend(id){
+  const el=document.getElementById('tkIn'), text=el.value.trim(); if(!text&&!_tk.photo) return;
+  try{ await tkApi('taskPost',{id:id,text:text,photo:_tk.photo}); el.value=''; _tk.photo=''; const c=document.querySelector('.tk-cam'); if(c) c.classList.remove('on'); await tkRefresh(id,false); }
+  catch(e){ fmErr(e.message); }
+}
+function tkPick(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return; const img=new Image(), u=URL.createObjectURL(f);
+  img.onload=()=>{ const k=Math.min(1,900/Math.max(img.width,img.height)), c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); _tk.photo=c.toDataURL('image/jpeg',0.6); const l=document.querySelector('.tk-cam'); if(l) l.classList.add('on'); };
   img.onerror=()=>fmErr('Could not read the photo.'); img.src=u;
 }
+async function tkSet(id,state){
+  const t=_tk.cur&&_tk.cur.task;
+  if(state==='Done'&&t&&t.checklist.some(c=>!c.d)&&!confirm('Some checklist steps are not ticked. Mark done anyway?')) return;
+  try{ await tkApi('taskState',{id:id,state:state}); await tkRefresh(id,false); }catch(e){ fmErr(e.message); }
+}
+async function tkVerify(id,who,approve){
+  const note=(document.getElementById('tkWhy')||{}).value||'';
+  try{ await tkApi('taskVerify',{id:id,assignee:who,approve:approve,note:note}); await tkRefresh(id,false); if(tkIsAdmin()) tkLoad(); }catch(e){ fmErr(e.message); }
+}
+function tkCheck(id){ const c=Array.from(document.querySelectorAll('#tkCk input')).map(x=>x.checked); tkApi('taskCheck',{id:id,checked:c}).then(()=>tkRefresh(id,true)).catch(e=>fmErr(e.message)); }
+async function tkCancel(id){ if(!confirm('Cancel this task for everyone?')) return; try{ await tkApi('cancelTask',{id:id}); if(tkIsAdmin()){ fmClose(); tkLoad(); } else tkOpen(); }catch(e){ fmErr(e.message); } }
 
-/* admin side */
+/* give a task */
+async function tkForm(id){
+  await tkNames(); const t=id&&_tk.cur&&_tk.cur.task.id===id?_tk.cur.task:null, emps=_tk.dir||[];
+  _tk.ppl=t?t.assignees.slice():[]; _tk.pri=t?t.priority:'Normal';
+  tkBig(`<h3>${t?'Edit task':'New task'}</h3>
+    <div class="tk-scroll"><div class="fm-lbl">Task</div><input id="tkT" maxlength="120" placeholder="What needs to be done?" value="${hx(t?t.title:'')}">
+    <div class="fm-lbl">Details (optional)</div><textarea id="tkD" rows="2" maxlength="500">${hx(t?t.detail:'')}</textarea>
+    <div class="fm-lbl">Give to (one or more)</div><input id="tkQ" placeholder="Search name…" oninput="tkPeople()"><div id="tkPpl" class="tk-ppl"></div>
+    <div class="fm-lbl">Deadline</div><input id="tkDue" type="date" value="${hx(t?t.due:'')}">
+    <div class="fm-lbl">Priority</div><div class="fm-chips" id="tkPri"></div>
+    ${tkIsAdmin()?`<div class="fm-lbl">Amitek Coins</div><input id="tkC" inputmode="numeric" value="${t?t.coins:1}">`:''}
+    <div class="fm-lbl">Place (optional)</div><input id="tkPl" maxlength="150" value="${hx(t?t.place:'')}">
+    <div class="fm-lbl">Checklist — one step per line (optional)</div><textarea id="tkL" rows="3">${hx(t?t.checklist.map(c=>c.t).join('\n'):'')}</textarea></div>
+    <div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="tkSaveForm('${esc(id||'')}')">${t?'Save':'Send task'}</button><button class="fm-link" onclick="${t?`tkThread('${esc(id)}')`:(tkIsAdmin()?'fmClose()':'tkOpen()')}">Cancel</button>`);
+  window._tkEmps=emps; tkPeople(); tkPri();
+}
+function tkPeople(){
+  const q=((document.getElementById('tkQ')||{}).value||'').toLowerCase(), el=document.getElementById('tkPpl'); if(!el) return;
+  el.innerHTML=(window._tkEmps||[]).filter(e=>!q||(e.name+' '+e.id).toLowerCase().includes(q)).map(e=>{ const on=_tk.ppl.some(i=>tkSame(i,e.id)); return `<button type="button" class="fm-chip${on?' on':''}" onclick="tkTog('${esc(e.id)}')">${on?'✓ ':''}${hx(e.name)}${tkSame(e.id,tkMe())?' (me)':''}</button>`; }).join('');
+}
+function tkTog(id){ const i=_tk.ppl.findIndex(x=>tkSame(x,id)); if(i>=0) _tk.ppl.splice(i,1); else _tk.ppl.push(id); tkPeople(); }
+function tkPri(){ const el=document.getElementById('tkPri'); if(el) el.innerHTML=['Low','Normal','High'].map(p=>`<button type="button" class="fm-chip${_tk.pri===p?' on':''}" onclick="_tk.pri='${p}';tkPri()">${p}</button>`).join(''); }
+async function tkSaveForm(id){
+  const v=k=>(document.getElementById(k)||{}).value||'';
+  try{ const r=await tkApi('saveTask',{id:id,title:v('tkT'),detail:v('tkD'),assignees:_tk.ppl,due:v('tkDue'),priority:_tk.pri,coins:v('tkC'),place:v('tkPl'),checklist:v('tkL').split('\n')});
+    _tk.at=0; if(tkIsAdmin()){ fmClose(); tkLoad(); } else if(id) tkThread(id); else { _tk.tab='given'; tkOpen(); } }
+  catch(e){ fmErr(e.message); }
+}
+
+/* admin tab: every task in their scope */
 async function tkLoad(){
   const body=document.getElementById('tkBody'); if(!body) return;
-  try{ _tk.all=(await api('listTasks',{}))||[]; tkRender(); }
+  try{ await tkNames(); _tk.all=(await api('listTasks',{}))||[]; tkRender(); }
   catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
 }
-function tkPick(f){ _tk.f=f; tkRender(); }
-async function tkRender(){
+function tkFilter(f){ _tk.f=f; tkRender(); }
+function tkRender(){
   const body=document.getElementById('tkBody'); if(!body) return;
-  const emps=await getEmployees(), nm={}; emps.forEach(e=>{ nm[String(e.id).toUpperCase()]=e.name; });
-  const A=_tk.all, cnt=s=>A.filter(t=>t.status===s).length, active=A.filter(t=>t.status!=='Verified'&&t.status!=='Cancelled');
-  const chips=[['Active','Active',active.length],['Done','Waiting for check',cnt('Done')],['Open','Open',cnt('Open')],['To do','To do',cnt('To do')],['In progress','In progress',cnt('In progress')],['Verified','Verified',cnt('Verified')],['Cancelled','Cancelled',cnt('Cancelled')]];
-  const list=_tk.f==='Active'?active:A.filter(t=>t.status===_tk.f);
-  list.sort((x,y)=>(y.status==='Done')-(x.status==='Done'));
-  body.innerHTML=`<div class="fm-chips" style="margin-bottom:10px">${chips.map(c=>`<button type="button" class="fm-chip${_tk.f===c[0]?' on':''}" onclick="tkPick('${c[0]}')">${hx(c[1])} ${c[2]}</button>`).join('')}</div>`+
-    (list.length?list.map(t=>`<button class="tk-card" onclick="tkAdminOpen('${esc(t.id)}')"><div class="tk-row"><b>${hx(t.title)}</b>${tkPill(t)}</div><small>${t.empId?hx(nm[String(t.empId).toUpperCase()]||t.empId):'Nobody yet'}${tkDue(t)}${tkProg(t)}${tkCoin(t)}${t.proof.length?' · 📷 '+t.proof.length:''}</small></button>`).join(''):'<div class="empty"><div class="eicon">✅</div>Nothing here.</div>');
-}
-function tkAdminOpen(id){
-  const t=_tk.all.filter(x=>x.id===id)[0]; if(!t) return;
-  fmSheet(`<h3>${hx(t.title)}</h3><div>${tkPill(t)}<small style="color:var(--soft)">${t.priority==='High'?' · 🔴 High':''}${tkDue(t)}${tkCoin(t)}</small></div>
-    <div style="font-size:12.5px;color:var(--soft);margin:6px 0">${t.empId?'Assigned to '+hx(t.empId):'Not assigned — open for anyone'}${t.customerName||t.place?' · 📍 '+hx([t.customerName,t.place].filter(Boolean).join(' · ')):''}</div>
-    ${t.detail?`<div style="font-size:13.5px;margin:6px 0">${hx(t.detail)}</div>`:''}
-    ${t.checklist.length?`<div class="fm-lbl">Checklist</div>${t.checklist.map(c=>`<div class="tk-ck"><span>${c.d?'☑':'☐'}</span><span>${hx(c.t)}</span></div>`).join('')}`:''}
-    ${t.proof.length?`<div class="fm-lbl">Photos</div>${tkPhotos(t)}`:''}${t.comments.length?`<div class="fm-lbl">Notes</div>${tkCom(t)}`:''}
-    <div class="fm-err" id="fmErr"></div>
-    ${t.status==='Done'?`<button class="btn btn-green" style="width:100%" onclick="tkVerify('${esc(id)}',true)">✅ Verify</button><input id="tkWhy" placeholder="What needs to be redone?"><button class="btn btn-outline" style="width:100%" onclick="tkVerify('${esc(id)}',false)">↩ Send back</button>`:''}
-    ${t.status!=='Verified'&&t.status!=='Cancelled'?`<button class="fm-link" onclick="tkForm('${esc(id)}')">✏️ Edit / reassign</button><button class="fm-link" onclick="tkCancel('${esc(id)}')">🗑 Cancel this task</button>`:''}
-    <button class="fm-link" onclick="fmClose()">Close</button>`);
-}
-async function tkVerify(id,approve){
-  const note=(document.getElementById('tkWhy')||{}).value||'';
-  try{ await api('verifyTask',{id:id,approve:approve,note:note}); fmClose(); tkLoad(); }catch(e){ fmErr(e.message); }
-}
-async function tkCancel(id){ if(!confirm('Cancel this task?')) return; try{ await api('cancelTask',{id:id}); fmClose(); tkLoad(); }catch(e){ fmErr(e.message); } }
-async function tkForm(id){
-  const t=id?_tk.all.filter(x=>x.id===id)[0]:null, emps=await getEmployees();
-  fmSheet(`<h3>${t?'Edit task':'New task'}</h3>
-    <div class="fm-lbl">Task</div><input id="tkT" maxlength="120" placeholder="e.g. Measure site at Malviya Nagar" value="${hx(t?t.title:'')}">
-    <div class="fm-lbl">Details (optional)</div><textarea id="tkD" rows="2" maxlength="500">${hx(t?t.detail:'')}</textarea>
-    <div class="fm-lbl">Give to</div><select id="tkE"><option value="">Nobody yet (open for anyone)</option>${emps.map(e=>`<option value="${hx(e.id)}"${t&&String(t.empId).toUpperCase()===String(e.id).toUpperCase()?' selected':''}>${hx(e.name)}</option>`).join('')}</select>
-    <div class="fm-lbl">Due date</div><input id="tkDue" type="date" value="${hx(t?t.due:'')}">
-    <div class="fm-lbl">Priority</div><select id="tkP">${['Low','Normal','High'].map(p=>`<option${(t?t.priority:'Normal')===p?' selected':''}>${p}</option>`).join('')}</select>
-    <div class="fm-lbl">Amitek Coins for this task</div><input id="tkC" inputmode="numeric" value="${t?t.coins:1}">
-    <div class="fm-lbl">Place (optional)</div><input id="tkPl" maxlength="150" value="${hx(t?t.place:'')}">
-    <div class="fm-lbl">Checklist — one step per line (optional)</div><textarea id="tkL" rows="3">${hx(t?t.checklist.map(c=>c.t).join('\n'):'')}</textarea>
-    <div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="tkSaveForm('${esc(id||'')}')">Save task</button><button class="fm-link" onclick="fmClose()">Cancel</button>`);
-}
-async function tkSaveForm(id){
-  const v=k=>document.getElementById(k).value;
-  try{ await api('saveTask',{id:id,title:v('tkT'),detail:v('tkD'),empId:v('tkE'),due:v('tkDue'),priority:v('tkP'),coins:v('tkC'),place:v('tkPl'),checklist:v('tkL').split('\n')}); fmClose(); tkLoad(); }
-  catch(e){ fmErr(e.message); }
+  const A=_tk.all, act=A.filter(t=>t.status==='Open'), waiting=act.filter(t=>t.assignees.some(i=>(t.states[i]||{}).s==='Done')), late=act.filter(t=>t.due&&t.due<todayStr());
+  const sets={Active:act,Waiting:waiting,Late:late,Closed:A.filter(t=>t.status==='Closed'),Cancelled:A.filter(t=>t.status==='Cancelled'),All:A};
+  const lab={Active:'Active',Waiting:'Waiting for check',Late:'Late',Closed:'Closed',Cancelled:'Cancelled',All:'All'};
+  const list=sets[_tk.f]||act;
+  body.innerHTML=`<div class="fm-chips" style="margin-bottom:10px">${Object.keys(sets).map(k=>`<button type="button" class="fm-chip${_tk.f===k?' on':''}" onclick="tkFilter('${k}')">${lab[k]} ${sets[k].length}</button>`).join('')}</div>`+(list.length?list.map(tkCard).join(''):'<div class="empty"><div class="eicon">✅</div>Nothing here.</div>');
 }
 </script>
 </body>
