@@ -2799,6 +2799,7 @@ function renderHomeActs(){
   L.push(`<button onclick="showTeamLeave()">👥 <span>Team leave</span><small id="hmTlSub"></small></button>`);
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
+  L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
   lk.innerHTML=L.join('');
   if(window._hmTlSub) setHtml('hmTlSub',window._hmTlSub); if(window._hmLeaveSub) setHtml('hmLeaveSub',window._hmLeaveSub); if(window._hmFixSub) setHtml('hmFixSub',window._hmFixSub);
 }
@@ -5383,7 +5384,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script src="notify.js"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-15.1';</script>
+<script src="notify.js?v=2026-10-15.1"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -5673,6 +5675,14 @@ function trCsv(){
   if(!_tr) return;
   const q=v=>'"'+String(v).replace(/"/g,'""')+'"', rows=[['Employee ID','Name','Date','Km','GPS points','Meetings']].concat(_tr.days.map(d=>[d.empId,d.name,d.date,d.km,d.points,d.meetings]));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'})); a.download='travel-km-'+_tr.start+'-to-'+_tr.end+'.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* manual "Check for update" from the home screen */
+async function checkAppUpdate(btn){
+  const sm=btn.querySelector('small'), was=sm.textContent; sm.textContent='checking…';
+  let r='error'; try{ r=await AmkNotify.checkNow(); }catch(e){}
+  sm.textContent=r==='current'?'✅ up to date':r==='new'?'update ready':'could not check';
+  setTimeout(()=>{ sm.textContent=was; },3500);
 }
 </script>
 </body>

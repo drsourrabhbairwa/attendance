@@ -4,7 +4,7 @@
                 AmkNotify.alarmStart()       AmkNotify.alarmStop()        AmkNotify.chime() */
 (function () {
   'use strict';
-  var PAGE_VERSION = '2026-10-15.1';
+  var PAGE_VERSION = window.AMK_PAGE_VERSION || '';   // stamped into index.html by tools/release.py, so a refreshed page always knows its own version
   var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false };
 
   function $(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
@@ -183,17 +183,45 @@
       .catch(function () { });
   }
 
-  /* ── "new version" banner ── */
+  /* ── "new version" pop-up ── checked on load, every 5 minutes, and whenever the app comes back to the front */
   var lastVer = 0;
-  function checkVersion() {
-    if (Date.now() - lastVer < 10 * 60000) return; lastVer = Date.now();
-    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
-      if (!v || !v.web || v.web === PAGE_VERSION || document.getElementById('amkVerBar')) return;
-      bar('amkVerBar', 'A new version of the app is ready.', [{ t: 'Reload', f: function () { location.reload(); } }, { t: 'Later', f: function () { } }]);
-    }).catch(function () { });
+  function verCss() {
+    if (document.getElementById('amkVerCss')) return;
+    var s = document.createElement('style'); s.id = 'amkVerCss';
+    s.textContent = '.amk-ver{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:9800;max-width:460px;margin:0 auto;padding:14px;border-radius:18px;background:rgba(255,255,255,.96);color:var(--ink,#16302F);border:1px solid rgba(255,255,255,.8);box-shadow:0 14px 40px rgba(20,40,40,.28);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);font:14px/1.35 system-ui,sans-serif;animation:amkVerIn .25s ease-out}' +
+      '@keyframes amkVerIn{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}@media(prefers-reduced-motion:reduce){.amk-ver{animation:none}}' +
+      '.amk-ver b{display:block;font-size:15px;margin-bottom:2px}.amk-ver small{display:block;color:var(--soft,#5b6b66);margin-top:2px}' +
+      '.amk-ver div{display:flex;gap:8px;margin-top:10px}.amk-ver button{flex:1;min-height:42px;border-radius:12px;border:1px solid var(--border,#c9d4d0);background:#fff;font:600 14px system-ui,sans-serif;cursor:pointer;color:inherit}' +
+      '.amk-ver button.go{background:var(--accent,#1f7a6b);color:#fff;border-color:transparent}';
+    document.head.appendChild(s);
+  }
+  function applyUpdate(ver) {
+    var go = function () { location.replace(location.pathname + '?v=' + encodeURIComponent(ver) + location.hash); };
+    try { if (window.caches && caches.keys) { caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).catch(function () { }).then(go); return; } } catch (e) { }
+    go();
+  }
+  function showUpdate(v) {
+    verCss(); var old = document.getElementById('amkVerBar'); if (old) return;
+    var el = $('div', 'amk-ver', '<b>🆕 A new version is ready</b>' + (v.notes ? '<span>' + hx(v.notes) + '</span>' : '<span>Update now to get the latest fixes and features.</span>') + '<small>Your sign-in stays. It takes a few seconds.</small><div></div>');
+    el.id = 'amkVerBar'; el.setAttribute('role', 'alertdialog');
+    var go = $('button', 'go', 'Update now'); go.type = 'button'; go.onclick = function () { go.disabled = true; go.textContent = 'Updating…'; applyUpdate(v.web); };
+    el.lastChild.appendChild(go);
+    if (!v.force) { var later = $('button', '', 'Later'); later.type = 'button'; later.onclick = function () { el.remove(); ls('amk_ver_snooze', String(Date.now() + 3600000)); }; el.lastChild.appendChild(later); }
+    document.body.appendChild(el); try { chime(); } catch (e) { }
+  }
+  /* manual = the person tapped "Check for update": always answer, ignore the snooze */
+  function checkVersion(manual) {
+    if (!manual && Date.now() - lastVer < 120000) return Promise.resolve(); lastVer = Date.now();
+    return fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (!v || !v.web) return manual ? 'error' : undefined;
+      if (v.web === PAGE_VERSION) return manual ? 'current' : undefined;
+      if (!manual && !v.force && Number(ls('amk_ver_snooze') || 0) > Date.now()) return;
+      showUpdate(v); return 'new';
+    }).catch(function () { return manual ? 'error' : undefined; });
   }
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') checkVersion(); });
+  setInterval(function () { if (document.visibilityState === 'visible') checkVersion(); }, 300000);
   setTimeout(checkVersion, 4000);
 
-  window.AmkNotify = { onPoll: onPoll, mount: mount, reset: reset, alarmStart: alarmStart, alarmStop: alarmStop, chime: chime, refresh: refresh, _state: S };
+  window.AmkNotify = { version: function () { return PAGE_VERSION; }, checkNow: function () { return checkVersion(true); }, onPoll: onPoll, mount: mount, reset: reset, alarmStart: alarmStart, alarmStop: alarmStop, chime: chime, refresh: refresh, _state: S };
 })();
