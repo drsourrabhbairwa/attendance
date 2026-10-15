@@ -1026,6 +1026,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <button class="tab-btn" onclick="switchTab('places')">📍 Places</button>
     <button class="tab-btn sa-only" onclick="switchTab('holidays')">🗓 Holidays</button>
     <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
+    <button class="tab-btn" onclick="switchTab('leads')">🤝 Leads</button>
     <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
     <button class="tab-btn" onclick="switchTab('corrections')">✏️ Corrections</button>
     <button class="tab-btn sa-only" onclick="switchTab('log')">🧾 Log</button>
@@ -1298,6 +1299,15 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Who changed what, newest first (last 300). The name comes from the app, so treat it as a record, not proof.</div>
     <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th><th>Details</th></tr></thead><tbody id="logBody"></tbody></table></div>
     <div class="empty" id="logEmpty" style="display:none"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">Nothing logged yet.</div>
+  </div>
+
+  <!-- LEADS TAB -->
+  <div id="tabLeads" class="tab-pane">
+    <div class="ld-top">
+      <div><div style="font-weight:700;font-size:15px">Leads &amp; customers</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Every customer our team has met, by stage.</div></div>
+      <button class="btn btn-outline" style="width:auto;margin:0;padding:8px 14px" onclick="ldLoad()">🔄 Refresh</button>
+    </div>
+    <div id="ldBody"><div class="empty"><div class="eicon">🤝</div>Loading…</div></div>
   </div>
 
   <!-- SITE MONITOR TAB -->
@@ -3851,7 +3861,7 @@ function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endMa
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','reports','corrections','log','safety','org'];
+  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','leads','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
@@ -3866,6 +3876,7 @@ function switchTab(tab){
   if(tab==='holidays')   renderHolList();
   if(tab==='reports') initReports();
   if(tab==='corrections') loadCorrectionsTab();
+  if(tab==='leads') ldLoad();
   if(tab==='log') loadAuditTab();
   if(tab==='safety') loadSafety('admin');
   if(tab==='org') loadOrg();
@@ -5362,6 +5373,27 @@ init();
 <script src="firebase-config.js"></script>
 <script src="notify.js"></script>
 <style>
+
+/* ── Leads (admin) ── */
+.ld-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ld-glass{padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2)}
+.ld-stages{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+.ld-st{flex:0 0 118px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);padding:10px;border-radius:16px;border:1px solid rgba(255,255,255,.75);background:rgba(255,255,255,.55)}
+.ld-st.on{outline:2px solid var(--accent)}
+.ld-st b{display:block;font-size:20px}.ld-st span{font-size:11px;color:var(--soft);display:block}
+.ld-st small{font-size:12px;font-weight:700}
+.ld-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px}
+.ld-grid h4{font-size:13px;margin-bottom:6px}
+.ld-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:12.5px}
+.ld-row:first-of-type{border-top:0}
+.ld-row small{color:var(--soft);display:block}
+.ld-cust{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;margin-bottom:8px;border-radius:14px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);cursor:pointer}
+.ld-cust b{font-size:14px}.ld-cust span{display:block;font-size:12px;color:var(--soft)}
+.ld-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.8);border:1px solid var(--border);white-space:nowrap}
+.ld-hist{border-left:2px solid var(--border);margin:8px 0 0 6px;padding-left:12px}
+.ld-hist>div{margin-bottom:10px;font-size:12.5px}
+.ld-hist small{color:var(--soft)}
+
 /* ── Field meetings (glass look) ── */
 .fm-card{margin-top:12px;padding:14px;border-radius:20px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.10);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
 .fm-step{font-size:12px;color:var(--soft);font-weight:600}
@@ -5490,6 +5522,46 @@ function fmArrived(m,d){
   try{ if(window.AmkNotify&&AmkNotify.chime) AmkNotify.chime(); }catch(e){}
   try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('You reached '+m.customerName,{body:'Open the app and tap Start meeting.'}); }catch(e){}
   fmSheet(`<h3>📍 You reached ${hx(m.customerName)}</h3><p style="margin:0 0 12px;color:var(--soft)">About ${d} m from the saved place. Start the meeting now?</p><button class="btn btn-green" style="width:100%" onclick="fmClose();fmStart(${m.seq})">▶ Start meeting</button><button class="fm-link" style="display:block;margin:10px auto 0" onclick="fmClose()">Not yet</button>`);
+}
+
+/* ── Admin Leads tab: stage board, pipeline value, customer page ── */
+const LD_STAGES=['New','Contacted','Meeting done','Quotation sent','Negotiation','Won','Lost'];
+let _ld={data:null,stage:'',q:''};
+const ldRs=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+async function ldLoad(){
+  const box=document.getElementById('ldBody'); if(!box) return;
+  if(!_ld.data) box.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{ _ld.data=await api('listCustomers',{stage:_ld.stage,q:_ld.q}); ldRender(); }
+  catch(e){ box.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
+}
+function ldPick(s){ _ld.stage=(_ld.stage===s?'':s); ldLoad(); }
+let _ldT=null;
+function ldSearch(v){ _ld.q=v; clearTimeout(_ldT); _ldT=setTimeout(ldLoad,350); }
+function ldRender(){
+  const d=_ld.data, box=document.getElementById('ldBody'); if(!d) return;
+  const stages=LD_STAGES.map(s=>`<button class="ld-st ${_ld.stage===s?'on':''}" onclick="ldPick('${s}')"><b>${d.counts[s]||0}</b><span>${hx(s)}</span><small>${ldRs(d.value[s])}</small></button>`).join('');
+  const groupRows=(arr,nameOf)=>arr.length?arr.map(g=>`<div class="ld-row"><div><b>${hx(nameOf(g))}</b><small>${g.count} lead${g.count===1?'':'s'}${g.lost?' · '+g.lost+' lost':''}</small></div><div style="text-align:right"><b>${ldRs(g.openValue)}</b><small>open · ${ldRs(g.wonValue)} won</small></div></div>`).join(''):'<div class="empty" style="padding:10px">No leads yet.</div>';
+  const list=d.customers.length?d.customers.map(c=>`<div class="ld-cust" onclick="ldOpen('${esc(c.id)}')"><div><b>${hx(c.name)}</b><span>${c.phone?'📞 '+hx(c.phone):''}${c.vertical?' · '+hx(c.vertical):''}${c.followUpDate?' · follow-up '+hx(c.followUpDate):''}</span></div><div style="text-align:right"><span class="ld-pill">${hx(c.stage||'New')}</span>${c.expectedValue?'<span>'+ldRs(c.expectedValue)+'</span>':''}</div></div>`).join(''):'<div class="empty"><div class="eicon">🤝</div>'+(_ld.stage||_ld.q?'No customers match.':'No customers yet. They appear here when your team starts logging meetings.')+'</div>';
+  const keep=document.activeElement&&document.activeElement.id==='ldQ';
+  box.innerHTML=`<div class="ld-stages">${stages}</div>
+    <div class="ld-grid"><div class="ld-glass"><h4>By employee</h4>${groupRows(d.byEmp,g=>g.name)}</div><div class="ld-glass"><h4>By vertical</h4>${groupRows(d.byVertical,g=>g.vertical)}</div></div>
+    <input id="ldQ" type="text" placeholder="Search name or phone…" value="${hx(_ld.q)}" oninput="ldSearch(this.value)" style="margin:0 0 10px">
+    <div style="font-size:12px;color:var(--soft);margin-bottom:8px">${d.total} customer${d.total===1?'':'s'}${_ld.stage?' in “'+hx(_ld.stage)+'”':''}${d.customers.length<d.total?' · showing '+d.customers.length:''}</div>${list}`;
+  if(keep){ const q=document.getElementById('ldQ'); q.focus(); q.setSelectionRange(q.value.length,q.value.length); }
+}
+async function ldOpen(id){
+  const m=document.getElementById('detailModal'), body=document.getElementById('modalBody');
+  document.getElementById('modalTitle').textContent='🤝 Customer';
+  body.innerHTML='<div class="empty">⏳ Loading…</div>'; m.classList.add('open');
+  try{
+    const r=await api('customerDetail',{id:id}), c=r.customer;
+    const hist=r.meetings.length?r.meetings.map(x=>`<div><b>${hx(x.date)}</b> · ${hx(x.empName)}<br>${hx(x.reason||'Meeting')}${x.startTime?' · '+fmt12(x.startTime)+(x.endTime?' → '+fmt12(x.endTime):''):''}<br>${x.result?'<b>'+hx(x.result)+'</b>':'<small>No result recorded</small>'}${x.vertical?' · '+hx(x.vertical):''}${x.expectedValue?' · '+ldRs(x.expectedValue):''}${x.followUpDate?'<br><small>Follow-up '+hx(x.followUpDate)+'</small>':''}${x.note?'<br><small>'+hx(x.note)+'</small>':''}</div>`).join(''):'<div class="empty" style="padding:10px">No meetings logged yet.</div>';
+    body.innerHTML=`<div class="ld-glass"><div style="font-weight:700;font-size:15px">${hx(c.name)} <span class="ld-pill">${hx(c.stage||'New')}</span></div>
+      <div style="font-size:13px;margin-top:6px">${c.phone?'📞 <a href="tel:'+hx(c.phone)+'">'+hx(c.phone)+'</a>':''}${c.address?'<br>📍 '+hx(c.address)+(c.lat?' <a class="map-link" href="'+mapsUrl(c.lat,c.lng)+'" target="_blank">Map</a>':''):''}</div>
+      <div class="sd-sum" style="margin-top:10px"><div><b>${r.meetings.length}</b>Meetings</div><div><b>${c.expectedValue?ldRs(c.expectedValue):'—'}</b>Expected value</div><div><b>${hx(r.lastResult||'—')}</b>Last result</div><div><b>${hx(r.nextFollowUp||'—')}</b>Next follow-up</div></div>
+      ${c.stage==='Lost'&&c.lostReason?'<div style="font-size:12px;color:var(--red)">Lost: '+hx(c.lostReason)+'</div>':''}</div>
+      <div style="font-weight:700;font-size:13px;margin:12px 0 2px">Meeting history</div><div class="ld-hist">${hist}</div>`;
+  }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
 }
 </script>
 </body>
