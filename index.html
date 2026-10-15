@@ -2742,7 +2742,7 @@ function renderHomeToday(rec,dayOff){
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
     extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
-    b=am?btn('🔙 I am back — confirm','btn-purple'):btn('📸 Punch Out','btn-blue');
+    b=am?(pers?'':fmCardHtml(am))+btn('🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline'):btn('📸 Punch Out','btn-blue');
   } else { title='Not punched in yet'; sub='Office starts at '+set.start; b=btn('📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
@@ -3439,6 +3439,7 @@ function buildTimeline(rec){
   if(rec.punchIn) html+=`<div class="tl-item">${photoEl(rec.punchIn.photo,'Punch In')}<div><div class="tl-label">🟢 Punch In</div><div class="tl-time">${fmt12(rec.punchIn.time)}</div>${rec.punchIn.area?'<div class="tl-area">📍 '+hx(rec.punchIn.area)+'</div>':''}</div></div>`;
   (rec.meetings||[]).forEach((m,i)=>{
     if(m.outTime) html+=`<div class="tl-item">${photoEl(m.outPhoto,'Meeting Out')}<div><div class="tl-label">${m.kind==='personal'?'🏃 Out · personal work':'🚗 Out for Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.outTime)}</div>${m.outArea?'<div class="tl-area">📍 '+hx(m.outArea)+'</div>':''}${m.note?'<div class="tl-note">"'+hx(m.note)+'"</div>':''}</div></div>`;
+    if(m.customerName) html+=`<div class="tl-item"><div class="tl-photo" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">🤝</div><div><div class="tl-label">${hx(m.customerName)}${m.reason?' · '+hx(m.reason):''}</div><div class="tl-time">${m.startTime?fmt12(m.startTime)+(m.endTime?' → '+fmt12(m.endTime)+(calcHrs(m.startTime,m.endTime)?' · '+calcHrs(m.startTime,m.endTime).label:''):' · in meeting'):'On the way'}</div><div class="tl-area">${m.phone?'📞 <a href="tel:'+hx(m.phone)+'">'+hx(m.phone)+'</a>':''}${m.address?' · '+hx(m.address):''}</div>${m.result?'<div class="tl-note">'+hx(m.result)+(m.vertical?' · '+hx(m.vertical):'')+(m.expectedValue?' · ₹'+Number(m.expectedValue).toLocaleString('en-IN'):'')+(m.followUpDate?' · follow-up '+hx(m.followUpDate):'')+'</div>':''}</div></div>`;
     if(m.backTime){const d=calcHrs(m.outTime,m.backTime);html+=`<div class="tl-item">${photoEl(m.backPhoto,'Meeting Back')}<div><div class="tl-label">${m.kind==='personal'?'🔙 Back from personal work':'🔙 Back from Meeting '+(i+1)}</div><div class="tl-time">${fmt12(m.backTime)}${d?' · <span style="color:var(--soft);font-size:12px">Away: '+d.label+'</span>':''}</div>${m.backArea?'<div class="tl-area">📍 '+hx(m.backArea)+'</div>':''}</div></div>`;}
   });
   if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+hx(rec.punchOut.area)+'</div>':''}</div></div>`;
@@ -5357,5 +5358,115 @@ init();
 </script>
 <script src="firebase-config.js"></script>
 <script src="notify.js"></script>
+<style>
+/* ── Field meetings (glass look) ── */
+.fm-card{margin-top:12px;padding:14px;border-radius:20px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.10);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
+.fm-step{font-size:12px;color:var(--soft);font-weight:600}
+.fm-cust{display:flex;align-items:center;gap:10px;margin:8px 0 10px;padding:9px 11px;border-radius:14px;background:rgba(255,255,255,.55);border:1px solid var(--border)}
+.fm-cust b{display:block;font-size:14px}.fm-cust span{font-size:12px;color:var(--soft)}
+.fm-cust a{margin-left:auto;font-size:20px;text-decoration:none}
+.fm-card .btn{width:100%;margin-top:6px}
+.fm-link{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:6px;font-family:inherit}
+.fm-back{position:fixed;inset:0;z-index:9000;background:rgba(15,30,30,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.fm-sheet{width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:18px 16px 22px;border-radius:24px 24px 0 0;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8)}
+.fm-sheet h3{margin:0 0 10px;font-size:17px}
+.fm-sheet input,.fm-sheet textarea{width:100%;box-sizing:border-box;margin:5px 0;padding:11px 12px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;color:var(--ink)}
+.fm-lbl{font-size:12px;font-weight:700;color:var(--soft);margin:10px 0 4px}
+.fm-chips{display:flex;flex-wrap:wrap;gap:7px}
+.fm-chip{padding:8px 13px;border-radius:999px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.fm-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fm-res{margin:6px 0;max-height:190px;overflow:auto}
+.fm-res button{display:block;width:100%;text-align:left;padding:9px 11px;margin:4px 0;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;cursor:pointer;color:var(--ink)}
+.fm-res button small{display:block;color:var(--soft)}
+.fm-err{color:var(--red);font-size:13px;margin:6px 0;min-height:1em}
+.fm-or{font-size:12px;color:var(--soft);margin:12px 0 2px}
+</style>
+<script>
+/* ── Field meetings: leave → customer → start → end (result) → next meeting or Back ── */
+const FM_REASONS=['Quotation','Demo','Site visit','Payment','Follow-up','Complaint','Other'];
+const FM_RESULTS=['Interested','Quotation asked','Order','Follow-up','Not interested'];
+const FM_VERTICALS=['Seamless Floorings','Waterproofing','Road Marking Paint','Home Automation'];
+let _fm={seq:0,id:'',reason:'',result:'',vertical:'',lat:'',lng:'',busy:false,t:null};
+function fmCust(m){ return m.customerName?`<div class="fm-cust"><div><b>${hx(m.customerName)}</b><span>${hx(m.reason||'')}${m.address?' · '+hx(m.address):''}</span></div>${m.phone?`<a href="tel:${hx(m.phone)}" title="Call">📞</a>`:''}</div>`:''; }
+function fmCardHtml(m){
+  const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
+  if(st==='go') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · on the way</div>${fmCust(m)}`+
+    (m.customerId?`<button class="btn btn-green" onclick="fmStart(${n})">▶ Start meeting</button><button class="fm-link" onclick="fmChoose(${n})">Change customer</button>`:`<button class="btn btn-green" onclick="fmChoose(${n})">👤 Choose customer</button>`)+`</div>`;
+  if(st==='in') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button></div>`;
+  return `<div class="fm-card"><div class="fm-step">Meeting ${n} · done · ${hx(m.result||'')}</div>${fmCust(m)}<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button></div>`;
+}
+function fmSheet(html){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet">'+html+'</div>'; }
+function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
+function fmErr(t){ const e=document.getElementById('fmErr'); if(e) e.textContent=t||''; }
+function fmChips(list,cur,fn){ return '<div class="fm-chips">'+list.map(x=>`<button type="button" class="fm-chip${x===cur?' on':''}" onclick="${fn}('${esc(x)}')">${hx(x)}</button>`).join('')+'</div>'; }
+async function fmCall(action,extra){
+  if(_fm.busy) return null; _fm.busy=true;
+  try{ return await api(action,Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),time:nowTime()},extra||{})); }
+  finally{ _fm.busy=false; }
+}
+async function fmRefresh(){ const r=await freshRecordToday(currentEmp.id); if(r!==undefined) renderHomeToday(r,_hmOff); }
+async function fmPlace(){
+  const f=await freshFix(); let area=''; try{ area=await reverseGeocode(f.lat,f.lng); }catch(e){}
+  return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
+}
+async function fmStart(seq){
+  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
+  catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the meeting.'); }
+}
+async function fmNext(){
+  try{ const p=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
+  catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the next meeting.'); }
+}
+function fmChoose(seq){
+  _fm=Object.assign(_fm,{seq:seq,id:'',reason:'',lat:'',lng:''});
+  fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
+    <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (filled from your location)">
+    <div class="fm-lbl">Reason for the meeting</div><div id="fmReason">${fmChips(FM_REASONS,'', 'fmReasonPick')}</div><div class="fm-err" id="fmErr"></div>
+    <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
+  fmSearch();
+  fmPlace().then(p=>{ _fm.lat=p.lat; _fm.lng=p.lng; const a=document.getElementById('fmAddr'); if(a&&!a.value) a.value=p.area; }).catch(()=>{});
+}
+function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(FM_REASONS,r,'fmReasonPick'); }
+function fmSearch(){
+  clearTimeout(_fm.t);
+  _fm.t=setTimeout(async()=>{
+    const q=(document.getElementById('fmQ')||{}).value||'', box=document.getElementById('fmRes'); if(!box) return;
+    try{ const list=(await api('searchCustomers',{empId:currentEmp.id,q:q}))||[];
+      box.innerHTML=list.length?list.map(c=>`<button onclick="fmPick('${esc(c.id)}','${esc(c.name)}','${esc(c.phone)}','${esc(c.address||'')}')">${hx(c.name)}<small>${hx(c.phone)}${c.address?' · '+hx(c.address):''}${c.stage?' · '+hx(c.stage):''}</small></button>`).join(''):'<div class="fm-or">No customer found</div>';
+    }catch(e){ box.innerHTML='<div class="fm-or">Search is not available right now</div>'; }
+  },250);
+}
+function fmPick(id,name,phone,addr){ _fm.id=id; document.getElementById('fmName').value=name; document.getElementById('fmPhone').value=phone; document.getElementById('fmAddr').value=addr; }
+async function fmSaveCustomer(){
+  const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim();
+  if(!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
+  if(!_fm.reason) return fmErr('Choose the reason for the meeting.');
+  fmErr('Saving…');
+  try{
+    const body={seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr,lat:_fm.lat,lng:_fm.lng};
+    const r=await fmCall('setMeetingCustomer',body);
+    if(r){ fmClose(); await fmRefresh(); }
+  }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
+}
+function fmEnd(seq){
+  _fm=Object.assign(_fm,{seq:seq,result:'',vertical:''});
+  fmSheet(`<h3>How did the meeting go?</h3><div class="fm-lbl">Result</div><div id="fmRes2">${fmChips(FM_RESULTS,'','fmResultPick')}</div>
+    <div class="fm-lbl">Business line (optional)</div><div id="fmVert">${fmChips(FM_VERTICALS,'','fmVertPick')}</div>
+    <div class="fm-lbl">Expected order value in ₹ (optional)</div><input id="fmVal" inputmode="numeric" placeholder="e.g. 150000">
+    <div class="fm-lbl">Next follow-up (optional)</div><input id="fmFollow" type="date">
+    <div class="fm-lbl" id="fmNoteL">Note (optional)</div><textarea id="fmNote" rows="2" placeholder="One line"></textarea><div class="fm-err" id="fmErr"></div>
+    <button class="btn btn-blue" style="width:100%" onclick="fmFinish()">Finish meeting</button>`);
+}
+function fmResultPick(r){ _fm.result=r; fmErr(''); document.getElementById('fmRes2').innerHTML=fmChips(FM_RESULTS,r,'fmResultPick'); const l=document.getElementById('fmNoteL'); if(l) l.textContent=r==='Not interested'?'Why not interested?':'Note (optional)'; }
+function fmVertPick(v){ _fm.vertical=_fm.vertical===v?'':v; document.getElementById('fmVert').innerHTML=fmChips(FM_VERTICALS,_fm.vertical,'fmVertPick'); }
+async function fmFinish(){
+  if(!_fm.result) return fmErr('Choose the result of the meeting.');
+  fmErr('Saving…');
+  try{
+    const r=await fmCall('endMeetingVisit',{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()});
+    if(r){ fmClose(); await fmRefresh(); }
+  }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
+}
+</script>
 </body>
 </html>
