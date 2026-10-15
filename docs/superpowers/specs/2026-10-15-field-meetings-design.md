@@ -21,7 +21,7 @@ A field sales employee runs a day of 4–5 customer meetings from one screen, in
 Rule: while a meeting is `travelling` or `in meeting`, Punch Out is hidden. The existing "Back" button stays the way to close the day's field work.
 
 ## Data
-- `Customers` (new, shared by the team): `id, name, phone, address, lat, lng, createdBy, createdAt, lastMeetingAt, ownerEmpId`. Phone is the dedupe key; saving an existing phone reuses the record.
+- `Customers` (new, shared by the team; this is also the **lead record** — one list, no separate lead table): add `stage` (New · Contacted · Meeting done · Quotation sent · Negotiation · Won · Lost), `source` (Walk-in · Reference · Call · Site visit · Other), `vertical`, `expectedValue`, `lostReason`. A meeting result moves the stage (Interested → Contacted/Meeting done, Quotation asked → Quotation sent, Order → Won, Not interested → Lost). Admin and employee can also edit the stage by hand. Original fields: `id, name, phone, address, lat, lng, createdBy, createdAt, lastMeetingAt, ownerEmpId`. Phone is the dedupe key; saving an existing phone reuses the record.
 - `Meetings` (extended, old rows stay valid): add `customerId, customerName, phone, address, reason, startTime, startLat, startLng, startArea, endTime, result, followUpDate, state` (`travelling | in_meeting | done`). `outTime…` stays "left", `backTime…` stays "returned to base" for the final Back.
 - Same Sheet-shaped path as today (`legacyRows`/`sheetMap`), so the Apps Script rollback keeps working.
 - Offline: actions queue on the phone with a client id and replay (same idea as `saveVisit`'s `id`); every write is idempotent.
@@ -36,7 +36,7 @@ Rule: while a meeting is `travelling` or `in meeting`, Punch Out is hidden. The 
 1. **Arrival prompt.** When the phone is within 150 m of the customer's saved address while a meeting is `travelling`, show "Start meeting?" (and a notification if the app is in the background, using the live notification system). Needs the customer's `lat/lng`; without it the button stays manual. Start time is the tap time, with the arrival time kept as `arrivedAt`.
 2. **Vertical and expected value.** End meeting also asks the vertical (Seamless Floorings · Waterproofing · Road Marking Paint · Home Automation & Security) and an expected value in rupees (optional). Columns: `vertical`, `expectedValue`. Admin gets pipeline value per employee/vertical against the sales target.
 3. **Today's plan.** On Punch In the employee sees today's follow-ups (from `followUpDate`) and customers the admin planned, ordered by distance from the current location. Admin can add a planned customer for an employee. Column on `Customers`/`Meetings`: `plannedFor` date.
-4. **Quotation link.** Result "Quotation asked" shows "Create quotation"; it opens the quotation tool with name, phone, address and vertical filled in. Needs the quotation tool's URL/parameters (open question: how it accepts prefilled data).
+4. **Quotation (kept inside this app for now).** Result "Quotation asked" sets the lead to *Quotation sent* and asks quotation number, amount and an optional file/link, stored on the lead as `quotes` rows (`leadId, number, amount, link, date, status`). A real quotation builder, or a link to the separate quotation tool, can replace this later without changing the lead.
 
 ## Not in this step
 Face recognition, bulk upload, announcements, support, file section, full geo-fencing (separate specs). Customer ownership/locking is not enforced; admin only sees who created and who visited.
@@ -54,11 +54,11 @@ Face recognition, bulk upload, announcements, support, file section, full geo-fe
 3. Arrival prompt.
 4. Admin day timeline + customer page + pipeline value.
 5. Today's plan and follow-up reminders (uses the notification system already live).
-6. Quotation link.
+6. Lead stages, lead list/board for admin and quotation records.
 7. Km report.
 
 ## Open decisions (defaults assumed, tell me if wrong)
 - Customer list shared by the whole team (assumed yes).
-- Quotation tool: how it takes prefilled data is not yet known (see item 4).
+- No link to the separate quotation tool yet (owner does not know how it could take prefilled data); quotations are recorded inside this app (item 4).
 - Result required at End (assumed yes), note optional.
 - Customer details entered at Leave/Start, result at End (assumed yes).
