@@ -7,5 +7,5 @@ self.AMK_FIREBASE = {
   projectId: 'amitek-attendance-59ccc',
   messagingSenderId: '572781418868',
   appId: '1:572781418868:web:a14a2d94402bb13edef421',
-  vapidKey: ''
+  vapidKey: 'BKxSZDrtmXbgMadmc2s48cfpAYPLzCs5_reO5aiTUfOAkQBz9Oz5nr_iyh7HroxtR2W4IVis15vuKe9dgmTiklg'
 };
