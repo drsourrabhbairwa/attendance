@@ -32,6 +32,12 @@ Rule: while a meeting is `travelling` or `in meeting`, Punch Out is hidden. The 
 - Km travelled per day from consecutive GPS points (the "km travel report" and "employee travel report" are the same report, one with a per-employee and one with a per-day view).
 - Follow-up list: "due today" for the employee and for the admin.
 
+## Version-1 additions (approved by the owner)
+1. **Arrival prompt.** When the phone is within 150 m of the customer's saved address while a meeting is `travelling`, show "Start meeting?" (and a notification if the app is in the background, using the live notification system). Needs the customer's `lat/lng`; without it the button stays manual. Start time is the tap time, with the arrival time kept as `arrivedAt`.
+2. **Vertical and expected value.** End meeting also asks the vertical (Seamless Floorings · Waterproofing · Road Marking Paint · Home Automation & Security) and an expected value in rupees (optional). Columns: `vertical`, `expectedValue`. Admin gets pipeline value per employee/vertical against the sales target.
+3. **Today's plan.** On Punch In the employee sees today's follow-ups (from `followUpDate`) and customers the admin planned, ordered by distance from the current location. Admin can add a planned customer for an employee. Column on `Customers`/`Meetings`: `plannedFor` date.
+4. **Quotation link.** Result "Quotation asked" shows "Create quotation"; it opens the quotation tool with name, phone, address and vertical filled in. Needs the quotation tool's URL/parameters (open question: how it accepts prefilled data).
+
 ## Not in this step
 Face recognition, bulk upload, announcements, support, file section, full geo-fencing (separate specs). Customer ownership/locking is not enforced; admin only sees who created and who visited.
 
@@ -44,12 +50,15 @@ Face recognition, bulk upload, announcements, support, file section, full geo-fe
 
 ## Build order (each is one daily push, glass theme)
 1. Customers collection + list/search API.
-2. Leave → Customer → Start → End flow on the employee screen.
-3. Admin day timeline + customer page.
-4. Follow-up reminders (uses the notification system already live).
-5. Km report.
+2. Leave → Customer → Start → End flow on the employee screen (with vertical/value).
+3. Arrival prompt.
+4. Admin day timeline + customer page + pipeline value.
+5. Today's plan and follow-up reminders (uses the notification system already live).
+6. Quotation link.
+7. Km report.
 
 ## Open decisions (defaults assumed, tell me if wrong)
 - Customer list shared by the whole team (assumed yes).
+- Quotation tool: how it takes prefilled data is not yet known (see item 4).
 - Result required at End (assumed yes), note optional.
 - Customer details entered at Leave/Start, result at End (assumed yes).
