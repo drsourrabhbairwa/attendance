@@ -1027,6 +1027,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <button class="tab-btn sa-only" onclick="switchTab('holidays')">🗓 Holidays</button>
     <button class="tab-btn" onclick="switchTab('site')">🗺️ Site Monitor</button>
     <button class="tab-btn" onclick="switchTab('leads')">🤝 Leads</button>
+    <button class="tab-btn" onclick="switchTab('travel')">🚗 Travel km</button>
     <button class="tab-btn" onclick="switchTab('reports')">📈 Reports</button>
     <button class="tab-btn" onclick="switchTab('corrections')">✏️ Corrections</button>
     <button class="tab-btn sa-only" onclick="switchTab('log')">🧾 Log</button>
@@ -1299,6 +1300,15 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Who changed what, newest first (last 300). The name comes from the app, so treat it as a record, not proof.</div>
     <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th><th>Details</th></tr></thead><tbody id="logBody"></tbody></table></div>
     <div class="empty" id="logEmpty" style="display:none"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">Nothing logged yet.</div>
+  </div>
+
+  <!-- TRAVEL KM TAB -->
+  <div id="tabTravel" class="tab-pane">
+    <div class="ld-top">
+      <div><div style="font-weight:700;font-size:15px">Travel km</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Worked out from each person's GPS points while punched in. Fewer points means the km may be understated.</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="date" id="trFrom" style="margin:0;width:auto"><input type="date" id="trTo" style="margin:0;width:auto"><button class="btn btn-outline" style="width:auto;margin:0;padding:8px 14px" onclick="trLoad()">🔄 Show</button><button class="btn btn-outline" style="width:auto;margin:0;padding:8px 14px" onclick="trCsv()">⬇ CSV</button></div>
+    </div>
+    <div id="trBody"><div class="empty"><div class="eicon">🚗</div>Loading…</div></div>
   </div>
 
   <!-- LEADS TAB -->
@@ -3862,7 +3872,7 @@ function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endMa
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','leads','reports','corrections','log','safety','org'];
+  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','leads','travel','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
@@ -3878,6 +3888,7 @@ function switchTab(tab){
   if(tab==='reports') initReports();
   if(tab==='corrections') loadCorrectionsTab();
   if(tab==='leads') ldLoad();
+  if(tab==='travel') trInit();
   if(tab==='log') loadAuditTab();
   if(tab==='safety') loadSafety('admin');
   if(tab==='org') loadOrg();
@@ -5634,6 +5645,34 @@ async function ldQuoteAdd(cid){
   msg.textContent='Saving…';
   try{ const me=(await getEmployees()).filter(e=>e.id===v('ldQEmp'))[0]; await api('saveQuote',{empId:v('ldQEmp'),customerId:cid,number:v('ldQNo'),amount:v('ldQAmt'),link:v('ldQLink')}); await ldLoad(); await ldOpen(cid); }
   catch(e){ msg.textContent='⚠️ '+e.message; }
+}
+
+/* ── Admin Travel km tab ── */
+let _tr=null, _trOpen='';
+function trInit(){
+  const f=document.getElementById('trFrom'), t=document.getElementById('trTo'); if(!f) return;
+  if(!t.value) t.value=todayStr(); if(!f.value) f.value=todayStr().slice(0,8)+'01';
+  trLoad();
+}
+async function trLoad(){
+  const box=document.getElementById('trBody'); box.innerHTML='<div class="empty">⏳ Loading…</div>';
+  try{ _tr=await api('travelReport',{start:document.getElementById('trFrom').value,end:document.getElementById('trTo').value}); _trOpen=''; trRender(); }
+  catch(e){ box.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
+}
+function trToggle(id){ _trOpen=_trOpen===id?'':id; trRender(); }
+function trRender(){
+  const r=_tr, box=document.getElementById('trBody'); if(!r) return;
+  if(!r.emps.length){ box.innerHTML='<div class="empty"><div class="eicon">🚗</div>No attendance in these dates.</div>'; return; }
+  const tot=r.emps.reduce((a,e)=>a+e.km,0);
+  box.innerHTML=`<div class="ld-glass" style="margin-bottom:10px"><b style="font-size:18px">${tot.toFixed(1)} km</b> <span style="color:var(--soft);font-size:12px">total · ${r.emps.length} people · ${hx(r.start)} to ${hx(r.end)}</span></div>`+
+   r.emps.map(e=>{ const open=_trOpen===e.empId;
+     const days=open?r.days.filter(d=>d.empId===e.empId).map(d=>`<div class="ld-row"><div>${hx(d.date)}<small>${d.points} GPS point${d.points===1?'':'s'}${d.meetings?' · '+d.meetings+' meeting'+(d.meetings===1?'':'s'):''}${d.points<4&&d.km===0?' · too few points to measure':''}</small></div><div style="text-align:right"><b>${d.km.toFixed(1)} km</b></div></div>`).join(''):'';
+     return `<div class="ld-cust" style="display:block" onclick="trToggle('${esc(e.empId)}')"><div style="display:flex;justify-content:space-between;gap:10px"><div><b>${hx(e.name)}</b><span>${e.days} day${e.days===1?'':'s'} with travel${e.days?' · avg '+e.avgKm.toFixed(1)+' km/day':''}${e.meetings?' · '+e.meetings+' meetings':''}</span></div><div style="text-align:right"><b style="font-size:16px">${e.km.toFixed(1)} km</b></div></div>${open?'<div style="margin-top:8px" onclick="event.stopPropagation()">'+days+'</div>':''}</div>`; }).join('');
+}
+function trCsv(){
+  if(!_tr) return;
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"', rows=[['Employee ID','Name','Date','Km','GPS points','Meetings']].concat(_tr.days.map(d=>[d.empId,d.name,d.date,d.km,d.points,d.meetings]));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'})); a.download='travel-km-'+_tr.start+'-to-'+_tr.end+'.csv'; document.body.appendChild(a); a.click(); a.remove();
 }
 </script>
 </body>
