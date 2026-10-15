@@ -5043,12 +5043,19 @@ async function refreshSiteMonitor(role){
           if(mins>GAP_MINS) gap='<div style="margin-top:3px"><span class="viol-badge" style="display:inline-block;line-height:1.35">⚠️ No check for '+fmtMins(mins)+'</span></div>';
         }
         const mapEl=fx?`<a class="map-link" href="${mapsUrl(fx.lat,fx.lng)}" target="_blank" onclick="event.stopPropagation()">📍</a>`:'—';
-        html+=`<div class="site-row clickable" onclick="openSiteDetail('${esc(r.id)}')"><div style="font-weight:600">${hx(r.name)}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}<div>${n} check${n===1?'':'s'}</div></div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+hx(lp.area||''):'—'}${gap}</div><div>${siteResult(lp)}</div><div>${mapEl}</div></div>`;
+        html+=`<div class="site-row clickable" onclick="openSiteDetail('${esc(r.id)}')"><div style="font-weight:600">${hx(r.name)}${parseInt(r.violations||0)>0?` <span class="viol-badge">⚠️${r.violations}</span>`:''}</div><div>${stEl}</div><div style="font-size:11px;color:var(--soft)">${r.startTime?fmt12(r.startTime):'—'}<div>${n} check${n===1?'':'s'}</div></div><div style="font-size:11px;color:var(--soft)">${lp?fmt12(lp.time)+' · '+hx(lp.area||''):'—'}${lp&&battBadge(lp)?'<div>'+battBadge(lp)+'</div>':''}${gap}</div><div>${siteResult(lp)}</div><div>${mapEl}</div></div>`;
       });
       html+='</div><div style="font-size:11px;color:var(--soft);margin:-4px 0 8px">Tap a row to see every check, the start and stop photos, and time on site.</div>';
     }
     el.innerHTML=html;
   }catch(e){el.innerHTML=`<div class="msg msg-error show">⚠️ ${e.message}<br><button onclick="refreshSiteMonitor('${esc(role)}')" style="margin-top:8px;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:12px">Retry</button></div>`;}
+}
+/* Phone battery of a location check: 🔋 42% (⚡ while charging), red below the low-battery setting */
+function battBadge(p){
+  if(!p||p.battery===''||p.battery===undefined||p.battery===null) return '';
+  const n=parseInt(p.battery,10); if(isNaN(n)) return '';
+  const low=parseInt((_D.settings||{}).lowBattery,10)||15, ch=!['','0','NO','FALSE','false','no'].includes(String(p.charging===undefined?'':p.charging));
+  return `<span style="font-size:11px;font-weight:600;color:${n<=low&&!ch?'var(--red)':'var(--soft)'}">🔋 ${n}%${ch?' ⚡':''}</span>`;
 }
 /* One site session: start/stop photos and places, every check, time on site, longest silence */
 async function openSiteDetail(id){
@@ -5085,7 +5092,7 @@ async function openSiteDetail(id){
         <div style="grid-column:1/-1"><b style="color:${longest>GAP_MINS?'var(--red)':'var(--ink)'}">${fmtMins(longest)}</b>Longest time with no check</div>
       </div>
       <div style="font-weight:700;font-size:13px;margin-top:4px">All checks</div>
-      ${checks.length?checks.map(c=>`<div class="sd-check"><div><b>${fmt12(c.time)}</b>${c.source==='app'?' <span style="font-size:10px;color:var(--soft)">📱 app</span>':''}<div style="color:var(--soft)">${hx(c.area||'')}</div></div><div style="text-align:right">${siteResult(c,true)}${c.lat?`<div style="margin-top:3px">${mapA(c.lat,c.lng)}</div>`:''}</div></div>`).join('')
+      ${checks.length?checks.map(c=>`<div class="sd-check"><div><b>${fmt12(c.time)}</b>${c.source==='app'?' <span style="font-size:10px;color:var(--soft)">📱 app</span>':''}<div style="color:var(--soft)">${hx(c.area||'')}</div>${battBadge(c)?'<div>'+battBadge(c)+'</div>':''}</div><div style="text-align:right">${siteResult(c,true)}${c.lat?`<div style="margin-top:3px">${mapA(c.lat,c.lng)}</div>`:''}</div></div>`).join('')
         :'<div class="empty" style="padding:14px">No location checks were received for this site work.</div>'}`;
   }catch(e){ body.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
