@@ -1248,6 +1248,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Alerts go by e-mail to you and to the supervisor assigned to that employee. Reminders go to employees who have an e-mail in their profile.</p>
       <div class="al-grid">
         <div><label style="margin:0 0 4px">Your e-mail (alerts &amp; summaries)</label><input type="text" id="alMail" placeholder="you@company.com"></div>
+        <div><label style="margin:0 0 4px">Punch-in reminder at</label><input type="text" id="alInAt" placeholder="10:00 AM"></div>
         <div><label style="margin:0 0 4px">Punch-out reminder at</label><input type="text" id="alOutAt" placeholder="07:30 PM"></div>
         <div><label style="margin:0 0 4px">“Not punched in” summary at</label><input type="text" id="alSumAt" placeholder="10:30 AM"></div>
         <div><label style="margin:0 0 4px">Site work silent alert after (min)</label><input type="number" id="alSilent" min="30" placeholder="90"></div>
@@ -2156,7 +2157,7 @@ function callBtns(){
 
 /* ── Employee: location-check prompt ── */
 function startEmpSafety(){ stopEmpSafety(true); if(!USE_SHEETS) return; empSafetyPoll(); safetyEmpInt=setInterval(empSafetyPoll,60000); }
-function stopEmpSafety(keepPoll){ clearInterval(safetyEmpInt); safetyEmpInt=null; if(!keepPoll) _empPoll=0;   /* a re-render of Home keeps the poll in flight; signing out forgets it */ _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
+function stopEmpSafety(keepPoll){ clearInterval(safetyEmpInt); safetyEmpInt=null; if(!keepPoll){ _empPoll=0; try{ if(window.AmkNotify) AmkNotify.reset(); }catch(e){} }   /* a re-render of Home keeps the poll in flight; signing out forgets it */ _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; const t=Date.now(); if(safetyEmpInt&&t-_empPollAt>POLL_RESUME_GAP) empSafetyPoll(); if(safetyAdmInt&&t-_admPollAt>POLL_RESUME_GAP) safetyAdminPoll(); });
 /* One poll at a time per phone: a slow reply must never let the next timer tick or an app-resume pile another request on top (the server runs them one by one). */
 let _empPoll=0, _empPollN=0, _empPollAt=0, _admPoll=0, _admPollN=0, _admPollAt=0;
@@ -2168,6 +2169,7 @@ async function empSafetyPoll(){
   finally{ if(_empPoll===id){ _empPoll=0; _empPollAt=Date.now(); } }
 }
 function handleEmpPoll(d){
+  try{ if(window.AmkNotify) AmkNotify.onPoll(d); }catch(e){}
   _chkPending=(d.checks||[]).filter(c=>!_chkDone[c.id]);
   const due=_chkPending.filter(c=>!_chkSnooze[c.id]||Date.now()>_chkSnooze[c.id])[0];
   if(due) showCheckPrompt(due); else if(!_chkPending.length) hideCheckPrompt();
@@ -2176,7 +2178,7 @@ function handleEmpPoll(d){
 }
 function showCheckPrompt(c){
   const m=document.getElementById('chkModal'); if(!m) return;
-  if(_chkShown!==c.id){ _chkShown=c.id; beep(4); }
+  if(_chkShown!==c.id){ _chkShown=c.id; if(window.AmkNotify) AmkNotify.alarmStart(); else beep(4); }
   document.getElementById('chkBody').innerHTML=`<div class="chk-ic">📍</div><h3>Please confirm your location</h3>
     <p><b>${hx(c.requestedBy||'The office')}</b> asked for your location${c.note?': “'+hx(c.note)+'”':''}.</p>
     <div id="chkMsg" class="chk-msg"></div>
@@ -2184,7 +2186,7 @@ function showCheckPrompt(c){
     <button class="btn btn-outline" onclick="snoozeCheck('${esc(c.id)}')">Later (5 min)</button>`;
   m.classList.add('open');
 }
-function hideCheckPrompt(){ const m=document.getElementById('chkModal'); if(m) m.classList.remove('open'); }
+function hideCheckPrompt(){ try{ if(window.AmkNotify) AmkNotify.alarmStop(); }catch(e){} const m=document.getElementById('chkModal'); if(m) m.classList.remove('open'); }
 function snoozeCheck(id){ _chkSnooze[id]=Date.now()+5*60000; _chkShown=''; hideCheckPrompt(); renderEmpSafety(); }
 async function answerMyCheck(id){
   const emp=currentEmp, msg=document.getElementById('chkMsg'), btn=document.getElementById('chkSend'); if(!emp||!msg) return;
@@ -2473,7 +2475,7 @@ async function setSupEmail(id,val){
 ══════════════════════════════════════════════════════════════ */
 function initAlerts(){
   const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('alMail')) return;
-  g('alMail').value=s.adminEmail||''; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90; g('alPhone').value=s.adminPhone||''; g('alSos').value=s.sosNumber||'';
+  g('alMail').value=s.adminEmail||''; g('alInAt').value=s.remindInAt||'10:00 AM'; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90; g('alPhone').value=s.adminPhone||''; g('alSos').value=s.sosNumber||'';
   g('alRem').checked=s.reminders!=='0'; g('alSite').checked=s.alertsSite!=='0'; g('alDrive').checked=s.photosToDrive!=='0';
   g('alWeekly').checked=s.weeklyEmail!=='0'; g('alBday').checked=s.birthdayMail!=='0';
   refreshAlertStatus();
@@ -2487,10 +2489,10 @@ async function refreshAlertStatus(){
 }
 function alertSettings(){
   const g=id=>document.getElementById(id);
-  const mail=g('alMail').value.trim(), outAt=normTime(g('alOutAt').value), sumAt=normTime(g('alSumAt').value);
+  const mail=g('alMail').value.trim(), inAt=normTime(g('alInAt').value), outAt=normTime(g('alOutAt').value), sumAt=normTime(g('alSumAt').value);
   if(mail&&!/^\S+@\S+\.\S+$/.test(mail)) return {error:'Your e-mail does not look right.'};
-  if(!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
-  return {settings:{adminEmail:mail,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),adminPhone:g('alPhone').value.trim(),sosNumber:g('alSos').value.replace(/[^\d+]/g,''),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
+  if(!inAt||!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
+  return {settings:{adminEmail:mail,remindInAt:inAt,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),adminPhone:g('alPhone').value.trim(),sosNumber:g('alSos').value.replace(/[^\d+]/g,''),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
 }
 async function saveAlerts(quiet){
   const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
@@ -5298,5 +5300,7 @@ document.addEventListener('keydown',e=>{
 ══════════════════════════════════════════════════════════════ */
 init();
 </script>
+<script src="firebase-config.js"></script>
+<script src="notify.js"></script>
 </body>
 </html>
