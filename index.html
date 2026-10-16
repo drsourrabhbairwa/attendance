@@ -5980,9 +5980,9 @@ function tkToast(msg){ const m=document.getElementById('tkMsgs'); if(!m) return 
 
 /* sheets inside the messenger */
 function tkSheet(html){ tkSheetClose(); const m=_tk.root; const b=document.createElement('div'); b.className='tk-sheetb'; b.id='tkSB'; b.onclick=e=>{ if(e.target===b) tkSheetClose(); }; b.innerHTML='<div class="tk-sheet">'+html+'</div>'; m.appendChild(b); }
-function tkSheetClose(){ const b=document.getElementById('tkSB'); if(b) b.remove(); }
+function tkSheetClose(){ if(_tk.cam){ try{ _tk.cam.getTracks().forEach(t=>t.stop()); }catch(e){} _tk.cam=null; } const b=document.getElementById('tkSB'); if(b) b.remove(); }
 function tkAttach(){
-  tkSheet(`<h3>Attach</h3><div class="tk-att"><button onclick="document.getElementById('tkFDoc').click();tkSheetClose()"><span class="c">${ti('doc',26)}</span>Document</button><button onclick="document.getElementById('tkFCam').click();tkSheetClose()"><span class="c">${ti('cam',26)}</span>Camera</button><button onclick="document.getElementById('tkFImg').click();tkSheetClose()"><span class="c">${ti('img',26)}</span>Gallery</button><button onclick="tkSheetClose();tkLoc()"><span class="c">${ti('pin',26)}</span>Location</button></div><div class="tk-err" style="margin-top:12px;color:var(--ink2)">Files up to about 500 KB. Photos are shrunk automatically.</div>`);
+  tkSheet(`<h3>Attach</h3><div class="tk-att"><button onclick="tkFilePick('tkFDoc')"><span class="c">${ti('doc',26)}</span>Document</button><button onclick="tkSheetClose();tkCamera()"><span class="c">${ti('cam',26)}</span>Camera</button><button onclick="tkFilePick('tkFImg')"><span class="c">${ti('img',26)}</span>Gallery</button><button onclick="tkSheetClose();tkLoc()"><span class="c">${ti('pin',26)}</span>Location</button></div><div class="tk-err" style="margin-top:12px;color:var(--ink2)">Files up to about 500 KB. Photos are shrunk automatically.</div>`);
 }
 function tkMenu(mid){
   const m=_tk.data.msgs.find(x=>x.id===mid); if(!m) return; const mine=tkSame(m.empId,tkMe())||_tk.admin&&false;
@@ -6000,6 +6000,20 @@ function tkShrink(f){ return new Promise((ok,no)=>{
     for(let n=0;n<6;n++){ const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); out=c.toDataURL('image/jpeg',q); if(out.length<=TK_MAX*1.3) break; k*=.8; q=Math.max(.45,q-.08); }
     URL.revokeObjectURL(u); out.length<=TK_MAX*1.37?ok(out):no(new Error('Photo is too big.')); };
   img.onerror=()=>no(new Error('Could not read the photo.')); img.src=u; }); }
+const TK_OLD='This needs the newer Amitek app. Install the latest app (ask your admin for the link), then try again.';
+function tkOldApp(){ return !!window.AndroidTracker&&typeof AndroidTracker.hasMedia!=='function'; }   // the installed APK predates the file picker and microphone
+function tkFilePick(id){ tkSheetClose(); if(tkOldApp()) return tkToast(TK_OLD); const el=document.getElementById(id); if(el) el.click(); }
+async function tkCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ const el=document.getElementById('tkFCam'); if(el) el.click(); return; }
+  let st; try{ st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false}); }catch(e){ return tkToast('Allow the camera to take a photo.'); }
+  tkSheet(`<h3>Take a photo</h3><video id="tkVid" autoplay playsinline muted style="width:100%;max-height:56vh;border-radius:24px;background:#000;object-fit:cover"></video><button class="tk-go" style="margin-top:12px" onclick="tkSnap()">Capture</button><button class="tk-gh" onclick="tkSheetClose()">Cancel</button>`);
+  _tk.cam=st; const v=document.getElementById('tkVid'); v.srcObject=st; v.play().catch(()=>{});
+}
+function tkSnap(){
+  const v=document.getElementById('tkVid'); if(!v||!v.videoWidth) return;
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+  c.toBlob(async b=>{ tkSheetClose(); if(!b) return tkToast('Could not take the photo.'); try{ _tk.att={type:'image',mime:'image/jpeg',data:await tkShrink(b)}; tkStagePaint(); tkCompBtn(); }catch(e){ tkToast(e.message); } },'image/jpeg',.9);
+}
 async function tkPickImg(inp){ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; try{ _tk.att={type:'image',mime:'image/jpeg',data:await tkShrink(f)}; tkStagePaint(); tkCompBtn(); }catch(e){ tkToast(e.message); } }
 async function tkPickDoc(inp){
   const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
@@ -6014,6 +6028,7 @@ function tkLoc(){
   navigator.geolocation.getCurrentPosition(async p=>{ let label=''; try{ label=await reverseGeocode(p.coords.latitude,p.coords.longitude); }catch(e){} _tk.att={type:'location',lat:p.coords.latitude,lng:p.coords.longitude,label:label||'Shared location'}; tkStagePaint(); tkCompBtn(); },()=>tkToast('Turn on GPS and allow location, then try again.'),{enableHighAccuracy:true,timeout:15000});
 }
 async function tkRecStart(){
+  if(tkOldApp()) return tkToast(TK_OLD);
   if(!navigator.mediaDevices||!window.MediaRecorder) return tkToast('Voice messages are not supported here.');
   try{
     const st=await navigator.mediaDevices.getUserMedia({audio:true}), mt=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(x=>MediaRecorder.isTypeSupported(x))||'';
@@ -6095,7 +6110,7 @@ function tkAnnPaint(){
   m.innerHTML=`<div class="tk-ch g1"><button class="tk-ib tk-back" onclick="tkBack()" aria-label="Back">${ti('back')}</button><span class="tk-av" style="background:linear-gradient(135deg,#0B7A6B,#1A8FB5 58%,#6A4BC9)">${ti('mega',22)}</span><div class="mid"><div class="t1">Announcements</div><div class="t2">${_tk.admin?'You post, everyone reads':'From your admins'}</div></div></div>
     <div class="tk-msgs" style="padding:12px" id="tkAnns">${_tk.ann.length?_tk.ann.map(a=>`<div class="tk-ann">${a.pinned?`<div class="tk-pill info" style="display:inline-flex;gap:5px;align-items:center;margin-bottom:6px">${ti('pinned',14)} Pinned</div>`:''}${a.title?`<h4>${hx(a.title)}</h4>`:''}${tkAttHtml(a.att)}${a.text?`<p>${hx(a.text)}</p>`:''}
       <div class="m"><span>${hx(tkDay(a.createdAt))}, ${hx(tkClock(a.createdAt))}</span><span class="sp"></span>${_tk.admin?`<span class="tk-pill ok">Seen by ${a.seenCount} of ${a.total}</span><button class="tk-btn" onclick="tkAnnPin('${esc(a.id)}',${a.pinned?'false':'true'})">${a.pinned?'Unpin':'Pin'}</button><button class="tk-btn bad" onclick="tkAnnDel('${esc(a.id)}')">Delete</button>`:''}</div></div>`).join(''):`<div class="tk-empty"><div class="eic">${ti('mega')}</div><b>No announcements yet</b>${_tk.admin?'Write one below. Everyone gets notified.':'News from your admins will appear here.'}</div>`}</div>
-    ${_tk.admin?`<div class="tk-stage g2" id="tkAnnStage" style="display:none"></div><div class="tk-comp" style="flex-direction:column;align-items:stretch"><label class="tk-q g2" style="margin:0"><input id="tkAT" maxlength="100" placeholder="Title (optional)" style="font-weight:700"></label><div class="box g1" style="align-items:center"><button class="tk-ib" onclick="document.getElementById('tkAF').click()" aria-label="Attach a file or photo">${ti('clip')}</button><textarea id="tkAX" rows="2" maxlength="1000" placeholder="Write an announcement for everyone" oninput="tkGrow(this)"></textarea><button class="tk-rb pri" onclick="tkAnnPost()" aria-label="Post">${ti('send')}</button></div><input type="file" id="tkAF" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" hidden onchange="tkAnnPick(this)"><div class="tk-err" id="tkAErr"></div></div>`:''}`;
+    ${_tk.admin?`<div class="tk-stage g2" id="tkAnnStage" style="display:none"></div><div class="tk-comp" style="flex-direction:column;align-items:stretch"><label class="tk-q g2" style="margin:0"><input id="tkAT" maxlength="100" placeholder="Title (optional)" style="font-weight:700"></label><div class="box g1" style="align-items:center"><button class="tk-ib" onclick="if(tkOldApp()) return tkToast(TK_OLD);document.getElementById('tkAF').click()" aria-label="Attach a file or photo">${ti('clip')}</button><textarea id="tkAX" rows="2" maxlength="1000" placeholder="Write an announcement for everyone" oninput="tkGrow(this)"></textarea><button class="tk-rb pri" onclick="tkAnnPost()" aria-label="Post">${ti('send')}</button></div><input type="file" id="tkAF" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" hidden onchange="tkAnnPick(this)"><div class="tk-err" id="tkAErr"></div></div>`:''}`;
 }
 async function tkAnnPick(inp){
   const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; const e=document.getElementById('tkAErr');
