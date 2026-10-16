@@ -6358,7 +6358,7 @@ const wmLbl=i=>i.kind==='Other'&&i.kindOther?i.kindOther:i.kind;
 const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
 function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(WM_TASKS,'','wmTaskPick'); }
 function wmTaskPick(k){
-  _fm=Object.assign(_fm,{id:'',task:k});
+  _fm=Object.assign(_fm,{id:'',task:k,wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)});
   const cl=WM_CLIENT.indexOf(k)>=0;
   fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
     (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
@@ -6370,10 +6370,10 @@ async function wmTaskGo(){
   if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
   if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
   try{
-    const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:'w'+Date.now()};
+    const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:_fm.wid};
     if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
     await api('workStart',body); fmClose(); await wmLoad();
-  }catch(e){ fmErr(e.message||'Could not start.'); }
+  }catch(e){ fmErr(e.message||'Could not start.'); if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
   finally{ _wm.busy=false; }
 }
 async function wmItem(action,extra){
@@ -6386,7 +6386,7 @@ function wmStopAsk(){
   const o=_wm.open; if(!o) return;
   fmSheet(`<h3>${hx(wmLbl(o))} · finish</h3><div class="fm-lbl">How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmStopGo()">⏹ Stop and save</button>`);
 }
-function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(!v) return fmErr('Write a short note first.'); fmErr('Saving…'); wmItem('workStop',{remarks:v}); }
+function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(v.length<3) return fmErr('Write a short note first.'); fmErr('Saving…'); wmItem('workStop',{remarks:v}); }
 function wmRunMin(){ const o=_wm.open; return o?o.activeMin+(o.status==='Active'?(Date.now()-_wm.at)/60000:0):0; }
 function wmRunHtml(){
   const o=_wm.open, ps=o.status==='Paused';
