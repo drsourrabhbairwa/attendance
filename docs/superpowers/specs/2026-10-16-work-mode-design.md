@@ -64,6 +64,7 @@ The home block shows **Total working hours** (Work ON until now, or until Work O
 ## Admin
 - **Live view** (reuses the Attendance/Travel tab area, no new top-level tab): one row per person who is punched in: name, mode, purpose/task, client name + phone (tap to call), since, Active/Paused, place tag.
 - **Reports:** daily and weekly, by mode and by purpose, per person Field / Office / WFH split, CSV and PDF. Added inside the existing Reports tab.
+- **Filters before download:** the admin can pick several employees, several modes, several purposes/tasks, status and a client name/phone search, plus a date range (Today, Last 7 days or custom). CSV and PDF contain exactly the filtered rows and state the filters used.
 - **Visibility:** the existing scope helper (`inSet`) decides: Super Admin sees all, Dept Admin their department, Supervisor their own staff.
 
 ## UI rules
