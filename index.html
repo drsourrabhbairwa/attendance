@@ -5508,6 +5508,10 @@ init();
 .tk-ann h4{margin:0 0 5px;font-size:18px;font-weight:800;letter-spacing:-.2px}.tk-ann p{margin:0;font-size:15.5px;line-height:1.5;white-space:pre-wrap}.tk-ann .m{font-size:12.5px;font-weight:600;color:var(--ink2);margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tk-ann .m .sp{flex:1}
 .tk-seg{display:flex;gap:3px;padding:4px;border-radius:20px;background:rgba(14,33,29,.08)}.tk-seg button{flex:1;height:40px;border-radius:16px;font-size:14px;font-weight:700;color:var(--ink2);text-align:center}.tk-seg button.on{background:#fff;color:var(--ink);box-shadow:0 3px 10px rgba(14,33,29,.14)}
 .tk-field{border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff,0 4px 12px rgba(18,70,60,.06);border-radius:20px}.tk-field:focus-within{box-shadow:0 0 0 2px var(--tint)}.tk-field input:focus-visible,.tk-field textarea:focus-visible,.tk-field select:focus-visible{outline:0}
+.tk-ph:not([src]){width:220px;max-width:100%;height:150px;background:linear-gradient(110deg,rgba(14,33,29,.08) 30%,rgba(14,33,29,.16) 50%,rgba(14,33,29,.08) 70%);background-size:200% 100%;animation:tksh 1.4s linear infinite}@keyframes tksh{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.tk-ph:not([src]){animation:none}}
+.tk-note{display:block;font-size:11.5px;font-weight:600;opacity:.75;margin:0 0 4px}.tk-note.warn{opacity:1;color:#8A4D04}.tk-b.me .tk-note.warn{color:#FFE2A8}
+.tk-sys.warnb{display:flex;gap:6px;align-items:flex-start;text-align:left;max-width:94%;background:rgba(255,236,200,.78);border-color:rgba(217,150,43,.5);color:#6B3C03;padding:8px 12px;border-radius:16px;line-height:1.35}.tk-sys.warnb svg{margin-top:1px}
 html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid .tk-b{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.92)}html.g-solid .tk-b.me{background:#0B7A6B}
 
 
@@ -5821,8 +5825,11 @@ function tkMount(root,admin,close){
   _tk.root=root; _tk.admin=!!admin; _tk.close=close||null; _tk.view='list'; _tk.cur=null; _tk.thread=null; _tk.tab='all'; _tk.q='';
   root.classList.add('tkx'); root.dataset.view='list';
   root.innerHTML='<section class="tkx-list" id="tkList"></section><section class="tkx-main" id="tkMain"></section>';
-  tkMainEmpty(); tkListLoad();
-  clearInterval(_tk.timer); _tk.timer=setInterval(()=>{ if(!document.body.contains(root)){ clearInterval(_tk.timer); return; } if(_tk.thread&&_tk.cur) tkRefresh(true); else if(_tk.view==='list'||innerWidth>=900) tkListLoad(true); },12000);
+  tkMainEmpty(); tkCacheList().then(()=>tkListLoad());
+  try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+  clearInterval(_tk.timer); _tk.tick=0;
+  _tk.timer=setInterval(()=>{ if(!document.body.contains(root)){ clearInterval(_tk.timer); return; } if(document.hidden) return;   // nothing is fetched while the app is in the background
+    _tk.tick++; if(_tk.thread&&_tk.cur) tkRefresh(true); else if((_tk.view==='list'||innerWidth>=900)&&_tk.tick%2===0) tkListLoad(true); },15000);
 }
 function tkView(v){ _tk.view=v; _tk.root.dataset.view=v; }
 function tkMainEmpty(){ const m=document.getElementById('tkMain'); if(m) m.innerHTML=`<div class="tk-empty" style="margin:auto"><div class="eic">${ti('chat')}</div><b>Your tasks, like a chat</b>Open a task to talk about it,<br>or press + to give a new one.</div>`; }
@@ -5841,8 +5848,11 @@ async function tkBadge(force){
 }
 
 /* ---- the list ---- */
+async function tkCacheList(){   // show the last list at once; the fresh one replaces it a moment later
+  const c=await tkGet('cache','list:'+tkMe()); if(c&&c.list&&!_tk.list.length){ _tk.list=c.list; _tk.ann=c.ann||[]; tkListPaint(); }
+}
 async function tkListLoad(quiet){
-  try{ const [l,a]=await Promise.all([_tk.admin?api('listTasks',{}):tkApi('myTasks'),tkApi('annList',{})]); _tk.list=l||[]; _tk.ann=a||[]; if(_tk.view==='list'||innerWidth>=900||!quiet) tkListPaint(); }
+  try{ const [l,a]=await Promise.all([_tk.admin?api('listTasks',{}):tkApi('myTasks'),tkApi('annList',{})]); _tk.list=l||[]; _tk.ann=a||[]; tkPut('cache','list:'+tkMe(),{list:_tk.list,ann:_tk.ann,at:Date.now()}); if(_tk.view==='list'||innerWidth>=900||!quiet) tkListPaint(); }
   catch(e){ const el=document.getElementById('tkList'); if(el&&!quiet) el.innerHTML='<div class="tk-err">'+hx(e.message)+'</div>'; }
 }
 function tkTabs(){ return _tk.admin?[['all','All'],['wait','To verify'],['late','Late'],['done','Finished']]:[['all','All'],['me','For me'],['given','Given by me'],['done','Finished']]; }
@@ -5903,13 +5913,15 @@ function tkRow(t){
 /* ---- the conversation ---- */
 async function tkOpenChat(id){
   _tk.cur=id; _tk.thread=true; _tk.reply=null; _tk.att=null; _tk.data=null; tkView('main'); tkRows();
-  document.getElementById('tkMain').innerHTML='<div class="tk-empty" style="margin:auto">Opening…</div>';
+  const c=await tkGet('cache','thr:'+tkMe()+':'+id);
+  if(c&&c.data&&_tk.cur===id){ Object.assign(_tk.names,c.data.names||{}); _tk.data=c.data; tkShell(); tkPaint(false); }   // the saved copy opens at once
+  else document.getElementById('tkMain').innerHTML='<div class="tk-empty" style="margin:auto">Opening…</div>';
   await tkRefresh(false);
 }
 function tkBack(){ _tk.cur=null; _tk.thread=null; tkView('list'); tkMainEmpty(); tkListLoad(); }
 async function tkRefresh(quiet){
   if(!_tk.cur||_tk.cur==='ann') return;
-  try{ const r=await tkApi('taskThread',{id:_tk.cur}); Object.assign(_tk.names,r.names||{}); const fresh=!_tk.data; _tk.data=r; if(fresh) tkShell(); tkPaint(quiet); if(!quiet) tkListLoad(true); }
+  try{ const r=await tkApi('taskThread',{id:_tk.cur}); Object.assign(_tk.names,r.names||{}); const fresh=!_tk.data; _tk.data=r; tkPut('cache','thr:'+tkMe()+':'+_tk.cur,{data:r,at:Date.now()}); if(fresh) tkShell(); tkPaint(quiet); if(!quiet) tkListLoad(true); }
   catch(e){ if(!quiet){ document.getElementById('tkMain').innerHTML='<div class="tk-empty" style="margin:auto">'+hx(e.message)+'<br><button class="tk-btn" style="margin-top:12px" onclick="tkBack()">Back</button></div>'; } }
 }
 function tkShell(){
@@ -5941,23 +5953,32 @@ function tkPaint(quiet){
     if(m.kind==='del'){ out+=`<div class="tk-b del${mine?' me':''}">This message was deleted</div>`; return; }
     const seen=mine&&others.length&&others.every(o=>String((d.reads||{})[String(o).toUpperCase()]||'')>=String(m.createdAt)), q=m.replyTo&&byId[m.replyTo];
     out+=`<button class="tk-b${mine?' me':''}${cont?' cont':''}" onclick="tkMenu('${esc(m.id)}')">${mine||cont?'':`<span class="who" style="color:${tkTint(m.empId).split('color:')[1]}">${hx(tkNm(m.empId))}</span>`}
-      ${q?`<span class="tk-q2"><b>${hx(tkNm(q.empId))}</b>${hx(q.text||tkAttLabel(q.att))}</span>`:''}${tkAttHtml(m.att)}${m.text?hx(m.text):''}
+      ${q?`<span class="tk-q2"><b>${hx(tkNm(q.empId))}</b>${hx(q.text||tkAttLabel(q.att))}</span>`:''}${tkAttHtml(m.att,t.id)}${m.text?hx(m.text):''}
       <span class="ft${seen?' seen':''}">${hx(tkClock(m.createdAt))}${mine?ti(seen?'check2':'check'):''}</span></button>`;
   });
-  box.innerHTML=out||'<div class="tk-sys">No messages yet. Say something.</div>';
+  const vanish=d.msgs.some(m=>m.att&&m.att.mid&&(tkLeft(m.att)||0)>0);
+  box.innerHTML=(vanish?`<div class="tk-sys warnb">${ti('info',14)} Photos, voice and files stay on the server for ${5} days. Open them once to save them on this phone, or they will vanish.</div>`:'')+(out||'<div class="tk-sys">No messages yet. Say something.</div>');
+  tkHydrate();
   if(!quiet||stick) box.scrollTop=box.scrollHeight;
   const cmp=document.getElementById('tkComp'); if(cmp) cmp.style.display=live?'flex':'none';
   tkReplyBar(); tkStagePaint(); tkCompBtn();
 }
 function tkAttLabel(a){ return !a?'':a.type==='image'?'Photo':a.type==='audio'?'Voice message':a.type==='location'?'Location':'Document'; }
 function tkSize(n){ return n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'; }
-function tkAttHtml(a){
+function tkAttHtml(a,key){
   if(!a) return '';
-  if(a.type==='image') return `<img class="tk-img" src="${hx(a.data)}" alt="Photo" onclick="event.stopPropagation();tkView2(this.src)">`;
-  if(a.type==='audio') return `<audio class="tk-aud" controls preload="none" src="${hx(a.data)}" onclick="event.stopPropagation()"></audio>`;
   if(a.type==='location') return `<a class="tk-loc" href="https://www.google.com/maps?q=${hx(a.lat)},${hx(a.lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="fi">${ti('pin')}</span><span><b>${hx(a.label||'Shared location')}</b><small>Open in Maps</small></span></a>`;
+  if(a.mid){   // kept on the server for 5 days; this phone saves its own copy
+    const d=`data-mid="${hx(a.mid)}" data-type="${hx(a.type)}" data-mime="${hx(a.mime)}" data-name="${hx(a.name||'')}" data-size="${+a.size||0}" data-exp="${hx(a.exp||'')}" data-key="${hx(key||_tk.cur||'')}"`, note=`<small class="tk-note" data-note="${hx(a.mid)}"></small>`;
+    if(a.type==='image') return `<img class="tk-img tk-ph" ${d} alt="Photo" onclick="event.stopPropagation();tkImgTap(this)">${note}`;
+    if(a.type==='audio') return `<audio class="tk-aud" controls preload="metadata" ${d} onclick="event.stopPropagation()"></audio>${note}`;
+    return `<a class="tk-file" href="#" ${d} onclick="tkFileTap(event,this)"><span class="fi">${ti('doc')}</span><span style="min-width:0"><b class="ell" style="display:block;max-width:190px">${hx(a.name||'file')}</b><small>${hx(tkSize(+a.size||0))}</small></span></a>${note}`;
+  }
+  if(a.type==='image') return `<img class="tk-img" src="${hx(a.data)}" alt="Photo" onclick="event.stopPropagation();tkView2(this.src)">`;   // older messages kept the picture inside the message
+  if(a.type==='audio') return `<audio class="tk-aud" controls preload="none" src="${hx(a.data)}" onclick="event.stopPropagation()"></audio>`;
   return `<a class="tk-file" href="${hx(a.data)}" download="${hx(a.name||'file')}" onclick="event.stopPropagation()"><span class="fi">${ti('doc')}</span><span style="min-width:0"><b class="ell" style="display:block;max-width:190px">${hx(a.name||'file')}</b><small>${hx(tkSize(Math.round((a.data||'').length*0.75)))} · Download</small></span></a>`;
 }
+function tkImgTap(el){ if(el.dataset.ready&&el.src) tkView2(el.src); else tkHyd1(el); }
 function tkView2(src){ const v=document.createElement('div'); v.className='tk-viewer'; v.onclick=()=>v.remove(); v.innerHTML=`<img src="${hx(src)}" alt="Photo">`; document.body.appendChild(v); }
 function tkGrow(el){ el.style.height='24px'; el.style.height=Math.min(110,Math.max(24,el.scrollHeight))+'px'; }
 function tkCompBtn(){ const b=document.getElementById('tkAct'), i=document.getElementById('tkIn'); if(!b||!i) return; const has=i.value.trim()||_tk.att; b.innerHTML=ti(has?'send':'mic'); b.setAttribute('aria-label',has?'Send':'Record a voice message'); }
@@ -5968,21 +5989,21 @@ function tkReplyBar(){
 }
 function tkStagePaint(){
   const el=document.getElementById('tkStage'); if(!el) return; const a=_tk.att;
-  el.innerHTML=a?`<div class="tk-stage g2">${a.type==='image'?`<img src="${hx(a.data)}" alt="" style="width:46px;height:46px;border-radius:10px;object-fit:cover">`:`<span class="fi" style="color:var(--tint)">${ti(a.type==='location'?'pin':a.type==='audio'?'mic':'doc')}</span>`}<span class="sp ell">${hx(a.type==='image'?'Photo ready to send':a.type==='location'?(a.label||'Location'):a.type==='audio'?'Voice message':a.name)}</span><button class="tk-ib" onclick="_tk.att=null;tkStagePaint();tkCompBtn()" aria-label="Remove">${ti('x')}</button></div>`:'';
+  el.innerHTML=a?`<div class="tk-stage g2">${a.type==='image'?`<img src="${hx(a.prev||a.data||'')}" alt="" style="width:46px;height:46px;border-radius:10px;object-fit:cover">`:`<span class="fi" style="color:var(--tint)">${ti(a.type==='location'?'pin':a.type==='audio'?'mic':'doc')}</span>`}<span class="sp ell">${hx(a.type==='image'?'Photo ready to send':a.type==='location'?(a.label||'Location'):a.type==='audio'?'Voice message':a.name)}</span><button class="tk-ib" onclick="_tk.att=null;tkStagePaint();tkCompBtn()" aria-label="Remove">${ti('x')}</button></div>`:'';
 }
 async function tkSend(){
   const i=document.getElementById('tkIn'), text=i.value.trim(); if(!text&&!_tk.att) return;
   const b=document.getElementById('tkAct'); if(b) b.disabled=true;
-  try{ await tkApi('taskPost',{id:_tk.cur,text:text,att:_tk.att,replyTo:_tk.reply||''}); i.value=''; tkGrow(i); _tk.att=null; _tk.reply=null; await tkRefresh(false); }
+  try{ let att=_tk.att; if(att&&att.blob){ att=await tkUpload(_tk.cur,att); } await tkApi('taskPost',{id:_tk.cur,text:text,att:att,replyTo:_tk.reply||''}); i.value=''; tkGrow(i); tkStage(null); _tk.reply=null; await tkRefresh(false); }
   catch(e){ tkToast(e.message); } finally{ if(b) b.disabled=false; tkCompBtn(); }
 }
 function tkToast(msg){ const m=document.getElementById('tkMsgs'); if(!m) return alert(msg); const d=document.createElement('div'); d.className='tk-sys'; d.style.color='#B42318'; d.textContent=msg; m.appendChild(d); m.scrollTop=m.scrollHeight; setTimeout(()=>d.remove(),5000); }
 
 /* sheets inside the messenger */
 function tkSheet(html){ tkSheetClose(); const m=_tk.root; const b=document.createElement('div'); b.className='tk-sheetb'; b.id='tkSB'; b.onclick=e=>{ if(e.target===b) tkSheetClose(); }; b.innerHTML='<div class="tk-sheet">'+html+'</div>'; m.appendChild(b); }
-function tkSheetClose(){ const b=document.getElementById('tkSB'); if(b) b.remove(); }
+function tkSheetClose(){ if(_tk.cam){ try{ _tk.cam.getTracks().forEach(t=>t.stop()); }catch(e){} _tk.cam=null; } const b=document.getElementById('tkSB'); if(b) b.remove(); }
 function tkAttach(){
-  tkSheet(`<h3>Attach</h3><div class="tk-att"><button onclick="document.getElementById('tkFDoc').click();tkSheetClose()"><span class="c">${ti('doc',26)}</span>Document</button><button onclick="document.getElementById('tkFCam').click();tkSheetClose()"><span class="c">${ti('cam',26)}</span>Camera</button><button onclick="document.getElementById('tkFImg').click();tkSheetClose()"><span class="c">${ti('img',26)}</span>Gallery</button><button onclick="tkSheetClose();tkLoc()"><span class="c">${ti('pin',26)}</span>Location</button></div><div class="tk-err" style="margin-top:12px;color:var(--ink2)">Files up to about 500 KB. Photos are shrunk automatically.</div>`);
+  tkSheet(`<h3>Attach</h3><div class="tk-att"><button onclick="tkFilePick('tkFDoc')"><span class="c">${ti('doc',26)}</span>Document</button><button onclick="tkSheetClose();tkCamera()"><span class="c">${ti('cam',26)}</span>Camera</button><button onclick="tkFilePick('tkFImg')"><span class="c">${ti('img',26)}</span>Gallery</button><button onclick="tkSheetClose();tkLoc()"><span class="c">${ti('pin',26)}</span>Location</button></div><div class="tk-err" style="margin-top:12px;color:var(--ink2)">Files up to 5 MB. Photos are shrunk automatically. They stay on the server for 5 days; every phone keeps its own copy once opened.</div>`);
 }
 function tkMenu(mid){
   const m=_tk.data.msgs.find(x=>x.id===mid); if(!m) return; const mine=tkSame(m.empId,tkMe())||_tk.admin&&false;
@@ -5991,22 +6012,82 @@ function tkMenu(mid){
 function tkCopy(mid){ const m=_tk.data.msgs.find(x=>x.id===mid); try{ navigator.clipboard.writeText(m.text); }catch(e){} tkSheetClose(); }
 async function tkDel(mid){ tkSheetClose(); try{ await tkApi('taskDelMsg',{id:_tk.cur,msgId:mid}); await tkRefresh(false); }catch(e){ tkToast(e.message); } }
 
-/* attachments */
-const TK_MAX=480000;
+/* attachments: photos, voice and files wait on the server's storage for 5 days and are kept on every phone (IndexedDB) */
+const TK_MAX=5*1024*1024, TK_IMG=1500000, TK_AUTO=1500000;
+const TK_MT={pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',txt:'text/plain',csv:'text/csv'};
+let _tkDb=null;
+function tkDb(){ return _tkDb||(_tkDb=new Promise(ok=>{ try{ const r=indexedDB.open('amitek-tasks',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('media'); r.result.createObjectStore('cache'); }; r.onsuccess=()=>ok(r.result); r.onerror=()=>ok(null); r.onblocked=()=>ok(null); }catch(e){ ok(null); } })); }
+async function tkGet(store,key){ const d=await tkDb(); if(!d) return undefined; return new Promise(ok=>{ try{ const q=d.transaction(store).objectStore(store).get(key); q.onsuccess=()=>ok(q.result); q.onerror=()=>ok(undefined); }catch(e){ ok(undefined); } }); }
+async function tkPut(store,key,val){ const d=await tkDb(); if(!d) return false; return new Promise(ok=>{ try{ const t=d.transaction(store,'readwrite'); t.objectStore(store).put(val,key); t.oncomplete=()=>ok(true); t.onerror=()=>ok(false); t.onabort=()=>ok(false); }catch(e){ ok(false); } }); }
+function tkB64(blob){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(',')[1]||''); r.onerror=()=>no(new Error('Could not read the file.')); r.readAsDataURL(blob); }); }
 function tkReadFile(f){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>no(new Error('Could not read the file.')); r.readAsDataURL(f); }); }
-function tkShrink(f){ return new Promise((ok,no)=>{
+function tkShrink(f){ return new Promise((ok,no)=>{   // a photo becomes a small JPEG (Blob)
   const img=new Image(), u=URL.createObjectURL(f);
-  img.onload=()=>{ let k=Math.min(1,1100/Math.max(img.width,img.height)), q=.72, out='';
-    for(let n=0;n<6;n++){ const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); out=c.toDataURL('image/jpeg',q); if(out.length<=TK_MAX*1.3) break; k*=.8; q=Math.max(.45,q-.08); }
-    URL.revokeObjectURL(u); out.length<=TK_MAX*1.37?ok(out):no(new Error('Photo is too big.')); };
-  img.onerror=()=>no(new Error('Could not read the photo.')); img.src=u; }); }
-async function tkPickImg(inp){ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; try{ _tk.att={type:'image',mime:'image/jpeg',data:await tkShrink(f)}; tkStagePaint(); tkCompBtn(); }catch(e){ tkToast(e.message); } }
-async function tkPickDoc(inp){
-  const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
-  if(f.size>TK_MAX) return tkToast('File is too big. Up to about 500 KB.');
-  const ext=(f.name.split('.').pop()||'').toLowerCase(), MT={pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',txt:'text/plain',csv:'text/csv'};
-  const mime=MT[ext]; if(!mime) return tkToast('This kind of file is not allowed.');
-  try{ let d=await tkReadFile(f); d='data:'+mime+';base64,'+d.slice(d.indexOf(',')+1); _tk.att={type:'file',mime:mime,name:f.name,data:d}; tkStagePaint(); tkCompBtn(); }catch(e){ tkToast(e.message); }
+  img.onload=()=>{ let k=Math.min(1,1280/Math.max(img.width,img.height)), q=.76, n=0;
+    const go=()=>{ const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      c.toBlob(b=>{ if(!b){ URL.revokeObjectURL(u); return no(new Error('Could not read the photo.')); } if(b.size>TK_IMG&&n++<5){ k*=.8; q=Math.max(.5,q-.07); return go(); } URL.revokeObjectURL(u); b.size<=TK_IMG?ok(b):no(new Error('Photo is too big.')); },'image/jpeg',q); };
+    go(); };
+  img.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('Could not read the photo.')); }; img.src=u; }); }
+const TK_OLD='This needs the newer Amitek app. Install the latest app (ask your admin for the link), then try again.';
+function tkOldApp(){ return !!window.AndroidTracker&&typeof AndroidTracker.hasMedia!=='function'; }   // the installed APK predates the file picker and microphone
+function tkFilePick(id){ tkSheetClose(); if(tkOldApp()) return tkToast(TK_OLD); const el=document.getElementById(id); if(el) el.click(); }
+function tkStage(a){ if(_tk.att&&_tk.att.prev) try{ URL.revokeObjectURL(_tk.att.prev); }catch(e){} _tk.att=a; tkStagePaint(); tkCompBtn(); }
+async function tkCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ const el=document.getElementById('tkFCam'); if(el) el.click(); return; }
+  let st; try{ st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false}); }catch(e){ return tkToast('Allow the camera to take a photo.'); }
+  tkSheet(`<h3>Take a photo</h3><video id="tkVid" autoplay playsinline muted style="width:100%;max-height:56vh;border-radius:24px;background:#000;object-fit:cover"></video><button class="tk-go" style="margin-top:12px" onclick="tkSnap()">Capture</button><button class="tk-gh" onclick="tkSheetClose()">Cancel</button>`);
+  _tk.cam=st; const v=document.getElementById('tkVid'); v.srcObject=st; v.play().catch(()=>{});
+}
+function tkSnap(){
+  const v=document.getElementById('tkVid'); if(!v||!v.videoWidth) return;
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+  c.toBlob(async b=>{ tkSheetClose(); if(!b) return tkToast('Could not take the photo.'); try{ const s=await tkShrink(b); tkStage({type:'image',mime:'image/jpeg',name:'photo.jpg',blob:s,prev:URL.createObjectURL(s)}); }catch(e){ tkToast(e.message); } },'image/jpeg',.9);
+}
+async function tkPickImg(inp){ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; try{ const s=await tkShrink(f); tkStage({type:'image',mime:'image/jpeg',name:'photo.jpg',blob:s,prev:URL.createObjectURL(s)}); }catch(e){ tkToast(e.message); } }
+function tkDocOf(f){   // a picked document as a staged attachment, or an error text
+  if(f.size>TK_MAX) return 'File is too big. Up to 5 MB.';
+  const ext=(f.name.split('.').pop()||'').toLowerCase(), mime=TK_MT[ext]; if(!mime) return 'This kind of file is not allowed.';
+  return {type:'file',mime:mime,name:f.name,blob:f,size:f.size};
+}
+async function tkPickDoc(inp){ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; const a=tkDocOf(f); if(typeof a==='string') return tkToast(a); tkStage(a); }
+/* saved on this phone / fetched from the server */
+async function tkUpload(key,a){   // sends the staged file to storage and keeps a copy on this phone
+  const r=await tkApi('taskMediaPut',{id:key,type:a.type,mime:a.mime,name:a.name||'',data:await tkB64(a.blob)});
+  await tkPut('media',r.mid,{blob:a.blob,mime:a.mime,name:a.name||'',type:a.type,at:Date.now()});
+  const ref={type:a.type,mime:a.mime,mid:r.mid,size:r.size,name:r.name}; if(a.dur) ref.dur=a.dur; return ref;
+}
+const _tkFly=new Map(), _tkUrl={};
+function tkFetch(key,a){   // download from the server once, keep on this phone
+  if(_tkFly.has(a.mid)) return _tkFly.get(a.mid);
+  const p=(async()=>{ const r=await tkApi('taskMediaGet',{id:key,mid:a.mid}); const bin=atob(r.data), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    const blob=new Blob([u],{type:r.mime||a.mime}); await tkPut('media',a.mid,{blob:blob,mime:a.mime,name:a.name||'',type:a.type,at:Date.now()}); return blob; })();
+  _tkFly.set(a.mid,p); p.then(()=>_tkFly.delete(a.mid),()=>_tkFly.delete(a.mid)); return p;
+}
+function tkLeft(a){ const d=Math.ceil((Date.parse(a.exp||'')-Date.now())/864e5); return isNaN(d)?null:d; }
+function tkNote(el,text,warn){ const n=el.closest('.tk-b,.tk-ann'); const x=n&&n.querySelector('[data-note="'+el.dataset.mid+'"]'); if(x){ x.textContent=text; x.className='tk-note'+(warn?' warn':''); } }
+async function tkHydrate(){
+  Array.from(document.querySelectorAll('#tkMain [data-mid]')).filter(e=>!e.dataset.ok).forEach(el=>{ el.dataset.ok='1'; tkHyd1(el); });
+}
+async function tkHyd1(el){
+  const a={mid:el.dataset.mid,type:el.dataset.type,mime:el.dataset.mime,name:el.dataset.name,size:+el.dataset.size||0,exp:el.dataset.exp}, key=el.dataset.key;
+  const show=b=>{ const u=_tkUrl[a.mid]||(_tkUrl[a.mid]=URL.createObjectURL(b)); if(el.tagName==='IMG'||el.tagName==='AUDIO') el.src=u; else { el.href=u; el.download=a.name||'file'; } el.dataset.ready='1'; tkNote(el,'Saved on this phone',false); };
+  const left=tkLeft(a), gone=left!==null&&left<=0;
+  let b=await tkGet('media',a.mid); b=b&&b.blob;
+  if(b) return show(b);
+  if(gone) return tkNote(el,'Expired: no longer on the server',true);
+  const warn='Download within '+(left>1?left+' days':'a day')+' or it will vanish';
+  if(a.size&&a.size>TK_AUTO){ tkNote(el,'Tap to download · '+warn,true); return; }
+  tkNote(el,'Downloading…',true);
+  try{ show(await tkFetch(key,a)); }catch(e){ tkNote(el,/expired/i.test(e.message)?'Expired: no longer on the server':'Tap to retry · '+warn,true); }
+}
+async function tkFileTap(ev,el){
+  ev.stopPropagation();
+  const a={mid:el.dataset.mid,type:el.dataset.type,mime:el.dataset.mime,name:el.dataset.name,key:el.dataset.key};
+  if(!el.dataset.ready){ ev.preventDefault(); try{ tkNote(el,'Downloading…',true); const b=await tkFetch(a.key,a); const u=_tkUrl[a.mid]||(_tkUrl[a.mid]=URL.createObjectURL(b)); el.href=u; el.download=a.name||'file'; el.dataset.ready='1'; tkNote(el,'Saved on this phone',false); }catch(e){ tkNote(el,e.message,true); } return; }
+  if(window.AndroidTracker&&typeof AndroidTracker.saveBlob==='function'){   // the Android app has no download manager: hand the file over
+    ev.preventDefault(); try{ const b=await tkGet('media',a.mid); if(b&&b.blob&&AndroidTracker.saveBlob(a.name||'file',a.mime,await tkB64(b.blob))) return; }catch(e){}
+    tkToast('Could not save the file. Update the app and try again.');
+  }
 }
 function tkLoc(){
   if(!navigator.geolocation) return tkToast('Location is not available on this device.');
@@ -6014,6 +6095,7 @@ function tkLoc(){
   navigator.geolocation.getCurrentPosition(async p=>{ let label=''; try{ label=await reverseGeocode(p.coords.latitude,p.coords.longitude); }catch(e){} _tk.att={type:'location',lat:p.coords.latitude,lng:p.coords.longitude,label:label||'Shared location'}; tkStagePaint(); tkCompBtn(); },()=>tkToast('Turn on GPS and allow location, then try again.'),{enableHighAccuracy:true,timeout:15000});
 }
 async function tkRecStart(){
+  if(tkOldApp()) return tkToast(TK_OLD);
   if(!navigator.mediaDevices||!window.MediaRecorder) return tkToast('Voice messages are not supported here.');
   try{
     const st=await navigator.mediaDevices.getUserMedia({audio:true}), mt=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(x=>MediaRecorder.isTypeSupported(x))||'';
@@ -6021,9 +6103,8 @@ async function tkRecStart(){
     mr.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
     _tk.rec={mr:mr,st:st,chunks:chunks,t0:t0,cancel:false};
     mr.onstop=async()=>{ st.getTracks().forEach(t=>t.stop()); clearInterval(_tk.recT); const r=_tk.rec; _tk.rec=null; tkRecPaint(false); if(!r||r.cancel||!chunks.length) return;
-      const blob=new Blob(chunks,{type:(mr.mimeType||'audio/webm').split(';')[0]}); if(blob.size>TK_MAX) return tkToast('Voice message is too long.');
-      let d=await tkReadFile(blob); const m=(mr.mimeType||'audio/webm').split(';')[0]; d='data:'+m+';base64,'+d.slice(d.indexOf(',')+1);
-      _tk.att={type:'audio',mime:m,dur:Math.round((Date.now()-t0)/1000),data:d}; await tkSend(); };
+      const m=(mr.mimeType||'audio/webm').split(';')[0], blob=new Blob(chunks,{type:m}); if(blob.size>TK_MAX) return tkToast('Voice message is too long.');
+      _tk.att={type:'audio',mime:m,name:'voice',blob:blob,dur:Math.round((Date.now()-t0)/1000)}; await tkSend(); };
     mr.start(); tkRecPaint(true); _tk.recT=setInterval(()=>{ const s=Math.round((Date.now()-t0)/1000), e=document.getElementById('tkRecT'); if(e) e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); if(s>=60) tkRecStop(false); },500);
   }catch(e){ tkToast('Allow the microphone to record.'); }
 }
@@ -6091,20 +6172,22 @@ async function tkOpenAnn(){
   setTimeout(()=>{ _tk.ann.forEach(a=>{ a.seen=true; }); tkRows(); },400);
 }
 function tkAnnPaint(){
-  const m=document.getElementById('tkMain'); if(!m) return;
+  const m=document.getElementById('tkMain'); if(!m) return; setTimeout(tkHydrate,0);
   m.innerHTML=`<div class="tk-ch g1"><button class="tk-ib tk-back" onclick="tkBack()" aria-label="Back">${ti('back')}</button><span class="tk-av" style="background:linear-gradient(135deg,#0B7A6B,#1A8FB5 58%,#6A4BC9)">${ti('mega',22)}</span><div class="mid"><div class="t1">Announcements</div><div class="t2">${_tk.admin?'You post, everyone reads':'From your admins'}</div></div></div>
-    <div class="tk-msgs" style="padding:12px" id="tkAnns">${_tk.ann.length?_tk.ann.map(a=>`<div class="tk-ann">${a.pinned?`<div class="tk-pill info" style="display:inline-flex;gap:5px;align-items:center;margin-bottom:6px">${ti('pinned',14)} Pinned</div>`:''}${a.title?`<h4>${hx(a.title)}</h4>`:''}${tkAttHtml(a.att)}${a.text?`<p>${hx(a.text)}</p>`:''}
+    <div class="tk-msgs" style="padding:12px" id="tkAnns">${_tk.ann.length?_tk.ann.map(a=>`<div class="tk-ann">${a.pinned?`<div class="tk-pill info" style="display:inline-flex;gap:5px;align-items:center;margin-bottom:6px">${ti('pinned',14)} Pinned</div>`:''}${a.title?`<h4>${hx(a.title)}</h4>`:''}${tkAttHtml(a.att,'ann')}${a.text?`<p>${hx(a.text)}</p>`:''}
       <div class="m"><span>${hx(tkDay(a.createdAt))}, ${hx(tkClock(a.createdAt))}</span><span class="sp"></span>${_tk.admin?`<span class="tk-pill ok">Seen by ${a.seenCount} of ${a.total}</span><button class="tk-btn" onclick="tkAnnPin('${esc(a.id)}',${a.pinned?'false':'true'})">${a.pinned?'Unpin':'Pin'}</button><button class="tk-btn bad" onclick="tkAnnDel('${esc(a.id)}')">Delete</button>`:''}</div></div>`).join(''):`<div class="tk-empty"><div class="eic">${ti('mega')}</div><b>No announcements yet</b>${_tk.admin?'Write one below. Everyone gets notified.':'News from your admins will appear here.'}</div>`}</div>
-    ${_tk.admin?`<div class="tk-stage g2" id="tkAnnStage" style="display:none"></div><div class="tk-comp" style="flex-direction:column;align-items:stretch"><label class="tk-q g2" style="margin:0"><input id="tkAT" maxlength="100" placeholder="Title (optional)" style="font-weight:700"></label><div class="box g1" style="align-items:center"><button class="tk-ib" onclick="document.getElementById('tkAF').click()" aria-label="Attach a file or photo">${ti('clip')}</button><textarea id="tkAX" rows="2" maxlength="1000" placeholder="Write an announcement for everyone" oninput="tkGrow(this)"></textarea><button class="tk-rb pri" onclick="tkAnnPost()" aria-label="Post">${ti('send')}</button></div><input type="file" id="tkAF" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" hidden onchange="tkAnnPick(this)"><div class="tk-err" id="tkAErr"></div></div>`:''}`;
+    ${_tk.admin?`<div class="tk-stage g2" id="tkAnnStage" style="display:none"></div><div class="tk-comp" style="flex-direction:column;align-items:stretch"><label class="tk-q g2" style="margin:0"><input id="tkAT" maxlength="100" placeholder="Title (optional)" style="font-weight:700"></label><div class="box g1" style="align-items:center"><button class="tk-ib" onclick="if(tkOldApp()) return tkToast(TK_OLD);document.getElementById('tkAF').click()" aria-label="Attach a file or photo">${ti('clip')}</button><textarea id="tkAX" rows="2" maxlength="1000" placeholder="Write an announcement for everyone" oninput="tkGrow(this)"></textarea><button class="tk-rb pri" onclick="tkAnnPost()" aria-label="Post">${ti('send')}</button></div><input type="file" id="tkAF" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" hidden onchange="tkAnnPick(this)"><div class="tk-err" id="tkAErr"></div></div>`:''}`;
 }
 async function tkAnnPick(inp){
   const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return; const e=document.getElementById('tkAErr');
-  try{ if(/^image\//.test(f.type)) _tk.annAtt={type:'image',mime:'image/jpeg',data:await tkShrink(f)}; else{ if(f.size>TK_MAX) throw new Error('File is too big. Up to about 500 KB.'); const ext=(f.name.split('.').pop()||'').toLowerCase(), MT={pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',txt:'text/plain',csv:'text/csv'}; if(!MT[ext]) throw new Error('This kind of file is not allowed.'); let d=await tkReadFile(f); _tk.annAtt={type:'file',mime:MT[ext],name:f.name,data:'data:'+MT[ext]+';base64,'+d.slice(d.indexOf(',')+1)}; }
+  try{ if(/^image\//.test(f.type)){ const b=await tkShrink(f); _tk.annAtt={type:'image',mime:'image/jpeg',name:'photo.jpg',blob:b}; }
+    else{ const a=tkDocOf(f); if(typeof a==='string') throw new Error(a); _tk.annAtt=a; }
     e.style.color='var(--ink2)'; e.textContent='Attached: '+(_tk.annAtt.name||'photo'); }catch(x){ e.style.color='#B42318'; e.textContent=x.message; }
 }
 async function tkAnnPost(){
   const e=document.getElementById('tkAErr'), v=k=>(document.getElementById(k)||{}).value||'';
-  try{ await api('postAnnouncement',{title:v('tkAT'),text:v('tkAX'),att:_tk.annAtt||''}); _tk.annAtt=null; _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(x){ e.style.color='#B42318'; e.textContent=x.message; }
+  try{ let att=_tk.annAtt||''; if(att&&att.blob) att=await tkUpload('ann',att);
+    await api('postAnnouncement',{title:v('tkAT'),text:v('tkAX'),att:att}); _tk.annAtt=null; _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(x){ e.style.color='#B42318'; e.textContent=x.message; }
 }
 async function tkAnnPin(id,on){ try{ await api('pinAnnouncement',{id:id,pinned:on}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
 async function tkAnnDel(id){ if(!confirm('Delete this announcement for everyone?')) return; try{ await api('deleteAnnouncement',{id:id}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
