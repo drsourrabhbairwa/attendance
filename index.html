@@ -603,6 +603,14 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wl-r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}
 .wl-r b{font-size:14px}.wl-r .s{font-size:12px;color:var(--soft)}.wl-r a{color:var(--accent);text-decoration:none;font-weight:600}
 .wl-b{align-self:start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--greenBg);color:var(--green)}.wl-b.p{background:var(--amberBg);color:var(--amber)}.wl-b.i{background:rgba(0,0,0,.07);color:var(--soft)}
+.wr-g{margin:10px 0 4px;font-size:12px;font-weight:700;color:var(--soft)}
+.wr-ch{display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow:auto}
+.wr-ch button{min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--border2);background:rgba(255,255,255,.7);font:inherit;font-size:13px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+.wr-ch button.on{background:var(--accentBg);border-color:var(--accent);color:var(--accent);font-weight:700}
+.wr-d{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.wr-d input,.wr-d select,.wr-q{min-height:44px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rs);font:inherit;font-size:14px;max-width:100%;background:rgba(255,255,255,.8)}
+.wr-q{width:100%;box-sizing:border-box}
+.wr-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.wr-a button{min-height:44px;padding:8px 16px;border:none;border-radius:var(--rs);color:#fff;font-weight:700;font:inherit;font-size:14px;cursor:pointer}
+.wr-t{overflow-x:auto;margin-top:12px}.wr-t table{width:100%;border-collapse:collapse;font-size:12px}.wr-t th{text-align:left;padding:6px;border-bottom:1px solid rgba(0,0,0,.12);white-space:nowrap}.wr-t td{padding:6px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:top}
 .wm-run{display:flex;gap:8px}.wm-run .btn{flex:1;margin:0;min-height:44px}
 </style>
 <style id="placesCss">
@@ -1220,6 +1228,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   <!-- REPORTS TAB -->
   <div id="tabReports" class="tab-pane">
     <div class="add-form" id="perBox_rpt" style="margin-bottom:18px"></div>
+    <div class="wl" id="wrBox"></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <div><div style="font-weight:700;font-size:15px">Monthly report</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Attendance trend, visits, travel and honesty score per employee</div></div>
       <div style="display:flex;gap:7px">
@@ -4877,6 +4886,7 @@ function initReports(){
   const s=settingsNow();
   document.getElementById('setStart').value=s.start; document.getElementById('setGrace').value=s.grace; document.getElementById('setRate').value=s.rate||'';
   renderDeptList(); initAlerts(); initRules(); periodInit('rpt');
+  try{ wrDraw(); }catch(e){ console.warn(e); }
 }
 async function saveReportSettings(){
   const ok=document.getElementById('setOk');
@@ -6407,6 +6417,78 @@ async function wlLoad(d){
     }).join('');
     el.innerHTML=`<div class="wl"><h4>Working now <small>${list.length} punched in</small></h4>${rows}</div>`;
   }catch(e){ el.innerHTML=''; }   // an older backend or no access: the tab simply looks as before
+}
+
+/* ── Work report: multi-select filters, then CSV or PDF of exactly the filtered rows ── */
+const WR_MODES=[['field','Field'],['office','Office'],['wfh','Work From Home']];
+const WR_KINDS=['Sales Meeting','Site Supervision','Complaint','Payment Collection','Installation','Brand Building','Material Delivery','Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
+let _wr={emps:[],modes:[],kinds:[],status:[],range:'today',data:null};
+const wrAddDays=(d,n)=>{ const t=new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
+const wrMin=m=>{ m=Math.round(m||0); return Math.floor(m/60)+'h '+(m%60)+'m'; };
+function wrChips(g,list){ return '<div class="wr-ch">'+list.map(x=>{ const v=Array.isArray(x)?x[0]:x, l=Array.isArray(x)?x[1]:x; return `<button type="button" class="${_wr[g].indexOf(v)>=0?'on':''}" onclick="wrTog('${g}','${esc(v)}')">${hx(l)}</button>`; }).join('')+'</div>'; }
+function wrDraw(){
+  const el=document.getElementById('wrBox'); if(!el) return;
+  const emps=(_D.employees||[]).map(e=>[String(e.id).toUpperCase(),e.name+' ('+e.id+')']);
+  const keep=(document.getElementById('wrQ')||{}).value||'', c1=(document.getElementById('wrFrom')||{}).value||'', c2=(document.getElementById('wrTo')||{}).value||'';
+  el.innerHTML=`<h4>Work report <small>by mode, purpose and person</small></h4>
+    <div class="wr-g">Period</div><div class="wr-ch">${[['today','Today'],['week','Last 7 days'],['custom','Custom']].map(x=>`<button type="button" class="${_wr.range===x[0]?'on':''}" onclick="wrRange('${x[0]}')">${x[1]}</button>`).join('')}</div>
+    ${_wr.range==='custom'?`<div class="wr-d" style="margin-top:8px"><input type="date" id="wrFrom" value="${hx(c1||todayStr())}"><span>to</span><input type="date" id="wrTo" value="${hx(c2||todayStr())}"></div>`:''}
+    <div class="wr-g">Employees <span style="font-weight:400">(none selected = all)</span></div>${wrChips('emps',emps)}
+    <div class="wr-g">Mode</div>${wrChips('modes',WR_MODES)}
+    <div class="wr-g">Purpose / task</div>${wrChips('kinds',WR_KINDS)}
+    <div class="wr-g">Status</div>${wrChips('status',['Active','Paused','Done','Travelling'])}
+    <div class="wr-g">Client name or phone</div><input class="wr-q" id="wrQ" placeholder="Search client" value="${hx(keep)}">
+    <div class="wr-a"><button style="background:var(--accent)" onclick="wrShow()">Show</button><button style="background:var(--green)" onclick="wrCsv()">⬇ CSV</button><button style="background:#B45309" onclick="wrPdf()">PDF</button></div>
+    <div id="wrOut"></div>`;
+  if(_wr.data) wrOut();
+}
+function wrTog(g,v){ const a=_wr[g], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); _wr.data=null; wrDraw(); }
+function wrRange(r){ _wr.range=r; _wr.data=null; wrDraw(); }
+function wrDates(){
+  const t=todayStr();
+  if(_wr.range==='today') return [t,t];
+  if(_wr.range==='week') return [wrAddDays(t,-6),t];
+  const a=(document.getElementById('wrFrom')||{}).value||t, b=(document.getElementById('wrTo')||{}).value||t; return [a,b];
+}
+function wrFilterText(){
+  const [a,b]=wrDates(), nm=id=>{ const e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===id); return e?e.name:id; };
+  const q=(document.getElementById('wrQ')||{}).value||'';
+  return [a===b?a:a+' to '+b,'Employees: '+(_wr.emps.length?_wr.emps.map(nm).join(', '):'all'),'Mode: '+(_wr.modes.length?_wr.modes.map(m=>(WR_MODES.find(x=>x[0]===m)||[m,m])[1]).join(', '):'all'),'Purpose/task: '+(_wr.kinds.length?_wr.kinds.join(', '):'all'),'Status: '+(_wr.status.length?_wr.status.join(', '):'all')]
+    .concat(q.trim()?['Client: '+q.trim()]:[]).join(' · ');
+}
+async function wrShow(){
+  const [a,b]=wrDates(); if(b<a) return alert('The end date is before the start date.');
+  loading(true,'Loading work report…');
+  try{
+    const r=await api('workReport',{start:a,end:b,empIds:_wr.emps,modes:_wr.modes,kinds:_wr.kinds,status:_wr.status,q:((document.getElementById('wrQ')||{}).value||'').trim()});
+    loading(false); _wr.data=Object.assign({},r,{filters:wrFilterText()}); wrOut();
+  }catch(e){ loading(false); alert(e.message||'Could not load the report.'); }
+}
+const wrKind=r=>r.kind==='Other'&&r.kindOther?r.kindOther:r.kind;
+function wrOut(){
+  const d=_wr.data, el=document.getElementById('wrOut'); if(!el||!d) return;
+  const sp=Object.keys(d.split||{}).map(k=>[k,d.split[k]]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
+  el.innerHTML=`<div class="wr-g" style="margin-top:14px">${d.rows.length} entries · ${hx(d.filters)}</div>
+    ${sp.length?`<div class="wr-t"><table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>WFH</th><th>Unlogged</th></tr></thead><tbody>${sp.map(([k,e])=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    ${bk.length?`<div class="wr-t"><table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    ${d.rows.length?`<div class="wr-t"><table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?'<br>'+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No work entries for these filters.</div>'}`;
+}
+async function wrEnsure(){ if(!_wr.data) await wrShow(); return _wr.data; }
+async function wrCsv(){
+  await wrShow(); const d=_wr.data; if(!d) return;
+  const hdr=['Date','Employee ID','Employee','Mode','Purpose / task','Client','Client phone','Start','End','Active minutes','Status','Place','Outcome'];
+  const rows=d.rows.map(r=>[r.date,r.empId,r.name,(WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1],wrKind(r),r.clientName,r.clientPhone,r.startAt?wmClk(r.startAt):'',r.endAt?wmClk(r.endAt):'',r.activeMin,r.status,r.placeTag,r.outcome].map(csvCell).join(','));
+  saveTextFile('work-report-'+d.start+(d.end!==d.start?'_to_'+d.end:'')+'.csv',[['Work report'].map(csvCell).join(','),['Filters',d.filters].map(csvCell).join(','),'',hdr.join(','),...rows].join('\n'));
+}
+async function wrPdf(){
+  await wrShow(); const d=_wr.data; if(!d) return;
+  const sp=Object.keys(d.split||{}).map(k=>d.split[k]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
+  const body=`<div class="note" style="margin:0 0 10px"><b>Filters:</b> ${hx(d.filters)}</div>
+    ${sp.length?`<table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Work From Home</th><th>Unlogged</th></tr></thead><tbody>${sp.map(e=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table><br>`:''}
+    ${bk.length?`<table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table><br>`:''}
+    <table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?' · '+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table>`;
+  const t=d.start===d.end?d.start:d.start+' to '+d.end;
+  printHtmlNow(printShell({title:'Amitek work report '+t,heading:'Work Report · '+t,sub:scopeLabel()+'<br>'+d.rows.length+' entries',body,who:printWho(),orient:'landscape'}));
 }
 </script>
 </body>
