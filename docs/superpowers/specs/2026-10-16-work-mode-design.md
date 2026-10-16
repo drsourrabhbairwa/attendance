@@ -40,7 +40,7 @@ Purposes: Sales Meeting, Site Supervision, Complaint, Payment Collection, Instal
 - The travel step ("on the way") stays: choosing Field starts it, so travel time and the arrival prompt keep working.
 
 ### Office Work and Work From Home
-Tasks: Client Calling (client name, number, result), Accounts Setting, Accounts Settling, Task Stack Settling, Training, Client Code Creation, Client Presentation Making, Demo to a client who came to the office (client name, number), Other (text required).
+Tasks: Client Calling (client name, number, result), Accounts Setting, Accounts Settling, Task Stack Settling, Training, Client Quotation Creation, Client Presentation Making, Client Quotation Creation (client name, number), Demo to a client who came to the office (client name, number), Other (text required).
 - New collection `WorkLogs` (one row per task): `empId, date, mode, kind, kindOther, clientName, clientPhone, customerId?, start, end, pauses[], status (Active|Paused|Done), outcome, place, placeTag`.
 - Client Calling and Demo link to an existing lead or add one (same picker as Field).
 - Start/Stop, Pause/Resume, short remarks required on Stop.
