@@ -598,6 +598,11 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
 .wm-cap{font-size:13px;color:var(--soft);margin:6px 0}.wm-cap b{color:var(--ink,inherit)}
 .wm-tl{margin-top:14px}.wm-tl ul{list-style:none;margin:6px 0 0;padding:0}.wm-tl li{padding:8px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}.wm-tl li b{display:block;font-size:14px}.wm-tl li span{display:block;font-size:12px;color:var(--soft)}.wm-tl li em{display:block;font-size:12px;font-style:normal;margin-top:2px}
+.wl{margin:0 0 14px;padding:14px;border-radius:18px;background:var(--surface2,rgba(255,255,255,.7));border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,.08)}
+.wl h4{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.wl h4 small{font-weight:500;color:var(--soft);font-size:12px}
+.wl-r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}
+.wl-r b{font-size:14px}.wl-r .s{font-size:12px;color:var(--soft)}.wl-r a{color:var(--accent);text-decoration:none;font-weight:600}
+.wl-b{align-self:start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--greenBg);color:var(--green)}.wl-b.p{background:var(--amberBg);color:var(--amber)}.wl-b.i{background:rgba(0,0,0,.07);color:var(--soft)}
 .wm-run{display:flex;gap:8px}.wm-run .btn{flex:1;margin:0;min-height:44px}
 </style>
 <style id="placesCss">
@@ -1070,6 +1075,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
       <div class="stat"><div class="n c-red" id="sAbsent">0</div><div class="l">Absent</div></div>
     </div>
     <div class="msg msg-error" id="holBanner" style="display:none"></div>
+    <div id="wlLive"></div>
     <div class="filter-row">
       <input type="date" id="filterDate" onchange="loadAttTab()">
       <input type="text" id="filterName" placeholder="Search name…">
@@ -3947,7 +3953,7 @@ async function loadAttTab(){
   loading(true,'Loading attendance…');
   try{
     const[dayRecs,emps]=await Promise.all([getAttRange(fd,fd),getEmployees(),syncLeaves()]);
-    loading(false);
+    loading(false); wlLoad(fd);
     const presIds=dayRecs.map(r=>String(r.empId).toUpperCase());
     let present=0,partial=0,meetOut=0;
     dayRecs.forEach(r=>{const am=getActiveMeeting(r);if(r.punchIn&&r.punchOut)present++;else if(r.punchIn&&am)meetOut++;else if(r.punchIn)partial++;});
@@ -6382,6 +6388,25 @@ function wmTimeline(){
   if(!L.length) return '';
   L.sort((a,b)=>a.t<b.t?-1:1);
   return `<div class="wm-tl"><div class="wm-q">Today</div><ul>${L.map(x=>x.h).join('')}</ul></div>`;
+}
+
+/* Admin: who is doing what right now (inside the Attendance tab) */
+const WL_MODE={field:'Field',office:'Office',wfh:'Work From Home'};
+async function wlLoad(d){
+  const el=document.getElementById('wlLive'); if(!el) return;
+  if(d!==todayStr()){ el.innerHTML=''; return; }
+  try{
+    const list=(await api('workLive',{date:d}))||[];
+    if(!list.length){ el.innerHTML=''; return; }
+    const rows=list.map(r=>{
+      const what=r.kind==='Other'&&r.kindOther?r.kindOther:r.kind, mode=WL_MODE[r.mode]||'', cls=r.status==='Paused'?'p':r.status==='Active'?'':'i';
+      const t=r.startAt?wmClk(r.startAt):'';
+      return `<div class="wl-r"><b>${hx(r.name)}</b><span class="wl-b ${cls}">${hx(r.status==='Idle'?(r.mode?'Idle':'Idle'):r.status)}${r.status==='Travelling'?'':''}</span>
+        <span class="s">${hx([mode,what].filter(Boolean).join(' · ')||'No mode chosen yet')}${r.placeTag?' · '+hx(r.placeTag):''}</span><span class="s">${t?'since '+t:'in '+hx(String(r.since||''))}</span>
+        ${r.clientName?`<span class="s">${hx(r.clientName)}${r.clientPhone?` · <a href="tel:${hx(r.clientPhone)}">${hx(r.clientPhone)}</a>`:''}</span>`:''}</div>`;
+    }).join('');
+    el.innerHTML=`<div class="wl"><h4>Working now <small>${list.length} punched in</small></h4>${rows}</div>`;
+  }catch(e){ el.innerHTML=''; }   // an older backend or no access: the tab simply looks as before
 }
 </script>
 </body>
