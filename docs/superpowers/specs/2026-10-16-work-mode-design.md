@@ -51,6 +51,9 @@ Tasks: Client Calling (client name, number, result), Accounts Setting, Accounts 
 - If the phone is inside one of the person's assigned Places (office or factory), the matching mode card is highlighted as a suggestion and the place name is shown as a tag ("At Factory"). It is a hint, never a block. Hard geo-fence rules remain a separate roadmap item.
 - The day's mode time is the sum of Active time of each item, grouped by mode. Time between items is "unlogged" and is shown as such.
 
+### Hours shown to the employee
+The home block shows **Total working hours** (Work ON until now, or until Work OFF) and **Productive working hours** (Active time of all meetings and tasks; pauses, travel and unlogged time do not count). The old "in office so far" caption is removed.
+
 ## Data
 - `Meetings`: add `purpose`, `purposeOther`, `outcome`, `pauses` (JSON), `pausedAt`, `activeMin`. Existing `reason` is kept and filled from `purpose`, so old reports and the Leads tab still read it.
 - `WorkLogs`: new, shape above.
