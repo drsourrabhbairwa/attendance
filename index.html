@@ -596,6 +596,8 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-card .sug{flex:none;font-size:11px;font-weight:700;color:var(--accent2);background:rgba(255,255,255,.8);border-radius:999px;padding:3px 8px}
 .wm-note{font-size:12px;color:var(--soft);margin-top:8px;line-height:1.5;overflow-wrap:anywhere}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.wm-cap{font-size:13px;color:var(--soft);margin:6px 0}.wm-cap b{color:var(--ink,inherit)}
+.wm-tl{margin-top:14px}.wm-tl ul{list-style:none;margin:6px 0 0;padding:0}.wm-tl li{padding:8px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}.wm-tl li b{display:block;font-size:14px}.wm-tl li span{display:block;font-size:12px;color:var(--soft)}.wm-tl li em{display:block;font-size:12px;font-style:normal;margin-top:2px}
 .wm-run{display:flex;gap:8px}.wm-run .btn{flex:1;margin:0;min-height:44px}
 </style>
 <style id="placesCss">
@@ -2794,7 +2796,8 @@ function renderHomeToday(rec,dayOff,noLoad){
     const since=parseTimeMins(rec.punchIn.time);
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
-    b=am?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?wmModeHtml()+wmOffBtn():btn('📸 Punch Out','btn-blue'));
+    const amB=W&&am&&am.state==='done'?null:am;   // a finished field item is in the timeline; the block goes back to the idle choices
+    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?wmModeHtml()+wmOffBtn()+wmTimeline():btn('📸 Punch Out','btn-blue'));
   } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=btn(W?'📸 Work ON':'📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
@@ -6282,10 +6285,10 @@ function wmLive(){   // minutes since the last server answer, so both figures ke
   return {total:total,prod:prod};
 }
 function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
-function wmTick(){ const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
+function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, t=k?`<span class="wm-chip">${WMI[k]}<span>${hx(wmTitle(k))}${_wm.placeTag?` <small>· ${hx(_wm.placeTag)}</small>`:''}</span></span>`:'<span class="wm-chip">Choose what you are doing</span>';
-  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():'');
+  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh')?(_wm.open?wmRunHtml():wmTaskChips()):'');
 }
 function wmOffBtn(){
   const run=_wm.open;
@@ -6330,6 +6333,55 @@ async function wmSiteStart(pl){
       const s=r&&r.already&&r.session?siteFromServer(r.session):null; if(s) sw=s; }
     swPut(sw); nativeStart(sw); startSiteTimer(); siteTick(); renderHomeSite&&renderHomeSite();
   }catch(e){ console.warn('site tracking not started',e); }
+}
+
+/* Office Work / Work From Home: tasks with run / pause / stop, and the day's timeline */
+const WM_TASKS=['Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
+const WM_CLIENT=['Client Calling','Client Quotation Creation','Demo to Office Client'];
+const wmLbl=i=>i.kind==='Other'&&i.kindOther?i.kindOther:i.kind;
+const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
+function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(WM_TASKS,'','wmTaskPick'); }
+function wmTaskPick(k){
+  _fm=Object.assign(_fm,{id:'',task:k});
+  const cl=WM_CLIENT.indexOf(k)>=0;
+  fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
+    (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
+  if(cl) fmSearch();
+}
+async function wmTaskGo(){
+  const k=_fm.task, cl=WM_CLIENT.indexOf(k)>=0, g=id=>((document.getElementById(id)||{}).value||'').trim();
+  if(k==='Other'&&!g('fmOther')) return fmErr('Write what the work is.');
+  if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
+  if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
+  try{
+    const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:'w'+Date.now()};
+    if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
+    await api('workStart',body); fmClose(); await wmLoad();
+  }catch(e){ fmErr(e.message||'Could not start.'); }
+  finally{ _wm.busy=false; }
+}
+async function wmItem(action,extra){
+  if(_wm.busy||!_wm.open) return; _wm.busy=true;
+  try{ await api(action,Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),id:_wm.open.id},extra||{})); fmClose(); await wmLoad(); }
+  catch(e){ if(document.getElementById('fmErr')) fmErr(e.message); else alert(e.message||'Could not save.'); }
+  finally{ _wm.busy=false; }
+}
+function wmStopAsk(){
+  const o=_wm.open; if(!o) return;
+  fmSheet(`<h3>${hx(wmLbl(o))} · finish</h3><div class="fm-lbl">How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmStopGo()">⏹ Stop and save</button>`);
+}
+function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(!v) return fmErr('Write a short note first.'); fmErr('Saving…'); wmItem('workStop',{remarks:v}); }
+function wmRunMin(){ const o=_wm.open; return o?o.activeMin+(o.status==='Active'?(Date.now()-_wm.at)/60000:0):0; }
+function wmRunHtml(){
+  const o=_wm.open, ps=o.status==='Paused';
+  return `<div class="fm-card"><div class="fm-step">${hx(wmLbl(o))} · ${ps?'paused':'running since '+wmClk(o.startAt)}</div>${o.clientName?`<div class="fm-cust"><div><b>${hx(o.clientName)}</b><span>${hx(o.clientPhone)}</span></div>${o.clientPhone?`<a href="tel:${hx(o.clientPhone)}" title="Call">📞</a>`:''}</div>`:''}<div class="wm-cap">Active <b id="wmRunT">${fmtMins(wmRunMin())}</b></div><div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="wmItem('${ps?'workResume':'workPause'}')">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="wmStopAsk()">⏹ Stop</button></div></div>`;
+}
+function wmTimeline(){
+  const L=[]; (_wm.items||[]).forEach(i=>L.push({t:i.startAt,h:`<li><b>${hx(wmLbl(i))}</b><span>${wmClk(i.startAt)}${i.endAt?' – '+wmClk(i.endAt):' · '+i.status.toLowerCase()} · ${fmtMins(i.status==='Done'?i.activeMin:wmRunMin())}${i.clientName?' · '+hx(i.clientName):''}</span>${i.outcome?`<em>${hx(i.outcome)}</em>`:''}</li>`}));
+  ((_hmRec&&_hmRec.meetings)||[]).filter(m=>m.kind!=='personal'&&m.startAt).forEach(m=>L.push({t:m.startAt,h:`<li><b>${hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:(m.purpose||'Meeting'))}</b><span>${wmClk(m.startAt)}${m.endAt?' – '+wmClk(m.endAt):' · running'}${m.activeMin?' · '+fmtMins(m.activeMin):''}${m.customerName?' · '+hx(m.customerName):''}</span>${m.outcome||m.result?`<em>${hx(m.outcome||m.result)}</em>`:''}</li>`}));
+  if(!L.length) return '';
+  L.sort((a,b)=>a.t<b.t?-1:1);
+  return `<div class="wm-tl"><div class="wm-q">Today</div><ul>${L.map(x=>x.h).join('')}</ul></div>`;
 }
 </script>
 </body>
