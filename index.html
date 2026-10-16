@@ -596,6 +596,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-card .sug{flex:none;font-size:11px;font-weight:700;color:var(--accent2);background:rgba(255,255,255,.8);border-radius:999px;padding:3px 8px}
 .wm-note{font-size:12px;color:var(--soft);margin-top:8px;line-height:1.5;overflow-wrap:anywhere}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.wm-run{display:flex;gap:8px}.wm-run .btn{flex:1;margin:0;min-height:44px}
 </style>
 <style id="placesCss">
 .pl-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}
@@ -2793,7 +2794,7 @@ function renderHomeToday(rec,dayOff,noLoad){
     const since=parseTimeMins(rec.punchIn.time);
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
-    b=am?(pers?'':fmCardHtml(am))+btn('🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline'):(W?wmModeHtml()+wmOffBtn():btn('📸 Punch Out','btn-blue'));
+    b=am?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?wmModeHtml()+wmOffBtn():btn('📸 Punch Out','btn-blue'));
   } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=btn(W?'📸 Work ON':'📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
@@ -2809,7 +2810,8 @@ function renderHomeActs(){
   const rec=_hmRec, dayOff=_hmOff, me=curRec()||{}, wt=String(me.workType||'');
   const inNow=!!(rec&&rec.punchIn&&!rec.punchOut), am=inNow&&getActiveMeeting(rec), sw=mySiteManual();
   const T=[];
-  if(inNow&&!am){
+  const W=wmOn();
+  if(inNow&&!am&&!W){
     if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🚗</div><b>Going for meeting</b><span>⛔ Stop site work first</span></button>`);
     else T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
     if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🏃</div><b>Urgent personal work</b><span>⛔ Stop site work first</span></button>`);
@@ -2823,6 +2825,7 @@ function renderHomeActs(){
     else if(_otShown==='start') T.push(`<button class="hm-tile" onclick="openOvertime('start')"><div class="ti">⏱</div><b>Start overtime</b><span>Working extra · your admin approves</span></button>`); }
   el.className='hm-grid n'+T.length; el.innerHTML=T.join('');
   const L=[];
+  if(!am&&W&&inNow&&!(_wm.open)) L.push(`<button onclick="openPunch('personal')">🏃 <span>Urgent personal work</span><small>Step out · time kept separate</small></button>`);
   if(!am){
     L.push(`<button onclick="showLeavePanel()">📋 <span>Apply for leave</span><small id="hmLeaveSub"></small></button>`);
     L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
@@ -3208,7 +3211,7 @@ async function onFix(pos){
   fixWaiters.slice().forEach(w=>w(fix));
   fixListeners.slice().forEach(l=>l(fix));
   const btn=document.getElementById('captureBtn'); if(btn&&locWanted) btn.disabled=false;
-  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display='block';
+  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display=wmOn()?'none':'block';
   geoHintUpdate();
   if(!capArea) locBar('green','📍 Getting area name…');
   const area=await reverseGeocode(fix.lat,fix.lng);
@@ -3374,7 +3377,7 @@ function setCamMode(mode,kind){
   const visitBtn=document.getElementById('visitBtn'), visitBox=document.getElementById('visitBox'), cancelBtn=document.getElementById('cancelModeBtn');
   if(meetBtn) meetBtn.style.display='none';
   const persBtn=document.getElementById('personalBtn'); if(persBtn) persBtn.style.display='none';
-  if(visitBtn) visitBtn.style.display=mode==='out'?'block':'none';
+  if(visitBtn) visitBtn.style.display=(mode==='out'&&!wmOn())?'block':'none';
   if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out'||mode==='personal_out'||mode==='resume'||mode==='ot_start'||mode==='ot_stop')?'block':'none';
   { const ob=document.getElementById('otBox'); if(ob) ob.classList.toggle('show',mode==='ot_start'); if(mode==='ot_start') otReset(); }
   if(visitBox) visitBox.classList.toggle('show',mode==='visit');
@@ -3634,7 +3637,7 @@ function updateSiteBar(){
   const bar=document.getElementById('siteWorkBar'), startBtn=document.getElementById('startSiteBtn');
   if(bar&&startBtn){
     const sw=mySiteManual();
-    if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng)?'block':'none'; }
+    if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng&&!wmOn())?'block':'none'; }
     else{
       bar.style.display='block'; startBtn.style.display='none';
       document.getElementById('swInfo').textContent='📍 '+(sw.startArea||'Site')+' · Started '+String(fmt12(sw.startTime)).toUpperCase();
@@ -5568,6 +5571,9 @@ html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid 
 <script>
 /* ── Field meetings: leave → customer → start → end (result) → next meeting or Back ── */
 const FM_REASONS=['Quotation','Demo','Site visit','Payment','Follow-up','Complaint','Other'];
+const FM_PURPOSES=['Sales Meeting','Site Supervision','Complaint','Payment Collection','Installation','Brand Building','Material Delivery','Other'];
+const fmMeet=n=>((_hmRec&&_hmRec.meetings)||[]).find(x=>x.seq==n)||{};
+const fmSales=m=>!wmOn()||!m.purpose||m.purpose==='Sales Meeting';
 const FM_RESULTS=['Interested','Quotation asked','Order','Follow-up','Not interested'];
 const FM_VERTICALS=['Seamless Floorings','Waterproofing','Road Marking Paint','Home Automation'];
 let _fm={seq:0,id:'',reason:'',result:'',vertical:'',busy:false,t:null,arrived:{}};
@@ -5578,8 +5584,13 @@ function fmCardHtml(m){
   const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
   if(st==='go') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · on the way</div>${fmCust(m)}`+
     (m.customerId?`<button class="btn btn-green" onclick="fmStart(${n})">▶ Start meeting</button><button class="fm-link" onclick="fmChoose(${n})">Change customer</button>${fmQ(m)}`:`<button class="btn btn-green" onclick="fmChoose(${n})">👤 Choose customer</button>`)+`</div>`;
-  if(st==='in') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
-  return `<div class="fm-card"><div class="fm-step">Meeting ${n} · done · ${hx(m.result||'')}</div>${fmCust(m)}<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>${fmQ(m)}</div>`;
+  const W=wmOn(), pu=m.purpose?hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:m.purpose)+' · ':'';
+  if(st==='in'){
+    if(!W) return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
+    const ps=!!m.pausedAt;
+    return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(fmt12(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
+  }
+  return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
 function fmSheet(html){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet">'+html+'</div>'; }
 function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
@@ -5596,22 +5607,22 @@ async function fmPlace(){
   return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
 }
 async function fmStart(seq){
-  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r) await fmRefresh(); }
+  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r){ await fmRefresh(); if(wmOn()&&fmMeet(seq).purpose==='Site Supervision') wmSiteStart(p); } }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the meeting.'); }
 }
 async function fmNext(){
   try{ const p=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the next meeting.'); }
 }
-function fmChoose(seq){
-  _fm=Object.assign(_fm,{seq:seq,id:'',reason:'',lat:'',lng:''});
+function fmChoose(seq,preset){
+  _fm=Object.assign(_fm,{seq:seq,id:'',reason:preset||'',other:'',lat:'',lng:''});
   fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
     <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)">
-    <div class="fm-lbl">Reason for the meeting</div><div id="fmReason">${fmChips(FM_REASONS,'', 'fmReasonPick')}</div><div class="fm-err" id="fmErr"></div>
+    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?FM_PURPOSES:FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" style="display:${preset==='Other'?'block':'none'}"><div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
   fmSearch();
 }
-function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(FM_REASONS,r,'fmReasonPick'); }
+function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?FM_PURPOSES:FM_REASONS,r,'fmReasonPick'); const o=document.getElementById('fmOther'); if(o) o.style.display=r==='Other'?'block':'none'; }
 function fmSearch(){
   clearTimeout(_fm.t);
   _fm.t=setTimeout(async()=>{
@@ -5625,16 +5636,20 @@ function fmPick(id,name,phone,addr){ _fm.id=id; document.getElementById('fmName'
 async function fmSaveCustomer(){
   const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim();
   if(!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
-  if(!_fm.reason) return fmErr('Choose the reason for the meeting.');
+  if(!_fm.reason) return fmErr(wmOn()?'Choose the purpose.':'Choose the reason for the meeting.');
+  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&_fm.reason==='Other'&&!oth.trim()) return fmErr('Write what the work is.');
   fmErr('Saving…');
   try{
-    const body={seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
+    const body=wmOn()?{seq:_fm.seq,purpose:_fm.reason,purposeOther:oth.trim()}:{seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
     const r=await fmCall('setMeetingCustomer',body);
     if(r){ fmClose(); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 function fmEnd(seq){
   _fm=Object.assign(_fm,{seq:seq,result:'',vertical:''});
+  const mm=fmMeet(seq);
+  if(!fmSales(mm)) return fmSheet(`<h3>${hx(mm.purpose==='Other'&&mm.purposeOther?mm.purposeOther:mm.purpose)} · finish</h3><div class="fm-lbl">${mm.purpose==='Complaint'?'What was the issue and what did you do?':'What was the outcome?'} (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea>
+    <div class="fm-lbl">Next follow-up (optional)</div><input id="fmFollow" type="date"><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="fmFinish()">⏹ Stop and save</button>`);
   fmSheet(`<h3>How did the meeting go?</h3><div class="fm-lbl">Result</div><div id="fmRes2">${fmChips(FM_RESULTS,'','fmResultPick')}</div>
     <div class="fm-lbl">Business line (optional)</div><div id="fmVert">${fmChips(FM_VERTICALS,'','fmVertPick')}</div>
     <div class="fm-lbl">Expected order value in ₹ (optional)</div><input id="fmVal" inputmode="numeric" placeholder="e.g. 150000">
@@ -5645,11 +5660,15 @@ function fmEnd(seq){
 function fmResultPick(r){ _fm.result=r; fmErr(''); document.getElementById('fmRes2').innerHTML=fmChips(FM_RESULTS,r,'fmResultPick'); const l=document.getElementById('fmNoteL'); if(l) l.textContent=r==='Not interested'?'Why not interested?':'Note (optional)'; }
 function fmVertPick(v){ _fm.vertical=_fm.vertical===v?'':v; document.getElementById('fmVert').innerHTML=fmChips(FM_VERTICALS,_fm.vertical,'fmVertPick'); }
 async function fmFinish(){
-  if(!_fm.result) return fmErr('Choose the result of the meeting.');
+  const mm=fmMeet(_fm.seq), sales=fmSales(mm);
+  if(sales&&!_fm.result) return fmErr('Choose the result of the meeting.');
+  if(!sales&&document.getElementById('fmNote').value.trim().length<3) return fmErr('Write the outcome first.');
   fmErr('Saving…');
   try{
-    const r=await fmCall('endMeetingVisit',{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()});
-    if(r){ fmClose(); await fmRefresh(); }
+    const body=sales?{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()}
+      :{seq:_fm.seq,outcome:document.getElementById('fmNote').value.trim(),followUpDate:document.getElementById('fmFollow').value};
+    const r=await fmCall('endMeetingVisit',body);
+    if(r){ fmClose(); if(mm.purpose==='Site Supervision'&&mySiteManual()) stopSiteWork(true); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 /* Arrival prompt: while a meeting is "on the way" to a customer whose place is known, tell the person when they are within 150 m */
@@ -6266,7 +6285,7 @@ function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id
 function wmTick(){ const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, t=k?`<span class="wm-chip">${WMI[k]}<span>${hx(wmTitle(k))}${_wm.placeTag?` <small>· ${hx(_wm.placeTag)}</small>`:''}</span></span>`:'<span class="wm-chip">Choose what you are doing</span>';
-  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`;
+  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():'');
 }
 function wmOffBtn(){
   const run=_wm.open;
@@ -6291,6 +6310,26 @@ async function wmSetMode(k){
   try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; fmClose(); await wmLoad(); }
   catch(e){ fmErr(e.message||'Could not change the mode.'); }
   finally{ _wm.busy=false; }
+}
+
+/* Field Work inside the Work ON block */
+function wmFieldChips(){ return '<div class="wm-q">What field work is it?</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'); }
+async function wmFieldGo(p){
+  try{ const pl=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:pl.lat,lng:pl.lng,area:pl.area}); if(!r) return; await fmRefresh(); fmChoose(r.seq,p); }
+  catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start.'); }
+}
+async function fmPause(n){ try{ const r=await fmCall('pauseMeeting',{seq:n}); if(r) await fmRefresh(); }catch(e){ alert(e.message||'Could not pause.'); } }
+async function fmResume(n){ try{ const r=await fmCall('resumeMeeting',{seq:n}); if(r) await fmRefresh(); }catch(e){ alert(e.message||'Could not resume.'); } }
+/* Site Supervision starts the existing site tracking, without the camera step */
+async function wmSiteStart(pl){
+  try{
+    if(mySiteManual()||!currentEmp) return;
+    const f=await freshFix(), date=todayStr(), startTime=nowTime(), id='sw-'+Date.now(), area=pl&&pl.area||'';
+    let sw={id,empId:currentEmp.id,empName:currentEmp.name,startTime,siteLat:f.lat,siteLng:f.lng,startArea:area,startAcc:f.acc||0,date,nextCheckAt:0,mode:'site'};
+    if(USE_SHEETS){ const r=await api('startSiteWork',{id,empId:currentEmp.id,name:currentEmp.name,date,startTime,lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area,accuracy:f.acc||'',photo:''});
+      const s=r&&r.already&&r.session?siteFromServer(r.session):null; if(s) sw=s; }
+    swPut(sw); nativeStart(sw); startSiteTimer(); siteTick(); renderHomeSite&&renderHomeSite();
+  }catch(e){ console.warn('site tracking not started',e); }
 }
 </script>
 </body>
