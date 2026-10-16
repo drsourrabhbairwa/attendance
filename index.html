@@ -576,6 +576,30 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .per-bar select,.per-bar input{width:auto;padding:7px 9px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit;background:var(--surface)}
 .per-bar>button.sq{width:34px;padding:7px 0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-size:16px;line-height:1;color:var(--ink,#16302F)}
 </style>
+<style id="wmCss">
+/* Work Mode: one clean block (Work ON → mode → purpose / task → run, pause, stop → Work OFF). Glass look comes from the app's own surface tokens. */
+.wm-mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;min-width:0}
+.wm-chip{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);font-weight:700;font-size:13px;color:var(--accent2);overflow-wrap:anywhere;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.wm-chip small{font-weight:600;color:var(--soft)}
+.wm-link{background:none;border:0;padding:8px 4px;min-height:44px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:underline;cursor:pointer}
+.wm-i{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.wm-hrs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.wm-hrs>div{min-width:0;padding:10px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.wm-hrs b{display:block;font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--accent2);overflow-wrap:anywhere}
+.wm-hrs span{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
+.wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
+.wm-cards{display:grid;gap:8px;margin:8px 0}
+.wm-card{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;text-align:left;border-radius:16px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 4px 14px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
+.wm-card .ic{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#27968B,#12604F);color:#fff}
+.wm-card .tx{min-width:0;flex:1}.wm-card b{display:block;font-size:15px;overflow-wrap:anywhere}.wm-card small{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
+.wm-card.on{border-color:var(--accent);background:var(--accentBg);box-shadow:0 0 0 3px rgba(31,127,119,.22)}
+.wm-card .sug{flex:none;font-size:11px;font-weight:700;color:var(--accent2);background:rgba(255,255,255,.8);border-radius:999px;padding:3px 8px}
+.wm-note{font-size:12px;color:var(--soft);margin-top:8px;line-height:1.5;overflow-wrap:anywhere}
+.wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.wm-cap{font-size:13px;color:var(--soft);margin:6px 0}.wm-cap b{color:var(--ink,inherit)}
+.wm-tl{margin-top:14px}.wm-tl ul{list-style:none;margin:6px 0 0;padding:0}.wm-tl li{padding:8px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}.wm-tl li b{display:block;font-size:14px}.wm-tl li span{display:block;font-size:12px;color:var(--soft)}.wm-tl li em{display:block;font-size:12px;font-style:normal;margin-top:2px}
+.wm-run{display:flex;gap:8px}.wm-run .btn{flex:1;margin:0;min-height:44px}
+</style>
 <style id="placesCss">
 .pl-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}
 .pl-row input[type=text],.pl-row select{flex:1;min-width:120px;margin-top:0;padding:8px 11px;font-size:13px;width:auto}
@@ -907,6 +931,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
       <textarea id="visitNote" rows="2" placeholder="e.g. Showed samples, quotation needed for 2,000 sq ft"></textarea>
     </div>
     <!-- Overtime: why (only in overtime-start mode) -->
+    <div id="wmPick" style="display:none"></div>
     <div class="note-box" id="otBox">
       <label style="margin:0 0 6px;font-size:12px">⏱ Why are you working extra? <span style="font-weight:400;color:var(--soft)">(required)</span></label>
       <div id="otChips"><button type="button" class="chip" data-r="Urgent client work" onclick="otPick(this)">🤝 Urgent client work</button><button type="button" class="chip" data-r="Site work" onclick="otPick(this)">🏗️ Site work</button><button type="button" class="chip" data-r="Delivery pending" onclick="otPick(this)">📦 Delivery pending</button><button type="button" class="chip" data-r="Other" onclick="otPick(this)">✏️ Other</button></div>
@@ -929,7 +954,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
         </div>
       </div>
     </div>
-    <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Punch In</button>
+    <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Work ON</button>
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
     <button class="btn btn-outline" id="personalBtn" style="display:none;color:#B45309;border-color:#B45309" onclick="switchToMeeting('personal')">🏃 Urgent personal work</button>
     <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
@@ -1561,7 +1586,8 @@ async function getRecordToday(empId){
 }
 async function storePunchIn(empId,name,date,punch){
   if(USE_SHEETS){
-    const r=await api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||''});
+    const r=await api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||'',mode:punch.mode||''});
+    if(punch.mode) _wm.mode=punch.mode;
     if(r&&r.time) punch.time=r.time;
     if(r&&r.geo) punch.geo=r.geo;
   }
@@ -2724,7 +2750,7 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
-    otTick();
+    otTick(); try{ wmTick(); }catch(e){}
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeTeamLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
@@ -2750,8 +2776,9 @@ async function freshRecordToday(empId){
     return rec;
   }catch(e){ return undefined; }
 }
-function renderHomeToday(rec,dayOff){
+function renderHomeToday(rec,dayOff,noLoad){
   window._fmSeen=false;
+  const W=wmOn(); if(W) wmRestore();
   const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
   const btn=(l,c)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch()">${l}</button>`;
   let ico='⏰', title='', sub='', extra='', b='';
@@ -2760,22 +2787,24 @@ function renderHomeToday(rec,dayOff){
   else if(rec&&rec.punchIn&&rec.punchOut){
     const th=calcTotalHrs(rec); ico='✅'; title='Day complete';
     sub='In '+fmt12(rec.punchIn.time)+' · Out '+fmt12(rec.punchOut.time);
-    if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
-    b=btn('View today','btn-outline')+`<button class="btn btn-purple" style="margin-top:8px" onclick="openPunch('resume')">↩ Came back? Resume work</button>`;
+    if(W) extra=wmHoursHtml(); else if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
+    b=btn('View today','btn-outline')+`<button class="btn btn-purple" style="margin-top:8px" onclick="openPunch('resume')">${W?'↩ Came back? Work ON again':'↩ Came back? Resume work'}</button>`;
   } else if(rec&&rec.punchIn){
     const am=getActiveMeeting(rec), half=isHalfDay(rec), late=!half&&parseTimeMins(rec.punchIn.time)>limit;
-    const pers=!!(am&&am.kind==='personal'); ico=am?(pers?'🏃':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':'In a meeting'):'You are punched in')+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
+    const pers=!!(am&&am.kind==='personal'); ico=am?(pers?'🏃':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':'In a meeting'):(W?'Work ON':'You are punched in'))+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
-    extra=`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
+    extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
-    b=am?(pers?'':fmCardHtml(am))+btn('🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline'):btn('📸 Punch Out','btn-blue');
-  } else { title='Not punched in yet'; sub='Office starts at '+set.start; b=btn('📸 Punch In','btn-green'); }
+    const amB=W&&am&&am.state==='done'?null:am;   // a finished field item is in the timeline; the block goes back to the idle choices
+    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?wmModeHtml()+wmOffBtn()+wmTimeline():btn('📸 Punch Out','btn-blue'));
+  } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=btn(W?'📸 Work ON':'📸 Punch In','btn-green'); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
+  if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
 }
 let _hmRec=null,_hmOff=null;
 const WORK_LABEL={'':'Everything (office + visits + site)',office:'Office staff',sales:'Sales / consultant (customer visits)',site:'Technician (site work)'};
@@ -2784,7 +2813,8 @@ function renderHomeActs(){
   const rec=_hmRec, dayOff=_hmOff, me=curRec()||{}, wt=String(me.workType||'');
   const inNow=!!(rec&&rec.punchIn&&!rec.punchOut), am=inNow&&getActiveMeeting(rec), sw=mySiteManual();
   const T=[];
-  if(inNow&&!am){
+  const W=wmOn();
+  if(inNow&&!am&&!W){
     if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🚗</div><b>Going for meeting</b><span>⛔ Stop site work first</span></button>`);
     else T.push(`<button class="hm-tile" onclick="openPunch('meeting')"><div class="ti">🚗</div><b>Going for meeting</b><span>Leave office · tap again when back</span></button>`);
     if(mySiteManual()) T.push(`<button class="hm-tile blocked" onclick="openPunch()"><div class="ti">🏃</div><b>Urgent personal work</b><span>⛔ Stop site work first</span></button>`);
@@ -2798,6 +2828,7 @@ function renderHomeActs(){
     else if(_otShown==='start') T.push(`<button class="hm-tile" onclick="openOvertime('start')"><div class="ti">⏱</div><b>Start overtime</b><span>Working extra · your admin approves</span></button>`); }
   el.className='hm-grid n'+T.length; el.innerHTML=T.join('');
   const L=[];
+  if(!am&&W&&inNow&&!(_wm.open)) L.push(`<button onclick="openPunch('personal')">🏃 <span>Urgent personal work</span><small>Step out · time kept separate</small></button>`);
   if(!am){
     L.push(`<button onclick="showLeavePanel()">📋 <span>Apply for leave</span><small id="hmLeaveSub"></small></button>`);
     L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
@@ -3183,7 +3214,7 @@ async function onFix(pos){
   fixWaiters.slice().forEach(w=>w(fix));
   fixListeners.slice().forEach(l=>l(fix));
   const btn=document.getElementById('captureBtn'); if(btn&&locWanted) btn.disabled=false;
-  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display='block';
+  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display=wmOn()?'none':'block';
   geoHintUpdate();
   if(!capArea) locBar('green','📍 Getting area name…');
   const area=await reverseGeocode(fix.lat,fix.lng);
@@ -3349,10 +3380,11 @@ function setCamMode(mode,kind){
   const visitBtn=document.getElementById('visitBtn'), visitBox=document.getElementById('visitBox'), cancelBtn=document.getElementById('cancelModeBtn');
   if(meetBtn) meetBtn.style.display='none';
   const persBtn=document.getElementById('personalBtn'); if(persBtn) persBtn.style.display='none';
-  if(visitBtn) visitBtn.style.display=mode==='out'?'block':'none';
+  if(visitBtn) visitBtn.style.display=(mode==='out'&&!wmOn())?'block':'none';
   if(cancelBtn) cancelBtn.style.display=(mode==='visit'||mode==='meeting_out'||mode==='personal_out'||mode==='resume'||mode==='ot_start'||mode==='ot_stop')?'block':'none';
   { const ob=document.getElementById('otBox'); if(ob) ob.classList.toggle('show',mode==='ot_start'); if(mode==='ot_start') otReset(); }
   if(visitBox) visitBox.classList.toggle('show',mode==='visit');
+  { const wp=document.getElementById('wmPick'); if(wp){ const on=mode==='in'&&wmOn(); wp.style.display=on?'block':'none'; if(on) wmPickReset(); } }
   if(mode==='visit'){ const vc=document.getElementById('visitCustomer'), vn=document.getElementById('visitNote'); if(vc) vc.value=''; if(vn) vn.value=''; }
   const noteModes=mode==='meeting_out'||mode==='personal_out'||mode==='resume';
   if(noteBox) noteBox.classList.toggle('show',noteModes);
@@ -3365,11 +3397,11 @@ function setCamMode(mode,kind){
   }
   btn.disabled=!(capLat&&capLng);
   if(mode==='in'){
-    bar.className='punch-bar bar-green'; document.getElementById('punchTxt').textContent='🟢 Mark Your Arrival';
-    btn.className='btn btn-green'; btn.textContent='📸 Punch In';
+    bar.className='punch-bar bar-green'; document.getElementById('punchTxt').textContent=wmOn()?'🟢 Work ON — start your day':'🟢 Mark Your Arrival';
+    btn.className='btn btn-green'; btn.textContent=wmOn()?'📸 Work ON':'📸 Punch In';
   } else if(mode==='out'){
-    bar.className='punch-bar bar-blue'; document.getElementById('punchTxt').textContent='🔵 End of Day — Punch Out';
-    btn.className='btn btn-blue'; btn.textContent='📸 Punch Out';
+    bar.className='punch-bar bar-blue'; document.getElementById('punchTxt').textContent=wmOn()?'🔵 End of Day — Work OFF':'🔵 End of Day — Punch Out';
+    btn.className='btn btn-blue'; btn.textContent=wmOn()?'📸 Work OFF':'📸 Punch Out';
     if(meetBtn) meetBtn.style.display='block';
     if(persBtn) persBtn.style.display='block';
   } else if(mode==='meeting_out'){
@@ -3410,6 +3442,7 @@ async function captureAndMark(){
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
   if(!video.srcObject){camErr.textContent='Camera not ready.';camErr.classList.add('show');return;}
   if(punchMode==='in'||punchMode==='out'){ const bm=geoBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; } }
+  if(punchMode==='in'&&wmOn()&&!_wm.pick){ camErr.textContent='Choose Field Work, Office Work or Work From Home first.'; camErr.classList.add('show'); return; }
   if(punchMode==='ot_start'){ const bm=otBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; }
     if(!otReasonText()){ camErr.textContent='Pick why you are working extra (and say what it is if you choose Other).'; camErr.classList.add('show'); return; } }
   const customer=(document.getElementById('visitCustomer')?.value||'').trim(), vnote=(document.getElementById('visitNote')?.value||'').trim();
@@ -3422,6 +3455,7 @@ async function captureAndMark(){
   const note=(punchMode==='meeting_out'||punchMode==='personal_out'||punchMode==='resume')?(document.getElementById('meetNote')?.value?.trim()||''):'';
   const lat=capLat, lng=capLng, time=nowTime();
   const punch={time,photo,lat,lng,accuracy:capAcc,area:capArea||await reverseGeocode(lat,lng)};
+  if(punchMode==='in'&&wmOn()&&_wm.pick) punch.mode=_wm.pick;
   let extra='';
   stopCamera(); stopLocWatch();
   document.getElementById('videoFeed').style.display='none';
@@ -3461,7 +3495,7 @@ async function captureAndMark(){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -3606,7 +3640,7 @@ function updateSiteBar(){
   const bar=document.getElementById('siteWorkBar'), startBtn=document.getElementById('startSiteBtn');
   if(bar&&startBtn){
     const sw=mySiteManual();
-    if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng)?'block':'none'; }
+    if(!sw){ bar.style.display='none'; startBtn.style.display=(capLat&&capLng&&!wmOn())?'block':'none'; }
     else{
       bar.style.display='block'; startBtn.style.display='none';
       document.getElementById('swInfo').textContent='📍 '+(sw.startArea||'Site')+' · Started '+String(fmt12(sw.startTime)).toUpperCase();
@@ -5540,6 +5574,9 @@ html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid 
 <script>
 /* ── Field meetings: leave → customer → start → end (result) → next meeting or Back ── */
 const FM_REASONS=['Quotation','Demo','Site visit','Payment','Follow-up','Complaint','Other'];
+const FM_PURPOSES=['Sales Meeting','Site Supervision','Complaint','Payment Collection','Installation','Brand Building','Material Delivery','Other'];
+const fmMeet=n=>((_hmRec&&_hmRec.meetings)||[]).find(x=>x.seq==n)||{};
+const fmSales=m=>!wmOn()||!m.purpose||m.purpose==='Sales Meeting';
 const FM_RESULTS=['Interested','Quotation asked','Order','Follow-up','Not interested'];
 const FM_VERTICALS=['Seamless Floorings','Waterproofing','Road Marking Paint','Home Automation'];
 let _fm={seq:0,id:'',reason:'',result:'',vertical:'',busy:false,t:null,arrived:{}};
@@ -5550,8 +5587,13 @@ function fmCardHtml(m){
   const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
   if(st==='go') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · on the way</div>${fmCust(m)}`+
     (m.customerId?`<button class="btn btn-green" onclick="fmStart(${n})">▶ Start meeting</button><button class="fm-link" onclick="fmChoose(${n})">Change customer</button>${fmQ(m)}`:`<button class="btn btn-green" onclick="fmChoose(${n})">👤 Choose customer</button>`)+`</div>`;
-  if(st==='in') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
-  return `<div class="fm-card"><div class="fm-step">Meeting ${n} · done · ${hx(m.result||'')}</div>${fmCust(m)}<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>${fmQ(m)}</div>`;
+  const W=wmOn(), pu=m.purpose?hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:m.purpose)+' · ':'';
+  if(st==='in'){
+    if(!W) return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
+    const ps=!!m.pausedAt;
+    return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(fmt12(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
+  }
+  return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
 function fmSheet(html){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet">'+html+'</div>'; }
 function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
@@ -5568,22 +5610,22 @@ async function fmPlace(){
   return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
 }
 async function fmStart(seq){
-  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r) await fmRefresh(); }
+  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r){ await fmRefresh(); if(wmOn()&&fmMeet(seq).purpose==='Site Supervision') wmSiteStart(p); } }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the meeting.'); }
 }
 async function fmNext(){
   try{ const p=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the next meeting.'); }
 }
-function fmChoose(seq){
-  _fm=Object.assign(_fm,{seq:seq,id:'',reason:'',lat:'',lng:''});
+function fmChoose(seq,preset){
+  _fm=Object.assign(_fm,{seq:seq,id:'',reason:preset||'',other:'',lat:'',lng:''});
   fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
     <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)">
-    <div class="fm-lbl">Reason for the meeting</div><div id="fmReason">${fmChips(FM_REASONS,'', 'fmReasonPick')}</div><div class="fm-err" id="fmErr"></div>
+    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?FM_PURPOSES:FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" style="display:${preset==='Other'?'block':'none'}"><div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
   fmSearch();
 }
-function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(FM_REASONS,r,'fmReasonPick'); }
+function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?FM_PURPOSES:FM_REASONS,r,'fmReasonPick'); const o=document.getElementById('fmOther'); if(o) o.style.display=r==='Other'?'block':'none'; }
 function fmSearch(){
   clearTimeout(_fm.t);
   _fm.t=setTimeout(async()=>{
@@ -5597,16 +5639,20 @@ function fmPick(id,name,phone,addr){ _fm.id=id; document.getElementById('fmName'
 async function fmSaveCustomer(){
   const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim();
   if(!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
-  if(!_fm.reason) return fmErr('Choose the reason for the meeting.');
+  if(!_fm.reason) return fmErr(wmOn()?'Choose the purpose.':'Choose the reason for the meeting.');
+  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&_fm.reason==='Other'&&!oth.trim()) return fmErr('Write what the work is.');
   fmErr('Saving…');
   try{
-    const body={seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
+    const body=wmOn()?{seq:_fm.seq,purpose:_fm.reason,purposeOther:oth.trim()}:{seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
     const r=await fmCall('setMeetingCustomer',body);
     if(r){ fmClose(); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 function fmEnd(seq){
   _fm=Object.assign(_fm,{seq:seq,result:'',vertical:''});
+  const mm=fmMeet(seq);
+  if(!fmSales(mm)) return fmSheet(`<h3>${hx(mm.purpose==='Other'&&mm.purposeOther?mm.purposeOther:mm.purpose)} · finish</h3><div class="fm-lbl">${mm.purpose==='Complaint'?'What was the issue and what did you do?':'What was the outcome?'} (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea>
+    <div class="fm-lbl">Next follow-up (optional)</div><input id="fmFollow" type="date"><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="fmFinish()">⏹ Stop and save</button>`);
   fmSheet(`<h3>How did the meeting go?</h3><div class="fm-lbl">Result</div><div id="fmRes2">${fmChips(FM_RESULTS,'','fmResultPick')}</div>
     <div class="fm-lbl">Business line (optional)</div><div id="fmVert">${fmChips(FM_VERTICALS,'','fmVertPick')}</div>
     <div class="fm-lbl">Expected order value in ₹ (optional)</div><input id="fmVal" inputmode="numeric" placeholder="e.g. 150000">
@@ -5617,11 +5663,15 @@ function fmEnd(seq){
 function fmResultPick(r){ _fm.result=r; fmErr(''); document.getElementById('fmRes2').innerHTML=fmChips(FM_RESULTS,r,'fmResultPick'); const l=document.getElementById('fmNoteL'); if(l) l.textContent=r==='Not interested'?'Why not interested?':'Note (optional)'; }
 function fmVertPick(v){ _fm.vertical=_fm.vertical===v?'':v; document.getElementById('fmVert').innerHTML=fmChips(FM_VERTICALS,_fm.vertical,'fmVertPick'); }
 async function fmFinish(){
-  if(!_fm.result) return fmErr('Choose the result of the meeting.');
+  const mm=fmMeet(_fm.seq), sales=fmSales(mm);
+  if(sales&&!_fm.result) return fmErr('Choose the result of the meeting.');
+  if(!sales&&document.getElementById('fmNote').value.trim().length<3) return fmErr('Write the outcome first.');
   fmErr('Saving…');
   try{
-    const r=await fmCall('endMeetingVisit',{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()});
-    if(r){ fmClose(); await fmRefresh(); }
+    const body=sales?{seq:_fm.seq,result:_fm.result,vertical:_fm.vertical,expectedValue:document.getElementById('fmVal').value,followUpDate:document.getElementById('fmFollow').value,note:document.getElementById('fmNote').value.trim()}
+      :{seq:_fm.seq,outcome:document.getElementById('fmNote').value.trim(),followUpDate:document.getElementById('fmFollow').value};
+    const r=await fmCall('endMeetingVisit',body);
+    if(r){ fmClose(); if(mm.purpose==='Site Supervision'&&mySiteManual()) stopSiteWork(true); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 /* Arrival prompt: while a meeting is "on the way" to a customer whose place is known, tell the person when they are within 150 m */
@@ -6191,6 +6241,148 @@ async function tkAnnPost(){
 }
 async function tkAnnPin(id,on){ try{ await api('pinAnnouncement',{id:id,pinned:on}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
 async function tkAnnDel(id){ if(!confirm('Delete this announcement for everyone?')) return; try{ await api('deleteAnnouncement',{id:id}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
+</script>
+<script id="wmJs">
+/* ── Work Mode: employee block ─────────────────────────────────────────────
+   Work ON (photo + GPS, as Punch In) with the kind of work chosen at the same time → run / pause / stop one item at a time → Work OFF.
+   Data stays punchIn / punchOut. If the server does not know workToday yet (older backend) the page falls back to the old home card. */
+const WMI={
+  field:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  office:'<svg class="wm-i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7.5h2M13 7.5h2M9 11.5h2M13 11.5h2M10 21v-4h4v4"/></svg>',
+  wfh:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10.5V20h12v-9.5"/><path d="M10 20v-5h4v5"/></svg>'
+};
+const WM_MODES=[{k:'field',t:'Field Work',h:'बाहर का काम'},{k:'office',t:'Office Work',h:'ऑफिस'},{k:'wfh',t:'Work From Home',h:'घर से'}];
+const wmTitle=k=>(WM_MODES.find(m=>m.k===k)||{t:''}).t;
+let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false};
+const wmOn=()=>_wm.ok!==false;
+const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
+function wmCards(cur,fn,hintK,hintTxt){
+  return '<div class="wm-cards">'+WM_MODES.map(m=>`<button type="button" class="wm-card${m.k===cur?' on':''}" data-k="${m.k}" onclick="${fn}('${m.k}')"><span class="ic">${WMI[m.k]}</span><span class="tx"><b>${m.t}</b><small>${m.h}</small></span>${m.k===hintK?`<span class="sug">${hx(hintTxt||'Suggested')}</span>`:''}</button>`).join('')+'</div>';
+}
+async function wmLoad(){
+  if(!currentEmp||!USE_SHEETS) return;
+  const emp=currentEmp.id;
+  try{
+    const r=await api('workToday',{empId:emp,date:todayStr()});
+    if(!currentEmp||String(currentEmp.id)!==String(emp)||!r) return;
+    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,at:Date.now()});
+    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,at:_wm.at});
+  }catch(e){
+    if(/unknown action/i.test(String(e&&e.message))) _wm.ok=false;   // an older backend: keep the old home card
+    else return;                                                    // offline: keep what is shown
+  }
+  try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
+}
+function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false}; }
+function wmRestore(){   // paint instantly from the last answer of today, then refresh
+  if(_wm.ok===false||!currentEmp) return;
+  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,at:c.at||Date.now()});
+}
+function wmLive(){   // minutes since the last server answer, so both figures keep moving between refreshes
+  const rec=_hmRec, gone=(Date.now()-_wm.at)/60000, out=!!(rec&&rec.punchOut);
+  const am=rec&&getActiveMeeting(rec), running=(_wm.open&&_wm.open.status==='Active')||(am&&am.state==='in_meeting'&&!am.pausedAt&&am.kind!=='personal');
+  const total=_wm.total+(out?0:gone), prod=Math.min(total,_wm.prod+(running&&!out?gone:0));
+  return {total:total,prod:prod};
+}
+function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
+function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
+function wmModeHtml(){
+  const k=_wm.mode, t=k?`<span class="wm-chip">${WMI[k]}<span>${hx(wmTitle(k))}${_wm.placeTag?` <small>· ${hx(_wm.placeTag)}</small>`:''}</span></span>`:'<span class="wm-chip">Choose what you are doing</span>';
+  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+}
+function wmOffBtn(){
+  const run=_wm.open;
+  if(run) return `<div class="wm-warn">Stop “${hx(run.kindOther||run.kind)}” first, then you can Work OFF.</div><button class="btn btn-outline" style="margin-top:10px" disabled>Work OFF</button>`;
+  return `<button class="btn btn-blue" style="margin-top:14px" onclick="openPunch()">📸 Work OFF</button>`;
+}
+/* Mode cards on the camera screen at Work ON */
+function wmPickReset(){
+  _wm.pick='';
+  const el=document.getElementById('wmPick'); if(!el) return;
+  let hint='',txt=''; try{ const g=geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc); if(g&&g.status==='YES'){ hint='office'; txt='At '+g.place; } }catch(e){}
+  el.innerHTML='<div class="wm-q">What kind of work are you starting? <span>(required)</span></div>'+wmCards('','wmPickSet',hint,txt);
+}
+function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-card').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
+/* Change the day's mode while nothing is running */
+function wmChangeMode(){
+  if(_wm.open) return alert('Stop “'+(_wm.open.kindOther||_wm.open.kind)+'” first.');
+  fmSheet('<h3>What are you doing now?</h3>'+wmCards(_wm.mode,'wmSetMode')+'<div class="fm-err" id="fmErr"></div>');
+}
+async function wmSetMode(k){
+  if(_wm.busy) return; _wm.busy=true;
+  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; fmClose(); await wmLoad(); }
+  catch(e){ fmErr(e.message||'Could not change the mode.'); }
+  finally{ _wm.busy=false; }
+}
+
+/* Field Work inside the Work ON block */
+function wmFieldChips(){ return '<div class="wm-q">What field work is it?</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'); }
+async function wmFieldGo(p){
+  try{ const pl=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:pl.lat,lng:pl.lng,area:pl.area}); if(!r) return; await fmRefresh(); fmChoose(r.seq,p); }
+  catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start.'); }
+}
+async function fmPause(n){ try{ const r=await fmCall('pauseMeeting',{seq:n}); if(r) await fmRefresh(); }catch(e){ alert(e.message||'Could not pause.'); } }
+async function fmResume(n){ try{ const r=await fmCall('resumeMeeting',{seq:n}); if(r) await fmRefresh(); }catch(e){ alert(e.message||'Could not resume.'); } }
+/* Site Supervision starts the existing site tracking, without the camera step */
+async function wmSiteStart(pl){
+  try{
+    if(mySiteManual()||!currentEmp) return;
+    const f=await freshFix(), date=todayStr(), startTime=nowTime(), id='sw-'+Date.now(), area=pl&&pl.area||'';
+    let sw={id,empId:currentEmp.id,empName:currentEmp.name,startTime,siteLat:f.lat,siteLng:f.lng,startArea:area,startAcc:f.acc||0,date,nextCheckAt:0,mode:'site'};
+    if(USE_SHEETS){ const r=await api('startSiteWork',{id,empId:currentEmp.id,name:currentEmp.name,date,startTime,lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area,accuracy:f.acc||'',photo:''});
+      const s=r&&r.already&&r.session?siteFromServer(r.session):null; if(s) sw=s; }
+    swPut(sw); nativeStart(sw); startSiteTimer(); siteTick(); renderHomeSite&&renderHomeSite();
+  }catch(e){ console.warn('site tracking not started',e); }
+}
+
+/* Office Work / Work From Home: tasks with run / pause / stop, and the day's timeline */
+const WM_TASKS=['Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
+const WM_CLIENT=['Client Calling','Client Quotation Creation','Demo to Office Client'];
+const wmLbl=i=>i.kind==='Other'&&i.kindOther?i.kindOther:i.kind;
+const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
+function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(WM_TASKS,'','wmTaskPick'); }
+function wmTaskPick(k){
+  _fm=Object.assign(_fm,{id:'',task:k});
+  const cl=WM_CLIENT.indexOf(k)>=0;
+  fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
+    (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
+  if(cl) fmSearch();
+}
+async function wmTaskGo(){
+  const k=_fm.task, cl=WM_CLIENT.indexOf(k)>=0, g=id=>((document.getElementById(id)||{}).value||'').trim();
+  if(k==='Other'&&!g('fmOther')) return fmErr('Write what the work is.');
+  if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
+  if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
+  try{
+    const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:'w'+Date.now()};
+    if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
+    await api('workStart',body); fmClose(); await wmLoad();
+  }catch(e){ fmErr(e.message||'Could not start.'); }
+  finally{ _wm.busy=false; }
+}
+async function wmItem(action,extra){
+  if(_wm.busy||!_wm.open) return; _wm.busy=true;
+  try{ await api(action,Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),id:_wm.open.id},extra||{})); fmClose(); await wmLoad(); }
+  catch(e){ if(document.getElementById('fmErr')) fmErr(e.message); else alert(e.message||'Could not save.'); }
+  finally{ _wm.busy=false; }
+}
+function wmStopAsk(){
+  const o=_wm.open; if(!o) return;
+  fmSheet(`<h3>${hx(wmLbl(o))} · finish</h3><div class="fm-lbl">How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmStopGo()">⏹ Stop and save</button>`);
+}
+function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(!v) return fmErr('Write a short note first.'); fmErr('Saving…'); wmItem('workStop',{remarks:v}); }
+function wmRunMin(){ const o=_wm.open; return o?o.activeMin+(o.status==='Active'?(Date.now()-_wm.at)/60000:0):0; }
+function wmRunHtml(){
+  const o=_wm.open, ps=o.status==='Paused';
+  return `<div class="fm-card"><div class="fm-step">${hx(wmLbl(o))} · ${ps?'paused':'running since '+wmClk(o.startAt)}</div>${o.clientName?`<div class="fm-cust"><div><b>${hx(o.clientName)}</b><span>${hx(o.clientPhone)}</span></div>${o.clientPhone?`<a href="tel:${hx(o.clientPhone)}" title="Call">📞</a>`:''}</div>`:''}<div class="wm-cap">Active <b id="wmRunT">${fmtMins(wmRunMin())}</b></div><div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="wmItem('${ps?'workResume':'workPause'}')">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="wmStopAsk()">⏹ Stop</button></div></div>`;
+}
+function wmTimeline(){
+  const L=[]; (_wm.items||[]).forEach(i=>L.push({t:i.startAt,h:`<li><b>${hx(wmLbl(i))}</b><span>${wmClk(i.startAt)}${i.endAt?' – '+wmClk(i.endAt):' · '+i.status.toLowerCase()} · ${fmtMins(i.status==='Done'?i.activeMin:wmRunMin())}${i.clientName?' · '+hx(i.clientName):''}</span>${i.outcome?`<em>${hx(i.outcome)}</em>`:''}</li>`}));
+  ((_hmRec&&_hmRec.meetings)||[]).filter(m=>m.kind!=='personal'&&m.startAt).forEach(m=>L.push({t:m.startAt,h:`<li><b>${hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:(m.purpose||'Meeting'))}</b><span>${wmClk(m.startAt)}${m.endAt?' – '+wmClk(m.endAt):' · running'}${m.activeMin?' · '+fmtMins(m.activeMin):''}${m.customerName?' · '+hx(m.customerName):''}</span>${m.outcome||m.result?`<em>${hx(m.outcome||m.result)}</em>`:''}</li>`}));
+  if(!L.length) return '';
+  L.sort((a,b)=>a.t<b.t?-1:1);
+  return `<div class="wm-tl"><div class="wm-q">Today</div><ul>${L.map(x=>x.h).join('')}</ul></div>`;
+}
 </script>
 </body>
 </html>
