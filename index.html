@@ -961,6 +961,30 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
 .card{border-radius:28px}
 .logo .brand{filter:none}.logo h1{color:var(--ag-ink)}.logo p{color:var(--soft)}
 #loginScreen .help-link,#loginScreen a{color:#0B7A6B}
+
+/* ═══ Desktop: a real wide layout, not a stretched phone ═══ */
+.hm-cols,.hm-colL,.hm-colR{display:block}
+@media(min-width:1000px){
+  body[data-screen="homeScreen"] #app{max-width:1180px}
+  #homeScreen.active{display:block}
+  #homeScreen .hm-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:22px;padding:20px 28px;border-radius:28px;margin-bottom:20px}
+  #homeScreen .hm-hero .hm-brand{margin:0;grid-column:1}
+  #homeScreen .hm-hero .hm-top{grid-column:2;justify-self:start;gap:14px}
+  #homeScreen .hm-hero .hm-date{grid-column:3;margin:0;text-align:right}
+  #homeScreen .hm-nm{font-size:24px}
+  .hm-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+  .hm-colL,.hm-colR{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .hm-colL>*,.hm-colR>*{margin:0}
+  .hm-colR .hm-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .hm-colL>:empty,.hm-colR>:empty{display:none}
+  #homeScreen .hm-hero{padding-right:76px}
+  #homeScreen .wm-opt{min-height:64px}
+  #homeScreen .wm-opt b{font-size:13.5px}
+  /* admin / supervisor: use the width */
+  #adminScreen .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #adminScreen .tbl{font-size:14px}
+}
+@media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:1320px} }
 </style>
 </head>
 <body>
@@ -1042,6 +1066,7 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
+  <div class="hm-cols"><div class="hm-colL">
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
@@ -1049,6 +1074,7 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
   <div id="hmTrack"></div>
   <div id="hmSafety"></div>
   <button class="sos-open" onclick="openSOS()"><span>🚨</span><div><b>Emergency</b><small>Hurt, in danger or need help? Tap here</small></div></button>
+  </div><div class="hm-colR">
   <div class="hm-grid" id="hmActs"></div>
   <div class="hm-links" id="hmLinks"></div>
   <div class="card hm-card">
@@ -1062,6 +1088,7 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
   <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
   <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
+  </div></div>
 </div>
 
 <!-- ══ PROFILE ══ -->
