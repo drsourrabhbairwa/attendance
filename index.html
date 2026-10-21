@@ -3531,7 +3531,7 @@ async function onFix(pos){
   fixWaiters.slice().forEach(w=>w(fix));
   fixListeners.slice().forEach(l=>l(fix));
   const btn=document.getElementById('captureBtn'); if(btn&&locWanted) btn.disabled=false;
-  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display=wmOn()?'none':'block';
+  const sBtn=document.getElementById('startSiteBtn'); if(sBtn&&!mySite()) sBtn.style.display=(wmOn()||!feat('siteTracking'))?'none':'block';
   geoHintUpdate();
   if(!capArea) locBar('green','📍 Getting area name…');
   const area=await reverseGeocode(fix.lat,fix.lng);
@@ -3801,7 +3801,7 @@ async function captureAndMark(){
   const btnLabel=btn.textContent;
   const shot=snapSquare(video,PHOTO_PX);
   let face='';
-  if(punchMode==='in'||punchMode==='out'){
+  if((punchMode==='in'||punchMode==='out')&&feat('face')){
     face=await faceCheck(shot);
     if(face==='no'&&FACE.fails<2){ FACE.fails++; camErr.textContent='👤 We could not see your face. Look at the camera in good light and try again.'; camErr.classList.add('show'); return; }
   }
@@ -5931,8 +5931,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-21.5';</script>
-<script src="notify.js?v=2026-10-21.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.1';</script>
+<script src="notify.js?v=2026-10-22.1"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6762,7 +6762,8 @@ const WMI={
 const WM_MODES=[{k:'wfh',t:'Work From Home',s:'WFH'},{k:'office',t:'Office Work',s:'Office'},{k:'factory',t:'Factory Work',s:'Factory'},{k:'field',t:'Field Work',s:'Field'}];
 const wmTitle=k=>(WM_MODES.find(m=>m.k===k)||{t:''}).t;
 let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false};
-const wmOn=()=>_wm.ok!==false;
+const feat=k=>!(_D.features&&_D.features[k]===false);   /* the platform team can switch a feature off for a company; unset means on */
+const wmOn=()=>_wm.ok!==false&&feat('workModes');
 const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
 function wmCards(cur,fn,hintK,hintTxt,lock){
   return '<div class="wm-row" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';

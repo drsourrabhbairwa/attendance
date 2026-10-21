@@ -30,6 +30,8 @@ h1{font-size:26px}h2{font-size:20px}h3{font-size:16px}
 .soft{color:var(--soft);font-size:13px}
 label{display:block;font-weight:700;font-size:13px;margin:12px 0 5px}
 input,select{width:100%;min-height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.85);padding:0 14px;font:inherit;color:var(--ink)}
+label.chk{display:flex;align-items:center;gap:10px;min-height:44px;margin:0}
+label.chk input{width:22px;min-height:22px;height:22px;flex:none}
 input:focus,select:focus,button:focus-visible{outline:3px solid rgba(20,145,127,.35);outline-offset:1px}
 button{font:inherit;font-weight:700;min-height:44px;border-radius:14px;border:1px solid var(--edge);padding:0 18px;cursor:pointer;background:rgba(255,255,255,.8);color:var(--ink)}
 button.primary{background:var(--primary);color:#fff;border:0;box-shadow:var(--primary-shadow)}
@@ -130,7 +132,7 @@ const API='https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';
 const SALT='att##sys77!';
 const $=id=>document.getElementById(id);
 let S={token:'',role:'',name:'',email:''};
-const CAN={create:['platform_owner','sales'],limit:['platform_owner','sales'],reset:['platform_owner','support'],status:['platform_owner'],team:['platform_owner'],settings:['platform_owner']};
+const CAN={edit:['platform_owner','sales'],create:['platform_owner','sales'],limit:['platform_owner','sales'],reset:['platform_owner','support'],status:['platform_owner'],team:['platform_owner'],settings:['platform_owner']};
 const can=k=>CAN[k].indexOf(S.role)>=0;
 const ROLE={platform_owner:'Owner',support:'Support',sales:'Sales'};
 
@@ -186,13 +188,14 @@ async function loadCompanies(){
 function card(c){
   const meta=(k,v)=>el('div',{},[el('b',{text:k}),document.createTextNode(v)]);
   const acts=el('div',{class:'row'});
+  if(can('edit'))acts.append(el('button',{class:'small primary',text:'Edit',onclick:()=>editDlg(c)}));
   if(can('limit'))acts.append(el('button',{class:'small',text:'Staff limit',onclick:()=>limitDlg(c)}));
   if(can('reset'))acts.append(el('button',{class:'small',text:'Reset owner password',onclick:()=>resetDlg(c)}));
   if(can('status'))acts.append(el('button',{class:'small'+(c.status==='suspended'?'':' danger'),text:c.status==='suspended'?'Activate':'Suspend',onclick:()=>statusDlg(c)}));
   return el('div',{class:'card co','data-id':c.id},[
     el('div',{class:'row'},[el('h3',{class:'grow',text:c.name}),el('span',{class:'chip '+c.status,text:c.status})]),
     el('div',{class:'soft',text:'Code: '+c.id}),
-    el('div',{class:'meta'},[meta('Staff',c.staffCount+' of '+c.staffLimit),meta('Trial ends',c.trialEnds||'—'),meta('Owner',c.ownerName),meta('Owner email',c.ownerEmail)]),
+    el('div',{class:'meta'},[meta('Staff',c.staffCount+' of '+c.staffLimit),meta('Trial ends',c.trialEnds||'—'),meta('Owner',c.ownerName),meta('Owner email',c.ownerEmail),meta('Plan',c.plan||'—'),meta('Switched off',FEATS.filter(f=>c.features&&c.features[f[0]]===false).map(f=>f[1]).join(', ')||'nothing')]),
     acts]);
 }
 function field(label,id,type,val){return el('div',{},[el('label',{for:id,text:label}),el('input',{id,type:type||'text',value:val==null?'':val})]);}
@@ -216,6 +219,22 @@ function showSecret(title,d){
   }
   nodes.push(el('div',{class:'row'},[el('button',{class:'primary',text:'Done',onclick:closeModal})]));
   openModal(nodes);
+}
+const FEATS=[['face','Face check on punch'],['workModes','Work modes (Field / Office / WFH / Factory)'],['siteTracking','Site tracking']];
+function editDlg(c){
+  const err=el('div',{class:'err',role:'alert'});
+  const sel=el('select',{id:'ePlan'},['trial','basic','pro'].map(p=>{const o=el('option',{value:p,text:p});if((c.plan||'trial')===p)o.selected=true;return o;}));
+  const boxes=FEATS.map(f=>{const i=el('input',{type:'checkbox',id:'eF_'+f[0]});i.checked=!(c.features&&c.features[f[0]]===false);return el('label',{class:'chk'},[i,document.createTextNode(' '+f[1])]);});
+  const btn=el('button',{class:'primary',text:'Save',onclick:async()=>{
+    const features={};FEATS.forEach(f=>{features[f[0]]=$('eF_'+f[0]).checked;});
+    const body={id:c.id,name:$('eName').value,ownerName:$('eOwner').value,ownerEmail:$('eEmail').value,ownerPhone:$('ePhone').value,plan:$('ePlan').value,trialEnds:$('eTrial').value.trim(),features};
+    if($('eLogin').value.trim())body.ownerLogin=$('eLogin').value.trim();
+    btn.disabled=true;const r=await api('platformUpdateCompany',body);
+    if(!r.ok){btn.disabled=false;err.textContent=r.error;return;}closeModal();loadCompanies();}});
+  openModal([el('h2',{text:'Edit — '+c.name}),field('Company name','eName','text',c.name),field('Owner name','eOwner','text',c.ownerName),field('Owner email','eEmail','email',c.ownerEmail),field('Owner phone','ePhone','tel',c.ownerPhone),
+    field('Owner login ID (their sign-in name)','eLogin','text',c.ownerLogin),field('Trial ends (YYYY-MM-DD, blank = none)','eTrial','text',c.trialEnds),
+    el('div',{},[el('label',{for:'ePlan',text:'Plan'}),sel]),el('div',{class:'soft',style:'margin-top:10px',text:'Features for this company'}),el('div',{},boxes),err,
+    el('div',{class:'row',style:'margin-top:14px'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
 }
 function limitDlg(c){
   const err=el('div',{class:'err',role:'alert'});
