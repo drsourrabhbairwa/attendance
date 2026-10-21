@@ -3891,7 +3891,9 @@ async function testMyLocation(){
 /* ── Manage / My work: one person, one sign-in. The manage panel opens with the manage token the server gave at sign-in. ── */
 function showOldLogin(){ document.getElementById('oldRoles').style.display='flex'; document.getElementById('oldLoginLink').style.display='none'; }
 function syncManageBtn(){ const b=document.getElementById('hmManage'); if(!b) return; let hint=false; try{ hint=localStorage.getItem(MGR_HINT)==='1'; }catch(e){} b.style.display=(_mgr||hint)?'':'none'; }
+function pauseStaffHome(){ try{ stopEmpSafety(); fmWatchStop(); clearInterval(officeTimerInt); clearInterval(homeTimerInt); homeTok++; }catch(e){} }   // staff polls must not run on a manage token
 async function openAdminPanel(r){   // r = a manager login reply {token, role, name, id, departments}
+  if(r.via==='emp') pauseStaffHome();
   _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[],via:r.via||''};
   const fresh=await api('getAll',{date:todayStr()});
   Object.assign(_D,{employees:[],attendance:[],leaves:[],quotas:{},supervisors:[]},fresh,{loadedAt:Date.now()});
@@ -3901,6 +3903,7 @@ async function openAdminPanel(r){   // r = a manager login reply {token, role, n
   loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges(); startSafetyWatch('admin');
 }
 async function openSupPanel(m){   // a person with the supervisor role opens the same site monitor the old supervisor login did
+  pauseStaffHome();
   _tok=m.token; _me={role:'V',name:m.name,id:m.id,departments:[],via:'emp'};
   const fresh=await api('getAll',{date:todayStr()}); Object.assign(_D,fresh,{loadedAt:Date.now()});
   currentSupervisor={id:m.id,name:m.name,assignedEmp:m.assignedEmp||'',email:m.email||''}; _actor='Supervisor '+m.name; loading(false);
@@ -3973,7 +3976,8 @@ function applyRoleUI(){
   document.getElementById('myPwBtn').style.display=(isSuper()||isDeptAdmin())?'inline-block':'none';
   fillEmpDeptSelect();
 }
-function adminLogout(){ stopSafetyWatch(); if(_tok){ endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+function viaEmpEnd(){ if(_me&&_me.via==='emp'){ meClear(); mgrHint(false); _mgr=null; } }   // Logout inside Manage signs the person out of this phone, not only the panel
+function adminLogout(){ stopSafetyWatch(); if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -4002,7 +4006,7 @@ async function handleSupLogin(){
     showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup'); periodInit('sup');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endManagerSession(false); return; } _actor=''; showScreen('loginScreen'); }
+function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN TABS
