@@ -389,6 +389,7 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 /* ── Safety: check now + SOS ── */
 .sos-open{display:flex;align-items:center;gap:12px;width:100%;background:#B3261E;color:#fff;border:none;border-radius:14px;padding:13px 15px;margin:0 0 14px;text-align:left;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(179,38,30,.35)}
 .sos-open span{font-size:28px}.sos-open b{display:block;font-size:15px}.sos-open small{font-size:12px;opacity:.9}
+.sos-open.sos-mini{width:auto;margin:0;padding:6px 12px;gap:4px;border-radius:20px;font-size:12.5px;font-weight:800;letter-spacing:.3px;min-height:36px;align-items:center;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 6px rgba(179,38,30,.4)}.sos-open.sos-mini span{font-size:14px}
 .sos-banner{border-radius:12px;padding:11px 13px;margin:0 0 12px;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:2px;background:var(--redBg);border:1.5px solid var(--red);color:var(--red)}
 .sos-banner.s-ack{background:var(--amberBg);border-color:var(--amber);color:var(--amber)}
 .sos-banner.s-aid,.sos-banner.s-resolved{background:var(--greenBg);border-color:var(--green);color:var(--green)}
@@ -625,7 +626,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wl-r b{font-size:14px}.wl-r .s{font-size:12px;color:var(--soft)}.wl-r a{color:var(--accent);text-decoration:none;font-weight:600}
 .wl-b{align-self:start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--greenBg);color:var(--green)}.wl-b.p{background:var(--amberBg);color:var(--amber)}.wl-b.i{background:rgba(0,0,0,.07);color:var(--soft)}
 .wr-g{margin:10px 0 4px;font-size:12px;font-weight:700;color:var(--soft)}
-.wr-ch{display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow:auto}
+.wr-ch{display:flex;flex-wrap:wrap;gap:6px}
 .wr-ch button{min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--border2);background:rgba(255,255,255,.7);font:inherit;font-size:13px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
 .wr-ch button.on{background:var(--accentBg);border-color:var(--accent);color:var(--accent);font-weight:700}
 .wr-d{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.wr-d input,.wr-d select,.wr-q{min-height:44px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rs);font:inherit;font-size:14px;max-width:100%;background:rgba(255,255,255,.8)}
@@ -742,6 +743,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 .hm-top.long{flex-wrap:wrap;row-gap:10px}
 .hm-top.long>div:nth-child(2){flex:1 1 calc(100% - 70px)}
 .hm-top.long .hm-tools{width:100%;margin-left:0;justify-content:flex-end}
+@media(max-width:520px){.hm-top{flex-wrap:wrap;row-gap:10px}.hm-top>div:nth-child(2){flex:1 1 calc(100% - 70px)}.hm-top .hm-tools{width:100%;margin-left:0;justify-content:flex-end;flex-wrap:wrap}}
 .hm-date{overflow-wrap:anywhere}
 /* Leave calendar: long names are cut with … (the full name is the tooltip) and the name column stays solid while the days scroll */
 .lc .nm{max-width:132px;overflow:hidden;text-overflow:ellipsis;background:#EEF4F3}
@@ -879,6 +881,28 @@ label{color:var(--ag-ink)}
 .hm-hero{border-radius:26px;box-shadow:var(--ag-shadow)}
 .hm-tile,.hm-stat{background:var(--ag-panel);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 6px 18px rgba(4,26,30,.10)}
 .hm-tt{font-family:var(--ag-serif)}
+
+/* Live tab: everyone at a glance, tap a card for the whole story */
+.lv-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.lv-sum{font-size:13px;color:var(--soft);font-weight:600}
+.lv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.lv-chips button{border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.lv-chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.lv-c{display:block;text-align:left;width:100%;background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--border);border-radius:14px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--text)}
+.lv-c:focus-visible{outline:3px solid rgba(20,145,127,.4)}
+.lv-c .h{display:flex;align-items:center;justify-content:space-between;gap:8px}.lv-c b{font-size:14.5px}.lv-c .s{display:block;font-size:12px;color:var(--soft);margin-top:3px;overflow-wrap:anywhere}
+.lv-b{font-size:11px;font-weight:800;border-radius:12px;padding:3px 9px;white-space:nowrap;background:#e8eceb;color:#41504d}
+.lv-c.st-active{border-left-color:#1a9b6c}.st-active .lv-b{background:#dff5ea;color:#0d6b47}
+.lv-c.st-meeting{border-left-color:#1a9b6c}.st-meeting .lv-b{background:#dff5ea;color:#0d6b47}
+.lv-c.st-idle{border-left-color:#d68a00}.st-idle .lv-b{background:#fff1d6;color:#8a5a00}
+.lv-c.st-paused{border-left-color:#d68a00}.st-paused .lv-b{background:#fff1d6;color:#8a5a00}
+.lv-c.st-travelling{border-left-color:#2a6fdb}.st-travelling .lv-b{background:#e1ecfd;color:#1b4fa0}
+.lv-c.st-notin{border-left-color:#c8504a}.st-notin .lv-b{background:#fbe3e1;color:#9a2a24}
+.lv-c.st-leave .lv-b{background:#ece4f7;color:#5a3a96}.lv-c.st-out{opacity:.85}
+.lv-stale{color:#9a2a24!important;font-weight:700}.lv-note{font-size:11.5px;color:var(--soft);margin-top:12px}
+.lv-box{max-width:520px}.lv-box h3{margin:0 0 2px;font-size:18px}.lv-box .sub{font-size:12.5px;color:var(--soft);margin-bottom:10px}
+.lv-box .kv{display:grid;grid-template-columns:110px 1fr;gap:5px 10px;font-size:13px;margin:10px 0}.lv-box .kv span{color:var(--soft)}
+.lv-box ul{list-style:none;margin:6px 0 0;padding:0}.lv-box li{border-top:1px solid var(--border);padding:8px 0;font-size:13px}.lv-box li small{display:block;color:var(--soft);font-size:11.5px}
+.lv-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.lv-acts a{text-decoration:none}
 
 /* Working now: a card per person */
 .wl{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:20px;padding:16px 18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(4,26,30,.08)}
@@ -1100,7 +1124,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
     <div class="hm-top">
       <div class="hm-av" id="hmAv">?</div>
       <div><div class="hm-nm" id="hmName">—</div></div>
-      <div class="hm-tools"><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
+      <div class="hm-tools"><button class="sos-open sos-mini" onclick="openSOS()" aria-label="Emergency: hurt, in danger or need help"><span aria-hidden="true">🚨</span> SOS</button><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
@@ -1111,7 +1135,6 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   <div id="hmBday"></div>
   <div id="hmTrack"></div>
   <div id="hmSafety"></div>
-  <button class="sos-open" onclick="openSOS()"><span>🚨</span><div><b>Emergency</b><small>Hurt, in danger or need help? Tap here</small></div></button>
   </div><div class="hm-colR">
   <div class="hm-grid" id="hmActs"></div>
   <div class="hm-links" id="hmLinks"></div>
@@ -1290,7 +1313,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
     <div class="msg msg-success" id="lvOk"></div>
   </div>
   <div style="font-weight:700;font-size:14px;margin-bottom:8px">My Requests</div>
-  <div id="lvHistory" style="max-height:240px;overflow-y:auto"></div>
+  <div id="lvHistory"></div>
   <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
 </div>
 </div>
@@ -1339,6 +1362,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   </div>
   <div class="tab-row">
     <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
+    <button class="tab-btn" onclick="switchTab('live')">👁 Live</button>
     <button class="tab-btn" onclick="switchTab('monthly')">📊 Monthly</button>
     <button class="tab-btn" onclick="switchTab('leaves')">📋 Leaves</button>
     <button class="tab-btn" onclick="switchTab('overtime')">⏱ Overtime</button>
@@ -1478,7 +1502,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
       </div>
     </div>
     <p style="font-size:12px;color:var(--soft);margin:0 2px 8px">Tap ✕ on any holiday, national ones too, to cancel it: that day then becomes a normal working day. Cancelled holidays are listed at the top and can be restored.</p>
-    <div id="holList" style="max-height:380px;overflow-y:auto"></div>
+    <div id="holList"></div>
   </div>
 
   <!-- PLACES TAB -->
@@ -1609,6 +1633,12 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   </div>
 
   <!-- ACTIONS LOG TAB -->
+  <div id="tabLive" class="tab-pane">
+    <div class="lv-top"><div class="lv-sum" id="lvSum"></div><button class="btn-sm" onclick="liveLoad(true)" aria-label="Refresh">↻ Refresh</button></div>
+    <div class="lv-chips" id="lvChips"></div>
+    <div class="lv-grid" id="lvGrid"><div class="empty">⏳ Loading…</div></div>
+    <div class="lv-note" id="lvNote"></div>
+  </div>
   <div id="tabSafety" class="tab-pane">
     <div id="safetyContent"><div class="empty"><div class="eicon">🚨</div>Loading…</div></div>
   </div>
@@ -1709,6 +1739,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
 </div>
 
 <div id="sosBar"></div>
+<div class="modal-bg" id="liveModal" onclick="if(event.target===this)liveClose()"><div class="modal-box lv-box" id="liveBody"></div></div>
 <div class="modal-bg" id="sosModal"><div class="modal-box" id="sosBody"></div></div>
 <div class="modal-bg" id="chkModal"><div class="modal-box" id="chkBody"></div></div>
 <!-- Detail Modal -->
@@ -4328,13 +4359,14 @@ function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ viaEm
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','monthly','leaves','overtime','employees','places','holidays','site','leads','tasks','travel','reports','corrections','log','safety','org'];
+  const tabs=['attendance','live','monthly','leaves','overtime','employees','places','holidays','site','leads','tasks','travel','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(pane) pane.classList.add('active');
   if(tab==='attendance') loadAttTab();
+  if(tab==='live') liveStart(); else liveStop();
   if(tab==='monthly')    initMonthly();
   if(tab==='leaves')     loadLeavesTab();
   if(tab==='overtime')   loadOtTab();
@@ -4712,7 +4744,7 @@ const AC={};   // the open Access dialog
 function acBox(html,wide){ fmSheet('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">'+html.title+'</h3><button class="fm-chip" onclick="fmClose()">Close</button></div>'+html.body,wide); }
 function acMsg(t,bad){ const e=document.getElementById('acMsg'); if(!e) return; e.className='msg '+(bad?'msg-error':'msg-success')+' show'; e.textContent=t; }
 function acDepts(){ const set={}; deptList().forEach(d=>set[d.name]=1); (_D.employees||[]).forEach(e=>{ if(e.department) set[e.department]=1; }); myDepts().forEach(d=>set[d]=1); return Object.keys(set).sort(); }
-function acChips(list,sel,fn){ return '<div class="fm-chips" style="max-height:170px;overflow:auto">'+list.map(x=>`<button type="button" class="fm-chip${sel.has(x.id)?' on':''}" onclick="${fn}('${esc(x.id)}')">${hx(x.label)}</button>`).join('')+'</div>'; }
+function acChips(list,sel,fn){ return '<div class="fm-chips">'+list.map(x=>`<button type="button" class="fm-chip${sel.has(x.id)?' on':''}" onclick="${fn}('${esc(x.id)}')">${hx(x.label)}</button>`).join('')+'</div>'; }
 function empAccess(id){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
   const roles=String(e.roles||'').split(',').map(x=>x.trim());
@@ -5040,7 +5072,7 @@ function openPlaceStaff(pid){
   document.getElementById('modalTitle').textContent=(PLACE_ICON[p.type]||'📍')+' '+p.name+' · staff';
   document.getElementById('modalBody').innerHTML=`<input type="text" id="plsQ" placeholder="Search name or ID" oninput="_pls.q=this.value.toLowerCase();plsDraw()" autocomplete="off">
     ${depts.length?`<div class="pl-row"><select id="plsDept">${depts.map(d=>`<option value="${hx(d)}">${hx(d)}</option>`).join('')}</select><button class="pl-btn ghost" onclick="plsAddDept()">Add the whole department</button></div>`:''}
-    <div id="plsList" style="max-height:300px;overflow-y:auto;margin:8px 0"></div>
+    <div id="plsList" style="margin:8px 0"></div>
     <div class="msg msg-error" id="plsErr"></div>
     <div class="pl-row"><button class="pl-btn" onclick="plsSave()">Save <span id="plsCnt"></span></button></div>
     <div class="pl-tip">Ticked people must punch inside this boundary. Someone can belong to more than one place (inside any one is fine). People with no place are not checked.</div>`;
@@ -5807,7 +5839,7 @@ function renderSupList(){
     return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${hx(s.name)}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${esc(s.id)}')">✕</button></div>
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:12px">📧</span><input type="text" value="${(s.email||'').replace(/"/g,'&quot;')}" placeholder="E-mail for alerts (optional)" onchange="setSupEmail('${esc(s.id)}',this.value)" style="margin:0;padding:6px 9px;font-size:12px"></div>
       <details><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none">▼ Assign Employees</summary>
-      <div style="margin-top:8px;max-height:160px;overflow-y:auto">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${esc(s.id)}','${esc(emp.id)}',this.checked)" style="width:14px;height:14px"> ${hx(emp.name)} <span style="color:var(--soft);font-size:11px">${hx(emp.id)}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
+      <div style="margin-top:8px">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${esc(s.id)}','${esc(emp.id)}',this.checked)" style="width:14px;height:14px"> ${hx(emp.name)} <span style="color:var(--soft);font-size:11px">${hx(emp.id)}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
       </details></div>`;
   }).join('');
 }
@@ -6072,7 +6104,7 @@ html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid 
 .fm-chips{display:flex;flex-wrap:wrap;gap:7px}
 .fm-chip{padding:8px 13px;border-radius:999px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
 .fm-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.fm-res{margin:6px 0;max-height:190px;overflow:auto}
+.fm-res{margin:6px 0}
 .fm-res button{display:block;width:100%;text-align:left;padding:9px 11px;margin:4px 0;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;cursor:pointer;color:var(--ink)}
 .fm-res button small{display:block;color:var(--soft)}
 .fm-err{color:var(--red);font-size:13px;margin:6px 0;min-height:1em}
@@ -6905,6 +6937,56 @@ async function wlLoad(d){
     }).join('');
     el.innerHTML=`<div class="wl"><h4>Working now <small>${list.length} punched in</small></h4>${rows}</div>`;
   }catch(e){ el.innerHTML=''; }   // an older backend or no access: the tab simply looks as before
+}
+
+/* ── Live tab: everyone in scope, what they are doing right now; tap for the detail ── */
+const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused',travelling:'Travelling',notin:'Not in yet',leave:'On leave',out:'Punched out'};
+const LV_ORDER=['active','meeting','travelling','paused','idle','notin','leave','out'];
+let _lv={data:null,filter:'all',timer:null,busy:false};
+function liveStart(){ liveStop(); liveLoad(); _lv.timer=setInterval(()=>{ if(document.getElementById('tabLive')?.classList.contains('active')&&!document.hidden) liveLoad(); },60000); }
+function liveStop(){ if(_lv.timer){ clearInterval(_lv.timer); _lv.timer=null; } }
+async function liveLoad(manual){
+  if(_lv.busy) return; _lv.busy=true;
+  try{ const r=await api('liveBoard',{date:todayStr()}); _lv.data=r; liveDraw(); }
+  catch(e){ const g=document.getElementById('lvGrid'); if(g&&!_lv.data) g.innerHTML='<div class="empty">Could not load. '+hx(e&&e.message||'')+'</div>'; }
+  finally{ _lv.busy=false; }
+}
+const liveWhat=x=>{ const k=x.kind==='Other'&&x.kindOther?x.kindOther:x.kind; return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
+const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
+function liveDraw(){
+  const d=_lv.data; if(!d) return;
+  const st=d.staff||[], cnt={}; st.forEach(x=>{ cnt[x.state]=(cnt[x.state]||0)+1; });
+  const working=(cnt.active||0)+(cnt.meeting||0)+(cnt.travelling||0);
+  document.getElementById('lvSum').textContent=st.length+' staff · '+working+' working · '+(cnt.idle||0)+' idle · '+(cnt.notin||0)+' not in yet';
+  const chips=[['all','All '+st.length]].concat(LV_ORDER.filter(k=>cnt[k]).map(k=>[k,LV_STATE[k]+' '+cnt[k]]));
+  document.getElementById('lvChips').innerHTML=chips.map(c=>`<button type="button" class="${_lv.filter===c[0]?'on':''}" onclick="_lv.filter='${c[0]}';liveDraw()">${hx(c[1])}</button>`).join('');
+  const list=st.filter(x=>_lv.filter==='all'||x.state===_lv.filter).sort((a,b)=>LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
+  document.getElementById('lvGrid').innerHTML=list.length?list.map(x=>{
+    const what=liveWhat(x), seen=x.lastSeen, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30;
+    return `<button type="button" class="lv-c st-${hx(x.state)}" onclick="liveOpen('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
+      <span class="s">${hx(x.empId)}${x.department?' · '+hx(x.department):''}</span>
+      ${what?`<span class="s">${hx(what)}${x.clientName?' · '+hx(x.clientName):''}${x.placeTag?' · '+hx(x.placeTag):''}</span>`:''}
+      ${x.since?`<span class="s">since ${hx(wmClk(x.since))}</span>`:x.punchIn&&x.state!=='out'?`<span class="s">in at ${hx(x.punchIn)}</span>`:''}
+      ${seen?`<span class="s${stale?' lv-stale':''}">📍 ${hx(seen.area||'Location known')} · ${hx(liveAge(seen.ageMin)||seen.time)}${stale?' (no recent update)':''}</span>`:''}</button>`;
+  }).join(''):'<div class="empty">Nobody here.</div>';
+  document.getElementById('lvNote').textContent='Updates every minute. "Idle" means punched in with no work item running. Location is the latest check or punch.';
+}
+function liveClose(){ document.getElementById('liveModal').classList.remove('open'); }
+function liveOpen(id){
+  const x=((_lv.data||{}).staff||[]).find(r=>String(r.empId)===String(id)); if(!x) return;
+  const seen=x.lastSeen, what=liveWhat(x);
+  const items=(x.items||[]).map(i=>`<li><b>${hx(liveWhat(i)||'Work')}</b>${i.clientName?' · '+hx(i.clientName):''}<small>${i.startAt?hx(wmClk(i.startAt)):''}${i.endAt?' – '+hx(wmClk(i.endAt)):i.status==='Done'?'':' · '+hx(i.status.toLowerCase())}${i.activeMin?' · '+hx(wrMin(i.activeMin)):''}${i.placeTag?' · '+hx(i.placeTag):''}${i.outcome?' · '+hx(i.outcome):''}</small></li>`).join('');
+  document.getElementById('liveBody').innerHTML=`<h3>${hx(x.name)}</h3><div class="sub">${hx(x.empId)}${x.designation?' · '+hx(x.designation):''}${x.department?' · '+hx(x.department):''}</div>
+    <span class="lv-b" style="font-size:12.5px">${hx(LV_STATE[x.state]||x.state)}</span>
+    <div class="kv"><span>Doing now</span><b>${hx(what||'—')}${x.clientName?'<br><small style="font-weight:400">'+hx(x.clientName)+(x.clientPhone?' · <a href="tel:'+hx(x.clientPhone)+'">'+hx(x.clientPhone)+'</a>':'')+'</small>':''}</b>
+      <span>Since</span><b>${x.since?hx(wmClk(x.since)):'—'}</b>
+      <span>Punched in</span><b>${hx(x.punchIn||'—')}</b><span>Punched out</span><b>${hx(x.punchOut||'—')}</b>
+      <span>Work mode</span><b>${hx(WL_MODE[x.mode]||'—')}</b>
+      <span>Last location</span><b>${seen?hx(seen.area||'Known')+'<br><small style="font-weight:400">'+hx(seen.time)+' · '+hx(seen.how)+(seen.ageMin!=null?' · '+hx(liveAge(seen.ageMin)):'')+'</small>':'—'}</b></div>
+    <div style="font-weight:800;font-size:13px">Today</div>${items?'<ul>'+items+'</ul>':'<div class="sub" style="margin-top:4px">Nothing logged yet today.</div>'}
+    <div class="lv-acts">${x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}</div>
+    <button class="modal-close" onclick="liveClose()">Close</button>`;
+  document.getElementById('liveModal').classList.add('open');
 }
 
 /* ── Work report: multi-select filters, then CSV or PDF of exactly the filtered rows ── */
