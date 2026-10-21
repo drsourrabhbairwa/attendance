@@ -600,6 +600,14 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-hrs>div{min-width:0;padding:10px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .wm-hrs b{display:block;font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--accent2);overflow-wrap:anywhere}
 .wm-hrs span{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
+.wm-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.wm-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;padding:8px 2px;border-radius:14px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 3px 10px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;min-width:0;position:relative}
+.wm-opt .ic{display:flex;color:var(--accent2)}.wm-opt .wm-i{width:20px;height:20px}
+.wm-opt b{font-size:12px;font-weight:700;white-space:nowrap}
+.wm-opt small{position:absolute;top:-8px;right:2px;font-size:9px;font-weight:700;color:var(--accent2);background:#fff;border-radius:999px;padding:1px 6px;white-space:nowrap}
+.wm-opt.on{border-color:var(--accent);background:var(--accentBg);box-shadow:0 0 0 3px rgba(31,127,119,.22)}.wm-opt.on .ic{color:var(--accent)}
+.wm-opt[disabled]{opacity:.55;cursor:default}
+.wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-cards{display:grid;gap:8px;margin:8px 0}
 .wm-card{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;text-align:left;border-radius:16px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 4px 14px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
@@ -761,6 +769,193 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 .hm-links button,.btn-outline,.chip{background:rgba(255,255,255,.9)}
 .hm-links button small,.hm-tile.blocked span,.chip{color:var(--warn)}
 </style>
+<style id="auroraGlass">
+/* ═══════════════════════════════════════════════════════════════════
+   v23 — AURORA GLASS: one design language for the whole app (loaded last)
+   Surfaces: frosted white panels with a thin light edge and a soft shadow.
+   Controls: one primary (deep teal gradient), one quiet (glass), one danger (soft red), one shape language (14 px corners, 44 px tall).
+   Type: a serif for titles, system sans for everything else. Works from 320 px to a wide desktop.
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --ag-panel:rgba(255,255,255,.74);--ag-panel2:rgba(255,255,255,.58);--ag-edge:rgba(255,255,255,.78);
+  --ag-line:rgba(16,70,74,.12);--ag-shadow:0 14px 40px rgba(4,26,30,.22),0 2px 6px rgba(4,26,30,.08);
+  --ag-radius:22px;--ag-r:14px;--ag-blur:blur(22px) saturate(1.6);
+  --ag-primary:linear-gradient(180deg,#22907F 0%,#15695A 100%);
+  --ag-primary-shadow:0 8px 18px rgba(14,84,68,.34),inset 0 1px 0 rgba(255,255,255,.32);
+  --ag-serif:'Iowan Old Style','Palatino Linotype','Source Serif Pro',Georgia,serif;
+  --ag-ink:#0F2A2D;
+}
+body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 520px at 8% -5%,rgba(124,201,184,.30),transparent 62%),radial-gradient(760px 520px at 100% 18%,rgba(231,176,74,.15),transparent 60%),radial-gradient(900px 600px at 40% 110%,rgba(31,127,119,.30),transparent 60%)}
+#app{position:relative;z-index:1}
+
+/* Panels */
+.card,.modal-box,.hm-today{background:var(--ag-panel);border:1px solid var(--ag-edge);border-radius:var(--ag-radius);box-shadow:var(--ag-shadow),inset 0 1px 0 rgba(255,255,255,.85);-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur)}
+#adminScreen>.card,#supervisorScreen>.card{background:rgba(255,255,255,.80);padding:24px 26px}
+.add-form,.leave-card,.sup-card,.bal-item,.org-node,.hol-item,.site-wrap{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 4px 14px rgba(4,26,30,.07),inset 0 1px 0 rgba(255,255,255,.8)}
+.add-form{padding:16px 18px}
+.add-form h3,.card h3,.card h4{font-family:var(--ag-serif);color:var(--ag-ink);letter-spacing:.1px}
+.add-form h3{font-size:16px}
+
+/* Titles */
+.topbar h2,.logo h1,.hm-nm,.state-box h3,.modal-box h3{font-family:var(--ag-serif);color:var(--ag-ink)}
+#adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:26px;line-height:1.15;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#adminScreen .topbar,#supervisorScreen .topbar{padding-bottom:18px!important;margin-bottom:18px!important;border-bottom:1px solid var(--ag-line)!important}
+.role-chip{border-radius:999px;font-family:inherit}
+
+/* Buttons: one language */
+.btn,.btn-sm,.filter-row button,.modal-close,.btn-approve,.btn-reject,.org-act,.hm-out,.pl-btn,.key-btn{border-radius:var(--ag-r);font-weight:700;letter-spacing:.1px;transition:transform .12s,box-shadow .15s,background .15s,filter .15s}
+.btn,.filter-row button{min-height:46px}
+.btn-primary,.filter-row button,.modal-close,.btn-approve{background:var(--ag-primary);color:#fff;box-shadow:var(--ag-primary-shadow)}
+.btn-green{background:linear-gradient(180deg,#2F9A63,#1E7A4A);color:#fff;box-shadow:0 8px 18px rgba(24,102,60,.30),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-blue{background:linear-gradient(180deg,#3B6FB6,#264E8C);color:#fff;box-shadow:0 8px 18px rgba(30,70,130,.28),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-orange{background:linear-gradient(180deg,#D9822B,#B2631A);color:#fff;box-shadow:0 8px 18px rgba(150,80,20,.28),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-purple{background:linear-gradient(180deg,#7A5BC0,#5B3F9E);color:#fff;box-shadow:0 8px 18px rgba(80,50,150,.26),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-teal{background:var(--ag-primary);color:#fff;box-shadow:var(--ag-primary-shadow)}
+.btn-danger,.btn-reject{background:linear-gradient(180deg,#C65A52,#A23B35);color:#fff;box-shadow:0 8px 18px rgba(150,40,35,.26),inset 0 1px 0 rgba(255,255,255,.26)}
+.btn-outline,.btn-sm.btn-outline{background:rgba(255,255,255,.72);color:var(--ag-ink);border:1px solid var(--ag-line);box-shadow:0 2px 8px rgba(4,26,30,.06)}
+.btn:hover,.filter-row button:hover{filter:brightness(1.05)}
+.btn:active,.filter-row button:active{transform:translateY(1px) scale(.985)}
+.org-act,.hm-out{background:rgba(255,255,255,.72);border:1px solid var(--ag-line);color:var(--ag-ink);min-height:36px;padding:6px 13px;font-size:12.5px;box-shadow:0 2px 6px rgba(4,26,30,.05)}
+.org-act:hover,.hm-out:hover{background:#fff;box-shadow:0 4px 12px rgba(4,26,30,.10)}
+.org-act.red{color:#A23B35;border-color:rgba(162,59,53,.28)}
+#adminScreen .topbar .btn-danger,#supervisorScreen .topbar .btn-danger{background:rgba(162,59,53,.10)!important;color:#A23B35!important;border:1px solid rgba(162,59,53,.30)!important;box-shadow:none;min-height:36px;padding:6px 14px!important;border-radius:var(--ag-r)!important}
+#supervisorScreen button[onclick="supLogout()"]{background:rgba(162,59,53,.10)!important;color:#A23B35!important;border:1px solid rgba(162,59,53,.30)!important;border-radius:var(--ag-r)!important}
+
+/* Inputs */
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=month],input[type=number],input[type=email],input[type=tel],select,textarea{background:rgba(255,255,255,.88);border:1px solid var(--ag-line);border-radius:var(--ag-r);min-height:44px;color:var(--ag-ink);box-shadow:inset 0 1px 2px rgba(4,26,30,.05)}
+textarea{min-height:88px}
+input:focus,select:focus,textarea:focus{border-color:#1F7F77;box-shadow:0 0 0 4px rgba(31,127,119,.20)}
+label{color:var(--ag-ink)}
+.filter-row{gap:10px;margin-bottom:16px}
+.filter-row input,.filter-row select{min-height:46px}
+
+/* Admin side navigation: one quiet list, the active page is a teal pill */
+#adminScreen .tab-row{background:var(--ag-panel);border:1px solid var(--ag-edge);box-shadow:var(--ag-shadow);border-radius:20px;padding:10px;gap:3px}
+#adminScreen .tab-btn{background:transparent!important;border:1px solid transparent!important;box-shadow:none!important;color:var(--ag-ink);text-align:left;justify-content:flex-start;font-weight:600;font-size:13.5px;min-height:42px;border-radius:13px;padding:8px 14px}
+#adminScreen .tab-btn:hover{background:rgba(255,255,255,.7)!important}
+#adminScreen .tab-btn.active{background:var(--ag-primary)!important;color:#fff!important;box-shadow:var(--ag-primary-shadow)!important;font-weight:700}
+@media(max-width:1023px){
+  #adminScreen .tab-row{padding:7px;border-radius:18px}
+  #adminScreen .tab-btn{text-align:center;justify-content:center;white-space:nowrap;background:rgba(255,255,255,.55)!important;border-color:rgba(255,255,255,.7)!important}
+}
+
+/* Numbers at a glance */
+.stats-grid{gap:14px}
+.stat{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.66));border:1px solid var(--ag-edge);border-radius:18px;padding:16px 10px;box-shadow:0 6px 18px rgba(4,26,30,.09),inset 0 1px 0 #fff}
+.stat .n{font-family:var(--ag-serif);font-size:32px;line-height:1.1}
+.stat .l{font-size:12px;font-weight:700;color:var(--soft);margin-top:4px}
+
+/* Tables */
+.tbl{border:1px solid var(--ag-edge);border-radius:18px;overflow:hidden;background:rgba(255,255,255,.78);box-shadow:0 6px 20px rgba(4,26,30,.08);border-collapse:separate;border-spacing:0}
+.tbl th{background:linear-gradient(180deg,rgba(16,70,74,.10),rgba(16,70,74,.05));color:var(--ag-ink);font-weight:700;padding:12px 12px;border-bottom:1px solid var(--ag-line);position:sticky;top:0}
+.tbl td{padding:12px;border-bottom:1px solid rgba(16,70,74,.07)}
+.tbl tbody tr:nth-child(even) td{background:rgba(16,70,74,.025)}
+.tbl tbody tr:hover td{background:rgba(31,127,119,.08)}
+.badge,.tag,.hm-chip{border-radius:999px;padding:3px 10px;font-weight:700}
+
+/* Lists (staff, places, leaves …) */
+.list-item{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;padding:12px 16px;box-shadow:0 3px 12px rgba(4,26,30,.06);transition:box-shadow .15s,transform .15s}
+.list-item:hover{box-shadow:0 8px 22px rgba(4,26,30,.12)}
+.emp-acts{gap:8px}
+.dept-sel{background:rgba(255,255,255,.8)!important;border-radius:12px!important;min-height:36px!important}
+
+/* Messages */
+.msg{border-radius:14px;padding:11px 14px}
+.msg-error{background:rgba(198,90,82,.12);border:1px solid rgba(162,59,53,.30);color:#8E2F2A}
+.msg-success{background:rgba(47,154,99,.13);border:1px solid rgba(30,122,74,.30);color:#1D6E43}
+.empty{color:var(--soft)}
+
+/* Dialogs and sheets */
+.modal-bg,.fm-back{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:rgba(8,30,34,.42)}
+.fm-sheet{background:rgba(255,255,255,.88);border:1px solid var(--ag-edge);box-shadow:0 -10px 50px rgba(4,26,30,.30);border-radius:26px 26px 0 0}
+@media(min-width:900px){.fm-sheet,.fm-sheet.wide{border-radius:26px}}
+.fm-chip{background:rgba(255,255,255,.8);border:1px solid var(--ag-line);min-height:40px;font-weight:600;color:var(--ag-ink)}
+.fm-chip.on{background:var(--ag-primary);color:#fff;border-color:transparent;box-shadow:var(--ag-primary-shadow)}
+.ld-glass{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 4px 14px rgba(4,26,30,.07)}
+.ld-pill{border-radius:999px}
+
+/* Employee home */
+.hm-hero{border-radius:26px;box-shadow:var(--ag-shadow)}
+.hm-tile,.hm-stat{background:var(--ag-panel);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 6px 18px rgba(4,26,30,.10)}
+.hm-tt{font-family:var(--ag-serif)}
+
+/* Working now: a card per person */
+.wl{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:20px;padding:16px 18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(4,26,30,.08)}
+#wlLive .wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+#wlLive .wl h4{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:17px;margin:0}
+.wl h4 small{font-family:system-ui,sans-serif;font-size:12px;font-weight:700;color:var(--soft)}
+.wl-r{background:rgba(255,255,255,.85);border:1px solid var(--ag-edge)!important;border-radius:16px;padding:12px 14px!important;box-shadow:0 3px 10px rgba(4,26,30,.06)}
+.wl-r b{font-size:15px}
+
+.wr-ch{align-items:flex-start;align-content:flex-start}
+.wr-ch button{background:rgba(255,255,255,.82);border-color:var(--ag-line);color:var(--ag-ink)}
+.wr-ch button.on{background:var(--ag-primary);color:#fff;border-color:transparent;box-shadow:var(--ag-primary-shadow)}
+.wr-a button{border-radius:var(--ag-r);box-shadow:0 6px 14px rgba(4,26,30,.2)}
+@media(max-width:600px){
+  #adminScreen .topbar,#supervisorScreen .topbar{flex-direction:column;align-items:flex-start;gap:12px}
+  #adminScreen .topbar>div:last-child{width:100%}
+  #adminScreen .topbar>div:last-child>button{flex:1}
+}
+
+/* Quiet scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(16,70,74,.35) transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(16,70,74,.30);border-radius:8px}
+
+/* Phones: roomy but never wider than the screen */
+@media(max-width:600px){
+  #adminScreen>.card,#supervisorScreen>.card{padding:16px 14px;border-radius:20px}
+  #adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:22px}
+  .stat .n{font-size:26px}
+  .tbl th,.tbl td{padding:10px 9px}
+}
+@media(prefers-reduced-transparency:reduce){.card,.modal-box,.hm-today,#adminScreen .tab-row{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* ═══ v24 — PASTEL AURORA: the light glass look of the first redesign (mint · sky · lavender · peach, Figtree, deep-teal actions) ═══ */
+@font-face{font-family:'Figtree';font-weight:800;font-display:swap;src:url(fonts/figtree-latin-800-normal.woff2) format('woff2')}
+:root{
+  --ag-ink:#0E211D;--soft:#4A6560;
+  --ag-panel:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.48));--ag-panel2:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.42));
+  --ag-edge:rgba(255,255,255,.78);--ag-line:rgba(14,33,29,.10);
+  --ag-shadow:0 12px 32px rgba(18,70,60,.14);--ag-blur:blur(26px) saturate(170%);
+  --ag-primary:linear-gradient(180deg,#14917F,#0B7A6B);--ag-primary-shadow:0 8px 20px rgba(11,122,107,.28),inset 0 1px 0 rgba(255,255,255,.3);
+  --ag-serif:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+html{background:#DCEFEA}
+body,button,input,select,textarea{font-family:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+body,body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before,body::before{color:var(--ag-ink)}
+body::before,body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before{z-index:-1;
+  background:radial-gradient(560px 520px at 6% 4%,#98E0C9 0,rgba(152,224,201,0) 72%),radial-gradient(600px 560px at 100% 24%,#B7D4F7 0,rgba(183,212,247,0) 72%),radial-gradient(640px 600px at 0% 78%,#D8CBF3 0,rgba(216,203,243,0) 72%),radial-gradient(560px 520px at 100% 100%,#F6E4C3 0,rgba(246,228,195,0) 72%),#DCEFEA}
+#app{z-index:auto}
+.topbar h2,.logo h1,.hm-nm,.state-box h3,.modal-box h3,.add-form h3,.card h3,.card h4,.hm-tt,.stat .n,.wl h4{font-family:var(--ag-serif);font-weight:800;letter-spacing:-.2px}
+.stat .n{font-weight:800}
+#adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:26px}
+.card,.modal-box,.hm-today,#adminScreen .tab-row,.fm-sheet{border-color:rgba(255,255,255,.72)}
+#adminScreen>.card,#supervisorScreen>.card{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.40))}
+.stat,.hm-tile,.hm-stat,.wl-r{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.58))}
+.tbl{background:rgba(255,255,255,.82)}
+.tbl th{background:rgba(11,122,107,.08)}
+.btn-primary,.filter-row button,.modal-close,.btn-approve,.btn-teal,.fm-chip.on{background:var(--ag-primary)}
+.btn-outline,.org-act,.hm-out{color:var(--ag-ink)}
+input:focus,select:focus,textarea:focus{border-color:#0B7A6B;box-shadow:0 0 0 4px rgba(11,122,107,.18)}
+.fm-back,.modal-bg{background:rgba(14,33,29,.30)}
+.fm-sheet{background:linear-gradient(180deg,rgba(247,252,251,.92),rgba(238,247,244,.88));-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%)}
+/* employee home hero: light glass, no dark photo */
+.hm-hero{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.46))!important;border:1px solid rgba(255,255,255,.75);color:var(--ag-ink);-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur);box-shadow:var(--ag-shadow)}
+.hm-hero .hm-nm,.hm-hero .hm-date{color:var(--ag-ink);opacity:1}
+.hm-hero .hm-date{color:var(--soft);font-weight:600}
+.hm-hero .hm-av{background:rgba(11,122,107,.14);border-color:#fff;color:#0B7A6B}
+.hm-hero .hm-out{background:rgba(255,255,255,.8);color:var(--ag-ink);border:1px solid var(--ag-line)}
+.hm-hero .brand{filter:none}.hm-hero,.hm-hero *{text-shadow:none!important}
+#bellBtn,.bell-btn{background:rgba(255,255,255,.85)}
+/* sign-in side panel */
+#loginScreen .lg-side{color:var(--ag-ink)!important;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.44))!important;border:1px solid rgba(255,255,255,.75)!important;-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur);box-shadow:var(--ag-shadow)!important}
+#loginScreen .lg-side li::before{color:#0B7A6B}
+.wm-opt{background:rgba(255,255,255,.78)}.wm-opt.on{background:#fff;border-color:#0B7A6B}
+body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:transparent!important}
+.logo .brand{filter:none}.logo h1{color:var(--ag-ink)}.logo p{color:var(--soft)}
+#loginScreen .help-link,#loginScreen a{color:#0B7A6B}
+</style>
 </head>
 <body>
 <div id="loadOv"><div class="load-spin"></div><div style="font-size:13px;color:var(--soft);font-weight:700" id="loadMsg">Loading…</div></div>
@@ -771,7 +966,6 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 <div id="setupScreen" class="screen">
 <div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>First Time Setup</h1><p>Create your admin account to get started</p></div>
 <div class="card">
-  <div id="sb0" class="sbadge sb-local">💾 Local Storage</div>
   <label>Admin Username</label><input type="text" id="setupUser" placeholder="e.g. admin" autocomplete="off">
   <label>Admin Password</label><input type="password" id="setupPass" placeholder="Minimum 6 characters">
   <label>Confirm Password</label><input type="password" id="setupConfirm" placeholder="Repeat password">
@@ -785,7 +979,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 <div id="loginScreen" class="screen">
 <div class="lg-side"><h2>One person. One sign-in.</h2><p>Use your email or staff ID with the same password everywhere. If you manage a team, a Manage button appears after you sign in.</p><ul><li>Mark Work ON / OFF and your tasks</li><li>Leave, corrections and reports</li><li>Manage your people when you have access</li></ul></div>
 <div class="lg-main">
-<div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>Staff Attendance</h1><p>Sign in with your email or ID</p><div id="sb1" class="sbadge sb-local">💾 Local Storage</div></div>
+<div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>Staff Attendance</h1><p>Sign in with your email or ID</p></div>
 <div class="card">
   <div class="msg" id="siteRunBanner" style="display:none;background:var(--orangeBg);color:var(--orange);border:1px solid #f0c898;margin:0 0 12px;font-weight:600"></div>
   <div class="role-row" id="oldRoles" style="display:none">
@@ -837,7 +1031,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <div class="hm-brand"><div class="brand" role="img" aria-label="AMITEK"></div></div>
     <div class="hm-top">
       <div class="hm-av" id="hmAv">?</div>
-      <div><div class="hm-hi" id="hmHi">Hello</div><div class="hm-nm" id="hmName">—</div></div>
+      <div><div class="hm-nm" id="hmName">—</div></div>
       <div class="hm-tools"><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
     </div>
     <div class="hm-date" id="hmDate"></div>
@@ -1069,7 +1263,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 <div id="adminScreen" class="screen admin-wrap">
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
-    <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div><div id="sb2" class="sbadge sb-local" style="margin-top:4px">💾 Local Storage</div></div>
+    <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div></div>
     <div style="display:flex;gap:6px"><button class="org-act" id="adminMyWork" style="display:none" onclick="leaveManage()">🏠 My work</button><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
   </div>
   <div class="tab-row">
@@ -1899,7 +2093,6 @@ function distMeters(lat1,lng1,lat2,lng2){
 function updateBadges(){
   const cls=USE_SHEETS?'sbadge sb-sheets':'sbadge sb-local';
   const txt=USE_SHEETS?'✅ Google Sheets':'💾 Local Storage';
-  ['sb0','sb1','sb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.className=cls;el.textContent=txt;}});
 }
 /* Minutes spent away, by kind ('personal' or '' for meetings); an absence still open counts up to now */
 function awayMins(rec,kind){
@@ -2778,7 +2971,6 @@ async function loadHome(){
   showScreen('homeScreen'); syncManageBtn();
   refreshMyGeo();
   const now=new Date(), h=now.getHours();
-  document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   document.getElementById('hmName').textContent=emp.name; document.querySelector('.hm-top').classList.toggle('long',String(emp.name||'').length>18);
   fillAv('hmAv',curRec()||emp);
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
@@ -6440,15 +6632,16 @@ async function tkAnnDel(id){ if(!confirm('Delete this announcement for everyone?
 const WMI={
   field:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   office:'<svg class="wm-i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7.5h2M13 7.5h2M9 11.5h2M13 11.5h2M10 21v-4h4v4"/></svg>',
+  factory:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M3 21V10l6 3.5V10l6 3.5V6h3v15z"/><path d="M7 17h2M12 17h2"/></svg>',
   wfh:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10.5V20h12v-9.5"/><path d="M10 20v-5h4v5"/></svg>'
 };
-const WM_MODES=[{k:'field',t:'Field Work',h:'बाहर का काम'},{k:'office',t:'Office Work',h:'ऑफिस'},{k:'wfh',t:'Work From Home',h:'घर से'}];
+const WM_MODES=[{k:'wfh',t:'Work From Home',s:'WFH'},{k:'office',t:'Office Work',s:'Office'},{k:'factory',t:'Factory Work',s:'Factory'},{k:'field',t:'Field Work',s:'Field'}];
 const wmTitle=k=>(WM_MODES.find(m=>m.k===k)||{t:''}).t;
 let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false};
 const wmOn=()=>_wm.ok!==false;
 const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
-function wmCards(cur,fn,hintK,hintTxt){
-  return '<div class="wm-cards">'+WM_MODES.map(m=>`<button type="button" class="wm-card${m.k===cur?' on':''}" data-k="${m.k}" onclick="${fn}('${m.k}')"><span class="ic">${WMI[m.k]}</span><span class="tx"><b>${m.t}</b><small>${m.h}</small></span>${m.k===hintK?`<span class="sug">${hx(hintTxt||'Suggested')}</span>`:''}</button>`).join('')+'</div>';
+function wmCards(cur,fn,hintK,hintTxt,lock){
+  return '<div class="wm-row" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';
 }
 async function wmLoad(){
   if(!currentEmp||!USE_SHEETS) return;
@@ -6478,8 +6671,8 @@ function wmLive(){   // minutes since the last server answer, so both figures ke
 function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
-  const k=_wm.mode, t=k?`<span class="wm-chip">${WMI[k]}<span>${hx(wmTitle(k))}${_wm.placeTag?` <small>· ${hx(_wm.placeTag)}</small>`:''}</span></span>`:'<span class="wm-chip">Choose what you are doing</span>';
-  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+  const k=_wm.mode, lock=!!_wm.open;
+  return `<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',lock)}</div>`+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
 }
 function wmOffBtn(){
   const run=_wm.open;
@@ -6493,16 +6686,11 @@ function wmPickReset(){
   let hint='',txt=''; try{ const g=geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc); if(g&&g.status==='YES'){ hint='office'; txt='At '+g.place; } }catch(e){}
   el.innerHTML='<div class="wm-q">What kind of work are you starting? <span>(required)</span></div>'+wmCards('','wmPickSet',hint,txt);
 }
-function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-card').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
-/* Change the day's mode while nothing is running */
-function wmChangeMode(){
-  if(_wm.open) return alert('Stop “'+(_wm.open.kindOther||_wm.open.kind)+'” first.');
-  fmSheet('<h3>What are you doing now?</h3>'+wmCards(_wm.mode,'wmSetMode')+'<div class="fm-err" id="fmErr"></div>');
-}
+function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-opt').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
 async function wmSetMode(k){
-  if(_wm.busy) return; _wm.busy=true;
-  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; fmClose(); await wmLoad(); }
-  catch(e){ fmErr(e.message||'Could not change the mode.'); }
+  if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
+  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; await wmLoad(); }
+  catch(e){ alert(e.message||'Could not change the mode.'); }
   finally{ _wm.busy=false; }
 }
 
@@ -6576,7 +6764,7 @@ function wmTimeline(){
 }
 
 /* Admin: who is doing what right now (inside the Attendance tab) */
-const WL_MODE={field:'Field',office:'Office',wfh:'Work From Home'};
+const WL_MODE={field:'Field',office:'Office',factory:'Factory',wfh:'Work From Home'};
 async function wlLoad(d){
   const el=document.getElementById('wlLive'); if(!el) return;
   if(d!==todayStr()){ el.innerHTML=''; return; }
@@ -6595,7 +6783,7 @@ async function wlLoad(d){
 }
 
 /* ── Work report: multi-select filters, then CSV or PDF of exactly the filtered rows ── */
-const WR_MODES=[['field','Field'],['office','Office'],['wfh','Work From Home']];
+const WR_MODES=[['field','Field'],['office','Office'],['factory','Factory'],['wfh','Work From Home']];
 const WR_KINDS=['Sales Meeting','Site Supervision','Complaint','Payment Collection','Installation','Brand Building','Material Delivery','Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
 let _wr={emps:[],modes:[],kinds:[],status:[],range:'today',data:null};
 const wrAddDays=(d,n)=>{ const t=new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
@@ -6644,7 +6832,7 @@ function wrOut(){
   const d=_wr.data, el=document.getElementById('wrOut'); if(!el||!d) return;
   const sp=Object.keys(d.split||{}).map(k=>[k,d.split[k]]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
   el.innerHTML=`<div class="wr-g" style="margin-top:14px">${d.rows.length} entries · ${hx(d.filters)}</div>
-    ${sp.length?`<div class="wr-t"><table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>WFH</th><th>Unlogged</th></tr></thead><tbody>${sp.map(([k,e])=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    ${sp.length?`<div class="wr-t"><table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Factory</th><th>WFH</th><th>Unlogged</th></tr></thead><tbody>${sp.map(([k,e])=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.factory)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table></div>`:''}
     ${bk.length?`<div class="wr-t"><table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table></div>`:''}
     ${d.rows.length?`<div class="wr-t"><table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?'<br>'+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No work entries for these filters.</div>'}`;
 }
@@ -6659,7 +6847,7 @@ async function wrPdf(){
   await wrShow(); const d=_wr.data; if(!d) return;
   const sp=Object.keys(d.split||{}).map(k=>d.split[k]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
   const body=`<div class="note" style="margin:0 0 10px"><b>Filters:</b> ${hx(d.filters)}</div>
-    ${sp.length?`<table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Work From Home</th><th>Unlogged</th></tr></thead><tbody>${sp.map(e=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table><br>`:''}
+    ${sp.length?`<table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Factory</th><th>Work From Home</th><th>Unlogged</th></tr></thead><tbody>${sp.map(e=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.factory)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table><br>`:''}
     ${bk.length?`<table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table><br>`:''}
     <table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?' · '+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table>`;
   const t=d.start===d.end?d.start:d.start+' to '+d.end;
