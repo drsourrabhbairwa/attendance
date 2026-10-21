@@ -1799,7 +1799,7 @@ const _OPT={getAll:1,getAttendance:1,getLeaves:1,getCorrections:1,getQuotas:1};
 const API_TIMEOUT_MS=90000;   // a photo upload or a big report can take a while; beyond this the connection is considered lost
 async function api(action, params={}, opts={}){
   const body={action, secret:API_SECRET, actor:_actor, ...params};
-  if(_tok) body.token=_tok;
+  if(_tok&&!_NOTOK[action]) body.token=_tok;   // a sign-in step never carries an old token: it must reach the company typed on the screen
   else{
     if(COMPANY) body.company=COMPANY;   // before sign-in the server needs to know which company; after it the token says so
     if(_empTok&&!_NOTOK[action]) body.token=_empTok;   // the staff member's own private sign-in
@@ -1824,8 +1824,8 @@ async function api(action, params={}, opts={}){
   }finally{ if(timer) clearTimeout(timer); }
   if(j.newToken&&_empTok&&!_tok&&!_NOTOK[action]){ const me=meLoad(); empTokSave((me&&me.id)||(typeof currentEmp!=='undefined'&&currentEmp?currentEmp.id:''),j.newToken); }   // the server swaps in a fresh token while the old one still has days left
   if(!j.ok){
-    if(/Session expired/i.test(j.error||'') && _tok){ endManagerSession(true); }
-    if(!_tok&&!_NOTOK[action]&&/^(Please update the app|Session expired)/i.test(j.error||'')&&(_empTok||(typeof currentEmp!=='undefined'&&currentEmp)||meLoad())){ endStaffSession(j.error); const se=new Error(j.error); se.staffEnded=true; throw se; }
+    if(/Session expired|^This account is paused/i.test(j.error||'') && _tok){ endManagerSession(true); }
+    if(!_tok&&!_NOTOK[action]&&/^(Please update the app|Session expired|This account is paused)/i.test(j.error||'')&&(_empTok||(typeof currentEmp!=='undefined'&&currentEmp)||meLoad())){ endStaffSession(j.error); const se=new Error(j.error); se.staffEnded=true; throw se; }
     throw new Error(j.error||'API error');
   }
   return j.data;
@@ -4269,6 +4269,7 @@ async function handleAdminLogin(){
       _me={role:'A',name:u,departments:[]};
     } else {
       let r;
+      syncCompany();
       try{ r=await api('login',{kind:'manager',username:u,passHash:await hashPass(p)}); }
       catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect username or password.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[]};
@@ -4306,6 +4307,7 @@ async function handleSupLogin(){
     let sup;
     if(USE_SHEETS){
       let r;
+      syncCompany();
       try{ r=await api('login',{kind:'supervisor',name,passHash:await hashPass(pass)}); }
       catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect supervisor credentials.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:'V',name:r.name,id:r.id,departments:[]};

@@ -208,11 +208,14 @@ $('newBtn').onclick=()=>{
   openModal([el('h2',{text:'New company'}),field('Company name','fName'),field('Owner name','fOwner'),field('Owner email','fEmail','email'),field('Owner phone (optional)','fPhone','tel'),field('Staff limit','fLimit','number','25'),field('Trial days','fTrial','number','14'),err,el('div',{class:'row',style:'margin-top:14px'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
 };
 function showSecret(title,d){
-  openModal([el('h2',{text:title}),
-    el('p',{class:'soft',text:d.mailed?'The owner has been emailed these details.':'The email could not be sent, so give the owner these details yourself.'}),
-    el('div',{class:'soft',text:'Login ID'}),el('div',{class:'secret',id:'sLogin',text:d.username}),
-    el('div',{class:'soft',text:'One-time password (shown only now)'}),el('div',{class:'secret',id:'sPass',text:d.oneTimePassword}),
-    el('div',{class:'row'},[el('button',{class:'primary',text:'Done',onclick:closeModal})])]);
+  const nodes=[el('h2',{text:title}),
+    el('p',{class:'soft',text:d.mailed?'The owner has been emailed the login details.':'The email could not be sent. Ask the platform owner to share the details.'})];
+  if(d.oneTimePassword){   // only the platform owner is shown this
+    nodes.push(el('div',{class:'soft',text:'Login ID'}),el('div',{class:'secret',id:'sLogin',text:d.username}),
+      el('div',{class:'soft',text:'One-time password (shown only now)'}),el('div',{class:'secret',id:'sPass',text:d.oneTimePassword}));
+  }
+  nodes.push(el('div',{class:'row'},[el('button',{class:'primary',text:'Done',onclick:closeModal})]));
+  openModal(nodes);
 }
 function limitDlg(c){
   const err=el('div',{class:'err',role:'alert'});
