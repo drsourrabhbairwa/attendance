@@ -123,7 +123,7 @@
       if (S.empId !== id) return;
       S.notices = d.notices || []; S.unread = d.unread || 0; paintBell(); paintSheet();
       var seen = alertedSet(), fresh = S.notices.filter(function (n) {
-        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
+        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
       });
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
