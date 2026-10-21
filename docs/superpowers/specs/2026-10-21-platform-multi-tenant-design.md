@@ -37,7 +37,7 @@ Own-database tenants (the routing is built, the move is a later task), mobile-nu
 - Root collections (outside any tenant): `platform_companies`, `platform_plans`, `platform_payments`, `platform_users`, `platform_audit`, `platform_usage`.
 - Company record: `id, name, status (active|suspended), planId, features[], employeeLimit, paidUntil, ownerEmail, nextEmpNo, pathMode, dbRef, legacyIds, createdAt`.
 - Platform team signs in on its own page with its own email + password and its own token (`plat:true`). A platform token can call only platform actions; a company token can never call them.
-- **Support view**: to look inside a company the platform user gives a reason; the view is read-only, expires in 30 minutes, and writes a `platform_audit` entry (who, which company, why, when). Passwords are never shown anywhere; the only password action is **reset** (a temporary password shown once).
+- **Support view**: to look inside a company the platform user gives a reason; the view is read-only except that support may deactivate or reactivate an employee ID and send an employee a password reset, each logged and visible to the company owner; expires in 30 minutes, and writes a `platform_audit` entry (who, which company, why, when). Passwords are never shown anywhere; the only password action is **reset** (a temporary password shown once).
 - **Suspended** company: every person of that company gets "This company's account is paused. Contact your admin." at sign-in and on every call.
 
 ## Features and plans
