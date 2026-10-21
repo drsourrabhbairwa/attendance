@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Platform Admin</title>
+<style>
+@font-face{font-family:'Figtree';font-weight:400;font-display:swap;src:url(fonts/figtree-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:600;font-display:swap;src:url(fonts/figtree-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:700;font-display:swap;src:url(fonts/figtree-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:800;font-display:swap;src:url(fonts/figtree-latin-800-normal.woff2) format('woff2')}
+:root{
+  --ink:#0E211D;--soft:#4A6560;--line:rgba(14,33,29,.10);--edge:rgba(255,255,255,.78);
+  --panel:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.52));
+  --shadow:0 12px 32px rgba(18,70,60,.14);--blur:blur(26px) saturate(170%);
+  --primary:linear-gradient(180deg,#14917F,#0B7A6B);--primary-shadow:0 8px 20px rgba(11,122,107,.28),inset 0 1px 0 rgba(255,255,255,.3);
+  --ok:#0B7A6B;--warn:#A86A00;--bad:#B3261E;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:#DCEFEA}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:radial-gradient(560px 520px at 6% 4%,#98E0C9 0,rgba(152,224,201,0) 72%),radial-gradient(600px 560px at 100% 24%,#B7D4F7 0,rgba(183,212,247,0) 72%),radial-gradient(640px 600px at 0% 78%,#D8CBF3 0,rgba(216,203,243,0) 72%),radial-gradient(520px 480px at 96% 96%,#F7D9BC 0,rgba(247,217,188,0) 72%),#DCEFEA;
+  background-attachment:fixed}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.85);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);padding:20px}
+h1,h2,h3{font-weight:800;letter-spacing:-.2px;margin:0}
+h1{font-size:26px}h2{font-size:20px}h3{font-size:16px}
+.soft{color:var(--soft);font-size:13px}
+label{display:block;font-weight:700;font-size:13px;margin:12px 0 5px}
+input,select{width:100%;min-height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.85);padding:0 14px;font:inherit;color:var(--ink)}
+input:focus,select:focus,button:focus-visible{outline:3px solid rgba(20,145,127,.35);outline-offset:1px}
+button{font:inherit;font-weight:700;min-height:44px;border-radius:14px;border:1px solid var(--edge);padding:0 18px;cursor:pointer;background:rgba(255,255,255,.8);color:var(--ink)}
+button.primary{background:var(--primary);color:#fff;border:0;box-shadow:var(--primary-shadow)}
+button.danger{color:var(--bad);background:rgba(255,235,233,.9)}
+button.small{min-height:36px;padding:0 12px;font-size:13px}
+button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>.grow{flex:1 1 180px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.chip{display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:700;background:rgba(14,33,29,.07)}
+.chip.trial{background:#FFF1D6;color:var(--warn)}.chip.active{background:#D8F3EA;color:var(--ok)}.chip.suspended{background:#FFE1DE;color:var(--bad)}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button.on{background:var(--primary);color:#fff;border:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.co h3{margin-bottom:4px}
+.co .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:12px 0;font-size:13px}
+.co .meta b{display:block;font-size:11px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.err{color:var(--bad);font-weight:600;margin-top:10px;min-height:20px}
+.okmsg{color:var(--ok);font-weight:600}
+.secret{font-family:ui-monospace,Consolas,monospace;font-size:16px;background:#fff;border:1px dashed var(--ok);border-radius:12px;padding:10px 12px;word-break:break-all;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.4px}
+.overlay{position:fixed;inset:0;background:rgba(14,33,29,.35);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto;z-index:20}
+.overlay .card{width:100%;max-width:520px;background:#fff}
+.login{max-width:420px;margin:12vh auto 0}
+.hide{display:none!important}
+@media (min-width:1000px){.wrap{padding-top:32px}}
+@media (max-width:420px){.wrap{padding-left:12px;padding-right:12px}th:nth-child(3),td:nth-child(3){display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginView" class="login card">
+    <h1>Platform Admin</h1>
+    <p class="soft">For the platform team only.</p>
+    <label for="lgEmail">Email</label><input id="lgEmail" type="email" autocomplete="username" autocapitalize="off">
+    <label for="lgPass">Password</label><input id="lgPass" type="password" autocomplete="current-password">
+    <div class="err" id="lgErr" role="alert"></div>
+    <button class="primary" id="lgBtn" style="width:100%;margin-top:6px">Sign in</button>
+  </div>
+
+  <div id="appView" class="hide">
+    <div class="topbar">
+      <div><h1>Platform Admin</h1><div class="soft" id="who"></div></div>
+      <button id="outBtn">Sign out</button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+
+    <section id="tabCompanies">
+      <div class="row" style="margin-bottom:14px"><h2 class="grow">Companies</h2><button class="primary" id="newBtn">+ New company</button></div>
+      <div class="grid" id="coList"></div>
+      <p class="soft" id="coEmpty"></p>
+    </section>
+
+    <section id="tabTeam" class="hide">
+      <div class="card">
+        <h2>Platform team</h2>
+        <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody id="teamRows"></tbody></table>
+        <h3 style="margin-top:20px">Add a person</h3>
+        <div class="row">
+          <div class="grow"><label for="tmName">Name</label><input id="tmName"></div>
+          <div class="grow"><label for="tmEmail">Email</label><input id="tmEmail" type="email"></div>
+        </div>
+        <div class="row">
+          <div class="grow"><label for="tmRole">Role</label><select id="tmRole"><option value="support">Support</option><option value="sales">Sales</option><option value="platform_owner">Owner</option></select></div>
+          <div class="grow"><label for="tmPass">First password (8+ characters)</label><input id="tmPass" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="err" id="tmErr" role="alert"></div>
+        <button class="primary" id="tmAdd">Add person</button>
+      </div>
+    </section>
+
+    <section id="tabSettings" class="hide">
+      <div class="card">
+        <h2>Mail sender</h2>
+        <p class="soft">Every system email goes out from this name and address. The mail service key itself is kept on the server and is never entered here.</p>
+        <div class="row">
+          <div class="grow"><label for="mlName">Sender name</label><input id="mlName"></div>
+          <div class="grow"><label for="mlFrom">Sender email</label><input id="mlFrom" type="email"></div>
+          <div class="grow"><label for="mlReply">Reply-to (optional)</label><input id="mlReply" type="email"></div>
+        </div>
+        <div class="err" id="mlErr" role="alert"></div>
+        <button class="primary" id="mlSave">Save sender</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h2>Recent activity</h2>
+        <table><thead><tr><th>When</th><th>Who</th><th>What</th><th>Detail</th></tr></thead><tbody id="auditRows"></tbody></table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="modal" class="overlay hide" role="dialog" aria-modal="true"><div class="card" id="modalBox"></div></div>
+
+<script>
+const API='https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';
+const SALT='att##sys77!';
+const $=id=>document.getElementById(id);
+let S={token:'',role:'',name:'',email:''};
+const CAN={create:['platform_owner','sales'],limit:['platform_owner','sales'],reset:['platform_owner','support'],status:['platform_owner'],team:['platform_owner'],settings:['platform_owner']};
+const can=k=>CAN[k].indexOf(S.role)>=0;
+const ROLE={platform_owner:'Owner',support:'Support',sales:'Sales'};
+
+function el(tag,props,kids){const e=document.createElement(tag);Object.keys(props||{}).forEach(k=>{if(k==='class')e.className=props[k];else if(k==='text')e.textContent=props[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),props[k]);else e.setAttribute(k,props[k]);});(kids||[]).forEach(c=>e.append(c));return e;}
+async function sha(p){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(SALT+p));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function api(action,extra){
+  let j;
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,token:S.token},extra||{}))});
+    j=await r.json();
+  }catch(e){return {ok:false,error:'Could not reach the server. Check your connection and try again.'};}
+  if(!j.ok&&/sign in again/i.test(j.error||'')&&S.token){signOut();}
+  return j;
+}
+function save(){try{sessionStorage.setItem('plat',JSON.stringify(S));}catch(e){}}
+function signOut(){S={token:'',role:'',name:'',email:''};try{sessionStorage.removeItem('plat');}catch(e){} $('appView').classList.add('hide');$('loginView').classList.remove('hide');}
+
+/* ── sign in ── */
+$('lgBtn').onclick=async()=>{
+  $('lgErr').textContent='';$('lgBtn').disabled=true;
+  const r=await api('platformLogin',{email:$('lgEmail').value.trim(),passHash:await sha($('lgPass').value)});
+  $('lgBtn').disabled=false;
+  if(!r.ok){$('lgErr').textContent=r.error;return;}
+  S={token:r.data.token,role:r.data.role,name:r.data.name,email:r.data.email};save();$('lgPass').value='';start();
+};
+$('lgPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('lgBtn').click();});
+$('outBtn').onclick=signOut;
+
+function start(){
+  $('loginView').classList.add('hide');$('appView').classList.remove('hide');
+  $('who').textContent=S.name+' · '+ROLE[S.role];
+  const tabs=[['Companies','tabCompanies']];if(can('team'))tabs.push(['Team','tabTeam']);if(can('settings'))tabs.push(['Settings','tabSettings']);
+  const box=$('tabs');box.textContent='';
+  tabs.forEach(([label,id],i)=>box.append(el('button',{class:i?'':'on','data-tab':id,text:label,onclick:ev=>{box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));ev.target.classList.add('on');['tabCompanies','tabTeam','tabSettings'].forEach(t=>$(t).classList.toggle('hide',t!==id));if(id==='tabTeam')loadTeam();if(id==='tabSettings')loadSettings();}})));
+  ['tabCompanies','tabTeam','tabSettings'].forEach(t=>$(t).classList.toggle('hide',t!=='tabCompanies'));
+  $('newBtn').classList.toggle('hide',!can('create'));
+  loadCompanies();
+}
+
+/* ── modal ── */
+function openModal(nodes){const b=$('modalBox');b.textContent='';nodes.forEach(n=>b.append(n));$('modal').classList.remove('hide');}
+function closeModal(){$('modal').classList.add('hide');}
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+
+/* ── companies ── */
+async function loadCompanies(){
+  const r=await api('platformListCompanies');
+  const box=$('coList');box.textContent='';
+  if(!r.ok){$('coEmpty').textContent=r.error;return;}
+  $('coEmpty').textContent=r.data.length?'':'No companies yet.';
+  r.data.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).forEach(c=>box.append(card(c)));
+}
+function card(c){
+  const meta=(k,v)=>el('div',{},[el('b',{text:k}),document.createTextNode(v)]);
+  const acts=el('div',{class:'row'});
+  if(can('limit'))acts.append(el('button',{class:'small',text:'Staff limit',onclick:()=>limitDlg(c)}));
+  if(can('reset'))acts.append(el('button',{class:'small',text:'Reset owner password',onclick:()=>resetDlg(c)}));
+  if(can('status'))acts.append(el('button',{class:'small'+(c.status==='suspended'?'':' danger'),text:c.status==='suspended'?'Activate':'Suspend',onclick:()=>statusDlg(c)}));
+  return el('div',{class:'card co','data-id':c.id},[
+    el('div',{class:'row'},[el('h3',{class:'grow',text:c.name}),el('span',{class:'chip '+c.status,text:c.status})]),
+    el('div',{class:'soft',text:'Code: '+c.id}),
+    el('div',{class:'meta'},[meta('Staff',c.staffCount+' of '+c.staffLimit),meta('Trial ends',c.trialEnds||'—'),meta('Owner',c.ownerName),meta('Owner email',c.ownerEmail)]),
+    acts]);
+}
+function field(label,id,type,val){return el('div',{},[el('label',{for:id,text:label}),el('input',{id,type:type||'text',value:val==null?'':val})]);}
+$('newBtn').onclick=()=>{
+  const err=el('div',{class:'err',role:'alert'});
+  const btn=el('button',{class:'primary',text:'Create company',onclick:async()=>{
+    err.textContent='';btn.disabled=true;
+    const r=await api('platformCreateCompany',{name:$('fName').value,ownerName:$('fOwner').value,ownerEmail:$('fEmail').value,ownerPhone:$('fPhone').value,staffLimit:$('fLimit').value,trialDays:$('fTrial').value});
+    btn.disabled=false;
+    if(!r.ok){err.textContent=r.error;return;}
+    showSecret('Company created',r.data);loadCompanies();
+  }});
+  openModal([el('h2',{text:'New company'}),field('Company name','fName'),field('Owner name','fOwner'),field('Owner email','fEmail','email'),field('Owner phone (optional)','fPhone','tel'),field('Staff limit','fLimit','number','25'),field('Trial days','fTrial','number','14'),err,el('div',{class:'row',style:'margin-top:14px'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
+};
+function showSecret(title,d){
+  const nodes=[el('h2',{text:title}),
+    el('p',{class:'soft',text:d.mailed?'The owner has been emailed the login details.':'The email could not be sent. Ask the platform owner to share the details.'})];
+  if(d.oneTimePassword){   // only the platform owner is shown this
+    nodes.push(el('div',{class:'soft',text:'Login ID'}),el('div',{class:'secret',id:'sLogin',text:d.username}),
+      el('div',{class:'soft',text:'One-time password (shown only now)'}),el('div',{class:'secret',id:'sPass',text:d.oneTimePassword}));
+  }
+  nodes.push(el('div',{class:'row'},[el('button',{class:'primary',text:'Done',onclick:closeModal})]));
+  openModal(nodes);
+}
+function limitDlg(c){
+  const err=el('div',{class:'err',role:'alert'});
+  const btn=el('button',{class:'primary',text:'Save',onclick:async()=>{const r=await api('platformSetLimit',{id:c.id,staffLimit:$('lLimit').value});if(!r.ok){err.textContent=r.error;return;}closeModal();loadCompanies();}});
+  openModal([el('h2',{text:'Staff limit — '+c.name}),field('Most staff this company can add','lLimit','number',c.staffLimit),err,el('div',{class:'row',style:'margin-top:14px'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
+}
+function resetDlg(c){
+  const btn=el('button',{class:'primary',text:'Reset password',onclick:async()=>{btn.disabled=true;const r=await api('platformResetOwner',{id:c.id});if(!r.ok){btn.disabled=false;err.textContent=r.error;return;}showSecret('New password for '+c.name,r.data);}});
+  const err=el('div',{class:'err',role:'alert'});
+  openModal([el('h2',{text:'Reset owner password'}),el('p',{text:'A new one-time password will be made for '+c.ownerName+' and emailed to '+c.ownerEmail+'.'}),err,el('div',{class:'row'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
+}
+function statusDlg(c){
+  const to=c.status==='suspended'?'active':'suspended';
+  const err=el('div',{class:'err',role:'alert'});
+  const btn=el('button',{class:to==='suspended'?'danger':'primary',text:to==='suspended'?'Suspend company':'Activate company',onclick:async()=>{const r=await api('platformSetStatus',{id:c.id,status:to});if(!r.ok){err.textContent=r.error;return;}closeModal();loadCompanies();}});
+  openModal([el('h2',{text:(to==='suspended'?'Suspend ':'Activate ')+c.name}),el('p',{text:to==='suspended'?'Nobody in this company will be able to sign in. Their data is kept.':'People in this company will be able to sign in again.'}),err,el('div',{class:'row'},[btn,el('button',{text:'Cancel',onclick:closeModal})])]);
+}
+
+/* ── team ── */
+async function loadTeam(){
+  const r=await api('platformTeam',{op:'list'});const body=$('teamRows');body.textContent='';
+  if(!r.ok){$('tmErr').textContent=r.error;return;}
+  r.data.filter(u=>u.active).forEach(u=>{
+    const sel=el('select',{'aria-label':'Role of '+u.name,onchange:async()=>{const x=await api('platformTeam',{op:'setRole',id:u.id,role:sel.value});if(!x.ok){$('tmErr').textContent=x.error;}loadTeam();}},
+      Object.keys(ROLE).map(k=>{const o=el('option',{value:k,text:ROLE[k]});if(k===u.role)o.selected=true;return o;}));
+    body.append(el('tr',{},[el('td',{text:u.name}),el('td',{text:u.email}),el('td',{},[sel]),el('td',{},[el('button',{class:'small danger',text:'Remove',onclick:async()=>{const x=await api('platformTeam',{op:'remove',id:u.id});$('tmErr').textContent=x.ok?'':x.error;loadTeam();}})])]));
+  });
+}
+$('tmAdd').onclick=async()=>{
+  $('tmErr').textContent='';
+  if($('tmPass').value.length<8){$('tmErr').textContent='Use at least 8 characters for the password.';return;}
+  const r=await api('platformTeam',{op:'add',name:$('tmName').value,email:$('tmEmail').value,role:$('tmRole').value,passHash:await sha($('tmPass').value)});
+  if(!r.ok){$('tmErr').textContent=r.error;return;}
+  ['tmName','tmEmail','tmPass'].forEach(i=>$(i).value='');loadTeam();
+};
+
+/* ── settings ── */
+async function loadSettings(){
+  const m=await api('platformGetMail');
+  if(m.ok&&m.data){$('mlName').value=m.data.fromName||'';$('mlFrom').value=m.data.fromAddress||'';$('mlReply').value=m.data.replyTo||'';}
+  const a=await api('platformAuditLog');const body=$('auditRows');body.textContent='';
+  if(a.ok)a.data.slice(0,50).forEach(x=>body.append(el('tr',{},[el('td',{text:String(x.at).replace('T',' ').slice(0,16)}),el('td',{text:x.by}),el('td',{text:x.action}),el('td',{text:[x.target,x.detail].filter(Boolean).join(' · ')})])));
+}
+$('mlSave').onclick=async()=>{
+  $('mlErr').textContent='';
+  const r=await api('platformSetMail',{fromName:$('mlName').value,fromAddress:$('mlFrom').value,replyTo:$('mlReply').value});
+  $('mlErr').textContent=r.ok?'Saved.':r.error;$('mlErr').className=r.ok?'err okmsg':'err';
+};
+
+try{const s=JSON.parse(sessionStorage.getItem('plat')||'null');if(s&&s.token){S=s;start();}}catch(e){}
+</script>
+</body>
+</html>

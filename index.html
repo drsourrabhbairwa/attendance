@@ -1055,6 +1055,8 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   </div>
   <!-- Employee login -->
   <div id="loginEmployee">
+    <a href="#" class="help-link" id="coLink" onclick="toggleCompany();return false" style="display:block;text-align:right;margin:0 0 4px">Different company?</a>
+    <div id="coBox" style="display:none"><label>Company code</label><input type="text" id="loginCompany" placeholder="Leave empty for Amitek" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
     <label>ID or email</label><input type="text" id="loginId" placeholder="Email or ID, e.g. 007" autocomplete="username" autocapitalize="off">
     <label>Password</label><input type="password" id="loginPass" placeholder="Your password">
     <div class="msg msg-error" id="loginErr">Incorrect ID, email or password.</div>
@@ -1784,13 +1786,22 @@ function loadCache(){
 let _actor='';   // who is using the app (the server writes the real name from the sign-in)
 let _tok='', _me=null;   // sign-in token (managers & supervisors) and who they are: {role:'S'|'A'|'D'|'V', name, departments}
 let _empTok='';   // this phone's private staff sign-in token (the staff password hash is never kept on the phone)
+let COMPANY=''; try{ COMPANY=localStorage.getItem('amk_company')||''; }catch(e){}   // the company code typed on the sign-in screen; empty = Amitek
+function syncCompany(){
+  const i=document.getElementById('loginCompany'); if(!i) return;
+  COMPANY=(document.getElementById('coBox').style.display!=='none'?i.value:COMPANY).trim().toLowerCase();
+  try{ COMPANY?localStorage.setItem('amk_company',COMPANY):localStorage.removeItem('amk_company'); }catch(e){}
+}
+function toggleCompany(){ const b=document.getElementById('coBox'); b.style.display=b.style.display==='none'?'block':'none'; if(b.style.display!=='none'){ const i=document.getElementById('loginCompany'); i.value=COMPANY; i.focus(); } else { document.getElementById('loginCompany').value=''; syncCompany(); } }
+window.addEventListener('DOMContentLoaded',()=>{ if(COMPANY){ document.getElementById('coBox').style.display='block'; document.getElementById('loginCompany').value=COMPANY; } });
 const _NOTOK={login:1,requestOtp:1,verifyOtp:1};   // sign-in steps are sent without a token
 const _OPT={getAll:1,getAttendance:1,getLeaves:1,getCorrections:1,getQuotas:1};
 const API_TIMEOUT_MS=90000;   // a photo upload or a big report can take a while; beyond this the connection is considered lost
 async function api(action, params={}, opts={}){
   const body={action, secret:API_SECRET, actor:_actor, ...params};
-  if(_tok) body.token=_tok;
+  if(_tok&&!_NOTOK[action]) body.token=_tok;   // a sign-in step never carries an old token: it must reach the company typed on the screen
   else{
+    if(COMPANY) body.company=COMPANY;   // before sign-in the server needs to know which company; after it the token says so
     if(_empTok&&!_NOTOK[action]) body.token=_empTok;   // the staff member's own private sign-in
     if(_OPT[action] && typeof currentEmp!=='undefined' && currentEmp && !body.empId) body.empId=currentEmp.id;   // staff may only ask for their own records
   }
@@ -1813,8 +1824,8 @@ async function api(action, params={}, opts={}){
   }finally{ if(timer) clearTimeout(timer); }
   if(j.newToken&&_empTok&&!_tok&&!_NOTOK[action]){ const me=meLoad(); empTokSave((me&&me.id)||(typeof currentEmp!=='undefined'&&currentEmp?currentEmp.id:''),j.newToken); }   // the server swaps in a fresh token while the old one still has days left
   if(!j.ok){
-    if(/Session expired/i.test(j.error||'') && _tok){ endManagerSession(true); }
-    if(!_tok&&!_NOTOK[action]&&/^(Please update the app|Session expired)/i.test(j.error||'')&&(_empTok||(typeof currentEmp!=='undefined'&&currentEmp)||meLoad())){ endStaffSession(j.error); const se=new Error(j.error); se.staffEnded=true; throw se; }
+    if(/Session expired|^This account is paused/i.test(j.error||'') && _tok){ endManagerSession(true); }
+    if(!_tok&&!_NOTOK[action]&&/^(Please update the app|Session expired|This account is paused)/i.test(j.error||'')&&(_empTok||(typeof currentEmp!=='undefined'&&currentEmp)||meLoad())){ endStaffSession(j.error); const se=new Error(j.error); se.staffEnded=true; throw se; }
     throw new Error(j.error||'API error');
   }
   return j.data;
@@ -3377,6 +3388,7 @@ async function finishStaffLogin(r){   // the server accepted this person (passwo
   saveCache(); closeCodeBox(); loading(false); await loadHome();
 }
 async function handleLogin(){
+  syncCompany();
   const id=document.getElementById('loginId').value.trim();
   const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
@@ -3403,6 +3415,7 @@ function codeWait(sec){   // "Send again" opens after a minute
   tick(); _codeTimer=setInterval(tick,1000);
 }
 async function requestCode(purpose){
+  syncCompany();
   document.getElementById('loginErr').classList.remove('show');
   const id=document.getElementById('loginId').value.trim();
   if(!id) return codeSay('Type your Employee ID first.');
@@ -4256,6 +4269,7 @@ async function handleAdminLogin(){
       _me={role:'A',name:u,departments:[]};
     } else {
       let r;
+      syncCompany();
       try{ r=await api('login',{kind:'manager',username:u,passHash:await hashPass(p)}); }
       catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect username or password.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[]};
@@ -4293,6 +4307,7 @@ async function handleSupLogin(){
     let sup;
     if(USE_SHEETS){
       let r;
+      syncCompany();
       try{ r=await api('login',{kind:'supervisor',name,passHash:await hashPass(pass)}); }
       catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect supervisor credentials.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:'V',name:r.name,id:r.id,departments:[]};
