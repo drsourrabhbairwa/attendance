@@ -26,6 +26,18 @@ body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh
 #app{width:100%;max-width:480px}
 .admin-wrap{max-width:960px}
 .screen{display:none}.screen.active{display:block}
+/* Sign-in: one centred card on a phone; on a desktop a welcome panel beside it */
+.lg-side{display:none}
+#loginScreen .help-link#oldLoginLink{opacity:.8}
+@media(min-width:900px){
+  body[data-screen="loginScreen"] #app{max-width:1000px}
+  #loginScreen.active{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:40px;align-items:center;margin:6vh auto 0;padding:0 24px}
+  #loginScreen .lg-side{display:block;color:#fff;padding:36px;border-radius:24px;background:linear-gradient(135deg,rgba(14,60,62,.88),rgba(27,127,107,.82));border:1px solid rgba(255,255,255,.35);box-shadow:0 10px 32px rgba(4,26,30,.30)}
+  #loginScreen .lg-side h2{font-size:28px;line-height:1.2;margin-bottom:10px}
+  #loginScreen .lg-side p{font-size:15px;opacity:.9;line-height:1.5;margin-bottom:16px}
+  #loginScreen .lg-side ul{list-style:none;display:grid;gap:8px;font-size:14px}
+  #loginScreen .lg-side li::before{content:"✓ ";color:#7CC9B8;font-weight:700}
+}
 /* Card */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px}
 /* Logo */
@@ -149,6 +161,7 @@ textarea{min-height:72px;resize:vertical}
 .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .tab-pane{display:none}.tab-pane.active{display:block}
 body.rD .sa-only{display:none!important}
+body:not(.rS) .own-only{display:none!important}   /* things only the company owner may do */
 @media(max-width:600px){.add-grid{grid-template-columns:1fr 1fr!important}.add-grid>div:last-child{grid-column:1/-1}.add-grid>div:last-child button{width:100%}}
 #tabBtnOrg{display:none}body.rS #tabBtnOrg{display:inline-block}
 body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
@@ -587,6 +600,14 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-hrs>div{min-width:0;padding:10px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .wm-hrs b{display:block;font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--accent2);overflow-wrap:anywhere}
 .wm-hrs span{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
+.wm-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.wm-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;padding:8px 2px;border-radius:14px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 3px 10px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;min-width:0;position:relative}
+.wm-opt .ic{display:flex;color:var(--accent2)}.wm-opt .wm-i{width:20px;height:20px}
+.wm-opt b{font-size:12px;font-weight:700;white-space:nowrap}
+.wm-opt small{position:absolute;top:-8px;right:2px;font-size:9px;font-weight:700;color:var(--accent2);background:#fff;border-radius:999px;padding:1px 6px;white-space:nowrap}
+.wm-opt.on{border-color:var(--accent);background:var(--accentBg);box-shadow:0 0 0 3px rgba(31,127,119,.22)}.wm-opt.on .ic{color:var(--accent)}
+.wm-opt[disabled]{opacity:.55;cursor:default}
+.wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-cards{display:grid;gap:8px;margin:8px 0}
 .wm-card{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;text-align:left;border-radius:16px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 4px 14px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
@@ -748,6 +769,223 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 .hm-links button,.btn-outline,.chip{background:rgba(255,255,255,.9)}
 .hm-links button small,.hm-tile.blocked span,.chip{color:var(--warn)}
 </style>
+<style id="auroraGlass">
+/* ═══════════════════════════════════════════════════════════════════
+   v23 — AURORA GLASS: one design language for the whole app (loaded last)
+   Surfaces: frosted white panels with a thin light edge and a soft shadow.
+   Controls: one primary (deep teal gradient), one quiet (glass), one danger (soft red), one shape language (14 px corners, 44 px tall).
+   Type: a serif for titles, system sans for everything else. Works from 320 px to a wide desktop.
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --ag-panel:rgba(255,255,255,.74);--ag-panel2:rgba(255,255,255,.58);--ag-edge:rgba(255,255,255,.78);
+  --ag-line:rgba(16,70,74,.12);--ag-shadow:0 14px 40px rgba(4,26,30,.22),0 2px 6px rgba(4,26,30,.08);
+  --ag-radius:22px;--ag-r:14px;--ag-blur:blur(22px) saturate(1.6);
+  --ag-primary:linear-gradient(180deg,#22907F 0%,#15695A 100%);
+  --ag-primary-shadow:0 8px 18px rgba(14,84,68,.34),inset 0 1px 0 rgba(255,255,255,.32);
+  --ag-serif:'Iowan Old Style','Palatino Linotype','Source Serif Pro',Georgia,serif;
+  --ag-ink:#0F2A2D;
+}
+body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 520px at 8% -5%,rgba(124,201,184,.30),transparent 62%),radial-gradient(760px 520px at 100% 18%,rgba(231,176,74,.15),transparent 60%),radial-gradient(900px 600px at 40% 110%,rgba(31,127,119,.30),transparent 60%)}
+#app{position:relative;z-index:1}
+
+/* Panels */
+.card,.modal-box,.hm-today{background:var(--ag-panel);border:1px solid var(--ag-edge);border-radius:var(--ag-radius);box-shadow:var(--ag-shadow),inset 0 1px 0 rgba(255,255,255,.85);-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur)}
+#adminScreen>.card,#supervisorScreen>.card{background:rgba(255,255,255,.80);padding:24px 26px}
+.add-form,.leave-card,.sup-card,.bal-item,.org-node,.hol-item,.site-wrap{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 4px 14px rgba(4,26,30,.07),inset 0 1px 0 rgba(255,255,255,.8)}
+.add-form{padding:16px 18px}
+.add-form h3,.card h3,.card h4{font-family:var(--ag-serif);color:var(--ag-ink);letter-spacing:.1px}
+.add-form h3{font-size:16px}
+
+/* Titles */
+.topbar h2,.logo h1,.hm-nm,.state-box h3,.modal-box h3{font-family:var(--ag-serif);color:var(--ag-ink)}
+#adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:26px;line-height:1.15;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#adminScreen .topbar,#supervisorScreen .topbar{padding-bottom:18px!important;margin-bottom:18px!important;border-bottom:1px solid var(--ag-line)!important}
+.role-chip{border-radius:999px;font-family:inherit}
+
+/* Buttons: one language */
+.btn,.btn-sm,.filter-row button,.modal-close,.btn-approve,.btn-reject,.org-act,.hm-out,.pl-btn,.key-btn{border-radius:var(--ag-r);font-weight:700;letter-spacing:.1px;transition:transform .12s,box-shadow .15s,background .15s,filter .15s}
+.btn,.filter-row button{min-height:46px}
+.btn-primary,.filter-row button,.modal-close,.btn-approve{background:var(--ag-primary);color:#fff;box-shadow:var(--ag-primary-shadow)}
+.btn-green{background:linear-gradient(180deg,#2F9A63,#1E7A4A);color:#fff;box-shadow:0 8px 18px rgba(24,102,60,.30),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-blue{background:linear-gradient(180deg,#3B6FB6,#264E8C);color:#fff;box-shadow:0 8px 18px rgba(30,70,130,.28),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-orange{background:linear-gradient(180deg,#D9822B,#B2631A);color:#fff;box-shadow:0 8px 18px rgba(150,80,20,.28),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-purple{background:linear-gradient(180deg,#7A5BC0,#5B3F9E);color:#fff;box-shadow:0 8px 18px rgba(80,50,150,.26),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-teal{background:var(--ag-primary);color:#fff;box-shadow:var(--ag-primary-shadow)}
+.btn-danger,.btn-reject{background:linear-gradient(180deg,#C65A52,#A23B35);color:#fff;box-shadow:0 8px 18px rgba(150,40,35,.26),inset 0 1px 0 rgba(255,255,255,.26)}
+.btn-outline,.btn-sm.btn-outline{background:rgba(255,255,255,.72);color:var(--ag-ink);border:1px solid var(--ag-line);box-shadow:0 2px 8px rgba(4,26,30,.06)}
+.btn:hover,.filter-row button:hover{filter:brightness(1.05)}
+.btn:active,.filter-row button:active{transform:translateY(1px) scale(.985)}
+.org-act,.hm-out{background:rgba(255,255,255,.72);border:1px solid var(--ag-line);color:var(--ag-ink);min-height:36px;padding:6px 13px;font-size:12.5px;box-shadow:0 2px 6px rgba(4,26,30,.05)}
+.org-act:hover,.hm-out:hover{background:#fff;box-shadow:0 4px 12px rgba(4,26,30,.10)}
+.org-act.red{color:#A23B35;border-color:rgba(162,59,53,.28)}
+#adminScreen .topbar .btn-danger,#supervisorScreen .topbar .btn-danger{background:rgba(162,59,53,.10)!important;color:#A23B35!important;border:1px solid rgba(162,59,53,.30)!important;box-shadow:none;min-height:36px;padding:6px 14px!important;border-radius:var(--ag-r)!important}
+#supervisorScreen button[onclick="supLogout()"]{background:rgba(162,59,53,.10)!important;color:#A23B35!important;border:1px solid rgba(162,59,53,.30)!important;border-radius:var(--ag-r)!important}
+
+/* Inputs */
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=month],input[type=number],input[type=email],input[type=tel],select,textarea{background:rgba(255,255,255,.88);border:1px solid var(--ag-line);border-radius:var(--ag-r);min-height:44px;color:var(--ag-ink);box-shadow:inset 0 1px 2px rgba(4,26,30,.05)}
+textarea{min-height:88px}
+input:focus,select:focus,textarea:focus{border-color:#1F7F77;box-shadow:0 0 0 4px rgba(31,127,119,.20)}
+label{color:var(--ag-ink)}
+.filter-row{gap:10px;margin-bottom:16px}
+.filter-row input,.filter-row select{min-height:46px}
+
+/* Admin side navigation: one quiet list, the active page is a teal pill */
+#adminScreen .tab-row{background:var(--ag-panel);border:1px solid var(--ag-edge);box-shadow:var(--ag-shadow);border-radius:20px;padding:10px;gap:3px}
+#adminScreen .tab-btn{background:transparent!important;border:1px solid transparent!important;box-shadow:none!important;color:var(--ag-ink);text-align:left;justify-content:flex-start;font-weight:600;font-size:13.5px;min-height:42px;border-radius:13px;padding:8px 14px}
+#adminScreen .tab-btn:hover{background:rgba(255,255,255,.7)!important}
+#adminScreen .tab-btn.active{background:var(--ag-primary)!important;color:#fff!important;box-shadow:var(--ag-primary-shadow)!important;font-weight:700}
+@media(max-width:1023px){
+  #adminScreen .tab-row{padding:7px;border-radius:18px}
+  #adminScreen .tab-btn{text-align:center;justify-content:center;white-space:nowrap;background:rgba(255,255,255,.55)!important;border-color:rgba(255,255,255,.7)!important}
+}
+
+/* Numbers at a glance */
+.stats-grid{gap:14px}
+.stat{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.66));border:1px solid var(--ag-edge);border-radius:18px;padding:16px 10px;box-shadow:0 6px 18px rgba(4,26,30,.09),inset 0 1px 0 #fff}
+.stat .n{font-family:var(--ag-serif);font-size:32px;line-height:1.1}
+.stat .l{font-size:12px;font-weight:700;color:var(--soft);margin-top:4px}
+
+/* Tables */
+.tbl{border:1px solid var(--ag-edge);border-radius:18px;overflow:hidden;background:rgba(255,255,255,.78);box-shadow:0 6px 20px rgba(4,26,30,.08);border-collapse:separate;border-spacing:0}
+.tbl th{background:linear-gradient(180deg,rgba(16,70,74,.10),rgba(16,70,74,.05));color:var(--ag-ink);font-weight:700;padding:12px 12px;border-bottom:1px solid var(--ag-line);position:sticky;top:0}
+.tbl td{padding:12px;border-bottom:1px solid rgba(16,70,74,.07)}
+.tbl tbody tr:nth-child(even) td{background:rgba(16,70,74,.025)}
+.tbl tbody tr:hover td{background:rgba(31,127,119,.08)}
+.badge,.tag,.hm-chip{border-radius:999px;padding:3px 10px;font-weight:700}
+
+/* Lists (staff, places, leaves …) */
+.list-item{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;padding:12px 16px;box-shadow:0 3px 12px rgba(4,26,30,.06);transition:box-shadow .15s,transform .15s}
+.list-item:hover{box-shadow:0 8px 22px rgba(4,26,30,.12)}
+.emp-acts{gap:8px}
+.dept-sel{background:rgba(255,255,255,.8)!important;border-radius:12px!important;min-height:36px!important}
+
+/* Messages */
+.msg{border-radius:14px;padding:11px 14px}
+.msg-error{background:rgba(198,90,82,.12);border:1px solid rgba(162,59,53,.30);color:#8E2F2A}
+.msg-success{background:rgba(47,154,99,.13);border:1px solid rgba(30,122,74,.30);color:#1D6E43}
+.empty{color:var(--soft)}
+
+/* Dialogs and sheets */
+.modal-bg,.fm-back{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:rgba(8,30,34,.42)}
+.fm-sheet{background:rgba(255,255,255,.88);border:1px solid var(--ag-edge);box-shadow:0 -10px 50px rgba(4,26,30,.30);border-radius:26px 26px 0 0}
+@media(min-width:900px){.fm-sheet,.fm-sheet.wide{border-radius:26px}}
+.fm-chip{background:rgba(255,255,255,.8);border:1px solid var(--ag-line);min-height:40px;font-weight:600;color:var(--ag-ink)}
+.fm-chip.on{background:var(--ag-primary);color:#fff;border-color:transparent;box-shadow:var(--ag-primary-shadow)}
+.ld-glass{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 4px 14px rgba(4,26,30,.07)}
+.ld-pill{border-radius:999px}
+
+/* Employee home */
+.hm-hero{border-radius:26px;box-shadow:var(--ag-shadow)}
+.hm-tile,.hm-stat{background:var(--ag-panel);border:1px solid var(--ag-edge);border-radius:18px;box-shadow:0 6px 18px rgba(4,26,30,.10)}
+.hm-tt{font-family:var(--ag-serif)}
+
+/* Working now: a card per person */
+.wl{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:20px;padding:16px 18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(4,26,30,.08)}
+#wlLive .wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+#wlLive .wl h4{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:17px;margin:0}
+.wl h4 small{font-family:system-ui,sans-serif;font-size:12px;font-weight:700;color:var(--soft)}
+.wl-r{background:rgba(255,255,255,.85);border:1px solid var(--ag-edge)!important;border-radius:16px;padding:12px 14px!important;box-shadow:0 3px 10px rgba(4,26,30,.06)}
+.wl-r b{font-size:15px}
+
+.wr-ch{align-items:flex-start;align-content:flex-start}
+.wr-ch button{background:rgba(255,255,255,.82);border-color:var(--ag-line);color:var(--ag-ink)}
+.wr-ch button.on{background:var(--ag-primary);color:#fff;border-color:transparent;box-shadow:var(--ag-primary-shadow)}
+.wr-a button{border-radius:var(--ag-r);box-shadow:0 6px 14px rgba(4,26,30,.2)}
+@media(max-width:600px){
+  #adminScreen .topbar,#supervisorScreen .topbar{flex-direction:column;align-items:flex-start;gap:12px}
+  #adminScreen .topbar>div:last-child{width:100%}
+  #adminScreen .topbar>div:last-child>button{flex:1}
+}
+
+/* Quiet scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(16,70,74,.35) transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(16,70,74,.30);border-radius:8px}
+
+/* Phones: roomy but never wider than the screen */
+@media(max-width:600px){
+  #adminScreen>.card,#supervisorScreen>.card{padding:16px 14px;border-radius:20px}
+  #adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:22px}
+  .stat .n{font-size:26px}
+  .tbl th,.tbl td{padding:10px 9px}
+}
+@media(prefers-reduced-transparency:reduce){.card,.modal-box,.hm-today,#adminScreen .tab-row{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* ═══ v24 — PASTEL AURORA: the light glass look of the first redesign (mint · sky · lavender · peach, Figtree, deep-teal actions) ═══ */
+@font-face{font-family:'Figtree';font-weight:800;font-display:swap;src:url(fonts/figtree-latin-800-normal.woff2) format('woff2')}
+:root{
+  --ag-ink:#0E211D;--soft:#4A6560;
+  --ag-panel:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.48));--ag-panel2:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.42));
+  --ag-edge:rgba(255,255,255,.78);--ag-line:rgba(14,33,29,.10);
+  --ag-shadow:0 12px 32px rgba(18,70,60,.14);--ag-blur:blur(26px) saturate(170%);
+  --ag-primary:linear-gradient(180deg,#14917F,#0B7A6B);--ag-primary-shadow:0 8px 20px rgba(11,122,107,.28),inset 0 1px 0 rgba(255,255,255,.3);
+  --ag-serif:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+html{background:#DCEFEA}
+body,button,input,select,textarea{font-family:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+body,body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before,body::before{color:var(--ag-ink)}
+body::before,body[data-screen]:not([data-screen="loginScreen"]):not([data-screen="setupScreen"])::before{z-index:-1;
+  background:radial-gradient(560px 520px at 6% 4%,#98E0C9 0,rgba(152,224,201,0) 72%),radial-gradient(600px 560px at 100% 24%,#B7D4F7 0,rgba(183,212,247,0) 72%),radial-gradient(640px 600px at 0% 78%,#D8CBF3 0,rgba(216,203,243,0) 72%),radial-gradient(560px 520px at 100% 100%,#F6E4C3 0,rgba(246,228,195,0) 72%),#DCEFEA}
+#app{z-index:auto}
+.topbar h2,.logo h1,.hm-nm,.state-box h3,.modal-box h3,.add-form h3,.card h3,.card h4,.hm-tt,.stat .n,.wl h4{font-family:var(--ag-serif);font-weight:800;letter-spacing:-.2px}
+.stat .n{font-weight:800}
+#adminScreen .topbar h2,#supervisorScreen .topbar h2{font-size:26px}
+.card,.modal-box,.hm-today,#adminScreen .tab-row,.fm-sheet{border-color:rgba(255,255,255,.72)}
+#adminScreen>.card,#supervisorScreen>.card{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.40))}
+.stat,.hm-tile,.hm-stat,.wl-r{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.58))}
+.tbl{background:rgba(255,255,255,.82)}
+.tbl th{background:rgba(11,122,107,.08)}
+.btn-primary,.filter-row button,.modal-close,.btn-approve,.btn-teal,.fm-chip.on{background:var(--ag-primary)}
+.btn-outline,.org-act,.hm-out{color:var(--ag-ink)}
+input:focus,select:focus,textarea:focus{border-color:#0B7A6B;box-shadow:0 0 0 4px rgba(11,122,107,.18)}
+.fm-back,.modal-bg{background:rgba(14,33,29,.30)}
+.fm-sheet{background:linear-gradient(180deg,rgba(247,252,251,.92),rgba(238,247,244,.88));-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%)}
+/* employee home hero: light glass, no dark photo */
+.hm-hero{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.46))!important;border:1px solid rgba(255,255,255,.75);color:var(--ag-ink);-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur);box-shadow:var(--ag-shadow)}
+.hm-hero .hm-nm,.hm-hero .hm-date{color:var(--ag-ink);opacity:1}
+.hm-hero .hm-date{color:var(--soft);font-weight:600}
+.hm-hero .hm-av{background:rgba(11,122,107,.14);border-color:#fff;color:#0B7A6B}
+.hm-hero .hm-out{background:rgba(255,255,255,.8);color:var(--ag-ink);border:1px solid var(--ag-line)}
+.hm-hero .brand{filter:none}.hm-hero,.hm-hero *{text-shadow:none!important}
+#bellBtn,.bell-btn{background:rgba(255,255,255,.85)}
+/* sign-in side panel */
+#loginScreen .lg-side{color:var(--ag-ink)!important;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.44))!important;border:1px solid rgba(255,255,255,.75)!important;-webkit-backdrop-filter:var(--ag-blur);backdrop-filter:var(--ag-blur);box-shadow:var(--ag-shadow)!important}
+#loginScreen .lg-side li::before{color:#0B7A6B}
+.wm-opt{background:rgba(255,255,255,.78)}.wm-opt.on{background:#fff;border-color:#0B7A6B}
+body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:transparent!important}
+/* shapes from the design canvas: pill buttons, 18px fields, big bold titles */
+.btn{border-radius:28px;min-height:54px;font-size:16px;font-weight:700}
+.btn-sm,.filter-row button{border-radius:22px}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=month],input[type=number],input[type=email],input[type=tel],select,textarea{border-radius:18px;background:rgba(255,255,255,.72)}
+.logo h1{font-size:32px;letter-spacing:-.03em}
+.card{border-radius:28px}
+.logo .brand{filter:none}.logo h1{color:var(--ag-ink)}.logo p{color:var(--soft)}
+#loginScreen .help-link,#loginScreen a{color:#0B7A6B}
+
+/* ═══ Desktop: a real wide layout, not a stretched phone ═══ */
+.hm-cols,.hm-colL,.hm-colR{display:block}
+@media(min-width:1000px){
+  body[data-screen="homeScreen"] #app{max-width:1180px}
+  #homeScreen.active{display:block}
+  #homeScreen .hm-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:22px;padding:20px 28px;border-radius:28px;margin-bottom:20px}
+  #homeScreen .hm-hero .hm-brand{margin:0;grid-column:1}
+  #homeScreen .hm-hero .hm-top{grid-column:2;justify-self:start;gap:14px}
+  #homeScreen .hm-hero .hm-date{grid-column:3;margin:0;text-align:right}
+  #homeScreen .hm-nm{font-size:24px}
+  .hm-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+  .hm-colL,.hm-colR{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .hm-colL>*,.hm-colR>*{margin:0}
+  .hm-colR .hm-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .hm-colL>:empty,.hm-colR>:empty{display:none}
+  #homeScreen .hm-hero{padding-right:76px}
+  #homeScreen .wm-opt{min-height:64px}
+  #homeScreen .wm-opt b{font-size:13.5px}
+  /* admin / supervisor: use the width */
+  #adminScreen .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #adminScreen .tbl{font-size:14px}
+}
+@media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:1320px} }
+</style>
 </head>
 <body>
 <div id="loadOv"><div class="load-spin"></div><div style="font-size:13px;color:var(--soft);font-weight:700" id="loadMsg">Loading…</div></div>
@@ -758,7 +996,6 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 <div id="setupScreen" class="screen">
 <div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>First Time Setup</h1><p>Create your admin account to get started</p></div>
 <div class="card">
-  <div id="sb0" class="sbadge sb-local">💾 Local Storage</div>
   <label>Admin Username</label><input type="text" id="setupUser" placeholder="e.g. admin" autocomplete="off">
   <label>Admin Password</label><input type="password" id="setupPass" placeholder="Minimum 6 characters">
   <label>Confirm Password</label><input type="password" id="setupConfirm" placeholder="Repeat password">
@@ -770,19 +1007,21 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 
 <!-- ══ LOGIN ══ -->
 <div id="loginScreen" class="screen">
-<div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>Staff Attendance</h1><p>Sign in to mark your attendance</p><div id="sb1" class="sbadge sb-local">💾 Local Storage</div></div>
+<div class="lg-side"><h2>One person. One sign-in.</h2><p>Use your email or staff ID with the same password everywhere. If you manage a team, a Manage button appears after you sign in.</p><ul><li>Mark Work ON / OFF and your tasks</li><li>Leave, corrections and reports</li><li>Manage your people when you have access</li></ul></div>
+<div class="lg-main">
+<div class="logo"><div class="brand" role="img" aria-label="AMITEK"></div><h1>Staff Attendance</h1><p>Sign in with your email or ID</p></div>
 <div class="card">
   <div class="msg" id="siteRunBanner" style="display:none;background:var(--orangeBg);color:var(--orange);border:1px solid #f0c898;margin:0 0 12px;font-weight:600"></div>
-  <div class="role-row">
+  <div class="role-row" id="oldRoles" style="display:none">
     <button class="role-btn active" id="roleEmp" onclick="setRole('employee')">Employee</button>
     <button class="role-btn" id="roleSup" onclick="setRole('supervisor')">Supervisor</button>
     <button class="role-btn" id="roleAdm" onclick="setRole('admin')">Admin</button>
   </div>
   <!-- Employee login -->
   <div id="loginEmployee">
-    <label>Employee ID</label><input type="text" id="loginId" placeholder="e.g. EMP001" autocomplete="off">
+    <label>ID or email</label><input type="text" id="loginId" placeholder="Email or ID, e.g. 007" autocomplete="username" autocapitalize="off">
     <label>Password</label><input type="password" id="loginPass" placeholder="Your password">
-    <div class="msg msg-error" id="loginErr">Incorrect Employee ID or password.</div>
+    <div class="msg msg-error" id="loginErr">Incorrect ID, email or password.</div>
     <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
     <a href="#" class="help-link" id="codeLink" onclick="requestCode('signin');return false">Email me a code</a>
     <a href="#" class="help-link" id="forgotLink" onclick="requestCode('reset');return false">Forgot password?</a>
@@ -799,6 +1038,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     </div>
     <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <a href="#" class="help-link" id="apkLink" style="display:none">📲 Download the Android app</a>
+    <a href="#" class="help-link" id="oldLoginLink" onclick="showOldLogin();return false">Old Supervisor / Admin login</a>
   </div>
   <!-- Supervisor login -->
   <div id="loginSupervisor" style="display:none">
@@ -813,6 +1053,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   </div>
 </div>
 </div>
+</div>
 
 <!-- ══ EMPLOYEE HOME ══ -->
 <div id="homeScreen" class="screen">
@@ -820,11 +1061,12 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     <div class="hm-brand"><div class="brand" role="img" aria-label="AMITEK"></div></div>
     <div class="hm-top">
       <div class="hm-av" id="hmAv">?</div>
-      <div><div class="hm-hi" id="hmHi">Hello</div><div class="hm-nm" id="hmName">—</div></div>
-      <div class="hm-tools"><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
+      <div><div class="hm-nm" id="hmName">—</div></div>
+      <div class="hm-tools"><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
+  <div class="hm-cols"><div class="hm-colL">
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
@@ -832,6 +1074,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   <div id="hmTrack"></div>
   <div id="hmSafety"></div>
   <button class="sos-open" onclick="openSOS()"><span>🚨</span><div><b>Emergency</b><small>Hurt, in danger or need help? Tap here</small></div></button>
+  </div><div class="hm-colR">
   <div class="hm-grid" id="hmActs"></div>
   <div class="hm-links" id="hmLinks"></div>
   <div class="card hm-card">
@@ -845,6 +1088,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
   <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
   <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
+  </div></div>
 </div>
 
 <!-- ══ PROFILE ══ -->
@@ -1052,8 +1296,8 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 <div id="adminScreen" class="screen admin-wrap">
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
-    <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div><div id="sb2" class="sbadge sb-local" style="margin-top:4px">💾 Local Storage</div></div>
-    <div style="display:flex;gap:6px"><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
+    <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div></div>
+    <div style="display:flex;gap:6px"><button class="org-act" id="adminMyWork" style="display:none" onclick="leaveManage()">🏠 My work</button><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
   </div>
   <div class="tab-row">
     <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
@@ -1168,7 +1412,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   <div id="tabEmployees" class="tab-pane">
     <div id="staffSignInCard"></div>
     <div class="add-form">
-      <h3>➕ Add Employee</h3>
+      <h3>➕ Add Employee <button class="org-act own-only" style="float:right" onclick="openLegacyLinks()">🔗 Link old logins</button></h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Default password = Employee ID</p>
       <div class="add-grid" style="display:grid;grid-template-columns:repeat(5,1fr) auto;gap:7px;align-items:end;margin-top:9px">
         <div><label style="margin:0 0 4px">ID</label><input type="text" id="nEmpId" placeholder="EMP021"></div>
@@ -1417,6 +1661,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
     </div>
     <div style="display:flex;gap:7px">
       <button onclick="refreshSiteMonitor('sup')" style="padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">🔄 Refresh</button>
+      <button id="supMyWork" onclick="leaveManage()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">🏠 My work</button>
       <button onclick="supLogout()" style="padding:6px 12px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">Logout</button>
     </div>
   </div>
@@ -1881,7 +2126,6 @@ function distMeters(lat1,lng1,lat2,lng2){
 function updateBadges(){
   const cls=USE_SHEETS?'sbadge sb-sheets':'sbadge sb-local';
   const txt=USE_SHEETS?'✅ Google Sheets':'💾 Local Storage';
-  ['sb0','sb1','sb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.className=cls;el.textContent=txt;}});
 }
 /* Minutes spent away, by kind ('personal' or '' for meetings); an absence still open counts up to now */
 function awayMins(rec,kind){
@@ -2684,12 +2928,21 @@ function signInStaffLocal(id,hash,list){   // phone-only copy, or a backend that
   try{ localStorage.setItem(ME_KEY,JSON.stringify({id:e.id,ph:e.passHash})); }catch(_){}
   return {employee:e,requireEmpToken:false};
 }
+let _mgr=null;   // this person's manage sign-in {token, role, departments, assignedEmp}: kept in memory only, never on the phone
+const MGR_HINT='att_mgr';   // remembers only THAT this person can manage (so Manage still shows after a reload); no token, no password
+function mgrHint(on){ try{ if(on) localStorage.setItem(MGR_HINT,'1'); else localStorage.removeItem(MGR_HINT); }catch(e){} }
 async function signInStaff(id,hash){   // the server checks the password and hands out the token and this person's own record
   if(!USE_SHEETS) return signInStaffLocal(id,hash);
   let r;
-  try{ r=await api('login',{kind:'employee',username:String(id),passHash:hash}); }
-  catch(e){ if(/^Unknown sign-in type/i.test(e.message)) return signInStaffLocal(id,hash,await api('getEmployees')); throw e; }   // the backend is older than this page: it still sends the list with hashes
+  try{ r=await api('login',{kind:'user',username:String(id),passHash:hash}); }   // the one sign-in: an email or an ID
+  catch(e){
+    if(!/^Unknown sign-in type/i.test(e.message)) throw e;
+    try{ r=await api('login',{kind:'employee',username:String(id),passHash:hash}); }   // a backend from before the one sign-in
+    catch(e2){ if(/^Unknown sign-in type/i.test(e2.message)) return signInStaffLocal(id,hash,await api('getEmployees')); throw e2; }   // the backend is older than this page: it still sends the list with hashes
+  }
+  if(r.role==='S') return {owner:r};   // the owner's own username: straight to the admin panel
   empTokSave(r.id,r.token);
+  _mgr=r.manage?Object.assign({},r.manage):null; mgrHint(!!r.manage);
   return {employee:r.employee,requireEmpToken:!!r.requireEmpToken};
 }
 async function migrateMe(){
@@ -2748,10 +3001,9 @@ async function loadHome(){
   const tok=++homeTok, emp=currentEmp;
   homeDay=todayStr();
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); clearInterval(homeTimerInt);
-  showScreen('homeScreen');
+  showScreen('homeScreen'); syncManageBtn();
   refreshMyGeo();
   const now=new Date(), h=now.getHours();
-  document.getElementById('hmHi').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   document.getElementById('hmName').textContent=emp.name; document.querySelector('.hm-top').classList.toggle('long',String(emp.name||'').length>18);
   fillAv('hmAv',curRec()||emp);
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
@@ -2817,6 +3069,7 @@ function renderHomeToday(rec,dayOff,noLoad){
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
+  if(rec&&rec.markedBy) sub+=' · Marked by '+hx(rec.markedBy);
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
   if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
@@ -3091,10 +3344,10 @@ async function handleLogin(){
   const id=document.getElementById('loginId').value.trim();
   const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
-  const wrong=()=>{ err.textContent='Incorrect Employee ID or password.'; err.classList.add('show'); };
+  const wrong=()=>{ err.textContent='Incorrect ID, email or password.'; err.classList.add('show'); };
   if(!id||!pass){ wrong(); return; }
   loading(true,'Verifying…');
-  try{ await finishStaffLogin(await signInStaff(id,await hashPass(pass))); }
+  try{ const res=await signInStaff(id,await hashPass(pass)); if(res.owner){ await openAdminPanel(res.owner); } else await finishStaffLogin(res); }
   catch(e){
     loading(false);
     if(/^Wrong ID or password/i.test(e.message)) wrong();
@@ -3510,7 +3763,7 @@ async function captureAndMark(){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ _mgr=null; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -3860,6 +4113,60 @@ async function testMyLocation(){
 /* ══════════════════════════════════════════════════════════════
    ADMIN LOGIN
 ══════════════════════════════════════════════════════════════ */
+/* ── Manage / My work: one person, one sign-in. The manage panel opens with the manage token the server gave at sign-in. ── */
+function showOldLogin(){ document.getElementById('oldRoles').style.display='flex'; document.getElementById('oldLoginLink').style.display='none'; }
+function syncManageBtn(){ const b=document.getElementById('hmManage'); if(!b) return; let hint=false; try{ hint=localStorage.getItem(MGR_HINT)==='1'; }catch(e){} b.style.display=(_mgr||hint)?'':'none'; }
+function pauseStaffHome(){ try{ stopEmpSafety(); fmWatchStop(); clearInterval(officeTimerInt); clearInterval(homeTimerInt); homeTok++; }catch(e){} }   // staff polls must not run on a manage token
+async function openAdminPanel(r){   // r = a manager login reply {token, role, name, id, departments}
+  if(r.via==='emp') pauseStaffHome();
+  _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[],via:r.via||''};
+  const fresh=await api('getAll',{date:todayStr()});
+  Object.assign(_D,{employees:[],attendance:[],leaves:[],quotas:{},supervisors:[]},fresh,{loadedAt:Date.now()});
+  _actor=(isSuper()?'Super Admin':isDeptAdmin()?'Dept Admin':'Admin')+' ('+_me.name+')';
+  document.getElementById('adminDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  applyRoleUI(); document.getElementById('adminMyWork').style.display=_me.via==='emp'?'inline-block':'none';
+  loading(false); switchTab('attendance'); showScreen('adminScreen'); adminBadges(); startSafetyWatch('admin');
+}
+async function openSupPanel(m){   // a person with the supervisor role opens the same site monitor the old supervisor login did
+  pauseStaffHome();
+  _tok=m.token; _me={role:'V',name:m.name,id:m.id,departments:[],via:'emp'};
+  const fresh=await api('getAll',{date:todayStr()}); Object.assign(_D,fresh,{loadedAt:Date.now()});
+  currentSupervisor={id:m.id,name:m.name,assignedEmp:m.assignedEmp||'',email:m.email||''}; _actor='Supervisor '+m.name; loading(false);
+  document.getElementById('supLabel').textContent=m.name; document.getElementById('supMyWork').style.display='inline-block';
+  document.getElementById('supDateLbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup'); periodInit('sup');
+}
+async function enterManage(){
+  if(!_mgr||!currentEmp) return mgrAsk();
+  loading(true,'Opening Manage…');
+  try{
+    const who={id:currentEmp.id,name:currentEmp.name,email:currentEmp.email||''};
+    if(_mgr.role==='D') await openAdminPanel({token:_mgr.token,role:'D',name:who.name,id:who.id,departments:_mgr.departments||[],via:'emp'});
+    else await openSupPanel(Object.assign({token:_mgr.token,assignedEmp:_mgr.assignedEmp},who));
+  }catch(e){ loading(false); _tok=''; _me=null; alert(e.message); }
+}
+async function leaveManage(){   // back to My work, with the staff sign-in
+  try{ stopSafetyWatch(); }catch(e){}
+  _tok=''; _me=null; currentSupervisor=null; document.body.classList.remove('rS','rD','rA','rV');
+  ['adminMyWork','supMyWork'].forEach(i=>{ const e=document.getElementById(i); if(e) e.style.display='none'; });
+  if(!currentEmp){ showScreen('loginScreen'); return; }
+  loading(true,'Opening…');
+  try{ await finishStaffLogin({employee:currentEmp}); }catch(e){ loading(false); }
+}
+function mgrAsk(msg){   // after a reload the manage sign-in is gone: one password check brings it back
+  fmSheet('<h3 style="margin-bottom:6px">Open Manage</h3><p style="font-size:13px;color:var(--soft);margin-bottom:10px">Type your password to open the manage panel.</p><input type="password" id="mgrPw" autocomplete="current-password" placeholder="Your password" style="width:100%;margin-bottom:8px"><div class="msg msg-error'+(msg?' show':'')+'" id="mgrErr">'+hx(msg||'')+'</div><button class="btn btn-primary" onclick="mgrOpen()">Open Manage</button><button class="btn btn-outline" onclick="fmClose()">Cancel</button>');
+  setTimeout(()=>{ try{ document.getElementById('mgrPw').focus(); }catch(e){} },50);
+}
+async function mgrOpen(){
+  const pw=document.getElementById('mgrPw').value; if(!pw||!currentEmp) return;
+  loading(true,'Checking…');
+  try{
+    const r=await api('login',{kind:'user',username:String(currentEmp.id),passHash:await hashPass(pw)});
+    loading(false);
+    if(!r.manage){ mgrHint(false); syncManageBtn(); fmClose(); alert('You do not have manage access now.'); return; }
+    _mgr=Object.assign({},r.manage); fmClose(); enterManage();
+  }catch(e){ loading(false); mgrAsk(e.message); }
+}
 async function handleAdminLogin(){
   const u=document.getElementById('adminUser').value.trim();
   const p=document.getElementById('adminPass').value;
@@ -3894,7 +4201,8 @@ function applyRoleUI(){
   document.getElementById('myPwBtn').style.display=(isSuper()||isDeptAdmin())?'inline-block':'none';
   fillEmpDeptSelect();
 }
-function adminLogout(){ stopSafetyWatch(); if(_tok){ endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+function viaEmpEnd(){ if(_me&&_me.via==='emp'){ meClear(); mgrHint(false); _mgr=null; } }   // Logout inside Manage signs the person out of this phone, not only the panel
+function adminLogout(){ stopSafetyWatch(); if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -3923,7 +4231,7 @@ async function handleSupLogin(){
     showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup'); periodInit('sup');
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
-function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ endManagerSession(false); return; } _actor=''; showScreen('loginScreen'); }
+function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN TABS
@@ -3990,7 +4298,7 @@ async function loadAttTab(){
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'—';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
@@ -4304,8 +4612,98 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${esc(e.id)}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${esc(e.id)}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
+}
+
+/* ── Access: email, roles, Mark for staff (the company owner), and moving old logins to one person, one login ── */
+const AC={};   // the open Access dialog
+function acBox(html,wide){ fmSheet('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">'+html.title+'</h3><button class="fm-chip" onclick="fmClose()">Close</button></div>'+html.body,wide); }
+function acMsg(t,bad){ const e=document.getElementById('acMsg'); if(!e) return; e.className='msg '+(bad?'msg-error':'msg-success')+' show'; e.textContent=t; }
+function acDepts(){ const set={}; deptList().forEach(d=>set[d.name]=1); (_D.employees||[]).forEach(e=>{ if(e.department) set[e.department]=1; }); myDepts().forEach(d=>set[d]=1); return Object.keys(set).sort(); }
+function acChips(list,sel,fn){ return '<div class="fm-chips" style="max-height:170px;overflow:auto">'+list.map(x=>`<button type="button" class="fm-chip${sel.has(x.id)?' on':''}" onclick="${fn}('${esc(x.id)}')">${hx(x.label)}</button>`).join('')+'</div>'; }
+function empAccess(id){
+  const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
+  const roles=String(e.roles||'').split(',').map(x=>x.trim());
+  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||''});
+  acDraw();
+}
+function acDraw(){
+  const own=isSuper(), mail=`<div class="ld-glass" style="margin-bottom:10px"><b>Email (sign-in name)</b><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><input type="email" id="acMail" value="${hx(AC.email)}" placeholder="name@company.com" style="flex:1;min-width:180px"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="acSaveMail()">Save email</button></div><div style="font-size:12px;color:var(--soft);margin-top:4px">One email belongs to one person. It is needed before someone can be given a manage role.</div></div>`;
+  let roles='';
+  if(own){
+    const others=(_D.employees||[]).filter(x=>String(x.id)!==String(AC.id)).map(x=>({id:String(x.id).toUpperCase(),label:x.name+' · '+x.id}));
+    const depts=acDepts().map(d=>({id:d,label:d}));
+    roles=`<div class="ld-glass" style="margin-bottom:10px"><b>Manage access</b>
+      <div class="fm-chips" style="margin:8px 0"><button class="fm-chip${AC.sup?' on':''}" onclick="acTog('sup')">Supervisor</button><button class="fm-chip${AC.dep?' on':''}" onclick="acTog('dep')">Department Admin</button></div>
+      ${AC.sup?`<div style="font-size:12px;font-weight:700;margin:6px 0 4px">Supervisor looks after</div>${acChips(others,AC.assigned,'acPickAs')}`:''}
+      ${AC.dep?`<div style="font-size:12px;font-weight:700;margin:8px 0 4px">Department Admin of</div>${depts.length?acChips(depts,AC.depts,'acPickDp'):'<div style="font-size:12px;color:var(--soft)">No departments yet. Add one in Settings first.</div>'}`:''}
+      <label style="margin-top:10px">Your owner password (to confirm)</label><input type="password" id="acPw" autocomplete="current-password" placeholder="Your password">
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="acSaveRoles()">Save roles</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="acActive(${AC.active?'false':'true'})">${AC.active?'Switch off access':'Switch on access'}</button></div>
+      ${AC.active?'':'<div style="font-size:12px;color:var(--red);margin-top:4px">Manage access is switched off for this person.</div>'}</div>
+    <div class="ld-glass" style="margin-bottom:10px"><b>Mark Work ON / OFF for ${hx(AC.name)}</b><div style="font-size:12px;color:var(--soft);margin:2px 0 6px">Only a time is saved (no photo or place). The row says it was marked by the owner.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><input type="date" id="mkDate" value="${todayStr()}"><input type="time" id="mkTime" value="${new Date().toTimeString().slice(0,5)}"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 14px" onclick="acMark('on')">Work ON</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 14px" onclick="acMark('off')">Work OFF</button></div></div>`;
+  }
+  acBox({title:'🔐 Access · '+hx(AC.name),body:'<div class="msg" id="acMsg"></div>'+mail+roles},true);
+}
+function acTog(k){ AC[k]=!AC[k]; acKeep(); acDraw(); }
+function acKeep(){ const m=document.getElementById('acMail'); if(m) AC.email=m.value; }
+function acPick(set,id){ acKeep(); if(set.has(id)) set.delete(id); else set.add(id); acDraw(); }
+function acPickAs(id){ acPick(AC.assigned,id); }
+function acPickDp(id){ acPick(AC.depts,id); }
+async function acApi(action,params,done){
+  loading(true,'Saving…');
+  try{ await api(action,params); loading(false); if(done) await done(); return true; }
+  catch(e){ loading(false); acMsg(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message,true); return false; }
+}
+async function acRefresh(){ const l=await api('getEmployees'); _D.employees=l; renderEmpList(); const e=l.find(x=>String(x.id)===String(AC.id)); if(e) empAccess(AC.id); }
+async function acSaveMail(){ acKeep(); const m=(document.getElementById('acMail').value||'').trim(); if(await acApi('setEmpEmail',{id:AC.id,email:m},acRefresh)) acMsg(m?'Email saved.':'Email removed.'); }
+async function acSaveRoles(){
+  acKeep(); const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  const ok=await acApi('setEmployeeRoles',{id:AC.id,supervisor:AC.sup,deptAdmin:AC.dep,departments:[...AC.depts],assigned:[...AC.assigned],confirmPass:await hashPass(pw)},acRefresh);
+  if(ok) acMsg('Roles saved. They apply the next time this person opens Manage.');
+}
+async function acActive(on){
+  const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  if(await acApi('setManageActive',{id:AC.id,active:on,confirmPass:await hashPass(pw)},acRefresh)) acMsg(on?'Manage access is on.':'Manage access is switched off.');
+}
+async function acMark(mode){
+  const date=document.getElementById('mkDate').value, time=document.getElementById('mkTime').value; if(!date||!time) return acMsg('Choose a date and a time.',true);
+  if(!confirm('Mark Work '+mode.toUpperCase()+' for '+AC.name+' on '+date+' at '+time+'?')) return;
+  if(await acApi('markForStaff',{empId:AC.id,mode,date,time})) acMsg('Marked Work '+mode.toUpperCase()+' at '+time+'.');
+}
+/* Old manager / supervisor logins → one person, one login */
+const LG={rows:[],retired:false};
+async function openLegacyLinks(){
+  loading(true,'Loading…');
+  try{ const r=await api('legacyLogins'); loading(false); LG.rows=r.logins||[]; LG.retired=!!r.retired; lgDraw(); }
+  catch(e){ loading(false); alert(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message); }
+}
+function lgDraw(msg,bad){
+  const emps=(_D.employees||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const opt=(sel)=>'<option value="">Choose a person…</option>'+emps.map(e=>`<option value="${hx(e.id)}"${String(e.id)===String(sel)?' selected':''}>${hx(e.name)} · ${hx(e.id)}${e.email?'':' (no email)'}</option>`).join('');
+  const rows=LG.rows.map((x,i)=>`<div class="ld-glass" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>${hx(x.name)}</b> <span class="ld-pill">${x.kind==='manager'?'Dept admin login':'Supervisor login'}</span><div style="font-size:12px;color:var(--soft)">${x.kind==='manager'?'Departments: ':'Looks after: '}${hx(x.scope||'—')}${x.email?' · '+hx(x.email):''}</div></div>${x.linkedEmp?`<span class="ld-pill">Linked to ${hx(x.linkedEmp)}</span>`:''}</div>${x.linkedEmp?'':`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><select id="lgEmp${i}" style="flex:1;min-width:180px">${opt(x.suggestedEmp)}</select><input type="email" id="lgMail${i}" placeholder="Email (if the person has none)" style="flex:1;min-width:160px" value="${hx(x.email||'')}"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="lgLink(${i})">Link</button></div>`}</div>`).join('')||'<div class="empty">No old manager or supervisor logins.</div>';
+  const todo=LG.rows.filter(x=>!x.linkedEmp).length;
+  acBox({title:'🔗 Link old logins',body:`<div class="msg ${msg?(bad?'msg-error':'msg-success')+' show':''}" id="acMsg">${hx(msg||'')}</div><p style="font-size:13px;color:var(--soft);margin-bottom:8px">Join each old login to the person it belongs to. After that they sign in once, with their email or ID, and a Manage button appears. Nothing is deleted.</p>
+    <label>Your owner password (to confirm)</label><input type="password" id="lgPw" autocomplete="current-password" placeholder="Your password" style="margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px">${rows}</div>
+    <div class="ld-glass" style="margin-top:10px"><b>Retire old logins</b><div style="font-size:12px;color:var(--soft);margin:2px 0 8px">${LG.retired?'Old Supervisor and Admin sign-ins are switched off. Your own owner login always works.':todo?todo+' old login(s) still need linking first.':'All linked. You can switch the old sign-ins off now.'}</div><button class="btn ${LG.retired?'btn-outline':'btn-primary'}" style="width:auto;margin:0;padding:0 16px" onclick="lgRetire(${LG.retired?'false':'true'})">${LG.retired?'Switch old logins back on':'Retire old logins'}</button></div>`},true);
+}
+async function lgPw(){ const pw=(document.getElementById('lgPw')||{}).value; if(!pw){ lgDraw('Type your owner password to confirm.',true); return null; } return hashPass(pw); }
+async function lgLink(i){
+  const x=LG.rows[i], empId=document.getElementById('lgEmp'+i).value, email=(document.getElementById('lgMail'+i).value||'').trim(), pw=document.getElementById('lgPw').value;
+  if(!pw) return acMsg('Type your owner password to confirm.',true); if(!empId) return acMsg('Choose the person.',true);
+  const cur=(_D.employees||[]).find(e=>String(e.id)===String(empId)), body={kind:x.kind,id:x.id,empId,confirmPass:await hashPass(pw)}; if(email&&!(cur&&cur.email)) body.email=email;
+  loading(true,'Linking…');
+  try{ await api('linkLegacyLogin',body); _D.employees=await api('getEmployees'); const r=await api('legacyLogins'); loading(false); LG.rows=r.logins||[]; LG.retired=!!r.retired; renderEmpList(); lgDraw('Linked '+x.name+'.'); document.getElementById('lgPw').value=pw; }
+  catch(e){ loading(false); acMsg(e.message,true); }
+}
+async function lgRetire(on){
+  const pw=document.getElementById('lgPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  if(on&&!confirm('Switch off the old Supervisor and Admin sign-ins? Everyone then signs in with email or ID.')) return;
+  loading(true,'Saving…');
+  try{ const r=await api('setRetireLegacy',{on,confirmPass:await hashPass(pw)}); loading(false); LG.retired=!!r.retired; lgDraw(on?'Old logins retired.':'Old logins are back on.'); document.getElementById('lgPw').value=pw; }
+  catch(e){ loading(false); acMsg(e.message,true); }
 }
 
 async function addEmployee(){
@@ -5574,6 +5972,8 @@ html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid 
 .fm-card .btn{width:100%;margin-top:6px}
 .fm-link{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:6px;font-family:inherit}
 .fm-back{position:fixed;inset:0;z-index:9000;background:rgba(15,30,30,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.fm-sheet.wide{max-width:860px}
+@media(min-width:900px){.fm-back{align-items:center}.fm-sheet{border-radius:24px}}
 .fm-sheet{width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:18px 16px 22px;border-radius:24px 24px 0 0;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8)}
 .fm-sheet h3{margin:0 0 10px;font-size:17px}
 .fm-sheet input,.fm-sheet textarea{width:100%;box-sizing:border-box;margin:5px 0;padding:11px 12px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;color:var(--ink)}
@@ -5611,7 +6011,7 @@ function fmCardHtml(m){
   }
   return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
-function fmSheet(html){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet">'+html+'</div>'; }
+function fmSheet(html,wide){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet'+(wide?' wide':'')+'">'+html+'</div>'; }
 function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
 function fmErr(t){ const e=document.getElementById('fmErr'); if(e) e.textContent=t||''; }
 function fmChips(list,cur,fn){ return '<div class="fm-chips">'+list.map(x=>`<button type="button" class="fm-chip${x===cur?' on':''}" onclick="${fn}('${esc(x)}')">${hx(x)}</button>`).join('')+'</div>'; }
@@ -6265,15 +6665,16 @@ async function tkAnnDel(id){ if(!confirm('Delete this announcement for everyone?
 const WMI={
   field:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   office:'<svg class="wm-i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7.5h2M13 7.5h2M9 11.5h2M13 11.5h2M10 21v-4h4v4"/></svg>',
+  factory:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M3 21V10l6 3.5V10l6 3.5V6h3v15z"/><path d="M7 17h2M12 17h2"/></svg>',
   wfh:'<svg class="wm-i" viewBox="0 0 24 24"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10.5V20h12v-9.5"/><path d="M10 20v-5h4v5"/></svg>'
 };
-const WM_MODES=[{k:'field',t:'Field Work',h:'बाहर का काम'},{k:'office',t:'Office Work',h:'ऑफिस'},{k:'wfh',t:'Work From Home',h:'घर से'}];
+const WM_MODES=[{k:'wfh',t:'Work From Home',s:'WFH'},{k:'office',t:'Office Work',s:'Office'},{k:'factory',t:'Factory Work',s:'Factory'},{k:'field',t:'Field Work',s:'Field'}];
 const wmTitle=k=>(WM_MODES.find(m=>m.k===k)||{t:''}).t;
 let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false};
 const wmOn=()=>_wm.ok!==false;
 const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
-function wmCards(cur,fn,hintK,hintTxt){
-  return '<div class="wm-cards">'+WM_MODES.map(m=>`<button type="button" class="wm-card${m.k===cur?' on':''}" data-k="${m.k}" onclick="${fn}('${m.k}')"><span class="ic">${WMI[m.k]}</span><span class="tx"><b>${m.t}</b><small>${m.h}</small></span>${m.k===hintK?`<span class="sug">${hx(hintTxt||'Suggested')}</span>`:''}</button>`).join('')+'</div>';
+function wmCards(cur,fn,hintK,hintTxt,lock){
+  return '<div class="wm-row" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';
 }
 async function wmLoad(){
   if(!currentEmp||!USE_SHEETS) return;
@@ -6303,8 +6704,8 @@ function wmLive(){   // minutes since the last server answer, so both figures ke
 function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
-  const k=_wm.mode, t=k?`<span class="wm-chip">${WMI[k]}<span>${hx(wmTitle(k))}${_wm.placeTag?` <small>· ${hx(_wm.placeTag)}</small>`:''}</span></span>`:'<span class="wm-chip">Choose what you are doing</span>';
-  return `<div class="wm-mode">${t}<button class="wm-link" onclick="wmChangeMode()">${k?'Change mode':'Choose mode'}</button></div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+  const k=_wm.mode, lock=!!_wm.open;
+  return `<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',lock)}</div>`+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
 }
 function wmOffBtn(){
   const run=_wm.open;
@@ -6318,16 +6719,11 @@ function wmPickReset(){
   let hint='',txt=''; try{ const g=geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc); if(g&&g.status==='YES'){ hint='office'; txt='At '+g.place; } }catch(e){}
   el.innerHTML='<div class="wm-q">What kind of work are you starting? <span>(required)</span></div>'+wmCards('','wmPickSet',hint,txt);
 }
-function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-card').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
-/* Change the day's mode while nothing is running */
-function wmChangeMode(){
-  if(_wm.open) return alert('Stop “'+(_wm.open.kindOther||_wm.open.kind)+'” first.');
-  fmSheet('<h3>What are you doing now?</h3>'+wmCards(_wm.mode,'wmSetMode')+'<div class="fm-err" id="fmErr"></div>');
-}
+function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-opt').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
 async function wmSetMode(k){
-  if(_wm.busy) return; _wm.busy=true;
-  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; fmClose(); await wmLoad(); }
-  catch(e){ fmErr(e.message||'Could not change the mode.'); }
+  if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
+  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; await wmLoad(); }
+  catch(e){ alert(e.message||'Could not change the mode.'); }
   finally{ _wm.busy=false; }
 }
 
@@ -6401,7 +6797,7 @@ function wmTimeline(){
 }
 
 /* Admin: who is doing what right now (inside the Attendance tab) */
-const WL_MODE={field:'Field',office:'Office',wfh:'Work From Home'};
+const WL_MODE={field:'Field',office:'Office',factory:'Factory',wfh:'Work From Home'};
 async function wlLoad(d){
   const el=document.getElementById('wlLive'); if(!el) return;
   if(d!==todayStr()){ el.innerHTML=''; return; }
@@ -6420,7 +6816,7 @@ async function wlLoad(d){
 }
 
 /* ── Work report: multi-select filters, then CSV or PDF of exactly the filtered rows ── */
-const WR_MODES=[['field','Field'],['office','Office'],['wfh','Work From Home']];
+const WR_MODES=[['field','Field'],['office','Office'],['factory','Factory'],['wfh','Work From Home']];
 const WR_KINDS=['Sales Meeting','Site Supervision','Complaint','Payment Collection','Installation','Brand Building','Material Delivery','Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
 let _wr={emps:[],modes:[],kinds:[],status:[],range:'today',data:null};
 const wrAddDays=(d,n)=>{ const t=new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
@@ -6469,7 +6865,7 @@ function wrOut(){
   const d=_wr.data, el=document.getElementById('wrOut'); if(!el||!d) return;
   const sp=Object.keys(d.split||{}).map(k=>[k,d.split[k]]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
   el.innerHTML=`<div class="wr-g" style="margin-top:14px">${d.rows.length} entries · ${hx(d.filters)}</div>
-    ${sp.length?`<div class="wr-t"><table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>WFH</th><th>Unlogged</th></tr></thead><tbody>${sp.map(([k,e])=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    ${sp.length?`<div class="wr-t"><table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Factory</th><th>WFH</th><th>Unlogged</th></tr></thead><tbody>${sp.map(([k,e])=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.factory)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table></div>`:''}
     ${bk.length?`<div class="wr-t"><table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table></div>`:''}
     ${d.rows.length?`<div class="wr-t"><table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?'<br>'+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No work entries for these filters.</div>'}`;
 }
@@ -6484,7 +6880,7 @@ async function wrPdf(){
   await wrShow(); const d=_wr.data; if(!d) return;
   const sp=Object.keys(d.split||{}).map(k=>d.split[k]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
   const body=`<div class="note" style="margin:0 0 10px"><b>Filters:</b> ${hx(d.filters)}</div>
-    ${sp.length?`<table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Work From Home</th><th>Unlogged</th></tr></thead><tbody>${sp.map(e=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table><br>`:''}
+    ${sp.length?`<table><thead><tr><th>Employee</th><th>Field</th><th>Office</th><th>Factory</th><th>Work From Home</th><th>Unlogged</th></tr></thead><tbody>${sp.map(e=>`<tr><td>${hx(e.name)}</td><td>${wrMin(e.field)}</td><td>${wrMin(e.office)}</td><td>${wrMin(e.factory)}</td><td>${wrMin(e.wfh)}</td><td>${e.unlogged===null||e.unlogged===undefined?'–':wrMin(e.unlogged)}</td></tr>`).join('')}</tbody></table><br>`:''}
     ${bk.length?`<table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table><br>`:''}
     <table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?' · '+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table>`;
   const t=d.start===d.end?d.start:d.start+' to '+d.end;
