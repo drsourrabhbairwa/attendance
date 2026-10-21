@@ -964,6 +964,14 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
 
 
 
+
+/* Black box when a drop-down or date picker opens: some Android WebViews paint native pop-ups black under a blurred (backdrop-filter) parent.
+   Any panel that holds a select, date or time field is therefore drawn solid, without blur. */
+#leavePanel .card,#leavePanel .add-form,#fixScreen .card,#profileScreen .card,#cameraScreen .card,#adminScreen .card,#adminScreen .add-form,.fm-sheet,.modal-box,
+.card:has(select),.card:has(input[type=date]),.card:has(input[type=time]),.add-form:has(select),.add-form:has(input[type=date]){
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:linear-gradient(180deg,rgba(252,255,254,.97),rgba(243,250,248,.96))!important}
+#leavePanel,#fixScreen,#profileScreen,#cameraScreen,#adminScreen,#supervisorScreen{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+select,input[type=date],input[type=time],input[type=month]{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color-scheme:light}
 /* Admin polish */
 #adminScreen .topbar,#supervisorScreen .topbar{background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important}
 input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18px}
@@ -1874,7 +1882,7 @@ async function getRecordToday(empId){
 }
 async function storePunchIn(empId,name,date,punch){
   if(USE_SHEETS){
-    const r=await api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||'',mode:punch.mode||''});
+    const r=await api('savePunchIn',{empId,name,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||'',mode:punch.mode||'',face:punch.face||''});
     if(punch.mode) _wm.mode=punch.mode;
     if(r&&r.time) punch.time=r.time;
     if(r&&r.geo) punch.geo=r.geo;
@@ -1889,7 +1897,7 @@ async function storePunchIn(empId,name,date,punch){
   updateLocalCache(empId,name,date,'punchIn',punch);
 }
 async function storePunchOut(empId,date,punch){
-  if(USE_SHEETS){ const r=await api('savePunchOut',{empId,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||''}); if(r&&r.geo) punch.geo=r.geo; }
+  if(USE_SHEETS){ const r=await api('savePunchOut',{empId,date,time:punch.time,photo:punch.photo||'',lat:punch.lat,lng:punch.lng,accuracy:punch.accuracy,area:punch.area||'',face:punch.face||''}); if(r&&r.geo) punch.geo=r.geo; }
   else{
     const all=JSON.parse(localStorage.getItem('att_rec')||'[]');
     const idx=all.findIndex(r=>r.empId===empId&&r.date===date);
@@ -3576,10 +3584,10 @@ function preciseFix(goodAcc,maxMs){
 
 let camTok=0;
 async function startCamera(){
-  capBusy=false;   // a new camera session always starts with a working Save button (a finished save stays locked only until the person leaves the camera screen)
+  capBusy=false; faceWarm();   // a new camera session always starts with a working Save button (a finished save stays locked only until the person leaves the camera screen)
   stopCamera(); const my=camTok;
   try{
-    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:640},audio:false});
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:960},height:{ideal:960}},audio:false});
     if(my!==camTok){ s.getTracks().forEach(t=>t.stop()); return; }   // the screen was left, or a newer start took over, while the permission was being answered
     videoStream=s;
     document.getElementById('videoFeed').srcObject=videoStream;
@@ -3592,15 +3600,48 @@ async function startCamera(){
 }
 function stopCamera(){ camTok++; if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} }
 
-function compressPhoto(video){
-  const c=document.createElement('canvas'); c.width=120; c.height=120;
-  const ctx=c.getContext('2d');
-  const S=Math.min(video.videoWidth,video.videoHeight);
-  const x=(video.videoWidth-S)/2, y=(video.videoHeight-S)/2;
-  ctx.drawImage(video,x,y,S,S,0,0,120,120);
-  let q=0.5, data=c.toDataURL('image/jpeg',q);
-  while(data.length>18000&&q>0.1){q=parseFloat((q-0.05).toFixed(2));data=c.toDataURL('image/jpeg',q);}
+/* The selfie: a square from the middle of the picture, 320 px, JPEG kept sharp but small (about 20-40 KB) */
+const PHOTO_PX=320, PHOTO_MAX=48000;
+function snapSquare(video,px){
+  const c=document.createElement('canvas'); c.width=px; c.height=px;
+  const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  const S=Math.min(video.videoWidth,video.videoHeight)||px;
+  const x=((video.videoWidth||px)-S)/2, y=((video.videoHeight||px)-S)/2;
+  ctx.drawImage(video,x,y,S,S,0,0,px,px);
+  return c;
+}
+function encodePhoto(c){
+  let q=0.85, data=c.toDataURL('image/jpeg',q);
+  while(data.length>PHOTO_MAX&&q>0.4){q=parseFloat((q-0.05).toFixed(2));data=c.toDataURL('image/jpeg',q);}
   return data;
+}
+function faceFlag(p){ return p&&p.face==='no'?' <span title="No face was found in this photo" aria-label="No face found">👤⚠️</span>':''; }
+function compressPhoto(video){ return encodePhoto(snapSquare(video,PHOTO_PX)); }
+
+/* ── Is there a person in the selfie? ── Answer 'yes', 'no' or '' (could not tell: then nothing is blocked).
+   The phone's own face detector is used when it has one; otherwise a small MediaPipe model is fetched once and kept by the browser. */
+const FACE={det:null,kind:'',loading:null,fails:0};
+function faceWarm(){
+  if(FACE.det||FACE.loading) return FACE.loading;
+  FACE.loading=(async()=>{
+    try{ if('FaceDetector' in window){ FACE.det=new window.FaceDetector({fastMode:true,maxDetectedFaces:2}); FACE.kind='native'; return; } }catch(e){}
+    try{
+      const V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+      const mod=await Promise.race([import(V+'/vision_bundle.mjs'),new Promise((_,no)=>setTimeout(()=>no(new Error('slow')),9000))]);
+      const fs=await mod.FilesetResolver.forVisionTasks(V+'/wasm');
+      FACE.det=await mod.FaceDetector.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'},runningMode:'IMAGE',minDetectionConfidence:0.5});
+      FACE.kind='mediapipe';
+    }catch(e){ FACE.det=null; }
+  })().finally(()=>{ FACE.loading=null; });
+  return FACE.loading;
+}
+async function faceCheck(canvas){
+  try{
+    if(!FACE.det&&FACE.loading) await Promise.race([FACE.loading,new Promise(r=>setTimeout(r,2500))]);
+    if(!FACE.det) return '';
+    if(FACE.kind==='native'){ const f=await FACE.det.detect(canvas); return f&&f.length?'yes':'no'; }
+    const r=FACE.det.detect(canvas); return r&&r.detections&&r.detections.length?'yes':'no';
+  }catch(e){ return ''; }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3609,7 +3650,7 @@ function compressPhoto(video){
 let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
 async function loadCameraScreen(opts){
-  capBusy=false;
+  capBusy=false; FACE.fails=0;
   showScreen('cameraScreen');
   refreshMyGeo();
   fillAv('empAvatar',curRec()||currentEmp);
@@ -3745,12 +3786,19 @@ async function captureAndMark(){
   if(punchMode==='visit'&&!customer){camErr.textContent='Enter the customer or company name.';camErr.classList.add('show');document.getElementById('visitCustomer').focus();return;}
   if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
   const btnLabel=btn.textContent;
+  const shot=snapSquare(video,PHOTO_PX);
+  let face='';
+  if(punchMode==='in'||punchMode==='out'){
+    face=await faceCheck(shot);
+    if(face==='no'&&FACE.fails<2){ FACE.fails++; camErr.textContent='👤 We could not see your face. Look at the camera in good light and try again.'; camErr.classList.add('show'); return; }
+  }
   capBusy=true;
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
-  const photo=compressPhoto(video);
+  const photo=encodePhoto(shot);
   const note=(punchMode==='meeting_out'||punchMode==='personal_out'||punchMode==='resume')?(document.getElementById('meetNote')?.value?.trim()||''):'';
   const lat=capLat, lng=capLng, time=nowTime();
   const punch={time,photo,lat,lng,accuracy:capAcc,area:capArea||await reverseGeocode(lat,lng)};
+  if(face) punch.face=face;
   if(punchMode==='in'&&wmOn()&&_wm.pick) punch.mode=_wm.pick;
   let extra='';
   stopCamera(); stopLocWatch();
@@ -4326,7 +4374,7 @@ async function loadAttTab(){
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'—';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn)+faceFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut)+faceFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
