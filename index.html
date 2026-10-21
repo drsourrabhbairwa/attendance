@@ -161,6 +161,7 @@ textarea{min-height:72px;resize:vertical}
 .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .tab-pane{display:none}.tab-pane.active{display:block}
 body.rD .sa-only{display:none!important}
+body:not(.rS) .own-only{display:none!important}   /* things only the company owner may do */
 @media(max-width:600px){.add-grid{grid-template-columns:1fr 1fr!important}.add-grid>div:last-child{grid-column:1/-1}.add-grid>div:last-child button{width:100%}}
 #tabBtnOrg{display:none}body.rS #tabBtnOrg{display:inline-block}
 body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
@@ -1184,7 +1185,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
   <div id="tabEmployees" class="tab-pane">
     <div id="staffSignInCard"></div>
     <div class="add-form">
-      <h3>➕ Add Employee</h3>
+      <h3>➕ Add Employee <button class="org-act own-only" style="float:right" onclick="openLegacyLinks()">🔗 Link old logins</button></h3>
       <p style="font-size:11px;color:var(--soft);margin-top:2px">Default password = Employee ID</p>
       <div class="add-grid" style="display:grid;grid-template-columns:repeat(5,1fr) auto;gap:7px;align-items:end;margin-top:9px">
         <div><label style="margin:0 0 4px">ID</label><input type="text" id="nEmpId" placeholder="EMP021"></div>
@@ -2843,6 +2844,7 @@ function renderHomeToday(rec,dayOff,noLoad){
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
+  if(rec&&rec.markedBy) sub+=' · Marked by '+hx(rec.markedBy);
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
   if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
@@ -4067,7 +4069,7 @@ async function loadAttTab(){
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'—';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'—';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'—';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
     }).join('');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
@@ -4381,8 +4383,98 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${esc(e.id)}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${esc(e.id)}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts">${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
+}
+
+/* ── Access: email, roles, Mark for staff (the company owner), and moving old logins to one person, one login ── */
+const AC={};   // the open Access dialog
+function acBox(html,wide){ fmSheet('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">'+html.title+'</h3><button class="fm-chip" onclick="fmClose()">Close</button></div>'+html.body,wide); }
+function acMsg(t,bad){ const e=document.getElementById('acMsg'); if(!e) return; e.className='msg '+(bad?'msg-error':'msg-success')+' show'; e.textContent=t; }
+function acDepts(){ const set={}; deptList().forEach(d=>set[d.name]=1); (_D.employees||[]).forEach(e=>{ if(e.department) set[e.department]=1; }); myDepts().forEach(d=>set[d]=1); return Object.keys(set).sort(); }
+function acChips(list,sel,fn){ return '<div class="fm-chips" style="max-height:170px;overflow:auto">'+list.map(x=>`<button type="button" class="fm-chip${sel.has(x.id)?' on':''}" onclick="${fn}('${esc(x.id)}')">${hx(x.label)}</button>`).join('')+'</div>'; }
+function empAccess(id){
+  const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
+  const roles=String(e.roles||'').split(',').map(x=>x.trim());
+  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||''});
+  acDraw();
+}
+function acDraw(){
+  const own=isSuper(), mail=`<div class="ld-glass" style="margin-bottom:10px"><b>Email (sign-in name)</b><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><input type="email" id="acMail" value="${hx(AC.email)}" placeholder="name@company.com" style="flex:1;min-width:180px"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="acSaveMail()">Save email</button></div><div style="font-size:12px;color:var(--soft);margin-top:4px">One email belongs to one person. It is needed before someone can be given a manage role.</div></div>`;
+  let roles='';
+  if(own){
+    const others=(_D.employees||[]).filter(x=>String(x.id)!==String(AC.id)).map(x=>({id:String(x.id).toUpperCase(),label:x.name+' · '+x.id}));
+    const depts=acDepts().map(d=>({id:d,label:d}));
+    roles=`<div class="ld-glass" style="margin-bottom:10px"><b>Manage access</b>
+      <div class="fm-chips" style="margin:8px 0"><button class="fm-chip${AC.sup?' on':''}" onclick="acTog('sup')">Supervisor</button><button class="fm-chip${AC.dep?' on':''}" onclick="acTog('dep')">Department Admin</button></div>
+      ${AC.sup?`<div style="font-size:12px;font-weight:700;margin:6px 0 4px">Supervisor looks after</div>${acChips(others,AC.assigned,'acPickAs')}`:''}
+      ${AC.dep?`<div style="font-size:12px;font-weight:700;margin:8px 0 4px">Department Admin of</div>${depts.length?acChips(depts,AC.depts,'acPickDp'):'<div style="font-size:12px;color:var(--soft)">No departments yet. Add one in Settings first.</div>'}`:''}
+      <label style="margin-top:10px">Your owner password (to confirm)</label><input type="password" id="acPw" autocomplete="current-password" placeholder="Your password">
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="acSaveRoles()">Save roles</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="acActive(${AC.active?'false':'true'})">${AC.active?'Switch off access':'Switch on access'}</button></div>
+      ${AC.active?'':'<div style="font-size:12px;color:var(--red);margin-top:4px">Manage access is switched off for this person.</div>'}</div>
+    <div class="ld-glass" style="margin-bottom:10px"><b>Mark Work ON / OFF for ${hx(AC.name)}</b><div style="font-size:12px;color:var(--soft);margin:2px 0 6px">Only a time is saved (no photo or place). The row says it was marked by the owner.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><input type="date" id="mkDate" value="${todayStr()}"><input type="time" id="mkTime" value="${new Date().toTimeString().slice(0,5)}"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 14px" onclick="acMark('on')">Work ON</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 14px" onclick="acMark('off')">Work OFF</button></div></div>`;
+  }
+  acBox({title:'🔐 Access · '+hx(AC.name),body:'<div class="msg" id="acMsg"></div>'+mail+roles},true);
+}
+function acTog(k){ AC[k]=!AC[k]; acKeep(); acDraw(); }
+function acKeep(){ const m=document.getElementById('acMail'); if(m) AC.email=m.value; }
+function acPick(set,id){ acKeep(); if(set.has(id)) set.delete(id); else set.add(id); acDraw(); }
+function acPickAs(id){ acPick(AC.assigned,id); }
+function acPickDp(id){ acPick(AC.depts,id); }
+async function acApi(action,params,done){
+  loading(true,'Saving…');
+  try{ await api(action,params); loading(false); if(done) await done(); return true; }
+  catch(e){ loading(false); acMsg(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message,true); return false; }
+}
+async function acRefresh(){ const l=await api('getEmployees'); _D.employees=l; renderEmpList(); const e=l.find(x=>String(x.id)===String(AC.id)); if(e) empAccess(AC.id); }
+async function acSaveMail(){ acKeep(); const m=(document.getElementById('acMail').value||'').trim(); if(await acApi('setEmpEmail',{id:AC.id,email:m},acRefresh)) acMsg(m?'Email saved.':'Email removed.'); }
+async function acSaveRoles(){
+  acKeep(); const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  const ok=await acApi('setEmployeeRoles',{id:AC.id,supervisor:AC.sup,deptAdmin:AC.dep,departments:[...AC.depts],assigned:[...AC.assigned],confirmPass:await hashPass(pw)},acRefresh);
+  if(ok) acMsg('Roles saved. They apply the next time this person opens Manage.');
+}
+async function acActive(on){
+  const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  if(await acApi('setManageActive',{id:AC.id,active:on,confirmPass:await hashPass(pw)},acRefresh)) acMsg(on?'Manage access is on.':'Manage access is switched off.');
+}
+async function acMark(mode){
+  const date=document.getElementById('mkDate').value, time=document.getElementById('mkTime').value; if(!date||!time) return acMsg('Choose a date and a time.',true);
+  if(!confirm('Mark Work '+mode.toUpperCase()+' for '+AC.name+' on '+date+' at '+time+'?')) return;
+  if(await acApi('markForStaff',{empId:AC.id,mode,date,time})) acMsg('Marked Work '+mode.toUpperCase()+' at '+time+'.');
+}
+/* Old manager / supervisor logins → one person, one login */
+const LG={rows:[],retired:false};
+async function openLegacyLinks(){
+  loading(true,'Loading…');
+  try{ const r=await api('legacyLogins'); loading(false); LG.rows=r.logins||[]; LG.retired=!!r.retired; lgDraw(); }
+  catch(e){ loading(false); alert(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message); }
+}
+function lgDraw(msg,bad){
+  const emps=(_D.employees||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const opt=(sel)=>'<option value="">Choose a person…</option>'+emps.map(e=>`<option value="${hx(e.id)}"${String(e.id)===String(sel)?' selected':''}>${hx(e.name)} · ${hx(e.id)}${e.email?'':' (no email)'}</option>`).join('');
+  const rows=LG.rows.map((x,i)=>`<div class="ld-glass" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>${hx(x.name)}</b> <span class="ld-pill">${x.kind==='manager'?'Dept admin login':'Supervisor login'}</span><div style="font-size:12px;color:var(--soft)">${x.kind==='manager'?'Departments: ':'Looks after: '}${hx(x.scope||'—')}${x.email?' · '+hx(x.email):''}</div></div>${x.linkedEmp?`<span class="ld-pill">Linked to ${hx(x.linkedEmp)}</span>`:''}</div>${x.linkedEmp?'':`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><select id="lgEmp${i}" style="flex:1;min-width:180px">${opt(x.suggestedEmp)}</select><input type="email" id="lgMail${i}" placeholder="Email (if the person has none)" style="flex:1;min-width:160px" value="${hx(x.email||'')}"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="lgLink(${i})">Link</button></div>`}</div>`).join('')||'<div class="empty">No old manager or supervisor logins.</div>';
+  const todo=LG.rows.filter(x=>!x.linkedEmp).length;
+  acBox({title:'🔗 Link old logins',body:`<div class="msg ${msg?(bad?'msg-error':'msg-success')+' show':''}" id="acMsg">${hx(msg||'')}</div><p style="font-size:13px;color:var(--soft);margin-bottom:8px">Join each old login to the person it belongs to. After that they sign in once, with their email or ID, and a Manage button appears. Nothing is deleted.</p>
+    <label>Your owner password (to confirm)</label><input type="password" id="lgPw" autocomplete="current-password" placeholder="Your password" style="margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px">${rows}</div>
+    <div class="ld-glass" style="margin-top:10px"><b>Retire old logins</b><div style="font-size:12px;color:var(--soft);margin:2px 0 8px">${LG.retired?'Old Supervisor and Admin sign-ins are switched off. Your own owner login always works.':todo?todo+' old login(s) still need linking first.':'All linked. You can switch the old sign-ins off now.'}</div><button class="btn ${LG.retired?'btn-outline':'btn-primary'}" style="width:auto;margin:0;padding:0 16px" onclick="lgRetire(${LG.retired?'false':'true'})">${LG.retired?'Switch old logins back on':'Retire old logins'}</button></div>`},true);
+}
+async function lgPw(){ const pw=(document.getElementById('lgPw')||{}).value; if(!pw){ lgDraw('Type your owner password to confirm.',true); return null; } return hashPass(pw); }
+async function lgLink(i){
+  const x=LG.rows[i], empId=document.getElementById('lgEmp'+i).value, email=(document.getElementById('lgMail'+i).value||'').trim(), pw=document.getElementById('lgPw').value;
+  if(!pw) return acMsg('Type your owner password to confirm.',true); if(!empId) return acMsg('Choose the person.',true);
+  const cur=(_D.employees||[]).find(e=>String(e.id)===String(empId)), body={kind:x.kind,id:x.id,empId,confirmPass:await hashPass(pw)}; if(email&&!(cur&&cur.email)) body.email=email;
+  loading(true,'Linking…');
+  try{ await api('linkLegacyLogin',body); _D.employees=await api('getEmployees'); const r=await api('legacyLogins'); loading(false); LG.rows=r.logins||[]; LG.retired=!!r.retired; renderEmpList(); lgDraw('Linked '+x.name+'.'); document.getElementById('lgPw').value=pw; }
+  catch(e){ loading(false); acMsg(e.message,true); }
+}
+async function lgRetire(on){
+  const pw=document.getElementById('lgPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
+  if(on&&!confirm('Switch off the old Supervisor and Admin sign-ins? Everyone then signs in with email or ID.')) return;
+  loading(true,'Saving…');
+  try{ const r=await api('setRetireLegacy',{on,confirmPass:await hashPass(pw)}); loading(false); LG.retired=!!r.retired; lgDraw(on?'Old logins retired.':'Old logins are back on.'); document.getElementById('lgPw').value=pw; }
+  catch(e){ loading(false); acMsg(e.message,true); }
 }
 
 async function addEmployee(){
@@ -5651,6 +5743,8 @@ html.g-solid .tkx .g1,html.g-solid .tkx .g2,html.g-solid .tk-sheet,html.g-solid 
 .fm-card .btn{width:100%;margin-top:6px}
 .fm-link{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:6px;font-family:inherit}
 .fm-back{position:fixed;inset:0;z-index:9000;background:rgba(15,30,30,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.fm-sheet.wide{max-width:860px}
+@media(min-width:900px){.fm-back{align-items:center}.fm-sheet{border-radius:24px}}
 .fm-sheet{width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:18px 16px 22px;border-radius:24px 24px 0 0;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8)}
 .fm-sheet h3{margin:0 0 10px;font-size:17px}
 .fm-sheet input,.fm-sheet textarea{width:100%;box-sizing:border-box;margin:5px 0;padding:11px 12px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);font:inherit;color:var(--ink)}
@@ -5688,7 +5782,7 @@ function fmCardHtml(m){
   }
   return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
-function fmSheet(html){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet">'+html+'</div>'; }
+function fmSheet(html,wide){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet'+(wide?' wide':'')+'">'+html+'</div>'; }
 function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
 function fmErr(t){ const e=document.getElementById('fmErr'); if(e) e.textContent=t||''; }
 function fmChips(list,cur,fn){ return '<div class="fm-chips">'+list.map(x=>`<button type="button" class="fm-chip${x===cur?' on':''}" onclick="${fn}('${esc(x)}')">${hx(x)}</button>`).join('')+'</div>'; }
