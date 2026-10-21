@@ -962,6 +962,26 @@ input[type=text],input[type=password],input[type=date],input[type=time],input[ty
 .logo .brand{filter:none}.logo h1{color:var(--ag-ink)}.logo p{color:var(--soft)}
 #loginScreen .help-link,#loginScreen a{color:#0B7A6B}
 
+
+/* Desktop: employee sub-screens (leave, profile, fix a punch, Work ON/OFF) */
+@media(min-width:1000px){
+  body[data-screen="leavePanel"] #app,body[data-screen="profileScreen"] #app{max-width:1100px}
+  body[data-screen="fixScreen"] #app,body[data-screen="cameraScreen"] #app{max-width:760px}
+  #leavePanel>.card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto min-content min-content 1fr auto auto auto;column-gap:28px;align-items:start;padding:28px 32px}
+  #leavePanel>.card>*{grid-column:1;margin-top:0}
+  #leavePanel>.card>.emp-badge{grid-column:1/-1}
+  #leavePanel>.card>.add-form{grid-column:2;grid-row:2/span 3}
+  #leavePanel>.card>.bal-grid{align-self:start}
+  #leavePanel>.card>#lvHistory{grid-column:1/-1;max-height:none}
+  #leavePanel>.card>div[style*="My Requests"],#leavePanel>.card>div:nth-last-child(3){grid-column:1/-1}
+  #leavePanel>.card>.btn{grid-column:1/-1;max-width:260px}
+  #profileScreen.active{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+  #profileScreen>.card{margin:0}
+  #profileScreen>.card:first-child{grid-row:1/span 3}
+  #profileScreen>:not(.card){grid-column:1/-1}
+  #cameraBox{max-height:360px;margin-left:auto;margin-right:auto}
+  #cameraScreen .card,#fixScreen .card{padding:26px 30px}
+}
 /* ═══ Desktop: a real wide layout, not a stretched phone ═══ */
 .hm-cols,.hm-colL,.hm-colR{display:block}
 @media(min-width:1000px){
