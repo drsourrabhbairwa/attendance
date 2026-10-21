@@ -19,7 +19,7 @@
 - A role needs a unique email on the employee record (case-insensitive, unique across all employees).
 - Sensitive actions (`setEmployeeRoles`, retire legacy logins, link legacy logins) require `confirmPass` = the owner's current password hash.
 - Errors for wrong id / email / password are one identical message ('Wrong ID or password'); lock-out is 8 tries per 10 minutes and follows the person, however they typed the id.
-- UI: glass theme tokens already in the app, text wraps inside boxes, 44 px touch targets, no horizontal scroll at 320 px, English labels.
+- UI: glass theme tokens already in the app, text wraps inside boxes, 44 px touch targets, English labels. **Good on desktop and on mobile:** checked in the browser at 320, 390 and 1280 px wide (no horizontal scroll at any of them); on desktop the sign-in is a centred glass card with a side panel and the Roles / Link-old-logins dialogs are wide, two-column where it helps.
 - Commits end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` and `Claude-Session: https://claude.ai/code/session_0111wkqXGwVNoaxJ5qZHoA6H`. No push to `main`, no deploy, no release without the user's "haan" at the gates.
 
 ## Review Focus
