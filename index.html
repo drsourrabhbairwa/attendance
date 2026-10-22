@@ -5978,8 +5978,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.4';</script>
-<script src="notify.js?v=2026-10-22.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.5';</script>
+<script src="notify.js?v=2026-10-22.5"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6060,6 +6060,7 @@ init();
 .tk-strip{margin:10px 12px 0;padding:9px 12px;border-radius:22px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13.5px;font-weight:600;flex:none}.tk-strip .sp{flex:1;min-width:120px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .tk-btn{height:40px;padding:0 17px;border-radius:20px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.85);color:var(--tint);border:1px solid #fff;box-shadow:0 4px 12px rgba(18,70,60,.1)}.tk-btn.pri{background:linear-gradient(160deg,var(--tint2),var(--tint));color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(11,122,107,.34)}.tk-btn.bad{color:#B42318}
 .tk-msgs{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:3px;-webkit-overflow-scrolling:touch;background-image:radial-gradient(rgba(11,122,107,.1) 1.3px,transparent 1.5px);background-size:24px 24px}
+.tk-msgs>*{flex-shrink:0}   /* bubbles are buttons with min-height:0: without this a long chat squashes them on top of each other */
 .tk-day,.tk-sys{align-self:center;margin:10px 0 4px;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:700;color:var(--ink2);background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85);text-align:center;max-width:88%}
 .tk-b{max-width:82%;min-width:100px;align-self:flex-start;padding:8px 13px 6px;margin-top:5px;border-radius:22px 22px 22px 8px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid #fff;box-shadow:0 5px 16px rgba(18,70,60,.1);font-size:15.5px;line-height:1.38;word-break:break-word;text-align:left;display:block}
 .tk-b.cont{margin-top:0;border-top-left-radius:8px}.tk-b.me.cont{border-top-left-radius:22px;border-top-right-radius:8px}
@@ -6710,7 +6711,13 @@ async function tkRecStart(){
       const m=(mr.mimeType||'audio/webm').split(';')[0], blob=new Blob(chunks,{type:m}); if(blob.size>TK_MAX) return tkToast('Voice message is too long.');
       _tk.att={type:'audio',mime:m,name:'voice',blob:blob,dur:Math.round((Date.now()-t0)/1000)}; await tkSend(); };
     mr.start(); tkRecPaint(true); _tk.recT=setInterval(()=>{ const s=Math.round((Date.now()-t0)/1000), e=document.getElementById('tkRecT'); if(e) e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); if(s>=60) tkRecStop(false); },500);
-  }catch(e){ tkToast('Allow the microphone to record.'); }
+  }catch(e){
+    const n=(e&&e.name)||'';   // say what really went wrong: "allow the microphone" for every failure hid the real cause
+    tkToast(n==='NotAllowedError'||n==='PermissionDeniedError'?'The microphone is blocked. Open Phone settings → Apps → Amitek → Permissions → Microphone → Allow, then try again.'
+      :n==='NotFoundError'||n==='DevicesNotFoundError'?'No microphone was found on this device.'
+      :n==='NotReadableError'||n==='TrackStartError'?'The microphone is being used by another app. Close it and try again.'
+      :'Could not start recording ('+(n||'error')+(e&&e.message?': '+String(e.message).slice(0,80):'')+').');
+  }
 }
 function tkRecStop(cancel){ const r=_tk.rec; if(!r) return; r.cancel=!!cancel; try{ r.mr.stop(); }catch(e){} }
 function tkRecPaint(on){
