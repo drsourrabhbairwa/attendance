@@ -3391,6 +3391,7 @@ async function homeStats(emp,tok){
 let _hmTab='today';
 function hmTab(t,silent){
   if(['today','month','me'].indexOf(t)<0) t='today'; _hmTab=t;
+  if(!silent&&document.body.classList.contains('tk-tab')&&_tk.close) _tk.close();   // leaving Tasks for another tab
   { const nav=document.getElementById('hmNav'); if(nav&&nav.parentNode!==document.body) document.body.appendChild(nav); }   // fixed to the screen, not to a moving parent
   document.querySelectorAll('#homeScreen .hm-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===t));
   document.querySelectorAll('#hmNav button[data-go]').forEach(b=>{ const on=b.dataset.go===t; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
@@ -6227,8 +6228,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.9';</script>
-<script src="notify.js?v=2026-10-22.9"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.10';</script>
+<script src="notify.js?v=2026-10-22.10"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6263,6 +6264,21 @@ init();
 @font-face{font-family:'Figtree';font-weight:700;font-display:swap;src:url(fonts/figtree-latin-700-normal.woff2) format('woff2')}
 @font-face{font-family:'Figtree';font-weight:800;font-display:swap;src:url(fonts/figtree-latin-800-normal.woff2) format('woff2')}
 #tkxOv{position:fixed;inset:0;z-index:9000}
+body.tk-tab .hm-nav{z-index:9100}
+body.tk-tab .hm-nav button.on{background:transparent;color:#5b6664;box-shadow:none}
+body.tk-tab .hm-nav button[data-go="tasks"]{background:linear-gradient(135deg,#0E3C3E,#1B7F6B);color:#fff;box-shadow:0 6px 16px rgba(14,60,62,.35)}
+body.tk-tab[data-tkview="main"] .hm-nav{display:none}
+body.tk-tab #tkxOv .tkx-list{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+@media(min-width:900px){ body.tk-tab .hm-nav{display:grid!important} body.tk-tab #tkxOv{bottom:calc(84px + env(safe-area-inset-bottom,0px))} body.tk-tab #tkxOv .tkx-list{padding-bottom:16px} }
+.tk-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
+.tk-sc{min-width:0!important;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 10px 9px;border-radius:16px;border:1px solid rgba(255,255,255,.85);background:rgba(255,255,255,.62);font:inherit;color:var(--ink);cursor:pointer;text-align:left;box-shadow:0 4px 14px rgba(14,33,29,.08);transition:transform .1s}
+.tk-sc:active{transform:scale(.96)}
+.tk-sc b{font-size:22px;font-weight:800;line-height:1.1}
+.tk-sc span{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.2}
+.tk-sc.me b{color:var(--tint)}.tk-sc.td b{color:var(--warn)}.tk-sc.lt b{color:var(--late)}.tk-sc.gv b{color:#5B5BD6}
+.tk-sc.on{background:var(--ink);border-color:var(--ink)}.tk-sc.on b,.tk-sc.on span{color:#fff}
+.tk-cta{margin-top:14px;display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 18px;border-radius:22px;border:0;background:linear-gradient(135deg,#0B7A6B,#14A58E);color:#fff;font:inherit;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 20px rgba(11,122,107,.3)}
+.tk-cta svg{width:18px;height:18px}
 .tkx{--tint:#0B7A6B;--tint2:#14A58E;--ink:#0E211D;--ink2:#41605A;--late:#D2453D;--warn:#D9962B;position:relative;display:flex;height:100%;min-height:0;overflow:hidden;font-family:'Figtree',system-ui,sans-serif;color:var(--ink);background:#C9E6E0;isolation:isolate}
 .tkx.boxed{height:min(84vh,820px);min-height:560px;border-radius:32px;border:1px solid rgba(255,255,255,.85);box-shadow:0 20px 56px rgba(18,70,60,.22)}
 .tkx::before{content:"";position:absolute;inset:-10%;z-index:-1;background:radial-gradient(42% 32% at 8% 10%,#6FD5B7 0,transparent 70%),radial-gradient(38% 30% at 94% 6%,#86B7F4 0,transparent 70%),radial-gradient(44% 36% at 86% 92%,#B49DF0 0,transparent 70%),radial-gradient(36% 30% at 4% 94%,#F6D58E 0,transparent 70%),linear-gradient(160deg,#C2EBDC 0%,#C3DBF6 55%,#DACDF4 100%)}
@@ -6685,12 +6701,13 @@ function tkMount(root,admin,close){
   _tk.timer=setInterval(()=>{ if(!document.body.contains(root)){ clearInterval(_tk.timer); return; } if(document.hidden) return;   // nothing is fetched while the app is in the background
     _tk.tick++; if(_tk.thread&&_tk.cur) tkRefresh(true); else if((_tk.view==='list'||innerWidth>=900)&&_tk.tick%2===0) tkListLoad(true); },15000);
 }
-function tkView(v){ _tk.view=v; _tk.root.dataset.view=v; }
+function tkView(v){ _tk.view=v; _tk.root.dataset.view=v; if(!_tk.admin) document.body.dataset.tkview=v; }
 function tkMainEmpty(){ const m=document.getElementById('tkMain'); if(m) m.innerHTML=`<div class="tk-empty" style="margin:auto"><div class="eic">${ti('chat')}</div><b>Your tasks, like a chat</b>Open a task to talk about it,<br>or press + to give a new one.</div>`; }
 async function tkOpen(){   // staff entry (home tile)
   let ov=document.getElementById('tkxOv'); if(ov) ov.remove();
   ov=document.createElement('div'); ov.id='tkxOv'; document.body.appendChild(ov);
-  _tk.admin=false; await tkNames(); tkMount(ov,false,()=>{ clearInterval(_tk.timer); ov.remove(); tkBadge(true); });
+  document.body.classList.add('tk-tab'); document.body.dataset.tkview='list';
+  _tk.admin=false; await tkNames(); tkMount(ov,false,()=>{ clearInterval(_tk.timer); ov.remove(); document.body.classList.remove('tk-tab'); delete document.body.dataset.tkview; tkBadge(true); try{ hmTab(_hmTab,true); }catch(e){} });
 }
 async function tkLoad(){   // admin tab
   const box=document.getElementById('tkBody'); if(!box) return; box.classList.add('boxed'); _tk.admin=true;
@@ -6709,7 +6726,7 @@ async function tkListLoad(quiet){
   try{ const [l,a]=await Promise.all([_tk.admin?api('listTasks',{}):tkApi('myTasks'),tkApi('annList',{})]); _tk.list=l||[]; _tk.ann=a||[]; tkPut('cache','list:'+tkMe(),{list:_tk.list,ann:_tk.ann,at:Date.now()}); if(_tk.view==='list'||innerWidth>=900||!quiet) tkListPaint(); }
   catch(e){ const el=document.getElementById('tkList'); if(el&&!quiet) el.innerHTML='<div class="tk-err">'+hx(e.message)+'</div>'; }
 }
-function tkTabs(){ return _tk.admin?[['all','All'],['wait','To verify'],['late','Late'],['done','Finished']]:[['all','All'],['me','For me'],['given','Given by me'],['done','Finished']]; }
+function tkTabs(){ return _tk.admin?[['all','All'],['wait','To verify'],['late','Late'],['done','Finished']]:[['all','All'],['done','Finished']]; }   // staff: For me / Given by me / Due today / Late are the summary cards
 function tkFiltered(tab,q){
   tab=tab||_tk.tab; q=(q===undefined?_tk.q:q).toLowerCase();
   const me=tkMe(), td=todayStr(), live=t=>t.status==='Open';
@@ -6719,6 +6736,7 @@ function tkFiltered(tab,q){
       case 'given': return live(t)&&tkSame(t.empId,me);
       case 'wait': return live(t)&&t.assignees.some(i=>(t.states[i]||{}).s==='Done');
       case 'late': return live(t)&&t.due&&t.due<td;
+      case 'today': return live(t)&&t.due===td;
       case 'done': return !live(t);
       default: return t.status!=='Cancelled'&&(_tk.admin||live(t)||t.status==='Closed'); }
   });
@@ -6733,6 +6751,7 @@ function tkListPaint(){
   const el=document.getElementById('tkList'); if(!el) return;
   el.innerHTML=`<div class="tk-h"><div class="ttl"><h2>Tasks</h2><small id="tkSubt">${hx(tkPending())}</small></div><button class="tk-rb g2" onclick="tkForm('')" aria-label="Give a task">${ti('plus')}</button>${_tk.close?`<button class="tk-rb g2" onclick="_tk.close()" aria-label="Close">${ti('x')}</button>`:''}</div>
     <div class="tk-fl" id="tkFl"></div>
+    ${_tk.admin?'':'<div class="tk-sum" id="tkSum"></div>'}
     <label class="tk-q g2">${ti('search')}<input id="tkSearch" placeholder="Search tasks or people" value="${hx(_tk.q)}" oninput="_tk.q=this.value;tkRows()"></label>
     <div class="tk-rows" id="tkRows"></div>`;
   tkRows();
@@ -6743,10 +6762,12 @@ function tkRows(){
   const el=document.getElementById('tkRows'); if(!el) return;
   const fl=document.getElementById('tkFl'); if(fl) fl.innerHTML=tkTabs().map(t=>{ const n=t[0]==='all'?0:tkFiltered(t[0],'').length; return `<button class="${_tk.tab===t[0]?'on':''}" onclick="_tk.tab='${t[0]}';tkListPaint()">${t[1]}${n?`<i>${n}</i>`:''}</button>`; }).join('');
   const st=document.getElementById('tkSubt'); if(st) st.textContent=tkPending();
+  const sm=document.getElementById('tkSum'); if(sm){ const c=k=>tkFiltered(k,'').length, card=(k,n,l,cl)=>`<button type="button" class="tk-sc ${cl}${_tk.tab===k?' on':''}" onclick="_tk.tab=_tk.tab==='${k}'?'all':'${k}';tkListPaint()"><b>${n}</b><span>${l}</span></button>`;
+    sm.innerHTML=card('me',c('me'),'For me','me')+card('today',c('today'),'Due today','td')+card('late',c('late'),'Late','lt')+card('given',c('given'),'Given by me','gv'); }
   const ann=_tk.ann, unseen=ann.filter(a=>!a.seen).length, last=ann[0], list=tkFiltered();
   const hero=`<button class="tk-hero${_tk.cur==='ann'?' on':''}" onclick="tkOpenAnn()"><span class="ic">${ti('mega',24)}</span><span class="mid"><div class="t1">Announcements</div><div class="t2 ell">${last?hx((last.title||last.text||'Attachment').slice(0,80)):(_tk.admin?'Post news for everyone':'Nothing posted yet')}</div></span>${unseen?`<span class="tk-bd">${unseen}</span>`:''}</button>`;
   let body='';
-  if(!list.length) body=`<div class="tk-empty"><div class="eic">${ti('check')}</div><b>${_tk.q?'No match':'Nothing here'}</b>${_tk.q?'Try another name or word.':'New tasks will show up in this list.'}</div>`;
+  if(!list.length) body=`<div class="tk-empty"><div class="eic">${ti('check')}</div><b>${_tk.q?'No match':'Nothing here'}</b>${_tk.q?'Try another name or word.':'New tasks will show up in this list.'}${_tk.q||_tk.admin?'':`<button type="button" class="tk-cta" onclick="tkForm('')">${ti('plus')} Give a task</button>`}</div>`;
   else if(_tk.tab==='done'||_tk.q) body=list.map(tkRow).join('');
   else TK_G.forEach(g=>{ const rows=list.filter(t=>tkGroup(t)===g); if(!rows.length) return;
     rows.sort((a,b)=>g==='No deadline'||g==='Finished'?String(b.lastMsgAt||b.createdAt).localeCompare(String(a.lastMsgAt||a.createdAt)):String(a.due).localeCompare(String(b.due)));
