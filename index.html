@@ -886,6 +886,9 @@ label{color:var(--ag-ink)}
 .lv-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.lv-sum{font-size:13px;color:var(--soft);font-weight:600}
 .lv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.lv-chips button{border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
 .lv-chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lv-q{width:100%;margin:0 0 10px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
+.lv-tag{display:inline-block;margin:0 4px 0 0;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:800;background:#FFF1D6;color:#8A4D04}.lv-tag.bad{background:#FDE2E0;color:#B42318}.lv-c.sos{outline:2px solid #C62828}
+.lv-sos{margin:8px 0;padding:8px 12px;border-radius:12px;background:#FDE2E0;color:#B42318;font-weight:800;font-size:13px}
 .lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .lv-c{display:block;text-align:left;width:100%;background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--border);border-radius:14px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--text)}
 .lv-c:focus-visible{outline:3px solid rgba(20,145,127,.4)}
@@ -1635,7 +1638,9 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   <!-- ACTIONS LOG TAB -->
   <div id="tabLive" class="tab-pane">
     <div class="lv-top"><div class="lv-sum" id="lvSum"></div><button class="btn-sm" onclick="liveLoad(true)" aria-label="Refresh">↻ Refresh</button></div>
+    <input type="search" id="lvQ" class="lv-q" placeholder="Search name, ID or department" oninput="_lv.q=this.value;liveDraw()" autocomplete="off">
     <div class="lv-chips" id="lvChips"></div>
+    <div class="lv-chips" id="lvDepts"></div>
     <div class="lv-grid" id="lvGrid"><div class="empty">⏳ Loading…</div></div>
     <div class="lv-note" id="lvNote"></div>
   </div>
@@ -5978,8 +5983,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.5';</script>
-<script src="notify.js?v=2026-10-22.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.6';</script>
+<script src="notify.js?v=2026-10-22.6"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6964,7 +6969,10 @@ async function wlLoad(d){
 /* ── Live tab: everyone in scope, what they are doing right now; tap for the detail ── */
 const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused',travelling:'Travelling',notin:'Not in yet',leave:'On leave',out:'Punched out'};
 const LV_ORDER=['active','meeting','travelling','paused','idle','notin','leave','out'];
-let _lv={data:null,filter:'all',timer:null,busy:false};
+let _lv={data:null,filter:'all',dept:'',q:'',timer:null,busy:false};
+const IDLE_FLAG=30;   // minutes of idle time after which a card turns red
+const liveDur=m=>m==null?'':m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m';
+const liveWa=ph=>{ const d=String(ph||'').replace(/\D/g,''); return d.length===10?'91'+d:d.length>=11?d:''; };
 function liveStart(){ liveStop(); liveLoad(); _lv.timer=setInterval(()=>{ if(document.getElementById('tabLive')?.classList.contains('active')&&!document.hidden) liveLoad(); },60000); }
 function liveStop(){ if(_lv.timer){ clearInterval(_lv.timer); _lv.timer=null; } }
 async function liveLoad(manual){
@@ -6979,16 +6987,22 @@ function liveDraw(){
   const d=_lv.data; if(!d) return;
   const st=d.staff||[], cnt={}; st.forEach(x=>{ cnt[x.state]=(cnt[x.state]||0)+1; });
   const working=(cnt.active||0)+(cnt.meeting||0)+(cnt.travelling||0);
-  document.getElementById('lvSum').textContent=st.length+' staff · '+working+' working · '+(cnt.idle||0)+' idle · '+(cnt.notin||0)+' not in yet';
+  document.getElementById('lvSum').textContent=st.length+' staff · '+working+' working · '+(cnt.idle||0)+' idle · '+(cnt.notin||0)+' not in yet'+(st.some(x=>x.late)?' · '+st.filter(x=>x.late).length+' late':'')+(st.some(x=>x.sos)?' · 🚨 '+st.filter(x=>x.sos).length+' SOS':'');
   const chips=[['all','All '+st.length]].concat(LV_ORDER.filter(k=>cnt[k]).map(k=>[k,LV_STATE[k]+' '+cnt[k]]));
   document.getElementById('lvChips').innerHTML=chips.map(c=>`<button type="button" class="${_lv.filter===c[0]?'on':''}" onclick="_lv.filter='${c[0]}';liveDraw()">${hx(c[1])}</button>`).join('');
-  const list=st.filter(x=>_lv.filter==='all'||x.state===_lv.filter).sort((a,b)=>LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
+  const depts=[...new Set(st.map(x=>x.department).filter(Boolean))].sort();
+  if(_lv.dept&&depts.indexOf(_lv.dept)<0) _lv.dept='';
+  document.getElementById('lvDepts').innerHTML=depts.length>1?[['','All departments']].concat(depts.map(x=>[x,x])).map(c=>`<button type="button" class="${_lv.dept===c[0]?'on':''}" onclick="_lv.dept=this.dataset.d;liveDraw()" data-d="${hx(c[0])}">${hx(c[1])}</button>`).join(''):'';
+  const q=String(_lv.q||'').trim().toLowerCase(), idleBad=x=>x.state==='idle'&&x.idleMin!=null&&x.idleMin>=IDLE_FLAG;
+  const list=st.filter(x=>(_lv.filter==='all'||x.state===_lv.filter)&&(!_lv.dept||x.department===_lv.dept)&&(!q||[x.name,x.empId,x.department].join(' ').toLowerCase().indexOf(q)>=0))
+    .sort((a,b)=>(b.sos?1:0)-(a.sos?1:0)||(idleBad(b)?1:0)-(idleBad(a)?1:0)||LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
   document.getElementById('lvGrid').innerHTML=list.length?list.map(x=>{
     const what=liveWhat(x), seen=x.lastSeen, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30;
-    return `<button type="button" class="lv-c st-${hx(x.state)}" onclick="liveOpen('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
+    return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}" onclick="liveOpen('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
+      ${x.sos||x.late||idleBad(x)?`<span class="s">${x.sos?'<span class="lv-tag bad">🚨 SOS</span>':''}${x.late?'<span class="lv-tag">Late</span>':''}${idleBad(x)?'<span class="lv-tag bad">Idle '+hx(liveDur(x.idleMin))+'</span>':''}</span>`:''}
       <span class="s">${hx(x.empId)}${x.department?' · '+hx(x.department):''}</span>
       ${what?`<span class="s">${hx(what)}${x.clientName?' · '+hx(x.clientName):''}${x.placeTag?' · '+hx(x.placeTag):''}</span>`:''}
-      ${x.since?`<span class="s">since ${hx(wmClk(x.since))}</span>`:x.punchIn&&x.state!=='out'?`<span class="s">in at ${hx(x.punchIn)}</span>`:''}
+      ${x.since?`<span class="s">since ${hx(wmClk(x.since))}</span>`:x.punchIn&&x.state!=='out'?`<span class="s">in at ${hx(x.punchIn)}${x.state==='idle'&&x.idleMin>0&&!idleBad(x)?' · idle '+hx(liveDur(x.idleMin)):''}</span>`:''}
       ${seen?`<span class="s${stale?' lv-stale':''}">📍 ${hx(seen.area||'Location known')} · ${hx(liveAge(seen.ageMin)||seen.time)}${stale?' (no recent update)':''}</span>`:''}</button>`;
   }).join(''):'<div class="empty">Nobody here.</div>';
   document.getElementById('lvNote').textContent='Updates every minute. "Idle" means punched in with no work item running. Location is the latest check or punch.';
@@ -6999,14 +7013,16 @@ function liveOpen(id){
   const seen=x.lastSeen, what=liveWhat(x);
   const items=(x.items||[]).map(i=>`<li><b>${hx(liveWhat(i)||'Work')}</b>${i.clientName?' · '+hx(i.clientName):''}<small>${i.startAt?hx(wmClk(i.startAt)):''}${i.endAt?' – '+hx(wmClk(i.endAt)):i.status==='Done'?'':' · '+hx(i.status.toLowerCase())}${i.activeMin?' · '+hx(wrMin(i.activeMin)):''}${i.placeTag?' · '+hx(i.placeTag):''}${i.outcome?' · '+hx(i.outcome):''}</small></li>`).join('');
   document.getElementById('liveBody').innerHTML=`<h3>${hx(x.name)}</h3><div class="sub">${hx(x.empId)}${x.designation?' · '+hx(x.designation):''}${x.department?' · '+hx(x.department):''}</div>
-    <span class="lv-b" style="font-size:12.5px">${hx(LV_STATE[x.state]||x.state)}</span>
+    <span class="lv-b" style="font-size:12.5px">${hx(LV_STATE[x.state]||x.state)}</span>${x.late?' <span class="lv-tag">Late</span>':''}
+    ${x.sos?'<div class="lv-sos">🚨 Open SOS from this person. Open the Safety tab to respond.</div>':''}
     <div class="kv"><span>Doing now</span><b>${hx(what||'—')}${x.clientName?'<br><small style="font-weight:400">'+hx(x.clientName)+(x.clientPhone?' · <a href="tel:'+hx(x.clientPhone)+'">'+hx(x.clientPhone)+'</a>':'')+'</small>':''}</b>
       <span>Since</span><b>${x.since?hx(wmClk(x.since)):'—'}</b>
       <span>Punched in</span><b>${hx(x.punchIn||'—')}</b><span>Punched out</span><b>${hx(x.punchOut||'—')}</b>
       <span>Work mode</span><b>${hx(WL_MODE[x.mode]||'—')}</b>
+      <span>Worked today</span><b>${x.workedMin!=null?hx(liveDur(x.workedMin)):'—'}</b>${x.idleMin!=null&&x.state==='idle'?'<span>Idle for</span><b'+(x.idleMin>=IDLE_FLAG?' style="color:#B42318"':'')+'>'+hx(liveDur(x.idleMin))+'</b>':''}
       <span>Last location</span><b>${seen?hx(seen.area||'Known')+'<br><small style="font-weight:400">'+hx(seen.time)+' · '+hx(seen.how)+(seen.ageMin!=null?' · '+hx(liveAge(seen.ageMin)):'')+'</small>':'—'}</b></div>
     <div style="font-weight:800;font-size:13px">Today</div>${items?'<ul>'+items+'</ul>':'<div class="sub" style="margin-top:4px">Nothing logged yet today.</div>'}
-    <div class="lv-acts">${x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}</div>
+    <div class="lv-acts">${x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${liveWa(x.phone)?`<a class="btn btn-outline" href="https://wa.me/${liveWa(x.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}</div>
     <button class="modal-close" onclick="liveClose()">Close</button>`;
   document.getElementById('liveModal').classList.add('open');
 }
