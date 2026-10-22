@@ -355,6 +355,17 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .lc-leg{font-size:11px;color:var(--soft);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}
 .dept-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
 .dept-row:first-child{border-top:0}
+.wt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.wt-tab{border:1px solid var(--border);background:var(--card,#fff);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink2,#475467);display:flex;gap:6px;align-items:center}
+.wt-tab small{background:rgba(14,60,62,.08);color:inherit;border-radius:999px;padding:0 6px;font-size:11px}
+.wt-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}.wt-tab.on small{background:rgba(255,255,255,.25)}
+.wt-note{font-size:11.5px;color:var(--soft);padding:4px 0 6px}
+.wt-row{display:flex;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--border)}
+.wt-row input:not([type=checkbox]){flex:1;min-width:0;margin:0;padding:7px 9px;font-size:13px}
+.wt-row button{min-width:0!important;flex-shrink:0;border:1px solid var(--border);background:transparent;border-radius:8px;width:30px;height:30px;cursor:pointer;font:inherit;color:var(--ink2,#475467)}
+.wt-row button:disabled{opacity:.35;cursor:default}.wt-row .wt-del{color:#B42318}
+.wt-need{display:flex;gap:4px;align-items:center;font-size:11.5px;font-weight:600;white-space:nowrap;margin:0}.wt-need input{width:auto;margin:0}
+.wt-fixed span{font-size:11px;color:var(--soft);white-space:nowrap}
 .dept-sel{width:auto !important;padding:5px 8px !important;font-size:12px !important;max-width:130px}
 .al-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:9px}
 @media(max-width:600px){.al-grid{grid-template-columns:1fr}}
@@ -1048,6 +1059,76 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   #adminScreen .tbl{font-size:14px}
 }
 @media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:1320px} }
+
+/* ═══ Employee home v2: tabs, smart line, quick actions, my month ═══ */
+#homeScreen{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+#homeScreen .hm-pane{display:none}
+#homeScreen .hm-pane.on{display:block;animation:hmIn .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes hmIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#homeScreen .hm-score,#homeScreen .hm-me{margin:-32px 10px 14px;position:relative;z-index:2;box-shadow:0 14px 34px rgba(4,26,30,.22)}
+#homeScreen .hm-today{border-radius:22px}
+/* bottom navigation */
+.hm-nav{display:none}
+body[data-screen="homeScreen"] .hm-nav{display:grid}
+.hm-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:60;width:min(520px,calc(100% - 20px));grid-template-columns:repeat(4,1fr);gap:4px;padding:6px;border-radius:24px;background:rgba(255,255,255,.86);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.9);box-shadow:0 12px 34px rgba(4,26,30,.22),0 1px 0 rgba(255,255,255,.9) inset}
+.hm-nav button{min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;border-radius:18px;padding:8px 2px 7px;font:inherit;font-size:11px;font-weight:700;color:#5b6664;cursor:pointer;transition:background .2s,color .2s,transform .1s;min-height:52px}
+.hm-nav button:active{transform:scale(.94)}
+.hm-nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hm-nav button.on{background:linear-gradient(135deg,#0E3C3E,#1B7F6B);color:#fff;box-shadow:0 6px 16px rgba(14,60,62,.35)}
+.hm-badge{position:absolute;top:4px;right:calc(50% - 22px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#E5484D;color:#fff;font-style:normal;font-size:10px;line-height:17px;font-weight:800;box-shadow:0 0 0 2px #fff}
+.hm-badge[hidden]{display:none}
+/* smart line */
+.hm-smart{display:flex;align-items:center;gap:11px;width:calc(100% - 20px);margin:0 10px 14px;padding:12px 14px;border-radius:18px;border:1px solid rgba(27,127,107,.25);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(229,246,241,.96));color:var(--ink);font:inherit;font-size:13.5px;text-align:left;line-height:1.4;box-shadow:0 8px 22px rgba(4,26,30,.12);animation:hmIn .35s ease}
+.hm-smart[hidden]{display:none}
+#homeScreen .hm-smart{margin:-32px 10px 12px;position:relative;z-index:3}
+#homeScreen .hm-smart:not([hidden])+.hm-today{margin-top:0}
+.hm-smart.warn{border-color:rgba(214,140,0,.35);background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(255,243,214,.97))}
+.hm-smart.good{border-color:rgba(31,107,69,.3);background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(223,241,230,.97))}
+.hm-si{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.hm-st{flex:1;min-width:0}.hm-st b{font-weight:800}
+.hm-sc{font-size:24px;color:var(--soft);line-height:1}
+/* quick actions */
+.hm-quick{display:flex;gap:8px;margin:0 10px 14px}.hm-quick>.hm-q{flex:1 1 0}
+.hm-quick:empty{display:none}
+.hm-q{min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:1px solid rgba(255,255,255,.85);border-radius:18px;background:rgba(255,255,255,.9);font:inherit;color:var(--ink);cursor:pointer;box-shadow:0 6px 16px rgba(4,26,30,.12);transition:transform .1s}
+.hm-q:active{transform:scale(.95)}
+.hm-qi{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;background:linear-gradient(135deg,#E6F4F0,#CFEAE2)}
+.hm-q b{font-size:11.5px;font-weight:700;line-height:1.2;text-align:center}
+/* my month */
+.hm-score-row{display:flex;align-items:center;gap:16px}
+.hm-ring-w{position:relative;width:88px;height:88px;flex-shrink:0}
+.hm-ring{width:88px;height:88px;transform:rotate(-90deg)}
+.hm-ring circle{fill:none;stroke-width:8}
+.hm-ring-bg{stroke:rgba(14,60,62,.1)}
+.hm-ring-fg{stroke-linecap:round;transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
+.hm-ring-w>b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;letter-spacing:-.5px}
+.hm-score-t{min-width:0}.hm-score-t>b{display:block;font-size:16px;font-weight:800}.hm-score-t>span{display:block;font-size:12px;color:var(--soft);margin-top:2px}
+.hm-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.hm-pill{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(14,60,62,.07);white-space:nowrap}
+.hm-bars{position:relative;display:flex;align-items:flex-end;gap:5px;height:150px;padding-top:6px}
+.hm-bar{flex:1 1 0;min-width:0!important;width:auto;margin:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;border:0;background:transparent;padding:0;cursor:pointer;font:inherit;position:relative;z-index:1}
+.hm-bar i{display:block;width:100%;max-width:22px;border-radius:7px 7px 4px 4px;background:linear-gradient(180deg,#2FA88B,#1B7F6B);transition:height .7s cubic-bezier(.2,.8,.2,1),opacity .2s;min-height:0}
+.hm-bar.late i{background:linear-gradient(180deg,#F2B544,#D68C00)}
+.hm-bar.today i{background:repeating-linear-gradient(135deg,#2FA88B 0 6px,#47BFA2 6px 12px)}
+.hm-bar small{font-size:10px;font-weight:700;color:var(--soft);height:12px}
+.hm-bar.off small,.hm-bar.leave small{opacity:.55}
+.hm-bar.sel i{box-shadow:0 0 0 3px rgba(27,127,107,.3)}.hm-bar.sel small{color:var(--ink)}
+.hm-tline{position:absolute;left:0;right:0;border-top:1.5px dashed rgba(14,60,62,.35);margin-bottom:17px;z-index:0}
+.hm-tline span{position:absolute;right:0;top:-17px;font-size:10px;font-weight:700;color:var(--soft);background:rgba(255,255,255,.9);padding:0 4px;border-radius:4px}
+.hm-tip{margin-top:10px;font-size:12.5px;color:var(--ink2,#475467);background:rgba(14,60,62,.05);border-radius:12px;padding:9px 11px;min-height:36px}
+/* me */
+.hm-me-row{display:flex;align-items:center;gap:14px}
+.hm-me-av{width:60px;height:60px;border-radius:20px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(135deg,#0E3C3E,#1B7F6B)}
+.hm-me-av img{width:100%;height:100%;object-fit:cover}
+.hm-me-row b{display:block;font-size:17px;font-weight:800}.hm-me-row span{display:block;font-size:12.5px;color:var(--soft);margin-top:2px}
+#hmPaneMe .hm-links{margin:0 0 14px}
+@media(min-width:1000px){
+  body[data-screen="homeScreen"] #app{max-width:820px}
+  .hm-nav{bottom:18px}
+}
+@media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:860px} }
+@media(prefers-reduced-motion:reduce){#homeScreen .hm-pane.on,.hm-smart{animation:none}.hm-bar i,.hm-ring-fg{transition:none}}
+
 </style>
 </head>
 <body>
@@ -1131,16 +1212,20 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
-  <div class="hm-cols"><div class="hm-colL">
+  <section class="hm-pane on" id="hmPaneToday" data-pane="today">
+  <button type="button" class="hm-smart" id="hmSmart" hidden></button>
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
+  <div class="hm-quick" id="hmQuick"></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
   <div id="hmBday"></div>
+  <div class="hm-grid" id="hmActs"></div>
   <div id="hmTrack"></div>
   <div id="hmSafety"></div>
-  </div><div class="hm-colR">
-  <div class="hm-grid" id="hmActs"></div>
-  <div class="hm-links" id="hmLinks"></div>
+  </section>
+  <section class="hm-pane" id="hmPaneMonth" data-pane="month">
+  <div class="card hm-card hm-score" id="hmScore"><div class="empty">⏳ Loading…</div></div>
+  <div class="card hm-card"><div class="hm-h">Hours · last 14 days</div><div id="hmChart"><div class="empty">⏳ Loading…</div></div></div>
   <div class="card hm-card">
     <div class="hm-h">This month</div>
     <div class="hm-stats" id="hmStats"><div class="hm-stat"><b>…</b><span>Present</span></div></div>
@@ -1150,9 +1235,19 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   </div>
   <div class="card hm-card"><div class="hm-h">Leave balance</div><div class="bal-grid" id="hmLeave" style="margin-bottom:0"></div><div id="hmLeavePol" style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5"></div></div>
   <div class="card hm-card"><div class="hm-h">Recent days</div><div id="hmRecent"><div class="empty">⏳ Loading…</div></div></div>
+  </section>
+  <section class="hm-pane" id="hmPaneMe" data-pane="me">
+  <div class="card hm-card hm-me" id="hmMe"></div>
+  <div class="hm-links" id="hmLinks"></div>
   <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
   <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
-  </div></div>
+  </section>
+  <nav class="hm-nav" id="hmNav" aria-label="Sections">
+    <button type="button" class="on" data-go="today" onclick="hmTab('today')" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Today</span></button>
+    <button type="button" data-go="tasks" onclick="tkOpen()"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/></svg><span>Tasks</span><i class="hm-badge" id="hmNavTk" hidden></i></button>
+    <button type="button" data-go="month" onclick="hmTab('month')"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-5M20 19V9"/></svg><span>My month</span></button>
+    <button type="button" data-go="me" onclick="hmTab('me')"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.6"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2"/></svg><span>Me</span></button>
+  </nav>
 </div>
 
 <!-- ══ PROFILE ══ -->
@@ -1557,6 +1652,18 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
         <div><button onclick="saveReportSettings()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save</button></div>
       </div>
       <div class="msg msg-success" id="setOk"></div>
+    </div>
+    <div class="add-form sa-only" style="margin-top:14px" id="wtCard">
+      <h3>🧰 Work types</h3>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">What staff can pick after they tap Office, WFH, Factory or Field. "Other" is always there. Removing a type keeps old entries in the reports.</p>
+      <div class="wt-tabs" id="wtTabs"></div>
+      <div id="wtList" style="margin-top:8px"></div>
+      <div class="set-row" style="margin-top:9px;align-items:flex-end">
+        <div style="flex:2"><label style="margin:0 0 4px">New type</label><input type="text" id="wtNew" maxlength="60" placeholder="e.g. Machine setup" onkeydown="if(event.key==='Enter')wtAdd()"></div>
+        <div id="wtNeedWrap"><label style="margin:0 0 4px;display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" id="wtNeed" style="width:auto"> Needs client</label></div>
+        <div><button onclick="wtAdd()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
+      </div>
+      <div class="msg msg-error" id="wtErr"></div><div class="msg msg-success" id="wtOk"></div>
     </div>
     <div class="add-form sa-only" style="margin-top:14px">
       <h3>🏢 Departments &amp; office hours</h3>
@@ -2848,6 +2955,47 @@ async function removeDept(n){
   try{ const key='dept|'+n; if(USE_SHEETS) await api('saveSettings',{settings:{[key]:''}}); _D.settings=Object.assign({},_D.settings,{[key]:''}); saveCache(); loading(false); renderDeptList(); }
   catch(e){ loading(false); alert(e.message); }
 }
+
+/* Work types: the owner's own list of what staff pick per mode */
+let _wtMode='office', _wtBusy=false;
+function wtDraw(){
+  const tb=document.getElementById('wtTabs'), el=document.getElementById('wtList'); if(!tb||!el) return;
+  tb.innerHTML=WT_MODES.map(([k,l])=>`<button type="button" class="wt-tab${k===_wtMode?' on':''}" onclick="_wtMode='${k}';wtDraw()">${l}<small>${wtList(k).length-1}</small></button>`).join('');
+  const own=Array.isArray(wtOwn()[_wtMode]), L=wtList(_wtMode).filter(x=>x.n!=='Other'), fld=_wtMode==='field';
+  document.getElementById('wtNeedWrap').style.display=fld?'none':'';
+  el.innerHTML=(own?'':'<div class="wt-note">Using the built-in list. Any change saves your own list for this mode.</div>')+L.map((x,i)=>`<div class="wt-row">
+    <input value="${hx(x.n)}" maxlength="60" aria-label="Type name" onchange="wtRename(${i},this.value)">
+    ${fld?'':`<label class="wt-need" title="Ask for the client name and phone"><input type="checkbox" ${x.c?'checked':''} onchange="wtNeed(${i},this.checked)"> Client</label>`}
+    <button type="button" aria-label="Move up" ${i?'':'disabled'} onclick="wtMove(${i},-1)">↑</button><button type="button" aria-label="Move down" ${i<L.length-1?'':'disabled'} onclick="wtMove(${i},1)">↓</button>
+    <button type="button" class="wt-del" aria-label="Remove" onclick="wtDel(${i})">✕</button></div>`).join('')+`<div class="wt-row wt-fixed"><input value="Other" disabled><span>always shown · staff write what it is</span></div>`;
+}
+async function wtSave(list,msg){
+  const err=document.getElementById('wtErr'), ok=document.getElementById('wtOk'); err.classList.remove('show'); ok.classList.remove('show');
+  if(_wtBusy) return false; _wtBusy=true;
+  const all=Object.assign({},wtOwn()); all[_wtMode]=list.map(x=>({n:x.n,c:x.c?1:0}));
+  if(!list.length) delete all[_wtMode];
+  const val=JSON.stringify(all);
+  try{ let saved=val; if(USE_SHEETS){ const r=await api('saveSettings',{settings:{workTypes:val}}); if(r&&r.workTypes!==undefined) saved=r.workTypes; }
+    _D.settings=Object.assign({},_D.settings,{workTypes:saved}); saveCache(); ok.textContent='✅ '+(msg||'Saved')+'. Staff see it next time they open the app.'; ok.classList.add('show'); return true; }
+  catch(e){ err.textContent=e.message; err.classList.add('show'); return false; }
+  finally{ _wtBusy=false; wtDraw(); }
+}
+const wtCur=()=>wtList(_wtMode).filter(x=>x.n!=='Other');
+async function wtAdd(){
+  const inp=document.getElementById('wtNew'), n=inp.value.replace(/\s+/g,' ').trim(), L=wtCur();
+  const err=document.getElementById('wtErr'); err.classList.remove('show');
+  if(!n){ err.textContent='Write the name of the work.'; err.classList.add('show'); return; }
+  if(n.toLowerCase()==='other'||L.some(x=>x.n.toLowerCase()===n.toLowerCase())){ err.textContent='"'+n+'" is already in the list.'; err.classList.add('show'); return; }
+  L.push({n:n,c:document.getElementById('wtNeed').checked?1:0});
+  if(await wtSave(L,'"'+n+'" added')){ inp.value=''; document.getElementById('wtNeed').checked=false; }
+}
+function wtRename(i,v){ const L=wtCur(), n=String(v).replace(/\s+/g,' ').trim(); if(!n||n===L[i].n) return wtDraw();
+  if(n.toLowerCase()==='other'||L.some((x,j)=>j!==i&&x.n.toLowerCase()===n.toLowerCase())){ const e=document.getElementById('wtErr'); e.textContent='"'+n+'" is already in the list.'; e.classList.add('show'); return wtDraw(); }
+  L[i].n=n; wtSave(L,'Renamed'); }
+function wtNeed(i,on){ const L=wtCur(); L[i].c=on?1:0; wtSave(L,on?'Client details will be asked':'Client details not asked'); }
+function wtMove(i,d){ const L=wtCur(), j=i+d; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; wtSave(L,'Order saved'); }
+function wtDel(i){ const L=wtCur(); if(L.length<=1){ const e=document.getElementById('wtErr'); e.textContent='Keep at least one type (besides Other).'; e.classList.add('show'); return; }
+  if(!confirm('Remove "'+L[i].n+'"? Old entries stay in the reports.')) return; const n=L[i].n; L.splice(i,1); wtSave(L,'"'+n+'" removed'); }
 async function setEmpWT(id,val){
   try{ if(USE_SHEETS) await api('setWorkType',{id,workType:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.workType=val; saveCache(); }
   catch(err){ alert('Error: '+err.message+(/Unknown action|Unknown work/i.test(err.message)?'\n(Update the Apps Script to the latest version.)':'')); renderEmpList(); }
@@ -3090,6 +3238,7 @@ async function loadHome(){
   const now=new Date(), h=now.getHours();
   document.getElementById('hmName').textContent=emp.name; document.querySelector('.hm-top').classList.toggle('long',String(emp.name||'').length>18);
   fillAv('hmAv',curRec()||emp);
+  try{ hmMeDraw(emp); hmTab(_hmTab,true); }catch(e){}
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
   const dayOff=checkDayOff(todayStr());
   let rec=null; if(!dayOff){ try{ rec=await getRecordToday(emp.id); }catch(e){} }
@@ -3101,7 +3250,7 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
-    otTick(); try{ wmTick(); }catch(e){}
+    otTick(); try{ wmTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){}
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeTeamLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
@@ -3157,6 +3306,7 @@ function renderHomeToday(rec,dayOff,noLoad){
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
   if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
+  try{ hmSmartDraw(); }catch(e){}
 }
 let _hmRec=null,_hmOff=null;
 const WORK_LABEL={'':'Everything (office + visits + site)',office:'Office staff',sales:'Sales / consultant (customer visits)',site:'Technician (site work)'};
@@ -3174,7 +3324,6 @@ function renderHomeActs(){
     if(wt===''||wt==='sales') T.push(`<button class="hm-tile" onclick="openPunch('visit')"><div class="ti">🤝</div><b>Customer visit</b><span>Photo + notes</span></button>`);
     if(wt===''||wt==='site') T.push(`<button class="hm-tile${sw?' live':''}" onclick="openPunch()"><div class="ti">🏗️</div><b>Site work</b><span id="hmSiteSub">${sw?'Running · tap to stop':'Start or stop'}</span></button>`);
   }
-  T.push(`<button class="hm-tile" onclick="tkOpen()"><div class="ti">✅</div><b>Tasks</b><span id="hmTkSub">${hx(_tk.sub||'Give or get work')}</span></button>`);
   { const o=otOpenRow(); _otShown=otSig();
     if(o) T.push(`<button class="hm-tile live" onclick="openOvertime('stop')"><div class="ti">⏱</div><b>Stop overtime</b><span>Since ${otClock(o.startTime)} · <span id="hmOtSub">${otRunTxt(o)}</span></span></button>`);
     else if(_otShown==='start') T.push(`<button class="hm-tile" onclick="openOvertime('start')"><div class="ti">⏱</div><b>Start overtime</b><span>Working extra · your admin approves</span></button>`); }
@@ -3190,6 +3339,12 @@ function renderHomeActs(){
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
   lk.innerHTML=L.join('');
+  { const Q=[], q=(ic,t,fn,live)=>Q.push(`<button type="button" class="hm-q${live?' live':''}" onclick="${fn}"><span class="hm-qi">${ic}</span><b>${t}</b></button>`);
+    if(!am&&W&&inNow&&!(_wm.open)) q('🏃','Personal work',"openPunch('personal')");
+    if(!am){ q('🌴','Leave','showLeavePanel()'); q('✏️','Fix punch','showFix()'); }
+    q('👥','Team leave','showTeamLeave()');
+    if(Q.length<4&&!am&&(_otMine.length||_otShown)) q('⏱','Overtime','showMyOvertime()');
+    setHtml('hmQuick',Q.slice(0,4).join('')); }
   tkBadge();
   if(window._hmTlSub) setHtml('hmTlSub',window._hmTlSub); if(window._hmLeaveSub) setHtml('hmLeaveSub',window._hmLeaveSub); if(window._hmFixSub) setHtml('hmFixSub',window._hmFixSub);
 }
@@ -3200,7 +3355,7 @@ function renderHomeSite(){
 }
 async function homeStats(emp,tok){
   const today=new Date(), t=todayStr(), ms=t.slice(0,7)+'-01';
-  const wk=dstr(new Date(today.getTime()-6*86400000)), start=wk<ms?wk:ms;
+  const wk=dstr(new Date(today.getTime()-13*86400000)), start=wk<ms?wk:ms;
   let recs=[]; try{ recs=(await getAttRange(start,t))||[]; }catch(e){ recs=_D.attendance||[]; }
   if(tok!==homeTok) return;
   const eid=String(emp.id).toUpperCase();
@@ -3221,12 +3376,98 @@ async function homeStats(emp,tok){
     strip+=`<div class="hm-day">${d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,3)}<div class="hm-dot ${cls}">${sym}</div>${d.getDate()}</div>`;
   }
   setHtml('hmStrip',strip);
+  try{ hmMonthDraw(emp,by,isLate,{days,late,full,mins}); }catch(e){ console.warn(e); }
   const recent=[...mine].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);
   setHtml('hmRecent',recent.length?recent.map(r=>{
     const th=calcTotalHrs(r), dd=new Date(r.date+'T12:00:00');
     return `<div class="hm-rec"><div><b>${dd.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><small>In ${fmt12(r.punchIn.time)}${r.punchOut?' · Out '+fmt12(r.punchOut.time):' · no punch-out'}</small></div><div style="text-align:right">${th?`<b>${th}</b>`:''}${isHalfDay(r)?'<small style="color:var(--amber)">Half day</small>':isLate(r)?'<small style="color:var(--amber)">Late</small>':'<small style="color:var(--green)">On time</small>'}</div></div>`;
   }).join(''):'<div class="empty" style="padding:10px 0">No attendance yet.</div>');
 }
+/* ── Employee home: tabs, smart line, my month ── */
+let _hmTab='today';
+function hmTab(t,silent){
+  if(['today','month','me'].indexOf(t)<0) t='today'; _hmTab=t;
+  { const nav=document.getElementById('hmNav'); if(nav&&nav.parentNode!==document.body) document.body.appendChild(nav); }   // fixed to the screen, not to a moving parent
+  document.querySelectorAll('#homeScreen .hm-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===t));
+  document.querySelectorAll('#hmNav button[data-go]').forEach(b=>{ const on=b.dataset.go===t; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  if(!silent) try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+}
+function hmTarget(){ const s=_D.settings||{}, st=(settingsFor(curRec())||{}).start||s.officeStart||'09:30 AM', d=parseTimeMins(s.officeEnd||'07:00 PM')-parseTimeMins(st); return d>=240&&d<=720?d:480; }   // the person's office hours: their start to the office end
+function hmMeDraw(emp){
+  const me=curRec()||emp||{}, ph=me.photo&&/^(data:image|https?:)/.test(me.photo)?`<img src="${hx(me.photo)}" alt="">`:hx(String(me.name||'?').trim().charAt(0).toUpperCase());
+  setHtml('hmMe',`<div class="hm-me-row"><div class="hm-me-av">${ph}</div><div style="min-width:0"><b>${hx(me.name||'')}</b><span>ID ${hx(me.id||'')}${me.department?' · '+hx(me.department):''}</span>${me.phone?`<span>${hx(me.phone)}</span>`:''}</div></div>`);
+}
+function hmRing(pct,col){ const r=30, c=2*Math.PI*r, v=Math.max(0,Math.min(100,pct||0));
+  return `<svg class="hm-ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" class="hm-ring-bg"/><circle cx="38" cy="38" r="${r}" class="hm-ring-fg" style="stroke:${col};stroke-dasharray:${(c*v/100).toFixed(1)} ${c.toFixed(1)}"/></svg>`; }
+let _hmBars=[];
+function hmMonthDraw(emp,by,isLate,m){
+  const today=new Date(), t=todayStr(), T=hmTarget();
+  // on-time streak: walk back over working days (today counts only once punched in)
+  let streak=0;
+  for(let i=0;i<60;i++){
+    const ds=dstr(new Date(today.getTime()-i*86400000)), r=by[ds];
+    if(i===0&&!r) continue;
+    if(r){ if(isLate(r)) break; streak++; continue; }
+    if(checkDayOff(ds)||leaveOn(emp.id,ds)) continue;
+    break;
+  }
+  let best=0, run=0; const ms=t.slice(0,8)+'01';
+  for(let d=new Date(ms+'T12:00:00');dstr(d)<=t;d=new Date(d.getTime()+86400000)){
+    const ds=dstr(d), r=by[ds];
+    if(r){ if(isLate(r)) run=0; else { run++; best=Math.max(best,run); } }
+    else if(!(checkDayOff(ds)||leaveOn(emp.id,ds)||ds===t)) run=0;
+  }
+  window._hmMon={late:m.late,streak:streak,best:best,days:m.days};
+  const pct=m.days?Math.round(100*(m.days-m.late)/m.days):0, col=pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
+  setHtml('hmScore',`<div class="hm-score-row"><div class="hm-ring-w">${hmRing(pct,col)}<b>${m.days?pct+'%':'—'}</b></div><div class="hm-score-t"><b>${m.days?(pct>=90?'Great month 👏':pct>=70?'Doing okay':'Let’s fix the late days'):'New month'}</b><span>On time · ${m.days} day${m.days===1?'':'s'} present · ${m.late} late</span><div class="hm-pills">${streak?`<span class="hm-pill">🔥 ${streak}-day streak</span>`:''}${best>1?`<span class="hm-pill">🏆 Best ${best}</span>`:''}${m.full?`<span class="hm-pill">⏱ ${fmtMins(m.mins/m.full)} / day</span>`:''}</div></div></div>`);
+  // hours bars, last 14 days
+  _hmBars=[]; let mx=T*1.2;
+  for(let i=13;i>=0;i--){
+    const d=new Date(today.getTime()-i*86400000), ds=dstr(d), r=by[ds];
+    let mins=0; if(r&&r.punchIn){ mins=r.punchOut?officeMins(r):(ds===t?Math.max(0,nowMins()-parseTimeMins(r.punchIn.time)):0); }
+    const cls=r?(isLate(r)?'late':'ok'):leaveOn(emp.id,ds)?'leave':checkDayOff(ds)?'off':ds===t?'now':'miss';
+    _hmBars.push({d,ds,r,mins,cls}); mx=Math.max(mx,mins);
+  }
+  const tl=Math.round(100*T/mx);
+  setHtml('hmChart',`<div class="hm-bars" role="img" aria-label="Hours worked each day for the last 14 days"><div class="hm-tline" style="bottom:${tl}%"><span>${fmtMins(T)}</span></div>${_hmBars.map((b,i)=>`<button type="button" class="hm-bar ${b.cls}${b.ds===t?' today':''}" onclick="hmBarTip(${i})" aria-label="${b.d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}: ${b.mins?fmtMins(b.mins):'no hours'}"><i style="height:${b.mins?Math.max(4,Math.round(100*b.mins/mx)):0}%"></i><small>${b.d.toLocaleDateString('en-IN',{weekday:'narrow'})}</small></button>`).join('')}</div><div class="hm-tip" id="hmTip">Tap a bar to see that day.</div>`);
+}
+function hmBarTip(i){
+  const b=_hmBars[i], el=document.getElementById('hmTip'); if(!b||!el) return;
+  document.querySelectorAll('#hmChart .hm-bar').forEach((x,j)=>x.classList.toggle('sel',j===i));
+  const dd=b.d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  el.innerHTML=b.r&&b.r.punchIn?`<b>${dd}</b> · In ${fmt12(b.r.punchIn.time)}${b.r.punchOut?' · Out '+fmt12(b.r.punchOut.time):' · no punch-out yet'} · <b>${fmtMins(b.mins)}</b>${isHalfDay(b.r)?' · half day':''}`:`<b>${dd}</b> · ${({leave:'On leave',off:'Off day',now:'Not punched in yet',miss:'No record'})[b.cls]||''}`;
+}
+function hmSmartDraw(){
+  const el=document.getElementById('hmSmart'); if(!el) return;
+  const show=(ic,txt,fn,tone)=>{ el.hidden=false; el.className='hm-smart'+(tone?' '+tone:''); el.innerHTML=`<span class="hm-si">${ic}</span><span class="hm-st">${txt}</span>${fn?'<span class="hm-sc" aria-hidden="true">›</span>':''}`; el.onclick=fn||null; el.style.cursor=fn?'pointer':'default'; };
+  const hide=()=>{ el.hidden=true; };
+  const rec=_hmRec, me=curRec()||{}; if(_hmOff||!me.id) return hide();
+  if(!(rec&&rec.punchIn)&&leaveOn(me.id,todayStr())) return hide();
+  const st=_D.settings||{}, set=settingsFor(me), start=parseTimeMins(set.start), limit=start+set.grace, now=nowMins(), T=hmTarget(), W=wmOn(), M=window._hmMon||{};
+  if(!(rec&&rec.punchIn)){
+    if(now<start-90) return hide();
+    if(now<start) return show('⏰',`Office ${hx(set.start)} pe — <b>${start-now} min</b> bache`,()=>openPunch());
+    if(now<=limit) return show('⏰',`Abhi Work ON karo — <b>${limit-now} min</b> me late ho jaoge`,()=>openPunch(),'warn');
+    return show('⚠️',`Abhi tak Work ON nahi hua — office ${hx(set.start)} se shuru hai`,()=>openPunch(),'warn');
+  }
+  if(rec.punchOut) return hide();
+  const am=getActiveMeeting(rec); if(am) return hide();
+  const pin=parseTimeMins(rec.punchIn.time), worked=W?Math.round(wmLive().total):Math.max(0,now-pin), endM=parseTimeMins(st.officeEnd||'07:00 PM');
+  if(now>=(st.remindOutAt?parseTimeMins(st.remindOutAt):endM+15)) return show('🌙',`${hx(st.officeEnd||'07:00 PM')} ho gaye — <b>Work OFF</b> karna mat bhoolna`,()=>hmGoToday());
+  if(W&&_wm.mode==='field'&&window._hmLastCheck){ const ago=now-parseTimeMins(window._hmLastCheck); if(ago>=40&&ago<600) return show('📍',`Last location <b>${fmtMins(ago)}</b> pehle mili — GPS on rakho`,()=>openPhoneHelp(),'warn'); }
+  if(W&&_wm.open&&_wm.open.status==='Active'){ const rm=wmRunMin(); if(rm>=180) return show('☕',`“${hx(wmLbl(_wm.open))}” <b>${fmtMins(rm)}</b> se chal raha hai — 5 min break?`); }
+  if(W&&!_wm.open&&['office','wfh','factory'].indexOf(_wm.mode)>=0){
+    const ends=(_wm.items||[]).map(i=>i.endAt).filter(Boolean).sort(), last=ends.length?parseTimeMins(wmClk(ends[ends.length-1])):pin, idle=now-last;
+    if(idle>=30&&idle<720) return show('⏳',`<b>${fmtMins(idle)}</b> se koi kaam log nahi — neeche chuno kya kar rahe ho`,()=>hmGoToday(),'warn');
+  }
+  if(pin>limit&&!isHalfDay(rec)&&worked<120){ const lh=parseInt(st.lateToHalf)||0; return show('🕒',`Aaj <b>${pin-start} min</b> late — is mahine ${M.late||1} late${lh?` · ${lh} late = half day`:''}`,null,'warn'); }
+  if(worked>=T) return show('✅',`Aaj ka <b>${fmtMins(T)}</b> poora — badhiya kaam!`,null,'good');
+  if(T-worked<=90) return show('🎯',`<b>${fmtMins(worked)}</b> hue — ${fmtMins(T-worked)} aur, phir ${fmtMins(T)} poora`,null,'good');
+  if(_tk.sum&&_tk.sum.todo) return show('✅',`<b>${_tk.sum.todo} task</b> pending hai${_tk.sum.todo>1?'n':''}`,()=>tkOpen());
+  if(M.streak>=3) return show('🔥',`<b>${M.streak} din</b> se on-time — aise hi chalte raho`,()=>hmTab('month'),'good');
+  return show('🎯',`<b>${fmtMins(worked)}</b> / ${fmtMins(T)} — aaj ka target`,()=>hmTab('month'));
+}
+function hmGoToday(){ hmTab('today',true); const t=document.getElementById('hmToday'); if(t) try{ t.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
 async function homeLeave(emp,tok){
   try{
     await refreshMyLeaves(emp.id);
@@ -3396,8 +3637,7 @@ async function homeNudge(emp,tok,rec,dayOff){
   const r=(_D.employees||[]).find(e=>String(e.id)===String(emp.id))||emp, el=document.getElementById('hmNote'); if(!el) return;
   if(!dayOff&&!leaveOn(r.id,todayStr())){
     const set=settingsFor(r), nowM=nowMins(), outAt=parseTimeMins((_D.settings||{}).remindOutAt||'07:30 PM');
-    if(!(rec&&rec.punchIn)&&nowM>=parseTimeMins(set.start)+set.grace){ el.innerHTML='<div class="pf-note" onclick="openPunch()">⏰ It is past '+set.start+' — you have not punched in yet. Tap to punch in.</div>'; return; }
-    if(rec&&rec.punchIn&&!rec.punchOut&&nowM>=outAt){ el.innerHTML='<div class="pf-note" onclick="openPunch()">🔵 Do not forget to punch out before you leave. Tap here.</div>'; return; }
+    // "not punched in yet" and "punch out before you leave" are now the smart line (hmSmartDraw)
   }
   let def=r.defaultPass===true; if(!def&&r.passHash){ try{ def=(await hashPass(String(r.id).toUpperCase()))===r.passHash; }catch(e){} }   // the server says whether the password is still the ID
   if(tok!==homeTok) return;
@@ -4005,7 +4245,7 @@ async function homeTrack(emp,tok,rec,dayOff){
   const endTxt=String((_D.settings||{}).trackEnd||'07:30 PM').replace(/^0/,'');
   const on=rec&&rec.punchIn&&!rec.punchOut&&nowMins()<trackEndMins();
   let extra='';
-  if(on&&USE_SHEETS){ try{ const t=await api('myTrail',{empId:emp.id,date:todayStr()}); if(tok!==homeTok) return; if(t&&t.count) extra=' Today: <b>'+t.count+'</b> check'+(t.count>1?'s':'')+(t.last?' · last at '+fmt12(t.last.time)+(t.last.area?' · '+t.last.area:''):'')+'.'; }catch(e){} }
+  if(on&&USE_SHEETS){ try{ const t=await api('myTrail',{empId:emp.id,date:todayStr()}); if(tok!==homeTok) return; window._hmLastCheck=t&&t.last?t.last.time:''; if(t&&t.count) extra=' Today: <b>'+t.count+'</b> check'+(t.count>1?'s':'')+(t.last?' · last at '+fmt12(t.last.time)+(t.last.area?' · '+t.last.area:''):'')+'.'; }catch(e){} }
   el.innerHTML='<div class="trk-note">📍 '+(on?'Location is being recorded while you are punched in':'Location is recorded only from punch-in to punch-out')+' — never after '+endTxt+'.'+extra+'</div>';
 }
 function empNameOf(id){ const e=(_D.employees||[]).find(x=>swKey(x.id)===swKey(id)); return e?e.name:String(id); }
@@ -5426,7 +5666,7 @@ function initReports(){
   const rm=document.getElementById('rptMonth'); if(rm&&!rm.value) rm.value=todayStr().slice(0,7);
   const s=settingsNow();
   document.getElementById('setStart').value=s.start; document.getElementById('setGrace').value=s.grace; document.getElementById('setRate').value=s.rate||'';
-  renderDeptList(); initAlerts(); initRules(); periodInit('rpt');
+  renderDeptList(); try{ wtDraw(); }catch(e){} initAlerts(); initRules(); periodInit('rpt');
   try{ wrDraw(); }catch(e){ console.warn(e); }
 }
 async function saveReportSettings(){
@@ -5983,8 +6223,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.7';</script>
-<script src="notify.js?v=2026-10-22.7"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.8';</script>
+<script src="notify.js?v=2026-10-22.8"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6153,7 +6393,7 @@ function fmCardHtml(m){
     const ps=!!m.pausedAt;
     return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(fmt12(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
   }
-  return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
+  return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(wtNames('field'),'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
 function fmSheet(html,wide){ let el=document.getElementById('fmSheet'); if(!el){ el=document.createElement('div'); el.id='fmSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) fmClose(); }; document.body.appendChild(el); } el.innerHTML='<div class="fm-sheet'+(wide?' wide':'')+'">'+html+'</div>'; }
 function fmClose(){ const el=document.getElementById('fmSheet'); if(el) el.remove(); }
@@ -6181,11 +6421,11 @@ function fmChoose(seq,preset){
   _fm=Object.assign(_fm,{seq:seq,id:'',reason:preset||'',other:'',lat:'',lng:''});
   fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
     <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)">
-    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?FM_PURPOSES:FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" style="display:${preset==='Other'?'block':'none'}"><div class="fm-err" id="fmErr"></div>
+    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?wtNames('field'):FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" style="display:${preset==='Other'?'block':'none'}"><div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
   fmSearch();
 }
-function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?FM_PURPOSES:FM_REASONS,r,'fmReasonPick'); const o=document.getElementById('fmOther'); if(o) o.style.display=r==='Other'?'block':'none'; }
+function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?wtNames('field'):FM_REASONS,r,'fmReasonPick'); const o=document.getElementById('fmOther'); if(o) o.style.display=r==='Other'?'block':'none'; }
 function fmSearch(){
   clearTimeout(_fm.t);
   _fm.t=setTimeout(async()=>{
@@ -6454,7 +6694,7 @@ async function tkLoad(){   // admin tab
 }
 async function tkBadge(force){
   if(!force&&Date.now()-(_tk.sumAt||0)<90000) return; _tk.sumAt=Date.now();
-  try{ const r=await api('taskSummary',{empId:currentEmp.id}); _tk.sum=r; const p=[]; if(r.todo) p.push(r.todo+' to do'); if(r.unread) p.push(r.unread+' new'); if(r.ann) p.push(r.ann+' announcement'+(r.ann>1?'s':'')); _tk.sub=p.join(' · ')||'Nothing pending'; setHtml('hmTkSub',hx(_tk.sub)); }catch(e){}
+  try{ const r=await api('taskSummary',{empId:currentEmp.id}); _tk.sum=r; const p=[]; if(r.todo) p.push(r.todo+' to do'); if(r.unread) p.push(r.unread+' new'); if(r.ann) p.push(r.ann+' announcement'+(r.ann>1?'s':'')); _tk.sub=p.join(' · ')||'Nothing pending'; setHtml('hmTkSub',hx(_tk.sub)); { const nb=document.getElementById('hmNavTk'), n=(r.todo||0)+(r.unread||0)+(r.ann||0); if(nb){ nb.hidden=!n; nb.textContent=n>9?'9+':n; nb.parentNode.setAttribute('aria-label','Tasks: '+_tk.sub); } } try{ hmSmartDraw(); }catch(e){} }catch(e){}
 }
 
 /* ---- the list ---- */
@@ -6885,7 +7125,7 @@ async function wmSetMode(k){
 }
 
 /* Field Work inside the Work ON block */
-function wmFieldChips(){ return '<div class="wm-q">What field work is it?</div>'+fmChips(FM_PURPOSES,'','wmFieldGo'); }
+function wmFieldChips(){ return '<div class="wm-q">What field work is it?</div>'+fmChips(wtNames('field'),'','wmFieldGo'); }
 async function wmFieldGo(p){
   try{ const pl=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:pl.lat,lng:pl.lng,area:pl.area}); if(!r) return; await fmRefresh(); fmChoose(r.seq,p); }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start.'); }
@@ -6907,18 +7147,28 @@ async function wmSiteStart(pl){
 /* Office Work / Work From Home: tasks with run / pause / stop, and the day's timeline */
 const WM_TASKS=['Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
 const WM_CLIENT=['Client Calling','Client Quotation Creation','Demo to Office Client'];
+const WT_MODES=[['office','🏢 Office'],['wfh','🏠 WFH'],['factory','🏭 Factory'],['field','🚗 Field']];
+function wtOwn(){ try{ const o=JSON.parse((_D.settings||{}).workTypes||'{}'); return o&&typeof o==='object'?o:{}; }catch(e){ return {}; } }
+// The task list for a mode: the owner's own (Settings → workTypes) or the built-in one; "Other" always last
+function wtList(m){
+  const own=wtOwn()[m];
+  const def=(m==='field'?FM_PURPOSES:WM_TASKS).filter(n=>n!=='Other').map(n=>({n:n,c:m!=='field'&&WM_CLIENT.indexOf(n)>=0?1:0}));
+  return (Array.isArray(own)&&own.length?own.map(x=>({n:String(x.n||x),c:x.c?1:0})):def).concat([{n:'Other',c:0}]);
+}
+const wtNames=m=>wtList(m).map(x=>x.n);
+const wtClient=(m,k)=>!!(wtList(m).find(x=>x.n===k)||{}).c;
 const wmLbl=i=>i.kind==='Other'&&i.kindOther?i.kindOther:i.kind;
 const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
-function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(WM_TASKS,'','wmTaskPick'); }
+function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(wtNames(_wm.mode||'office'),'','wmTaskPick'); }
 function wmTaskPick(k){
   _fm=Object.assign(_fm,{id:'',task:k,wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)});
-  const cl=WM_CLIENT.indexOf(k)>=0;
+  const cl=wtClient(_wm.mode||'office',k);
   fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
     (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
   if(cl) fmSearch();
 }
 async function wmTaskGo(){
-  const k=_fm.task, cl=WM_CLIENT.indexOf(k)>=0, g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const k=_fm.task, cl=wtClient(_wm.mode||'office',k), g=id=>((document.getElementById(id)||{}).value||'').trim();
   if(k==='Other'&&!g('fmOther')) return fmErr('Write what the work is.');
   if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
   if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
@@ -7049,7 +7299,7 @@ function wrDraw(){
     ${_wr.range==='custom'?`<div class="wr-d" style="margin-top:8px"><input type="date" id="wrFrom" value="${hx(c1||todayStr())}"><span>to</span><input type="date" id="wrTo" value="${hx(c2||todayStr())}"></div>`:''}
     <div class="wr-g">Employees <span style="font-weight:400">(none selected = all)</span></div>${wrChips('emps',emps)}
     <div class="wr-g">Mode</div>${wrChips('modes',WR_MODES)}
-    <div class="wr-g">Purpose / task</div>${wrChips('kinds',WR_KINDS)}
+    <div class="wr-g">Purpose / task</div>${wrChips('kinds',[...new Set(WR_KINDS.filter(k=>k!=='Other').concat(...WT_MODES.map(([m])=>wtNames(m))))])}
     <div class="wr-g">Status</div>${wrChips('status',['Active','Paused','Done','Travelling'])}
     <div class="wr-g">Client name or phone</div><input class="wr-q" id="wrQ" placeholder="Search client" value="${hx(keep)}">
     <div class="wr-a"><button style="background:var(--accent)" onclick="wrShow()">Show</button><button style="background:var(--green)" onclick="wrCsv()">⬇ CSV</button><button style="background:#B45309" onclick="wrPdf()">PDF</button></div>
