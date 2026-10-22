@@ -1,1 +1,1 @@
-{"web": "2026-10-22.11", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Cleanup: old Google Sheet server switch and dead code removed; desktop name fixed; new admins made from Access; report tasks follow the chosen mode"}
+{"web": "2026-10-22.12", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Tasks list scrolls on desktop and the bottom bar no longer covers the message box; Site Monitor is now part of the Live tab; Attendance no longer repeats Working now"}
