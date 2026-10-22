@@ -1358,7 +1358,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
     <div><h2><span id="adminTitle">📋 Admin Dashboard</span><span class="role-chip" id="roleChip" style="display:none"></span></h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="adminDate"></div></div>
-    <div style="display:flex;gap:6px"><button class="org-act" id="adminMyWork" style="display:none" onclick="leaveManage()">🏠 My work</button><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
+    <div style="display:flex;gap:6px"><button class="org-act" id="adminSwitch" style="display:none" onclick="openSwitch()">🔀 Switch</button><button class="org-act" id="adminMyWork" style="display:none" onclick="leaveManage()">🏠 My work</button><button class="org-act" id="myPwBtn" style="display:none" onclick="openMyPassword()">🔑 My password</button><button class="btn-sm btn-danger" style="border:none;cursor:pointer;color:#fff;font-weight:700;padding:7px 13px;border-radius:var(--rs)" onclick="adminLogout()">Logout</button></div>
   </div>
   <div class="tab-row">
     <button class="tab-btn active" onclick="switchTab('attendance')">📅 Attendance</button>
@@ -1729,7 +1729,7 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
     </div>
     <div style="display:flex;gap:7px">
       <button onclick="refreshSiteMonitor('sup')" style="padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">🔄 Refresh</button>
-      <button id="supMyWork" onclick="leaveManage()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">🏠 My work</button>
+      <button id="supSwitch" onclick="openSwitch()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;margin-right:6px">🔀 Switch</button><button id="supMyWork" onclick="leaveManage()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">🏠 My work</button>
       <button onclick="supLogout()" style="padding:6px 12px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit">Logout</button>
     </div>
   </div>
@@ -3006,6 +3006,7 @@ function signInStaffLocal(id,hash,list){   // phone-only copy, or a backend that
   try{ localStorage.setItem(ME_KEY,JSON.stringify({id:e.id,ph:e.passHash})); }catch(_){}
   return {employee:e,requireEmpToken:false};
 }
+let _mgrAll=[];   // every panel this person holds {token, role, departments, assignedEmp}: memory only
 let _mgr=null;   // this person's manage sign-in {token, role, departments, assignedEmp}: kept in memory only, never on the phone
 const MGR_HINT='att_mgr';   // remembers only THAT this person can manage (so Manage still shows after a reload); no token, no password
 function mgrHint(on){ try{ if(on) localStorage.setItem(MGR_HINT,'1'); else localStorage.removeItem(MGR_HINT); }catch(e){} }
@@ -3020,7 +3021,7 @@ async function signInStaff(id,hash){   // the server checks the password and han
   }
   if(r.role==='S') return {owner:r};   // the owner's own username: straight to the admin panel
   empTokSave(r.id,r.token);
-  _mgr=r.manage?Object.assign({},r.manage):null; mgrHint(!!r.manage);
+  _mgr=r.manage?Object.assign({},r.manage):null; _mgrAll=(r.manages||(r.manage?[r.manage]:[])).map(x=>Object.assign({},x)); mgrHint(!!r.manage);
   return {employee:r.employee,requireEmpToken:!!r.requireEmpToken};
 }
 async function migrateMe(){
@@ -3883,7 +3884,7 @@ async function captureAndMark(){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ _mgr=null; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ try{ fmClose(); }catch(e){} _mgr=null; _mgrAll=[]; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -4256,19 +4257,31 @@ async function openSupPanel(m){   // a person with the supervisor role opens the
   document.getElementById('supDateLbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   showScreen('supervisorScreen'); refreshSiteMonitor('sup'); startSafetyWatch('sup'); loadSafety('sup'); periodInit('sup');
 }
-async function enterManage(){
+async function enterManage(role){
   if(!_mgr||!currentEmp) return mgrAsk();
+  const m=(role&&_mgrAll.find(x=>x.role===role))||_mgr;
   loading(true,'Opening Manage…');
   try{
     const who={id:currentEmp.id,name:currentEmp.name,email:currentEmp.email||''};
-    if(_mgr.role==='D') await openAdminPanel({token:_mgr.token,role:'D',name:who.name,id:who.id,departments:_mgr.departments||[],via:'emp'});
-    else await openSupPanel(Object.assign({token:_mgr.token,assignedEmp:_mgr.assignedEmp},who));
+    if(m.role==='S'||m.role==='D') await openAdminPanel({token:m.token,role:m.role,name:who.name,id:who.id,departments:m.departments||[],via:'emp'});
+    else await openSupPanel(Object.assign({token:m.token,assignedEmp:m.assignedEmp},who));
+    syncSwitchBtns();
   }catch(e){ loading(false); _tok=''; _me=null; alert(e.message); }
+}
+/* One person, several panels: this switches between the ones they hold without signing in again */
+const ROLE_LBL={S:'👑 Super Admin',D:'🏢 Department Admin',V:'📋 Supervisor'};
+function syncSwitchBtns(){ const on=_mgrAll.length>1&&_me&&_me.via==='emp'; ['adminSwitch','supSwitch'].forEach(i=>{ const b=document.getElementById(i); if(b) b.style.display=on?'inline-block':'none'; }); }
+function openSwitch(){
+  const cur=_me&&_me.role;
+  fmSheet('<h3 style="margin-bottom:8px">Switch panel</h3><div class="fm-chips" style="flex-direction:column;align-items:stretch" id="swList">'
+    +'<button type="button" class="fm-chip" onclick="fmClose();leaveManage()">🏠 My work (staff)</button>'
+    +_mgrAll.map(m=>`<button type="button" class="fm-chip${m.role===cur?' on':''}" onclick="fmClose();enterManage('${m.role}')">${ROLE_LBL[m.role]||m.role}${m.role==='D'&&m.departments&&m.departments.length?' · '+hx(m.departments.join(', ')):''}</button>`).join('')
+    +'</div><button class="btn btn-outline" style="margin-top:10px" onclick="fmClose()">Close</button>');
 }
 async function leaveManage(){   // back to My work, with the staff sign-in
   try{ stopSafetyWatch(); }catch(e){}
   _tok=''; _me=null; currentSupervisor=null; document.body.classList.remove('rS','rD','rA','rV');
-  ['adminMyWork','supMyWork'].forEach(i=>{ const e=document.getElementById(i); if(e) e.style.display='none'; });
+  ['adminMyWork','supMyWork','adminSwitch','supSwitch'].forEach(i=>{ const e=document.getElementById(i); if(e) e.style.display='none'; });
   if(!currentEmp){ showScreen('loginScreen'); return; }
   loading(true,'Opening…');
   try{ await finishStaffLogin({employee:currentEmp}); }catch(e){ loading(false); }
@@ -4284,7 +4297,7 @@ async function mgrOpen(){
     const r=await api('login',{kind:'user',username:String(currentEmp.id),passHash:await hashPass(pw)});
     loading(false);
     if(!r.manage){ mgrHint(false); syncManageBtn(); fmClose(); alert('You do not have manage access now.'); return; }
-    _mgr=Object.assign({},r.manage); fmClose(); enterManage();
+    _mgr=Object.assign({},r.manage); _mgrAll=(r.manages||[r.manage]).map(x=>Object.assign({},x)); fmClose(); enterManage();
   }catch(e){ loading(false); mgrAsk(e.message); }
 }
 async function handleAdminLogin(){
@@ -4319,11 +4332,11 @@ function applyRoleUI(){
   const t=document.getElementById('adminTitle'), c=document.getElementById('roleChip');
   t.textContent=isSuper()?'👑 Super Admin':isDeptAdmin()?'🏢 Department Admin':'📋 Admin Dashboard';
   c.style.display=isDeptAdmin()?'inline-block':'none'; c.textContent=myDepts().join(', ');
-  document.getElementById('myPwBtn').style.display=(isSuper()||isDeptAdmin())?'inline-block':'none';
+  document.getElementById('myPwBtn').style.display=((isSuper()||isDeptAdmin())&&_me.via!=='emp')?'inline-block':'none';
   fillEmpDeptSelect();
 }
-function viaEmpEnd(){ if(_me&&_me.via==='emp'){ meClear(); mgrHint(false); _mgr=null; } }   // Logout inside Manage signs the person out of this phone, not only the panel
-function adminLogout(){ stopSafetyWatch(); if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
+function viaEmpEnd(){ if(_me&&_me.via==='emp'){ meClear(); mgrHint(false); _mgr=null; _mgrAll=[]; } }   // Logout inside Manage signs the person out of this phone, not only the panel
+function adminLogout(){ try{ fmClose(); }catch(e){} stopSafetyWatch(); if(_tok){ viaEmpEnd(); endManagerSession(false); return; } _actor=''; ['adminUser','adminPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); }
 
 /* ══════════════════════════════════════════════════════════════
    SUPERVISOR LOGIN
@@ -4748,7 +4761,7 @@ function acChips(list,sel,fn){ return '<div class="fm-chips">'+list.map(x=>`<but
 function empAccess(id){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
   const roles=String(e.roles||'').split(',').map(x=>x.trim());
-  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||''});
+  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,own:roles.indexOf('super')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||''});
   acDraw();
 }
 function acDraw(){
@@ -4758,7 +4771,8 @@ function acDraw(){
     const others=(_D.employees||[]).filter(x=>String(x.id)!==String(AC.id)).map(x=>({id:String(x.id).toUpperCase(),label:x.name+' · '+x.id}));
     const depts=acDepts().map(d=>({id:d,label:d}));
     roles=`<div class="ld-glass" style="margin-bottom:10px"><b>Manage access</b>
-      <div class="fm-chips" style="margin:8px 0"><button class="fm-chip${AC.sup?' on':''}" onclick="acTog('sup')">Supervisor</button><button class="fm-chip${AC.dep?' on':''}" onclick="acTog('dep')">Department Admin</button></div>
+      <div class="fm-chips" style="margin:8px 0"><button class="fm-chip${AC.sup?' on':''}" onclick="acTog('sup')">Supervisor</button><button class="fm-chip${AC.dep?' on':''}" onclick="acTog('dep')">Department Admin</button>${_me&&_me.via!=='emp'||AC.own?`<button class="fm-chip${AC.own?' on':''}" onclick="acTog('own')">👑 Owner (Super Admin)</button>`:''}</div>
+      ${AC.own?'<div style="font-size:12px;color:var(--soft)">Links your owner login to this person: one sign-in then opens staff, Super Admin and the panels ticked here. Your old owner username keeps working.</div>':''}
       ${AC.sup?`<div style="font-size:12px;font-weight:700;margin:6px 0 4px">Supervisor looks after</div>${acChips(others,AC.assigned,'acPickAs')}`:''}
       ${AC.dep?`<div style="font-size:12px;font-weight:700;margin:8px 0 4px">Department Admin of</div>${depts.length?acChips(depts,AC.depts,'acPickDp'):'<div style="font-size:12px;color:var(--soft)">No departments yet. Add one in Settings first.</div>'}`:''}
       <label style="margin-top:10px">Your owner password (to confirm)</label><input type="password" id="acPw" autocomplete="current-password" placeholder="Your password">
@@ -4783,7 +4797,8 @@ async function acRefresh(){ const l=await api('getEmployees'); _D.employees=l; r
 async function acSaveMail(){ acKeep(); const m=(document.getElementById('acMail').value||'').trim(); if(await acApi('setEmpEmail',{id:AC.id,email:m},acRefresh)) acMsg(m?'Email saved.':'Email removed.'); }
 async function acSaveRoles(){
   acKeep(); const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
-  const ok=await acApi('setEmployeeRoles',{id:AC.id,supervisor:AC.sup,deptAdmin:AC.dep,departments:[...AC.depts],assigned:[...AC.assigned],confirmPass:await hashPass(pw)},acRefresh);
+  const ok=AC.own?await acApi('linkOwnerToEmp',{empId:AC.id,departments:AC.dep?[...AC.depts]:[],assigned:AC.sup?[...AC.assigned]:[],confirmPass:await hashPass(pw)},acRefresh)
+    :await acApi('setEmployeeRoles',{id:AC.id,supervisor:AC.sup,deptAdmin:AC.dep,departments:[...AC.depts],assigned:[...AC.assigned],confirmPass:await hashPass(pw)},acRefresh);
   if(ok) acMsg('Roles saved. They apply the next time this person opens Manage.');
 }
 async function acActive(on){
@@ -5963,8 +5978,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.3';</script>
-<script src="notify.js?v=2026-10-22.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.4';</script>
+<script src="notify.js?v=2026-10-22.4"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
