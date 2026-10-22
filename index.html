@@ -5983,8 +5983,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.6';</script>
-<script src="notify.js?v=2026-10-22.6"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.7';</script>
+<script src="notify.js?v=2026-10-22.7"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6800,10 +6800,16 @@ async function tkAnnPick(inp){
     else{ const a=tkDocOf(f); if(typeof a==='string') throw new Error(a); _tk.annAtt=a; }
     e.style.color='var(--ink2)'; e.textContent='Attached: '+(_tk.annAtt.name||'photo'); }catch(x){ e.style.color='#B42318'; e.textContent=x.message; }
 }
+let _annBusy=false;
 async function tkAnnPost(){
+  if(_annBusy) return;   // one post at a time: a slow tap-tap-tap used to publish the same announcement several times
+  _annBusy=true;
   const e=document.getElementById('tkAErr'), v=k=>(document.getElementById(k)||{}).value||'';
+  const btns=[...document.querySelectorAll('[onclick*="tkAnnPost"]')]; btns.forEach(b=>b.disabled=true);
+  if(e){ e.style.color='var(--ink2)'; e.textContent='Posting…'; }
   try{ let att=_tk.annAtt||''; if(att&&att.blob) att=await tkUpload('ann',att);
-    await api('postAnnouncement',{title:v('tkAT'),text:v('tkAX'),att:att}); _tk.annAtt=null; _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(x){ e.style.color='#B42318'; e.textContent=x.message; }
+    await api('postAnnouncement',{title:v('tkAT'),text:v('tkAX'),att:att}); _tk.annAtt=null; _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(x){ if(e){ e.style.color='#B42318'; e.textContent=x.message; } }
+  finally{ _annBusy=false; btns.forEach(b=>b.disabled=false); }
 }
 async function tkAnnPin(id,on){ try{ await api('pinAnnouncement',{id:id,pinned:on}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
 async function tkAnnDel(id){ if(!confirm('Delete this announcement for everyone?')) return; try{ await api('deleteAnnouncement',{id:id}); _tk.ann=(await api('annList',{}))||[]; tkAnnPaint(); tkRows(); }catch(e){} }
