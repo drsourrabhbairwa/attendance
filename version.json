@@ -1,1 +1,1 @@
-{"web": "2026-10-22.10", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Tasks: bottom bar stays while in Tasks; summary cards (For me, Due today, Late, Given by me); Give a task button"}
+{"web": "2026-10-22.11", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Cleanup: old Google Sheet server switch and dead code removed; desktop name fixed; new admins made from Access; report tasks follow the chosen mode"}

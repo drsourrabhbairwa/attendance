@@ -77,7 +77,6 @@ textarea{min-height:72px;resize:vertical}
 /* Top bar */
 .topbar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;gap:8px}
 .topbar h2{font-size:17px;font-weight:700}
-.topbar-right{display:flex;gap:8px;align-items:center}
 /* Role switcher */
 .role-row{display:flex;gap:3px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:3px;margin-bottom:16px}
 .role-btn{flex:1;padding:8px 6px;border:none;background:transparent;border-radius:7px;font-size:12px;font-weight:700;color:var(--soft);cursor:pointer;font-family:inherit;transition:all .15s}
@@ -293,7 +292,7 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .hm-hero::before{content:'';position:absolute;right:40px;bottom:-60px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
 .hm-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
 .hm-av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
-.hm-hi{font-size:12px;opacity:.8}.hm-nm{font-size:19px;font-weight:700;line-height:1.2}
+.hm-nm{font-size:19px;font-weight:700;line-height:1.2}
 .hm-out{margin-left:auto;background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .hm-date{margin-top:14px;font-size:13px;opacity:.85;position:relative;z-index:1}
 .hm-today{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:-32px 10px 14px;box-shadow:0 10px 26px rgba(24,32,28,.12);position:relative;z-index:2}
@@ -604,9 +603,6 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 <style id="wmCss">
 /* Work Mode: one clean block (Work ON → mode → purpose / task → run, pause, stop → Work OFF). Glass look comes from the app's own surface tokens. */
 .wm-mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;min-width:0}
-.wm-chip{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);font-weight:700;font-size:13px;color:var(--accent2);overflow-wrap:anywhere;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
-.wm-chip small{font-weight:600;color:var(--soft)}
-.wm-link{background:none;border:0;padding:8px 4px;min-height:44px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:underline;cursor:pointer}
 .wm-i{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .wm-hrs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .wm-hrs>div{min-width:0;padding:10px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
@@ -621,13 +617,6 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-opt[disabled]{opacity:.55;cursor:default}
 .wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
-.wm-cards{display:grid;gap:8px;margin:8px 0}
-.wm-card{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;text-align:left;border-radius:16px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 4px 14px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
-.wm-card .ic{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#27968B,#12604F);color:#fff}
-.wm-card .tx{min-width:0;flex:1}.wm-card b{display:block;font-size:15px;overflow-wrap:anywhere}.wm-card small{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
-.wm-card.on{border-color:var(--accent);background:var(--accentBg);box-shadow:0 0 0 3px rgba(31,127,119,.22)}
-.wm-card .sug{flex:none;font-size:11px;font-weight:700;color:var(--accent2);background:rgba(255,255,255,.8);border-radius:999px;padding:3px 8px}
-.wm-note{font-size:12px;color:var(--soft);margin-top:8px;line-height:1.5;overflow-wrap:anywhere}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
 .wm-cap{font-size:13px;color:var(--soft);margin:6px 0}.wm-cap b{color:var(--ink,inherit)}
 .wm-tl{margin-top:14px}.wm-tl ul{list-style:none;margin:6px 0 0;padding:0}.wm-tl li{padding:8px 0;border-top:1px solid rgba(0,0,0,.08);overflow-wrap:anywhere}.wm-tl li b{display:block;font-size:14px}.wm-tl li span{display:block;font-size:12px;color:var(--soft)}.wm-tl li em{display:block;font-size:12px;font-style:normal;margin-top:2px}
@@ -1037,28 +1026,21 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   #cameraScreen .card,#fixScreen .card{padding:26px 30px}
 }
 /* ═══ Desktop: a real wide layout, not a stretched phone ═══ */
-.hm-cols,.hm-colL,.hm-colR{display:block}
 @media(min-width:1000px){
-  body[data-screen="homeScreen"] #app{max-width:1180px}
   #homeScreen.active{display:block}
-  #homeScreen .hm-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:22px;padding:20px 28px;border-radius:28px;margin-bottom:20px}
+  #homeScreen .hm-hero{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:22px;row-gap:6px;padding:20px 76px 48px 28px;border-radius:28px}
   #homeScreen .hm-hero .hm-brand{margin:0;grid-column:1}
-  #homeScreen .hm-hero .hm-top{grid-column:2;justify-self:start;gap:14px}
-  #homeScreen .hm-hero .hm-date{grid-column:3;margin:0;text-align:right}
-  #homeScreen .hm-nm{font-size:24px}
-  .hm-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
-  .hm-colL,.hm-colR{display:flex;flex-direction:column;gap:14px;min-width:0}
-  .hm-colL>*,.hm-colR>*{margin:0}
-  .hm-colR .hm-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
-  .hm-colL>:empty,.hm-colR>:empty{display:none}
-  #homeScreen .hm-hero{padding-right:76px}
+  #homeScreen .hm-hero .hm-top{grid-column:2;gap:14px;flex-wrap:nowrap;min-width:0}
+  #homeScreen .hm-hero .hm-top>div:nth-child(2){flex:1 1 auto;min-width:0}
+  #homeScreen .hm-hero .hm-date{grid-column:1/-1;margin:4px 0 0;text-align:left}
+  #homeScreen .hm-nm{font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+  #homeScreen .hm-top.long .hm-tools{width:auto}
   #homeScreen .wm-opt{min-height:64px}
   #homeScreen .wm-opt b{font-size:13.5px}
   /* admin / supervisor: use the width */
   #adminScreen .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   #adminScreen .tbl{font-size:14px}
 }
-@media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:1320px} }
 
 /* ═══ Employee home v2: tabs, smart line, quick actions, my month ═══ */
 #homeScreen{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
@@ -1866,28 +1848,12 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 </div><!-- #app -->
 <script>
 /* ══════════════════════════════════════════════════════════════
-   CONFIG — paste your Apps Script URL and secret here
+   CONFIG — the server
 ══════════════════════════════════════════════════════════════ */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysA72Mt6O6CTKGXnDdy0BWopVfezEjnm0dwuvFw6s2i9D_Q5Ndb__ko2rXVDbp5h48ew/exec';  // the old server (Google Apps Script + Sheet)
-const FIREBASE_URL = 'https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';   // the new server (Firebase)
-const DEFAULT_BACKEND = 'firebase';   // cut-over day: change this one word to 'firebase' (and back to 'appsscript' to roll back)
-/* Open the page with ?backend=firebase to try the new server on this device only; ?backend=appsscript goes back. Everyone else keeps DEFAULT_BACKEND. */
-const BACKEND = (function(){
-  let b = DEFAULT_BACKEND;
-  try{
-    const q = new URLSearchParams(location.search).get('backend');
-    if(q==='firebase'||q==='appsscript'){ if(q===DEFAULT_BACKEND) localStorage.removeItem('amk_backend'); else localStorage.setItem('amk_backend', q); }
-    const k = localStorage.getItem('amk_backend');
-    if(k==='firebase'||k==='appsscript') b = k;
-  }catch(e){}
-  return b;
-})();
-const SCRIPT_URL = BACKEND==='firebase' ? FIREBASE_URL : APPS_SCRIPT_URL;
-if(BACKEND!==DEFAULT_BACKEND){   // a visible reminder on a device that is not using the normal server
-  document.addEventListener('DOMContentLoaded',function(){ const d=document.createElement('div'); d.textContent='TEST SERVER: '+BACKEND; d.style.cssText='position:fixed;left:50%;top:0;transform:translateX(-50%);z-index:99999;background:#b45309;color:#fff;font:600 11px system-ui,sans-serif;padding:2px 10px;border-radius:0 0 8px 8px;pointer-events:none'; document.body.appendChild(d); });
-}
-const API_SECRET = 'CHANGE_THIS_SECRET';  // ← must match SECRET_KEY in Apps Script
-const USE_SHEETS = SCRIPT_URL.length > 0;
+const SCRIPT_URL = 'https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api';   // Firebase (the old Google Apps Script + Sheet server is retired)
+try{ localStorage.removeItem('amk_backend'); }catch(e){}   // a phone that was switched to the old server for testing goes back to Firebase
+const API_SECRET = 'CHANGE_THIS_SECRET';  // ← must match SECRET in the Firebase function
+const USE_SHEETS = true;   // always online now (the old offline / local-storage demo mode is gone)
 const APK_URL = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/download/amitek-attendance.apk';     // ← optional: download link of the Android app (shown on the sign-in page)
 
 /* ══════════════════════════════════════════════════════════════
@@ -2314,8 +2280,6 @@ function distMeters(lat1,lng1,lat2,lng2){
   return R*2*Math.asin(Math.sqrt(a));
 }
 function updateBadges(){
-  const cls=USE_SHEETS?'sbadge sb-sheets':'sbadge sb-local';
-  const txt=USE_SHEETS?'✅ Google Sheets':'💾 Local Storage';
 }
 /* Minutes spent away, by kind ('personal' or '' for meetings); an absence still open counts up to now */
 function awayMins(rec,kind){
@@ -2431,7 +2395,6 @@ function isoAdd(ds,n){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+n
 function leaveDates(from,to){ const out=[]; if(!from) return out; to=to||from; for(let d=from,i=0;d<=to&&i<400;d=isoAdd(d,1),i++) out.push(d); return out; }
 function workDaysBetween(from,to){ return leaveDates(from,to).filter(d=>!checkDayOff(d)).length; }
 function leaveDays(l){ return l.fromDate?(+l.days||workDaysBetween(l.fromDate,l.toDate)):1; }
-function usedDays(leaves,type){ return leaves.filter(l=>l.type===type&&l.status==='approved').reduce((s,l)=>s+leaveDays(l),0); }
 /* ── Leave policy: CL 2 a month (unused days carry forward in the year) · VL 5 a year · ML 5 a year · fresh start each leave year ── */
 const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function leavePolicy(){
@@ -2503,7 +2466,6 @@ async function syncLeaves(force){   // admin screens: re-read leaves so a leave 
 }
 function leaveSpan(l){ if(!l.fromDate) return ''; const f=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); const n=leaveDays(l); return f(l.fromDate)+(l.toDate&&l.toDate!==l.fromDate?' → '+f(l.toDate):'')+' · '+n+' day'+(n>1?'s':''); }
 async function refreshMyLeaves(empId){
-  if(!USE_SHEETS) return;
   try{ const f=await api('getLeaves',{empId}); const e=String(empId).toUpperCase(); _D.leaves=(_D.leaves||[]).filter(l=>String(l.empId).toUpperCase()!==e).concat(f||[]); saveCache(); }catch(err){}
 }
 function lvDatesChanged(){
@@ -2582,7 +2544,6 @@ async function loadFixHistory(){
   }catch(e){ el.innerHTML=''; }
 }
 async function fixNudge(emp,tok){
-  if(!USE_SHEETS) return;
   try{
     const l=await api('getCorrections',{empId:emp.id}); if(tok!==homeTok) return;
     const p=(l||[]).filter(x=>x.status==='pending').length, s=document.getElementById('hmFixSub');
@@ -2591,7 +2552,6 @@ async function fixNudge(emp,tok){
 }
 async function loadCorrectionsTab(){
   const el=document.getElementById('fxAdminList'); if(!el) return;
-  if(!USE_SHEETS){ el.innerHTML='<div class="msg msg-error show">Corrections need the Google Sheet connection.</div>'; return; }
   const f=document.getElementById('fxFilter').value;
   el.innerHTML='<div class="empty">⏳ Loading…</div>';
   try{
@@ -2616,7 +2576,6 @@ function setTabBadge(tab,n){
   b.textContent=b.dataset.l+(n?' ('+n+')':'');
 }
 async function adminBadges(){
-  if(!USE_SHEETS) return;
   try{
     const[c,l]=await Promise.all([api('getCorrections',{}),api('getLeaves',{})]);
     if(l){ _D.leaves=l; saveCache(); }
@@ -2771,7 +2730,6 @@ function sosFire(){
 }
 async function sosTransmit(note){
   const emp=currentEmp; if(!emp) return;
-  if(!USE_SHEETS){ _sos.sending=false; _sos.err='The emergency alert needs the online version. Please call now.'; renderSOS(); return; }
   const fresh=freshFix().then(f=>f,()=>null);
   let pos=await Promise.race([fresh,sleep(6000).then(()=>null)]), usedFresh=!!pos;
   if(!pos&&capLat&&Date.now()-capAt<300000) pos={lat:+capLat,lng:+capLng,acc:capAcc||0};
@@ -2829,7 +2787,6 @@ function renderSafetyViews(){
 }
 async function loadSafety(role){
   const el=document.getElementById(role==='sup'?'supSafety':'safetyContent'); if(!el) return;
-  if(!USE_SHEETS){ el.innerHTML='<div class="empty"><div class="eicon">🚨</div>Safety needs the online (Google Sheets) version.</div>'; return; }
   try{ _saf=await api('getSafety',{})||_saf; }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; return; }
   renderSafety(el.id,role);
 }
@@ -2880,7 +2837,6 @@ function renderSafety(elId,role){
   if(focusId&&focusId.startsWith('an_')){ const i=document.getElementById(focusId); if(i) i.focus(); }
 }
 async function askCheck(empId){
-  if(!USE_SHEETS){ safToast('Check now needs the online version.',true); return; }
   try{
     const r=await api('requestCheck',{empId}); safToast(r&&r.already?'Already asked — waiting for the answer.':'Asked '+empNameOf(empId)+' to confirm their location.');
     document.getElementById('detailModal').classList.remove('open');
@@ -2899,7 +2855,6 @@ async function alertAct(id,status){
 let _audit=[];
 async function loadAuditTab(){
   const b=document.getElementById('logBody'); if(!b) return;
-  if(!USE_SHEETS){ b.innerHTML=''; document.getElementById('logEmpty').style.display='block'; return; }
   b.innerHTML='<tr><td colspan="5" style="color:var(--soft)">⏳ Loading…</td></tr>';
   try{ _audit=await api('getAudit',{limit:300})||[]; renderAudit(); }catch(e){ b.innerHTML='<tr><td colspan="5" style="color:var(--red)">⚠️ '+e.message+'</td></tr>'; }
 }
@@ -2998,7 +2953,7 @@ function wtDel(i){ const L=wtCur(); if(L.length<=1){ const e=document.getElement
   if(!confirm('Remove "'+L[i].n+'"? Old entries stay in the reports.')) return; const n=L[i].n; L.splice(i,1); wtSave(L,'"'+n+'" removed'); }
 async function setEmpWT(id,val){
   try{ if(USE_SHEETS) await api('setWorkType',{id,workType:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.workType=val; saveCache(); }
-  catch(err){ alert('Error: '+err.message+(/Unknown action|Unknown work/i.test(err.message)?'\n(Update the Apps Script to the latest version.)':'')); renderEmpList(); }
+  catch(err){ alert('Error: '+err.message); renderEmpList(); }
 }
 async function setEmpDept(id,val){
   try{ if(USE_SHEETS) await api('setDepartment',{id,department:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.department=val; saveCache(); }
@@ -3025,7 +2980,6 @@ async function refreshAlertStatus(){
   const el=document.getElementById('alStatus'); if(!el||!USE_SHEETS) return;
   try{ const s=await api('alertStatus');
     el.innerHTML='⏱ Reminder timer: <b style="color:'+(s.timer?'var(--green)':'var(--red)')+'">'+(s.timer?'on':'off')+'</b> · ✉️ E-mail: '+(s.mailLeft===null?'<b style="color:var(--red)">not allowed yet</b>':'<b>'+s.mailLeft+'</b> left today')+' · 📁 Drive folder: '+(s.drive?'<b style="color:var(--green)">ready</b>':'not used yet');
-    if(s.mailLeft===null||!s.timer) el.innerHTML+='<br>If something says off / not allowed: open the Apps Script editor, run <b>authorizeAll</b> once, then Deploy → New version.';
   }catch(e){ el.textContent=''; }
 }
 function alertSettings(){
@@ -3145,7 +3099,6 @@ function empTokSave(id,tok){
 }
 function trackerTok(empId){ const me=meLoad(); return (_empTok&&me&&String(me.id).toUpperCase()===String(empId).toUpperCase())?_empTok:''; }   // a site tracker only ever gets the sign-in of its own person
 function empTokLoad(){ const me=meLoad(); _empTok=(me&&me.tok)||''; return _empTok; }
-function meSave(emp){ if(_empTok) empTokSave(emp.id,_empTok); }
 function meLoad(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||'null'); }catch(e){ return null; } }
 function meClear(){ _empTok=''; try{ localStorage.removeItem(ME_KEY); }catch(e){} }
 function meMatch(){
@@ -4109,7 +4062,6 @@ async function captureAndMark(){
     else if(punchMode==='meeting_back'){ await storeMeetingBack(currentEmp.id,todayStr(),activeMeetingSeq||1,punch); updateMeetingCache(currentEmp.id,todayStr(),'back',punch,activeMeetingSeq||1); }
     else if(punchMode==='visit'){ await storeVisit(Object.assign({},punch,{customer,note:vnote,accuracy:capAcc})); extra=' · '+customer; }
     else if(punchMode==='ot_start'||punchMode==='ot_stop'){
-      if(!USE_SHEETS) throw new Error('Overtime needs the Google Sheet connection.');
       const r=await api(punchMode==='ot_start'?'startOvertime':'stopOvertime',{empId:currentEmp.id,name:currentEmp.name,photo,lat:String(lat),lng:String(lng),accuracy:capAcc,area:punch.area,reason:punchMode==='ot_start'?otReasonText():''});
       if(r&&r.time) punch.time=otClock(r.time);
       if(punchMode==='ot_stop'&&r&&r.minutes!==undefined) extra=' · '+fmtMins(r.minutes)+' recorded, sent to your admin to approve';
@@ -4565,7 +4517,7 @@ async function handleAdminLogin(){
       let r;
       syncCompany();
       try{ r=await api('login',{kind:'manager',username:u,passHash:await hashPass(p)}); }
-      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect username or password.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
+      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect username or password.':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[]};
       const fresh=await api('getAll',{date:todayStr()});     // only what this person may see
       Object.assign(_D,{employees:[],attendance:[],leaves:[],quotas:{},supervisors:[]},fresh,{loadedAt:Date.now()});
@@ -4603,7 +4555,7 @@ async function handleSupLogin(){
       let r;
       syncCompany();
       try{ r=await api('login',{kind:'supervisor',name,passHash:await hashPass(pass)}); }
-      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect supervisor credentials.':/Unknown action|Unauthorized|Not allowed|Please sign in/i.test(e.message)?'The server script is still the OLD version. Paste the new code in Apps Script and Deploy a New version. ('+e.message+')':e.message; err.classList.add('show'); return; }
+      catch(e){ loading(false); err.textContent=/Wrong ID or password/i.test(e.message)?'Incorrect supervisor credentials.':e.message; err.classList.add('show'); return; }
       _tok=r.token; _me={role:'V',name:r.name,id:r.id,departments:[]};
       sup={id:r.id,name:r.name,assignedEmp:r.assignedEmp||'',email:r.email||''};
     } else {
@@ -4956,7 +4908,6 @@ async function submitLeaveNow(){
 let _ssc=null;
 async function loadStaffSignIn(){
   const el=document.getElementById('staffSignInCard'); if(!el) return;
-  if(!USE_SHEETS){ el.innerHTML=''; return; }
   let s; try{ s=await api('staffSignInStatus'); }catch(e){ _ssc=null; el.innerHTML=''; return; }   // an older backend has no counter: no card
   _ssc=s;
   const total=+s.total||0, seen=+s.seen||0, ns=s.notSeen||[], pct=total?Math.round(seen*100/total):0, on=!!s.requireEmpToken, canSwitch=isSuper()||(_me&&_me.role==='A');
@@ -4986,7 +4937,7 @@ async function signOutPhones(id){
   if(!confirm('Sign out every phone signed in as '+nm+' ('+id+')?\nTheir password stays the same: they can sign in again at once.')) return;
   loading(true,'Signing out…');
   try{ await api('signOutStaff',{id}); loading(false); loadStaffSignIn(); const ok=document.getElementById('empOk'); if(ok){ ok.textContent=nm+' is signed out on every phone. The password is unchanged.'; ok.classList.add('show'); } }
-  catch(err){ loading(false); alert('Error: '+err.message+(/Unknown action/i.test(err.message)?'\n(Update the Apps Script to the latest version.)':'')); }
+  catch(err){ loading(false); alert('Error: '+err.message); }
 }
 async function renderEmpList(){
   renderBdayAdmin(); loadStaffSignIn();
@@ -5141,8 +5092,7 @@ async function renderHolList(){
     const box=document.getElementById('holList'); box.innerHTML=html; box.scrollTop=0;
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
-const HOL_OLD_BACKEND='Your Google Apps Script is an older version and does not know how to cancel a holiday yet.\n\nOpen Extensions → Apps Script, paste the latest backend file (v21), Save, then Deploy → Manage deployments → Edit → New version → Deploy. After that, try again.';
-const holErr=e=>/Unknown action/i.test(e.message||'')?HOL_OLD_BACKEND:'Error: '+e.message;
+const holErr=e=>'Error: '+e.message;
 
 async function addHoliday(){
   const date=document.getElementById('hDate').value,name=document.getElementById('hName').value.trim();
@@ -5255,7 +5205,7 @@ async function openRoute(empId,name,date){
 const PLACE_ICON={office:'🏢',factory:'🏭',other:'📍'};
 const canEditPlaces=()=>!!_me&&(_me.role==='S'||_me.role==='A');
 const staffAt=pid=>(_D.employees||[]).filter(e=>placeIds(e).includes(pid));
-function placeApiErr(e){ return e.message+(/Unknown action/i.test(e.message)?'\n(Update the Apps Script to the latest version.)':''); }
+function placeApiErr(e){ return e.message; }
 async function refreshPlaces(){ try{ if(USE_SHEETS){ const l=await api('getPlaces',{}); if(l) _D.places=l; } }catch(e){} }
 async function renderPlaces(){
   const el=document.getElementById('placeList'); if(!el) return;
@@ -5389,7 +5339,7 @@ const otOpenRow=()=>_otMine.find(r=>r.status==='open')||null;
 const otClock=t=>String(fmt12(t)).replace(/:\d\d (AM|PM)/i,' $1').replace(/^0/,'');
 const otHM=m=>{ m=Math.round(+m||0); return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
 const otWhen=r=>new Date(r.date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-const otApiErr=e=>/Unknown action/i.test(e.message)?'The server script is still an old version. Paste the new code in Apps Script and Deploy a New version.':e.message;
+const otApiErr=e=>e.message;
 function otParse(v){ v=String(v||'').trim(); if(!v) return NaN; const a=v.match(/^(\d+):(\d{1,2})$/); if(a) return (+a[1])*60+(+a[2]); const n=parseFloat(v.replace(',','.')); return isFinite(n)?Math.round(n*60):NaN; }
 function otRunTxt(o){ if(!o||o.date!==todayStr()) return 'running'; return fmtMins(Math.max(0,nowMins()-parseTimeMins(o.startTime))); }
 async function otRefresh(){
@@ -5421,7 +5371,6 @@ function otBlockMsg(g){   // '' = fine (same rule as the server: a Strict place 
 function cancelCam(){ if(/^ot_/.test(punchMode)) loadHome(); else loadCameraScreen(); }
 async function openOvertime(kind){
   if(!currentEmp) return;
-  if(!USE_SHEETS){ alert('Overtime needs the Google Sheet connection.'); return; }
   showScreen('cameraScreen');
   refreshMyGeo();
   fillAv('empAvatar',curRec()||currentEmp);
@@ -5527,7 +5476,7 @@ async function showTeamLeave(ym){
   if(!_tl.data[ym]) body.innerHTML='<div class="empty">⏳ Loading…</div>';
   document.getElementById('detailModal').classList.add('open');
   let leaves; try{ leaves=await tlLoad(ym); }
-  catch(e){ if(_tl.ym===ym) body.innerHTML='<div class="msg msg-error show">⚠️ '+hx(/Unknown action/i.test(e.message)?'Ask your admin to update the Apps Script (backend v20) to see team leave.':e.message)+'</div>'; return; }
+  catch(e){ if(_tl.ym===ym) body.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; return; }
   if(_tl.ym===ym) renderTeamLeave(ym,leaves);
 }
 function tlPick(ds){ _tl.sel=ds; renderTeamLeave(_tl.ym,_tl.data[_tl.ym]||[]); }
@@ -5596,14 +5545,13 @@ function perShift(pfx,dir){
 async function perRun(pfx){
   const out=document.getElementById('perOut_'+pfx); if(!out) return;
   const R=perRange(pfx);
-  if(!USE_SHEETS){ out.innerHTML='<div class="msg msg-error show">The sheet needs the Google Sheet connection.</div>'; return; }
   out.innerHTML='<div class="empty">⏳ Loading…</div>';
   try{
     await syncLeaves();
     const d=await api('periodReport',{start:R.start,end:R.end});
     _per[pfx]={mode:R.mode,d};
     if(document.getElementById('perOut_'+pfx)) document.getElementById('perOut_'+pfx).innerHTML=perHtml(R.mode,d);
-  }catch(e){ out.innerHTML='<div class="msg msg-error show">⚠️ '+hx(/Unknown action/i.test(e.message)?'Update the Apps Script to the latest version (v20) to use the sheet.':e.message)+'</div>'; }
+  }catch(e){ out.innerHTML='<div class="msg msg-error show">⚠️ '+hx(e.message)+'</div>'; }
 }
 function perTitle(mode,d){
   const f=(ds,o)=>new Date(ds+'T12:00:00').toLocaleDateString('en-IN',o);
@@ -5691,7 +5639,6 @@ async function loadReports(){
   const el=document.getElementById('repContent');
   const mv=(document.getElementById('rptMonth').value||todayStr().slice(0,7)).trim(), mm=mv.match(/^(\d{4})-(\d{1,2})$/);
   if(!mm){ el.innerHTML='<div class="msg msg-error show">Pick a month.</div>'; return; }
-  if(!USE_SHEETS){ el.innerHTML='<div class="msg msg-error show">Reports need the Google Sheet connection.</div>'; return; }
   const y=+mm[1], mo=+mm[2], last=new Date(y,mo,0).getDate(), p2=n=>String(n).padStart(2,'0');
   const start=y+'-'+p2(mo)+'-01', end=y+'-'+p2(mo)+'-'+p2(last), today=todayStr();
   el.innerHTML='<div class="empty">⏳ Loading…</div>';
@@ -6136,7 +6083,9 @@ function renderOrg(){
   const noDept=o.departments.filter(d=>!covered[d.toLowerCase()]);
   const deptBlock=d=>{ const es=empBy(d), ss=supBy(d);
     return `<div class="org-node" style="margin-bottom:6px"><div class="org-row"><b>🏷️ ${hx(d)}</b><span style="font-size:12px;color:var(--soft)">${es.length} staff</span></div>`
-      +(ss.length?`<div style="margin-top:6px;font-size:12px">${ss.map(x=>`<span class="org-tag">👷 ${hx(x.name)}</span>`).join('')}</div>`:'<div style="margin-top:6px;font-size:12px;color:var(--soft)">No supervisor yet</div>')+'</div>'; };
+      +(()=>{ const rl=(o.employees||[]).filter(e=>String(e.department||'')===d&&/supervisor|dept_admin/.test(String(e.roles||''))).map(e=>`<span class="org-tag">${/dept_admin/.test(String(e.roles))?'🏢':'👷'} ${hx(e.name)}</span>`);
+        const all=rl.concat(ss.map(x=>`<span class="org-tag">👷 ${hx(x.name)}</span>`));
+        return all.length?`<div style="margin-top:6px;font-size:12px">${all.join('')}</div>`:'<div style="margin-top:6px;font-size:12px;color:var(--soft)">No supervisor yet · give someone the role from Staff → 🔐 Access</div>'; })()+'</div>'; };
   const unassignedEmp=o.employees.filter(e=>!String(e.department||'').trim()).length;
   box.innerHTML=
    `<div class="org-tree">
@@ -6155,6 +6104,14 @@ function renderOrg(){
 }
 function orgForm(m){
   const f=document.getElementById('orgForm'); if(!f) return;
+  if(!m){   // new admins and supervisors are staff members with a role now (one person, one sign-in) — no separate login is created here
+    const st=(_D.employees||[]).filter(e=>e.active!=='0').sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    f.innerHTML=`<h3>➕ Make someone a Department Admin or Supervisor</h3>
+     <p style="font-size:11px;color:var(--soft);margin-top:2px">Pick the staff member and tick their role in Access. They keep their own sign-in (staff ID or e-mail) and get a Manage button.</p>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px"><select id="orgPick" style="flex:1;min-width:200px;margin:0">${st.map(e=>`<option value="${hx(e.id)}">${hx(e.name)} (${hx(e.id)})${e.department?' · '+hx(e.department):''}</option>`).join('')}</select>
+     <button class="org-act" style="background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 14px;font-size:13px" onclick="empAccess(document.getElementById('orgPick').value)">🔐 Open Access</button></div>`;
+    return;
+  }
   const have=(m&&m.departments)||[], all=_org.departments;
   f.innerHTML=`<h3>${m?'✏️ Edit Department Admin: '+hx(m.name):'➕ Create a Department Admin (a different person, not you)'}</h3>
    <p style="font-size:11px;color:var(--soft);margin-top:2px">They sign in on the normal Admin login with this ID and password. They see and manage only the departments you tick.</p>
@@ -6228,8 +6185,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.10';</script>
-<script src="notify.js?v=2026-10-22.10"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.11';</script>
+<script src="notify.js?v=2026-10-22.11"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6687,8 +6644,6 @@ function tkDue(t){ if(!t.due) return ''; const d=todayStr(), live=t.status==='Op
 function tkDate(d){ return new Date(d+'T12:00:00Z').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
 const TK_S={'To do':['To do',''],'In progress':['In progress','info'],'Done':['Waiting for check','wait'],'Verified':['Verified','ok']};
 const tkSt=s=>{ const x=TK_S[s]||[s,'']; return `<span class="tk-pill ${x[1]}">${hx(x[0])}</span>`; };
-function tkIcon(el){ return el; }
-
 /* ---- mount ---- */
 async function tkNames(){ try{ if(!_tk.dir||!_tk.dir.length) _tk.dir=(await tkApi('taskPeople'))||[]; _tk.dir.forEach(e=>{ _tk.names[String(e.id).toUpperCase()]=e.name; }); }catch(e){ window._tkNmErr=e&&e.message; } _tk.names.ADMIN='Admin'; }
 function tkMount(root,admin,close){
@@ -6895,7 +6850,6 @@ function tkDb(){ return _tkDb||(_tkDb=new Promise(ok=>{ try{ const r=indexedDB.o
 async function tkGet(store,key){ const d=await tkDb(); if(!d) return undefined; return new Promise(ok=>{ try{ const q=d.transaction(store).objectStore(store).get(key); q.onsuccess=()=>ok(q.result); q.onerror=()=>ok(undefined); }catch(e){ ok(undefined); } }); }
 async function tkPut(store,key,val){ const d=await tkDb(); if(!d) return false; return new Promise(ok=>{ try{ const t=d.transaction(store,'readwrite'); t.objectStore(store).put(val,key); t.oncomplete=()=>ok(true); t.onerror=()=>ok(false); t.onabort=()=>ok(false); }catch(e){ ok(false); } }); }
 function tkB64(blob){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(',')[1]||''); r.onerror=()=>no(new Error('Could not read the file.')); r.readAsDataURL(blob); }); }
-function tkReadFile(f){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>no(new Error('Could not read the file.')); r.readAsDataURL(f); }); }
 function tkShrink(f){ return new Promise((ok,no)=>{   // a photo becomes a small JPEG (Blob)
   const img=new Image(), u=URL.createObjectURL(f);
   img.onload=()=>{ let k=Math.min(1,1280/Math.max(img.width,img.height)), q=.76, n=0;
@@ -7324,14 +7278,16 @@ function wrDraw(){
     ${_wr.range==='custom'?`<div class="wr-d" style="margin-top:8px"><input type="date" id="wrFrom" value="${hx(c1||todayStr())}"><span>to</span><input type="date" id="wrTo" value="${hx(c2||todayStr())}"></div>`:''}
     <div class="wr-g">Employees <span style="font-weight:400">(none selected = all)</span></div>${wrChips('emps',emps)}
     <div class="wr-g">Mode</div>${wrChips('modes',WR_MODES)}
-    <div class="wr-g">Purpose / task</div>${wrChips('kinds',[...new Set(WR_KINDS.filter(k=>k!=='Other').concat(...WT_MODES.map(([m])=>wtNames(m))))])}
+    <div class="wr-g">Purpose / task</div>${wrChips('kinds',wrKinds())}
     <div class="wr-g">Status</div>${wrChips('status',['Active','Paused','Done','Travelling'])}
     <div class="wr-g">Client name or phone</div><input class="wr-q" id="wrQ" placeholder="Search client" value="${hx(keep)}">
     <div class="wr-a"><button style="background:var(--accent)" onclick="wrShow()">Show</button><button style="background:var(--green)" onclick="wrCsv()">⬇ CSV</button><button style="background:#B45309" onclick="wrPdf()">PDF</button></div>
     <div id="wrOut"></div>`;
   if(_wr.data) wrOut();
 }
-function wrTog(g,v){ const a=_wr[g], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); _wr.data=null; wrDraw(); }
+function wrTog(g,v){ const a=_wr[g], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); if(g==='modes'){ const ok=wrKinds(); _wr.kinds=_wr.kinds.filter(k=>ok.indexOf(k)>=0); } _wr.data=null; wrDraw(); }
+// Purpose / task chips: the work types of the chosen modes (all modes when none is chosen); old names still in the reports stay findable through "all"
+function wrKinds(){ const ms=_wr.modes.length?_wr.modes:WT_MODES.map(x=>x[0]); const L=[...new Set([].concat(...ms.map(m=>wtNames(m).filter(k=>k!=='Other'))))]; if(!_wr.modes.length) WR_KINDS.forEach(k=>{ if(k!=='Other'&&L.indexOf(k)<0) L.push(k); }); return L.concat(['Other']); }
 function wrRange(r){ _wr.range=r; _wr.data=null; wrDraw(); }
 function wrDates(){
   const t=todayStr();
@@ -7362,7 +7318,6 @@ function wrOut(){
     ${bk.length?`<div class="wr-t"><table><thead><tr><th>Purpose / task</th><th>Count</th><th>Active time</th></tr></thead><tbody>${bk.map(([k,e])=>`<tr><td>${hx(k)}</td><td>${e.count}</td><td>${wrMin(e.minutes)}</td></tr>`).join('')}</tbody></table></div>`:''}
     ${d.rows.length?`<div class="wr-t"><table><thead><tr><th>Date</th><th>Employee</th><th>Mode</th><th>Purpose / task</th><th>Client</th><th>Time</th><th>Active</th><th>Status</th><th>Outcome</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${hx(r.date)}</td><td>${hx(r.name)}</td><td>${hx((WR_MODES.find(x=>x[0]===r.mode)||['',r.mode])[1])}</td><td>${hx(wrKind(r))}</td><td>${hx(r.clientName||'')}${r.clientPhone?'<br>'+hx(r.clientPhone):''}</td><td>${r.startAt?wmClk(r.startAt):''}${r.endAt?' – '+wmClk(r.endAt):''}</td><td>${wrMin(r.activeMin)}</td><td>${hx(r.status)}</td><td>${hx(r.outcome||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No work entries for these filters.</div>'}`;
 }
-async function wrEnsure(){ if(!_wr.data) await wrShow(); return _wr.data; }
 async function wrCsv(){
   await wrShow(); const d=_wr.data; if(!d) return;
   const hdr=['Date','Employee ID','Employee','Mode','Purpose / task','Client','Client phone','Start','End','Active minutes','Status','Place','Outcome'];
