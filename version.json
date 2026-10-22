@@ -1,1 +1,1 @@
-{"web": "2026-10-22.8", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "New employee home: Today / Tasks / My month / Me tabs, smart tips, quick actions, hours chart and on-time score; owner can edit work types per mode"}
+{"web": "2026-10-22.9", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Fix: home could stay on Loading… when opened before the page finished loading"}

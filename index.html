@@ -3230,6 +3230,10 @@ async function refreshMyGeo(force){
 }
 async function loadHome(){
   if(!currentEmp) return;
+  if(typeof wmOn!=='function'||typeof hmSmartDraw!=='function'){   // the page is still loading its later scripts: draw once they are in
+    if(!window._hmWait){ window._hmWait=1; const go=()=>{ window._hmWait=0; loadHome(); }; if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go,{once:true}); else setTimeout(go,50); }
+    return;
+  }
   const tok=++homeTok, emp=currentEmp;
   homeDay=todayStr();
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); clearInterval(homeTimerInt);
@@ -6223,8 +6227,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.8';</script>
-<script src="notify.js?v=2026-10-22.8"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.9';</script>
+<script src="notify.js?v=2026-10-22.9"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
