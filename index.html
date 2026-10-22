@@ -605,8 +605,8 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;min-width:0}
 .wm-i{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .wm-hrs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.wm-hrs>div{min-width:0;padding:10px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
-.wm-hrs b{display:block;font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--accent2);overflow-wrap:anywhere}
+.wm-hrs>div{min-width:0;padding:8px 12px;border-radius:14px;background:var(--surface2);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.wm-hrs b{display:block;font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--accent2);overflow-wrap:anywhere}
 .wm-hrs span{display:block;font-size:12px;color:var(--soft);overflow-wrap:anywhere}
 .wm-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
 .wm-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;padding:8px 2px;border-radius:14px;border:1.5px solid rgba(255,255,255,.85);background:var(--surface2);box-shadow:0 3px 10px rgba(16,70,74,.1),inset 0 1px 0 rgba(255,255,255,.7);color:var(--ink);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;min-width:0;position:relative}
@@ -615,6 +615,16 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .wm-opt small{position:absolute;top:-8px;right:2px;font-size:9px;font-weight:700;color:var(--accent2);background:#fff;border-radius:999px;padding:1px 6px;white-space:nowrap}
 .wm-opt.on{border-color:var(--accent);background:var(--accentBg);box-shadow:0 0 0 3px rgba(31,127,119,.22)}.wm-opt.on .ic{color:var(--accent)}
 .wm-opt[disabled]{opacity:.55;cursor:default}
+.hm-trow>.hm-tx{flex:1;min-width:0}
+.hm-off{margin-left:auto;flex:none;min-width:0!important;display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 15px;border:0;border-radius:21px;background:linear-gradient(135deg,#1F4E99,#2C6BC4);color:#fff;font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(31,78,153,.28)}
+.hm-off:active{transform:scale(.95)}
+.wm-row.sm{gap:5px}.wm-row.sm .wm-opt{flex-direction:row;min-height:38px;padding:6px 2px;gap:5px;border-radius:12px}.wm-row.sm .wm-opt .wm-i{width:17px;height:17px}.wm-row.sm .wm-opt b{font-size:12px}
+.wm-start .wm-q{margin:14px 0 8px;font-size:14px}.wm-start .wm-opt{min-height:74px;gap:6px}.wm-start .wm-opt .wm-i{width:26px;height:26px}.wm-start .wm-opt b{font-size:13px}
+.wm-start .wm-cap{text-align:center;margin:10px 0 0;font-size:12px}
+.pc-bar{align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0;padding:10px 12px 10px 16px;border-radius:16px;background:var(--accentBg);color:var(--accent2);font-weight:800;font-size:14.5px}
+.pc-bar button{flex:none;border:0;background:#fff;border-radius:999px;padding:8px 14px;min-height:36px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+#stCamera .cam-x{display:none}
+.hm-links button.hm-lo{flex:1 1 100%;color:#B42318;border-color:rgba(180,35,24,.25)}
 .wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
@@ -737,10 +747,7 @@ button,.btn,select{overflow-wrap:normal;word-break:normal}
 .btn-sm,.key-btn,.filter-row button,.hm-out,.hm-back,.pl-btn,.sb,.org-act,.map-link,.tab-btn{white-space:nowrap;flex-shrink:0}
 /* Hero: a long name gets its own full-width line and the two buttons drop underneath */
 .hm-nm{overflow-wrap:anywhere}
-.hm-top.long{flex-wrap:wrap;row-gap:10px}
-.hm-top.long>div:nth-child(2){flex:1 1 calc(100% - 70px)}
-.hm-top.long .hm-tools{width:100%;margin-left:0;justify-content:flex-end}
-@media(max-width:520px){.hm-top{flex-wrap:wrap;row-gap:10px}.hm-top>div:nth-child(2){flex:1 1 calc(100% - 70px)}.hm-top .hm-tools{width:100%;margin-left:0;justify-content:flex-end;flex-wrap:wrap}}
+@media(max-width:520px){.hm-top{flex-wrap:nowrap;gap:10px}.hm-top>div:nth-child(2){flex:1 1 0;min-width:0}.hm-top .hm-tools{width:auto;margin-left:auto;flex-wrap:nowrap}}
 .hm-date{overflow-wrap:anywhere}
 /* Leave calendar: long names are cut with … (the full name is the tooltip) and the name column stays solid while the days scroll */
 .lc .nm{max-width:132px;overflow:hidden;text-overflow:ellipsis;background:#EEF4F3}
@@ -1034,7 +1041,6 @@ input[type=checkbox],input[type=radio]{accent-color:#0B7A6B;width:18px;height:18
   #homeScreen .hm-hero .hm-top>div:nth-child(2){flex:1 1 auto;min-width:0}
   #homeScreen .hm-hero .hm-date{grid-column:1/-1;margin:4px 0 0;text-align:left}
   #homeScreen .hm-nm{font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
-  #homeScreen .hm-top.long .hm-tools{width:auto}
   #homeScreen .wm-opt{min-height:64px}
   #homeScreen .wm-opt b{font-size:13.5px}
   /* admin / supervisor: use the width */
@@ -1190,7 +1196,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     <div class="hm-top">
       <div class="hm-av" id="hmAv">?</div>
       <div><div class="hm-nm" id="hmName">—</div></div>
-      <div class="hm-tools"><button class="sos-open sos-mini" onclick="openSOS()" aria-label="Emergency: hurt, in danger or need help"><span aria-hidden="true">🚨</span> SOS</button><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button><button class="hm-out" onclick="showProfile()" aria-label="My profile">👤</button><button class="hm-out" onclick="logout()">Sign out</button></div>
+      <div class="hm-tools"><button class="sos-open sos-mini" onclick="openSOS()" aria-label="Emergency: hurt, in danger or need help"><span aria-hidden="true">🚨</span> SOS</button><button class="hm-out" id="hmManage" style="display:none" onclick="enterManage()">Manage</button></div>
     </div>
     <div class="hm-date" id="hmDate"></div>
   </div>
@@ -1221,8 +1227,6 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <section class="hm-pane" id="hmPaneMe" data-pane="me">
   <div class="card hm-card hm-me" id="hmMe"></div>
   <div class="hm-links" id="hmLinks"></div>
-  <a href="#" class="help-link" onclick="showProfile();return false">👤 My profile &amp; password</a>
-  <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
   </section>
   <nav class="hm-nav" id="hmNav" aria-label="Sections">
     <button type="button" class="on" data-go="today" onclick="hmTab('today')" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Today</span></button>
@@ -1352,14 +1356,15 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         </div>
       </div>
     </div>
+    <div class="pc-bar" id="pcBar" style="display:none" role="status" aria-live="polite"><span id="pcTxt"></span><button type="button" onclick="pcCancel()">Stop timer</button></div>
     <button class="btn" id="captureBtn" onclick="captureAndMark()">📸 Work ON</button>
     <button class="btn btn-orange" id="meetingBtn" style="display:none" onclick="switchToMeeting()">🚗 Going Out for Meeting</button>
     <button class="btn btn-outline" id="personalBtn" style="display:none;color:#B45309;border-color:#B45309" onclick="switchToMeeting('personal')">🏃 Urgent personal work</button>
     <button class="btn btn-teal" id="visitBtn" style="display:none" onclick="switchToVisit()">🤝 Customer Visit</button>
     <button class="btn btn-outline" id="cancelModeBtn" style="display:none" onclick="cancelCam()">✖ Cancel</button>
     <button class="btn btn-orange" id="startSiteBtn" style="display:none" onclick="beginSiteWork()">📸 Start Site Work</button>
-    <button class="btn btn-outline" onclick="logout()">Sign out</button>
-    <button class="btn btn-outline" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
+    <button class="btn btn-outline cam-x" onclick="logout()">Sign out</button>
+    <button class="btn btn-outline cam-x" onclick="showLeavePanel()" style="font-size:13px;color:var(--purple);border-color:var(--purple)">📋 Apply for Leave</button>
     <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <div class="msg msg-error" id="camErr"></div>
     <div class="msg msg-success" id="camOk"></div>
@@ -3154,12 +3159,15 @@ const _p2=n=>String(n).padStart(2,'0');
 function dstr(d){ return d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'+_p2(d.getDate()); }
 function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
 function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
+let _opBusy=false;
 async function openPunch(mode){
-  if(!currentEmp) return;
-  await loadCameraScreen(mode==='resume'?'resume':undefined);
-  if(mode==='visit'&&punchMode==='out') switchToVisit();
-  if(mode==='meeting'&&punchMode==='out') switchToMeeting();
-  if(mode==='personal'&&punchMode==='out') switchToMeeting('personal');
+  if(!currentEmp||_opBusy) return; _opBusy=true; _pc.want=(mode==='auto');
+  try{
+    await loadCameraScreen(mode==='resume'?'resume':undefined);
+    if(mode==='visit'&&punchMode==='out') switchToVisit();
+    if(mode==='meeting'&&punchMode==='out') switchToMeeting();
+    if(mode==='personal'&&punchMode==='out') switchToMeeting('personal');
+  } finally{ _opBusy=false; _pc.want=false; _wm.pre=''; }
 }
 function setHtml(id,h){ const el=document.getElementById(id); if(el) el.innerHTML=h; }
 /* The places and "works at" list are read when the app loads; a boundary an admin changed since then reaches this phone here */
@@ -3232,8 +3240,8 @@ function renderHomeToday(rec,dayOff,noLoad){
   window._fmSeen=false;
   const W=wmOn(); if(W) wmRestore();
   const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
-  const btn=(l,c)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch()">${l}</button>`;
-  let ico='⏰', title='', sub='', extra='', b='';
+  const btn=(l,c,auto)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch(${auto?"'auto'":''})">${l}</button>`;
+  let ico='⏰', title='', sub='', extra='', b='', offBtn='';
   if(dayOff){ ico=dayOff.icon; title=dayOff.type==='Sunday'?'Today is Sunday':'Public holiday'; sub=dayOff.name+' · no attendance needed'; }
   else if(!(rec&&rec.punchIn)&&leaveOn(curRec().id,todayStr())){ const lv=leaveOn(curRec().id,todayStr()); ico='🌴'; title='On approved leave'; sub=lv.type+' · '+leaveSpan(lv); b=btn('Open attendance','btn-outline'); }
   else if(rec&&rec.punchIn&&rec.punchOut){
@@ -3249,13 +3257,13 @@ function renderHomeToday(rec,dayOff,noLoad){
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
     const amB=W&&am&&am.state==='done'?null:am;   // a finished field item is in the timeline; the block goes back to the idle choices
-    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?wmModeHtml()+wmOffBtn()+wmTimeline():btn('📸 Punch Out','btn-blue'));
-  } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=btn(W?'📸 Work ON':'📸 Punch In','btn-green'); }
+    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?(offBtn=wmOffBtn(),wmModeHtml()+wmTimeline()):btn('📸 Punch Out','btn-blue',true));
+  } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=W?wmStartHtml():btn('📸 Punch In','btn-green',true); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
   if(rec&&rec.markedBy) sub+=' · Marked by '+hx(rec.markedBy);
-  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div></div>${extra}${b}<div id="hmPlan"></div>`);
+  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div class="hm-tx"><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div>${offBtn}</div>${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
   if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
   try{ hmSmartDraw(); }catch(e){}
@@ -3289,7 +3297,9 @@ function renderHomeActs(){
   L.push(`<button onclick="showTeamLeave()">👥 <span>Team leave</span><small id="hmTlSub"></small></button>`);
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
+  L.push(`<button onclick="openPhoneHelp()">📱 <span>Phone settings</span><small style="color:var(--soft)">location &amp; camera</small></button>`);
   L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
+  L.push(`<button class="hm-lo" onclick="logout()">⎋ <span>Sign out</span></button>`);
   lk.innerHTML=L.join('');
   { const Q=[], q=(ic,t,fn,live)=>Q.push(`<button type="button" class="hm-q${live?' live':''}" onclick="${fn}"><span class="hm-qi">${ic}</span><b>${t}</b></button>`);
     if(!am&&W&&inNow&&!(_wm.open)) q('🏃','Personal work',"openPunch('personal')");
@@ -3399,9 +3409,9 @@ function hmSmartDraw(){
   const st=_D.settings||{}, set=settingsFor(me), start=parseTimeMins(set.start), limit=start+set.grace, now=nowMins(), T=hmTarget(), W=wmOn(), M=window._hmMon||{};
   if(!(rec&&rec.punchIn)){
     if(now<start-90) return hide();
-    if(now<start) return show('⏰',`Office ${hx(set.start)} pe — <b>${start-now} min</b> bache`,()=>openPunch());
-    if(now<=limit) return show('⏰',`Abhi Work ON karo — <b>${limit-now} min</b> me late ho jaoge`,()=>openPunch(),'warn');
-    return show('⚠️',`Abhi tak Work ON nahi hua — office ${hx(set.start)} se shuru hai`,()=>openPunch(),'warn');
+    if(now<start) return show('⏰',`Office ${hx(set.start)} pe — <b>${start-now} min</b> bache`,()=>openPunch('auto'));
+    if(now<=limit) return show('⏰',`Abhi Work ON karo — <b>${limit-now} min</b> me late ho jaoge`,()=>openPunch('auto'),'warn');
+    return show('⚠️',`Abhi tak Work ON nahi hua — office ${hx(set.start)} se shuru hai`,()=>openPunch('auto'),'warn');
   }
   if(rec.punchOut) return hide();
   const am=getActiveMeeting(rec); if(am) return hide();
@@ -3413,7 +3423,7 @@ function hmSmartDraw(){
     const ends=(_wm.items||[]).map(i=>i.endAt).filter(Boolean).sort(), last=ends.length?parseTimeMins(wmClk(ends[ends.length-1])):pin, idle=now-last;
     if(idle>=30&&idle<720) return show('⏳',`<b>${fmtMins(idle)}</b> se koi kaam log nahi — neeche chuno kya kar rahe ho`,()=>hmGoToday(),'warn');
   }
-  if(pin>limit&&!isHalfDay(rec)&&worked<120){ const lh=parseInt(st.lateToHalf)||0; return show('🕒',`Aaj <b>${pin-start} min</b> late — is mahine ${M.late||1} late${lh?` · ${lh} late = half day`:''}`,null,'warn'); }
+  if(pin>limit&&!isHalfDay(rec)&&worked<120){ const lh=parseInt(st.lateToHalf)||0; return show('🕒',`Aaj <b>${Math.round(pin-start)} min</b> late — is mahine ${M.late||1} late${lh?` · ${lh} late = half day`:''}`,null,'warn'); }
   if(worked>=T) return show('✅',`Aaj ka <b>${fmtMins(T)}</b> poora — badhiya kaam!`,null,'good');
   if(T-worked<=90) return show('🎯',`<b>${fmtMins(worked)}</b> hue — ${fmtMins(T-worked)} aur, phir ${fmtMins(T)} poora`,null,'good');
   if(_tk.sum&&_tk.sum.todo) return show('✅',`<b>${_tk.sum.todo} task</b> pending hai${_tk.sum.todo>1?'n':''}`,()=>tkOpen());
@@ -3950,6 +3960,7 @@ async function loadCameraScreen(opts){
   document.getElementById('stCamera').style.display='block';
   checkSiteWork();
   startCamera(); startLocWatch();
+  if(_pc.want) pcArm(); _pc.want=false;   // only the Work ON / OFF buttons start the countdown, never Cancel or the other entries
 }
 
 function setCamMode(mode,kind){
@@ -4014,9 +4025,29 @@ function switchToMeeting(kind){
   if(mySiteManual()){ const ce=document.getElementById('camErr'); if(ce){ ce.textContent='Site work is running. Stop site work first, then '+(kind==='personal'?'step out.':'go for the meeting.'); ce.classList.add('show'); } return; }
   stopCamera(); setCamMode(kind==='personal'?'personal_out':'meeting_out'); startCamera(); if(capLat&&capLng) document.getElementById('captureBtn').disabled=false; }
 
+/* Photo countdown. Work ON / Work OFF / Punch In / Punch Out opened from the Today card take the photo by themselves as soon as the camera, the
+   location and (for Work ON) the kind of work are ready: one tap instead of two. The big button still takes it at once, "Stop timer" switches it off. */
+let _pc={t:null,state:'',end:0,want:false};
+function pcStop(){ clearInterval(_pc.t); _pc.t=null; _pc.state=''; const b=document.getElementById('pcBar'); if(b) b.style.display='none'; }
+function pcOk(){
+  const v=document.getElementById('videoFeed'), btn=document.getElementById('captureBtn');
+  return !capBusy&&!!v&&!!v.srcObject&&v.videoWidth>0&&!!capLat&&!!capLng&&!!btn&&!btn.disabled&&(punchMode==='in'||punchMode==='out')&&document.body.dataset.screen==='cameraScreen'&&(punchMode!=='in'||!wmOn()||!!_wm.pick);
+}
+function pcArm(){ pcStop(); _pc.state='wait'; _pc.t=setInterval(pcTick,400); }
+function pcCancel(){ pcStop(); _pc.want=false; const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }   // "Stop timer": the photo now waits for the big button
+function pcTick(){
+  if(document.body.dataset.screen!=='cameraScreen'||capBusy||(punchMode!=='in'&&punchMode!=='out')){ pcStop(); return; }
+  const bar=document.getElementById('pcBar'), txt=document.getElementById('pcTxt');
+  if(!pcOk()){ _pc.state='wait'; if(bar) bar.style.display='none'; return; }
+  if(_pc.state!=='count'){ _pc.state='count'; _pc.end=Date.now()+3000; }
+  const left=Math.ceil((_pc.end-Date.now())/1000);
+  if(left<=0){ pcStop(); captureAndMark(); return; }
+  if(bar){ bar.style.display='flex'; if(txt) txt.textContent='📸 Taking your photo in '+left+'…'; }
+}
 let capBusy=false;
 async function captureAndMark(){
   if(capBusy) return;   // already saving: a second tap must not send the same punch / visit again
+  pcStop();
   const video=document.getElementById('videoFeed'),canvas=document.getElementById('snapCanvas'),btn=document.getElementById('captureBtn');
   const camErr=document.getElementById('camErr');
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
@@ -6179,8 +6210,8 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-22.12';</script>
-<script src="notify.js?v=2026-10-22.12"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-22.13';</script>
+<script src="notify.js?v=2026-10-22.13"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7045,8 +7076,8 @@ let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.n
 const feat=k=>!(_D.features&&_D.features[k]===false);   /* the platform team can switch a feature off for a company; unset means on */
 const wmOn=()=>_wm.ok!==false&&feat('workModes');
 const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
-function wmCards(cur,fn,hintK,hintTxt,lock){
-  return '<div class="wm-row" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';
+function wmCards(cur,fn,hintK,hintTxt,lock,cls){
+  return '<div class="wm-row'+(cls?' '+cls:'')+'" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';
 }
 async function wmLoad(){
   if(!currentEmp||!USE_SHEETS) return;
@@ -7077,12 +7108,26 @@ function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, lock=!!_wm.open;
-  return `<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',lock)}</div>`+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+  return (lock?'':`<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',false,'sm')}</div>`)+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
 }
-function wmOffBtn(){
-  const run=_wm.open;
-  if(run) return `<div class="wm-warn">Stop “${hx(run.kindOther||run.kind)}” first, then you can Work OFF.</div><button class="btn btn-outline" style="margin-top:10px" disabled>Work OFF</button>`;
-  return `<button class="btn btn-blue" style="margin-top:14px" onclick="openPunch()">📸 Work OFF</button>`;
+/* Work ON: the kind of work is chosen right on the Today card; one tap opens the camera, which takes the photo by itself */
+function wmStartHtml(){
+  return `<div class="wm-start"><div class="wm-q">Start work: tap where you are working today</div>${wmCards('','wmStartMode','','')}<div class="wm-cap">Your photo and location are taken automatically.</div></div>`;
+}
+function wmStartMode(k){ if(_opBusy||_wm.busy) return; _wm.pre=k; openPunch('auto'); }
+/* Work OFF: a task still running is finished (with its note) in the same step, then the camera opens */
+function wmOffBtn(){ return `<button type="button" class="hm-off" onclick="wmOffTap()">⏹ Work OFF</button>`; }
+function wmOffTap(){ if(_wm.open) return wmOffAsk(); openPunch('auto'); }
+function wmOffAsk(){
+  const o=_wm.open; if(!o) return openPunch('auto');
+  fmSheet(`<h3>Work OFF</h3><div class="fm-lbl">“${hx(wmLbl(o))}” is still running. How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmOffGo()">⏹ Save and Work OFF</button>`);
+}
+async function wmOffGo(){
+  const v=((document.getElementById('fmNote')||{}).value||'').trim(); if(v.length<3) return fmErr('Write a short note first.');
+  if(_wm.busy||!_wm.open) return; _wm.busy=true; fmErr('Saving…');
+  try{ await api('workStop',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),id:_wm.open.id,remarks:v}); }
+  catch(e){ fmErr(e.message||'Could not save.'); _wm.busy=false; return; }
+  _wm.busy=false; fmClose(); _wm.open=null; wmLoad(); openPunch('auto');
 }
 /* Mode cards on the camera screen at Work ON */
 function wmPickReset(){
@@ -7090,8 +7135,9 @@ function wmPickReset(){
   const el=document.getElementById('wmPick'); if(!el) return;
   let hint='',txt=''; try{ const g=geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc); if(g&&g.status==='YES'){ hint='office'; txt='At '+g.place; } }catch(e){}
   el.innerHTML='<div class="wm-q">What kind of work are you starting? <span>(required)</span></div>'+wmCards('','wmPickSet',hint,txt);
+  if(_wm.pre){ const k=_wm.pre; _wm.pre=''; wmPickSet(k); }   // chosen on the Today card already
 }
-function wmPickSet(k){ _wm.pick=k; document.querySelectorAll('#wmPick .wm-opt').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
+function wmPickSet(k){ if(_pc.t) pcArm(); _wm.pick=k; document.querySelectorAll('#wmPick .wm-opt').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
 async function wmSetMode(k){
   if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
   try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; await wmLoad(); }
@@ -7138,6 +7184,7 @@ function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>
 function wmTaskPick(k){
   _fm=Object.assign(_fm,{id:'',task:k,wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)});
   const cl=wtClient(_wm.mode||'office',k);
+  if(!cl&&k!=='Other'){ wmTaskGo(); return; }   // one tap starts it
   fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
     (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
   if(cl) fmSearch();
@@ -7151,7 +7198,7 @@ async function wmTaskGo(){
     const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:_fm.wid};
     if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
     await api('workStart',body); fmClose(); await wmLoad();
-  }catch(e){ fmErr(e.message||'Could not start.'); if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
+  }catch(e){ if(document.getElementById('fmErr')) fmErr(e.message||'Could not start.'); else alert(e.message||'Could not start.'); if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
   finally{ _wm.busy=false; }
 }
 async function wmItem(action,extra){
