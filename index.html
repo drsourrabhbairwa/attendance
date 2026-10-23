@@ -366,7 +366,8 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .wt-row button{min-width:0!important;flex-shrink:0;border:1px solid var(--border);background:transparent;border-radius:8px;width:30px;height:30px;cursor:pointer;font:inherit;color:var(--ink2,#475467)}
 .wt-row button:disabled{opacity:.35;cursor:default}.wt-row .wt-del{color:#B42318}
 .wt-need{display:flex;gap:4px;align-items:center;font-size:11.5px;font-weight:600;white-space:nowrap;margin:0}.wt-need input{width:auto;margin:0}
-.wt-fixed span{font-size:11px;color:var(--soft);white-space:nowrap}
+@media(max-width:520px){.wt-row:not(.wt-fixed){flex-wrap:wrap}.wt-row:not(.wt-fixed)>input:not([type=checkbox]){flex:1 1 100%}.wt-row:not(.wt-fixed) .wt-need+.wt-need{margin-right:auto}}
+.wt-fixed span{font-size:11px;color:var(--soft)}.wt-fixed input{flex:none!important;width:84px}
 .dept-sel{width:auto !important;padding:5px 8px !important;font-size:12px !important;max-width:130px}
 .al-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:9px}
 @media(max-width:600px){.al-grid{grid-template-columns:1fr}}
@@ -1642,12 +1643,12 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <div class="add-form sa-only" style="margin-top:14px" id="wtCard">
       <h3>🧰 Work types</h3>
-      <p style="font-size:11px;color:var(--soft);margin-top:2px">What staff can pick after they tap Office, WFH, Factory or Field. "Other" is always there. Removing a type keeps old entries in the reports.</p>
+      <p style="font-size:11px;color:var(--soft);margin-top:2px">What staff can pick after they tap Office, WFH, Factory or Field. "Other" is always there. Tick <b>Client</b> to ask staff for the client's name and phone, and <b>Remark</b> to make them write a remark when they start that type. Removing a type keeps old entries in the reports.</p>
       <div class="wt-tabs" id="wtTabs"></div>
       <div id="wtList" style="margin-top:8px"></div>
       <div class="set-row" style="margin-top:9px;align-items:flex-end">
         <div style="flex:2"><label style="margin:0 0 4px">New type</label><input type="text" id="wtNew" maxlength="60" placeholder="e.g. Machine setup" onkeydown="if(event.key==='Enter')wtAdd()"></div>
-        <div id="wtNeedWrap"><label style="margin:0 0 4px;display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" id="wtNeed" style="width:auto"> Needs client</label></div>
+        <div id="wtNeedWrap"><label style="margin:0 0 4px;display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" id="wtNeed" style="width:auto"> Needs client</label><label style="margin:6px 0 0;display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" id="wtRem" style="width:auto"> Needs remark</label></div>
         <div><button onclick="wtAdd()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
       </div>
       <div class="msg msg-error" id="wtErr"></div><div class="msg msg-success" id="wtOk"></div>
@@ -2922,22 +2923,22 @@ async function removeDept(n){
 }
 
 /* Work types: the owner's own list of what staff pick per mode */
-let _wtMode='office', _wtBusy=false;
+let _wtMode='office', _wtBusy=false, _wtDrawn='';
 function wtDraw(){
   const tb=document.getElementById('wtTabs'), el=document.getElementById('wtList'); if(!tb||!el) return;
-  tb.innerHTML=WT_MODES.map(([k,l])=>`<button type="button" class="wt-tab${k===_wtMode?' on':''}" onclick="_wtMode='${k}';wtDraw()">${l}<small>${wtList(k).length-1}</small></button>`).join('');
-  const own=Array.isArray(wtOwn()[_wtMode]), L=wtList(_wtMode).filter(x=>x.n!=='Other'), fld=_wtMode==='field';
-  document.getElementById('wtNeedWrap').style.display=fld?'none':'';
+  tb.innerHTML=WT_MODES.map(([k,l])=>`<button type="button" class="wt-tab${k===_wtMode?' on':''}" onclick="_wtMode='${k}';wtDraw()">${l}<small>${wtList(k).filter(x=>!wtFixed(x.n)).length}</small></button>`).join('');
+  const own=Array.isArray(wtOwn()[_wtMode]), L=wtCur(), fld=_wtMode==='field';
+  if(_wtDrawn!==_wtMode){ _wtDrawn=_wtMode; const nc=document.getElementById('wtNeed'); if(nc) nc.checked=fld; }   // a new Field type asks for the customer unless told not to
   el.innerHTML=(own?'':'<div class="wt-note">Using the built-in list. Any change saves your own list for this mode.</div>')+L.map((x,i)=>`<div class="wt-row">
     <input value="${hx(x.n)}" maxlength="60" aria-label="Type name" onchange="wtRename(${i},this.value)">
-    ${fld?'':`<label class="wt-need" title="Ask for the client name and phone"><input type="checkbox" ${x.c?'checked':''} onchange="wtNeed(${i},this.checked)"> Client</label>`}
+    <label class="wt-need" title="${fld?'Ask for the customer name and phone':'Ask for the client name and phone'}"><input type="checkbox" ${x.c?'checked':''} onchange="wtNeed(${i},this.checked)"> Client</label><label class="wt-need" title="Staff must write a remark when they start this"><input type="checkbox" ${x.r?'checked':''} onchange="wtRem(${i},this.checked)"> Remark</label>
     <button type="button" aria-label="Move up" ${i?'':'disabled'} onclick="wtMove(${i},-1)">↑</button><button type="button" aria-label="Move down" ${i<L.length-1?'':'disabled'} onclick="wtMove(${i},1)">↓</button>
     <button type="button" class="wt-del" aria-label="Remove" onclick="wtDel(${i})">✕</button></div>`).join('')+`<div class="wt-row wt-fixed"><input value="Other" disabled><span>always shown · staff write what it is</span></div>`;
 }
 async function wtSave(list,msg){
   const err=document.getElementById('wtErr'), ok=document.getElementById('wtOk'); err.classList.remove('show'); ok.classList.remove('show');
   if(_wtBusy) return false; _wtBusy=true;
-  const all=Object.assign({},wtOwn()); all[_wtMode]=list.map(x=>({n:x.n,c:x.c?1:0}));
+  const all=Object.assign({},wtOwn()); all[_wtMode]=list.map(x=>{ const o=_wtMode==='field'?(x.c?{n:x.n,c:0}:{n:x.n,c:0,nc:1}):{n:x.n,c:x.c?1:0}; if(x.r) o.r=1; return o; });   // Field: a type asks for the customer unless nc is set, so lists saved before this option keep working
   if(!list.length) delete all[_wtMode];
   const val=JSON.stringify(all);
   try{ let saved=val; if(USE_SHEETS){ const r=await api('saveSettings',{settings:{workTypes:val}}); if(r&&r.workTypes!==undefined) saved=r.workTypes; }
@@ -2945,19 +2946,20 @@ async function wtSave(list,msg){
   catch(e){ err.textContent=e.message; err.classList.add('show'); return false; }
   finally{ _wtBusy=false; wtDraw(); }
 }
-const wtCur=()=>wtList(_wtMode).filter(x=>x.n!=='Other');
+const wtCur=()=>wtList(_wtMode).filter(x=>!wtFixed(x.n));
 async function wtAdd(){
   const inp=document.getElementById('wtNew'), n=inp.value.replace(/\s+/g,' ').trim(), L=wtCur();
   const err=document.getElementById('wtErr'); err.classList.remove('show');
   if(!n){ err.textContent='Write the name of the work.'; err.classList.add('show'); return; }
-  if(n.toLowerCase()==='other'||L.some(x=>x.n.toLowerCase()===n.toLowerCase())){ err.textContent='"'+n+'" is already in the list.'; err.classList.add('show'); return; }
-  L.push({n:n,c:document.getElementById('wtNeed').checked?1:0});
-  if(await wtSave(L,'"'+n+'" added')){ inp.value=''; document.getElementById('wtNeed').checked=false; }
+  if(wtFixed(n.toLowerCase().replace(/^./,ch=>ch.toUpperCase()))||L.some(x=>x.n.toLowerCase()===n.toLowerCase())){ err.textContent='"'+n+'" is already in the list.'; err.classList.add('show'); return; }
+  L.push({n:n,c:document.getElementById('wtNeed').checked?1:0,r:document.getElementById('wtRem').checked?1:0});
+  if(await wtSave(L,'"'+n+'" added')){ inp.value=''; document.getElementById('wtNeed').checked=_wtMode==='field'; document.getElementById('wtRem').checked=false; }
 }
 function wtRename(i,v){ const L=wtCur(), n=String(v).replace(/\s+/g,' ').trim(); if(!n||n===L[i].n) return wtDraw();
-  if(n.toLowerCase()==='other'||L.some((x,j)=>j!==i&&x.n.toLowerCase()===n.toLowerCase())){ const e=document.getElementById('wtErr'); e.textContent='"'+n+'" is already in the list.'; e.classList.add('show'); return wtDraw(); }
+  if(wtFixed(n.toLowerCase().replace(/^./,ch=>ch.toUpperCase()))||L.some((x,j)=>j!==i&&x.n.toLowerCase()===n.toLowerCase())){ const e=document.getElementById('wtErr'); e.textContent='"'+n+'" is already in the list.'; e.classList.add('show'); return wtDraw(); }
   L[i].n=n; wtSave(L,'Renamed'); }
-function wtNeed(i,on){ const L=wtCur(); L[i].c=on?1:0; wtSave(L,on?'Client details will be asked':'Client details not asked'); }
+function wtNeed(i,on){ const L=wtCur(); L[i].c=on?1:0; wtSave(L,on?(_wtMode==='field'?'Customer details will be asked':'Client details will be asked'):(_wtMode==='field'?'Customer details not asked':'Client details not asked')); }
+function wtRem(i,on){ const L=wtCur(); L[i].r=on?1:0; wtSave(L,on?'Staff will be asked for a remark':'Remark not asked'); }
 function wtMove(i,d){ const L=wtCur(), j=i+d; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; wtSave(L,'Order saved'); }
 function wtDel(i){ const L=wtCur(); if(L.length<=1){ const e=document.getElementById('wtErr'); e.textContent='Keep at least one type (besides Other).'; e.classList.add('show'); return; }
   if(!confirm('Remove "'+L[i].n+'"? Old entries stay in the reports.')) return; const n=L[i].n; L.splice(i,1); wtSave(L,'"'+n+'" removed'); }
@@ -4105,7 +4107,7 @@ async function captureAndMark(){
   let face='';
   if((punchMode==='in'||punchMode==='out')&&feat('face')){
     face=await faceCheck(shot);
-    if(face==='no'&&FACE.fails<2){ FACE.fails++; camErr.textContent='👤 We could not see your face. Look at the camera in good light and try again.'; camErr.classList.add('show'); return; }
+    if(face==='no'){ FACE.fails++; camErr.textContent='👤 We could not see your face. Look at the camera in good light and try again.'+(FACE.fails>=3?' Clean the camera lens and take off any cap, mask or sunglasses. Still stuck? Ask your manager to mark your attendance.':''); camErr.classList.add('show'); return; }   // face detection is compulsory: no face, no punch (a phone that cannot tell is let through)
   }
   capBusy=true;
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
@@ -6252,9 +6254,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-23.1';</script>
-<script src="notify.js?v=2026-10-23.1"></script>
-<script src="appstore.js?v=2026-10-23.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-23.2';</script>
+<script src="notify.js?v=2026-10-23.2"></script>
+<script src="appstore.js?v=2026-10-23.2"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6432,9 +6434,10 @@ function fmCust(m){ return m.customerName?`<div class="fm-cust"><div><b>${hx(m.c
 const fmQ=m=>m.customerId?`<button class="fm-link" onclick="fmQuote('${esc(m.customerId)}','${esc(m.customerName)}')">🧾 Record a quotation</button>`:'';
 function fmCardHtml(m){
   const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
-  if(st==='go') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · on the way</div>${fmCust(m)}`+
-    (m.customerId?`<button class="btn btn-green" onclick="fmStart(${n})">▶ Start meeting</button><button class="fm-link" onclick="fmChoose(${n})">Change customer</button>${fmQ(m)}`:`<button class="btn btn-green" onclick="fmChoose(${n})">👤 Choose customer</button>`)+`</div>`;
-  const W=wmOn(), pu=m.purpose?hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:m.purpose)+' · ':'';
+  const noCust=!m.customerId&&wmOn()&&m.purpose&&!wtClient('field',m.purpose);   // the chosen type does not ask for a customer: it is ready to start
+  if(st==='go') return `<div class="fm-card"><div class="fm-step">Meeting ${n} · on the way</div>${noCust?`<div class="fm-cust"><div><b>${hx(kindLbl(m.purpose,m.purposeOther))}</b></div></div>`:fmCust(m)}`+
+    (m.customerId||noCust?`<button class="btn btn-green" onclick="fmStart(${n})">▶ Start meeting</button><button class="fm-link" onclick="fmChoose(${n})">${noCust?'Change work':'Change customer'}</button>${fmQ(m)}`:`<button class="btn btn-green" onclick="fmChoose(${n})">👤 Choose customer</button>`)+`</div>`;
+  const W=wmOn(), pu=m.purpose?hx(kindLbl(m.purpose,m.purposeOther))+' · ':'';
   if(st==='in'){
     if(!W) return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
     const ps=!!m.pausedAt;
@@ -6464,15 +6467,25 @@ async function fmNext(){
   try{ const p=await fmPlace(); const r=await fmCall('leaveForMeeting',{lat:p.lat,lng:p.lng,area:p.area}); if(r) await fmRefresh(); }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the next meeting.'); }
 }
+/* In Field work a type can be set up not to ask for a customer (owner's Client option); then the customer part of the sheet goes away */
+const fmNeedsCust=r=>!(wmOn()&&r&&!wtClient('field',r));
+function fmSync(){
+  const r=_fm.reason, w=document.getElementById('fmCustWrap'); if(w) w.style.display=fmNeedsCust(r)?'':'none';
+  const o=document.getElementById('fmOther'); if(o){ o.style.display=wmOn()&&r&&wtText('field',r)?'block':'none'; o.placeholder=wtTextHint(r); }
+}
 function fmChoose(seq,preset){
   _fm=Object.assign(_fm,{seq:seq,id:'',reason:preset||'',other:'',lat:'',lng:''});
-  fmSheet(`<h3>Who are you meeting?</h3><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
-    <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)">
-    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?wtNames('field'):FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" style="display:${preset==='Other'?'block':'none'}"><div class="fm-err" id="fmErr"></div>
+  if(wmOn()&&preset&&!fmNeedsCust(preset)&&!wtText('field',preset)){   // nothing to ask: one tap sets the work and it is ready to start
+    fmCall('setMeetingCustomer',{seq:seq,purpose:preset,purposeOther:''}).then(async r=>{ if(r) await fmRefresh(); else fmChoose(seq,''); }).catch(e=>{ fmChoose(seq,''); fmErr((e&&e.message)||'Could not save. Try again.'); });
+    return;
+  }
+  fmSheet(`<h3>${fmNeedsCust(preset)?'Who are you meeting?':'Field work'}</h3><div id="fmCustWrap"><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
+    <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)"></div>
+    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?wtNames('field'):FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" maxlength="80" style="display:none"><div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
-  fmSearch();
+  fmSync(); if(fmNeedsCust(preset)) fmSearch();
 }
-function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?wtNames('field'):FM_REASONS,r,'fmReasonPick'); const o=document.getElementById('fmOther'); if(o) o.style.display=r==='Other'?'block':'none'; }
+function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?wtNames('field'):FM_REASONS,r,'fmReasonPick'); fmSync(); if(fmNeedsCust(r)) fmSearch(); }
 function fmSearch(){
   clearTimeout(_fm.t);
   _fm.t=setTimeout(async()=>{
@@ -6484,13 +6497,13 @@ function fmSearch(){
 }
 function fmPick(id,name,phone,addr){ _fm.id=id; document.getElementById('fmName').value=name; document.getElementById('fmPhone').value=phone; document.getElementById('fmAddr').value=addr; }
 async function fmSaveCustomer(){
-  const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim();
-  if(!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
+  const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim(), ask=fmNeedsCust(_fm.reason);
+  if(ask&&!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
   if(!_fm.reason) return fmErr(wmOn()?'Choose the purpose.':'Choose the reason for the meeting.');
-  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&_fm.reason==='Other'&&!oth.trim()) return fmErr('Write what the work is.');
+  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&wtText('field',_fm.reason)&&!oth.trim()) return fmErr(wtTextErr(_fm.reason));
   fmErr('Saving…');
   try{
-    const body=wmOn()?{seq:_fm.seq,purpose:_fm.reason,purposeOther:oth.trim()}:{seq:_fm.seq,reason:_fm.reason}; if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr};
+    const body=wmOn()?{seq:_fm.seq,purpose:_fm.reason,purposeOther:wtText('field',_fm.reason)?oth.trim():''}:{seq:_fm.seq,reason:_fm.reason}; if(ask){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr}; }
     const r=await fmCall('setMeetingCustomer',body);
     if(r){ fmClose(); await fmRefresh(); }
   }catch(e){ fmErr(e.message||'Could not save. Try again.'); }
@@ -6498,7 +6511,7 @@ async function fmSaveCustomer(){
 function fmEnd(seq){
   _fm=Object.assign(_fm,{seq:seq,result:'',vertical:''});
   const mm=fmMeet(seq);
-  if(!fmSales(mm)) return fmSheet(`<h3>${hx(mm.purpose==='Other'&&mm.purposeOther?mm.purposeOther:mm.purpose)} · finish</h3><div class="fm-lbl">${mm.purpose==='Complaint'?'What was the issue and what did you do?':'What was the outcome?'} (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea>
+  if(!fmSales(mm)) return fmSheet(`<h3>${hx(kindLbl(mm.purpose,mm.purposeOther))} · finish</h3><div class="fm-lbl">${mm.purpose==='Complaint'?'What was the issue and what did you do?':'What was the outcome?'} (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea>
     <div class="fm-lbl">Next follow-up (optional)</div><input id="fmFollow" type="date"><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="fmFinish()">⏹ Stop and save</button>`);
   fmSheet(`<h3>How did the meeting go?</h3><div class="fm-lbl">Result</div><div id="fmRes2">${fmChips(FM_RESULTS,'','fmResultPick')}</div>
     <div class="fm-lbl">Business line (optional)</div><div id="fmVert">${fmChips(FM_VERTICALS,'','fmVertPick')}</div>
@@ -7212,29 +7225,37 @@ async function wmSiteStart(pl){
 const WM_TASKS=['Client Calling','Accounts Setting','Accounts Settling','Task Stack Settling','Training','Client Quotation Creation','Client Presentation Making','Demo to Office Client','Other'];
 const WM_CLIENT=['Client Calling','Client Quotation Creation','Demo to Office Client'];
 const WT_MODES=[['office','🏢 Office'],['wfh','🏠 WFH'],['factory','🏭 Factory'],['field','🚗 Field']];
+const WT_FIXED=['Other'];   // always offered after the owner's own types; staff write what it is
+const wtFixed=n=>WT_FIXED.indexOf(n)>=0;
+const kindLbl=(k,o)=>o?(k==='Other'?o:k+' · '+o):k;   // Other shows its own words; a type with the Remark option shows "Type · remark"
 function wtOwn(){ try{ const o=JSON.parse((_D.settings||{}).workTypes||'{}'); return o&&typeof o==='object'?o:{}; }catch(e){ return {}; } }
 // The task list for a mode: the owner's own (Settings → workTypes) or the built-in one; "Other" always last
 function wtList(m){
   const own=wtOwn()[m];
-  const def=(m==='field'?FM_PURPOSES:WM_TASKS).filter(n=>n!=='Other').map(n=>({n:n,c:m!=='field'&&WM_CLIENT.indexOf(n)>=0?1:0}));
-  return (Array.isArray(own)&&own.length?own.map(x=>({n:String(x.n||x),c:x.c?1:0})):def).concat([{n:'Other',c:0}]);
+  const fld=m==='field', def=(fld?FM_PURPOSES:WM_TASKS).filter(n=>n!=='Other').map(n=>({n:n,c:fld||WM_CLIENT.indexOf(n)>=0?1:0,r:0}));
+  // c = "asks for the client". Field types ask unless saved with nc (older saved lists have no nc, so they keep asking)
+  return (Array.isArray(own)&&own.length?own.map(x=>({n:String(x.n||x),c:fld?(x&&x.nc?0:1):(x&&x.c?1:0),r:x&&x.r?1:0})):def).concat([{n:'Other',c:fld?1:0,r:0}]);
 }
 const wtNames=m=>wtList(m).map(x=>x.n);
 const wtClient=(m,k)=>!!(wtList(m).find(x=>x.n===k)||{}).c;
-const wmLbl=i=>i.kind==='Other'&&i.kindOther?i.kindOther:i.kind;
+const wtText=(m,k)=>k==='Other'||!!(wtList(m).find(x=>x.n===k)||{}).r;   // staff must write words: what Other is, or the remark
+const wtTextHint=k=>k==='Other'?'What is the work? (required)':'Remark (required)';
+const wtTextErr=k=>k==='Other'?'Write what the work is.':'Write your remark.';
+const wmLbl=i=>kindLbl(i.kind,i.kindOther);
 const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
 function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(wtNames(_wm.mode||'office'),'','wmTaskPick'); }
 function wmTaskPick(k){
   _fm=Object.assign(_fm,{id:'',task:k,wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)});
   const cl=wtClient(_wm.mode||'office',k);
-  if(!cl&&k!=='Other'){ wmTaskGo(); return; }   // one tap starts it
+  const tx=wtText(_wm.mode||'office',k);
+  if(!cl&&!tx){ wmTaskGo(); return; }   // one tap starts it
   fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
-    (k==='Other'?'<input id="fmOther" placeholder="What is the work? (required)">':'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
+    (tx?`<input id="fmOther" placeholder="${wtTextHint(k)}" maxlength="80">`:'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
   if(cl) fmSearch();
 }
 async function wmTaskGo(){
   const k=_fm.task, cl=wtClient(_wm.mode||'office',k), g=id=>((document.getElementById(id)||{}).value||'').trim();
-  if(k==='Other'&&!g('fmOther')) return fmErr('Write what the work is.');
+  if(wtText(_wm.mode||'office',k)&&!g('fmOther')) return fmErr(wtTextErr(k));
   if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
   if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
   try{
@@ -7262,7 +7283,7 @@ function wmRunHtml(){
 }
 function wmTimeline(){
   const L=[]; (_wm.items||[]).forEach(i=>L.push({t:i.startAt,h:`<li><b>${hx(wmLbl(i))}</b><span>${wmClk(i.startAt)}${i.endAt?' – '+wmClk(i.endAt):' · '+i.status.toLowerCase()} · ${fmtMins(i.status==='Done'?i.activeMin:wmRunMin())}${i.clientName?' · '+hx(i.clientName):''}</span>${i.outcome?`<em>${hx(i.outcome)}</em>`:''}</li>`}));
-  ((_hmRec&&_hmRec.meetings)||[]).filter(m=>m.kind!=='personal'&&m.startAt).forEach(m=>L.push({t:m.startAt,h:`<li><b>${hx(m.purpose==='Other'&&m.purposeOther?m.purposeOther:(m.purpose||'Meeting'))}</b><span>${wmClk(m.startAt)}${m.endAt?' – '+wmClk(m.endAt):' · running'}${m.activeMin?' · '+fmtMins(m.activeMin):''}${m.customerName?' · '+hx(m.customerName):''}</span>${m.outcome||m.result?`<em>${hx(m.outcome||m.result)}</em>`:''}</li>`}));
+  ((_hmRec&&_hmRec.meetings)||[]).filter(m=>m.kind!=='personal'&&m.startAt).forEach(m=>L.push({t:m.startAt,h:`<li><b>${hx(m.purpose?kindLbl(m.purpose,m.purposeOther):'Meeting')}</b><span>${wmClk(m.startAt)}${m.endAt?' – '+wmClk(m.endAt):' · running'}${m.activeMin?' · '+fmtMins(m.activeMin):''}${m.customerName?' · '+hx(m.customerName):''}</span>${m.outcome||m.result?`<em>${hx(m.outcome||m.result)}</em>`:''}</li>`}));
   if(!L.length) return '';
   L.sort((a,b)=>a.t<b.t?-1:1);
   return `<div class="wm-tl"><div class="wm-q">Today</div><ul>${L.map(x=>x.h).join('')}</ul></div>`;
@@ -7294,7 +7315,7 @@ async function liveLoad(manual){
   catch(e){ const g=document.getElementById('lvGrid'); if(g&&!_lv.data) g.innerHTML='<div class="empty">Could not load. '+hx(e&&e.message||'')+'</div>'; }
   finally{ _lv.busy=false; }
 }
-const liveWhat=x=>{ const k=x.kind==='Other'&&x.kindOther?x.kindOther:x.kind; return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
+const liveWhat=x=>{ const k=kindLbl(x.kind,x.kindOther); return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
 const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
 function liveDraw(){
   const d=_lv.data; if(!d) return;
@@ -7365,7 +7386,7 @@ function wrDraw(){
 }
 function wrTog(g,v){ const a=_wr[g], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); if(g==='modes'){ const ok=wrKinds(); _wr.kinds=_wr.kinds.filter(k=>ok.indexOf(k)>=0); } _wr.data=null; wrDraw(); }
 // Purpose / task chips: the work types of the chosen modes (all modes when none is chosen); old names still in the reports stay findable through "all"
-function wrKinds(){ const ms=_wr.modes.length?_wr.modes:WT_MODES.map(x=>x[0]); const L=[...new Set([].concat(...ms.map(m=>wtNames(m).filter(k=>k!=='Other'))))]; if(!_wr.modes.length) WR_KINDS.forEach(k=>{ if(k!=='Other'&&L.indexOf(k)<0) L.push(k); }); return L.concat(['Other']); }
+function wrKinds(){ const ms=_wr.modes.length?_wr.modes:WT_MODES.map(x=>x[0]); const L=[...new Set([].concat(...ms.map(m=>wtNames(m).filter(k=>!wtFixed(k)))))]; if(!_wr.modes.length) WR_KINDS.forEach(k=>{ if(!wtFixed(k)&&L.indexOf(k)<0) L.push(k); }); return L.concat(['Other']); }
 function wrRange(r){ _wr.range=r; _wr.data=null; wrDraw(); }
 function wrDates(){
   const t=todayStr();
@@ -7387,7 +7408,7 @@ async function wrShow(){
     loading(false); _wr.data=Object.assign({},r,{filters:wrFilterText()}); wrOut();
   }catch(e){ loading(false); alert(e.message||'Could not load the report.'); }
 }
-const wrKind=r=>r.kind==='Other'&&r.kindOther?r.kindOther:r.kind;
+const wrKind=r=>kindLbl(r.kind,r.kindOther);
 function wrOut(){
   const d=_wr.data, el=document.getElementById('wrOut'); if(!el||!d) return;
   const sp=Object.keys(d.split||{}).map(k=>[k,d.split[k]]), bk=Object.keys(d.byKind||{}).map(k=>[k,d.byKind[k]]);
