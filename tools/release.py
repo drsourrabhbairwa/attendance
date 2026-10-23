@@ -19,6 +19,7 @@ ix = root / 'index.html'
 s = ix.read_text()
 s, a = re.subn(r"window\.AMK_PAGE_VERSION='[^']*'", f"window.AMK_PAGE_VERSION='{ver}'", s)
 s, b = re.subn(r'src="notify\.js\?v=[^"]*"', f'src="notify.js?v={ver}"', s)
-if a != 1 or b != 1: sys.exit('index.html is missing the version stamp')
+s, c = re.subn(r'src="appstore\.js\?v=[^"]*"', f'src="appstore.js?v={ver}"', s)
+if a != 1 or b != 1 or c != 1: sys.exit('index.html is missing the version stamp')
 ix.write_text(s)
 print('released', ver)

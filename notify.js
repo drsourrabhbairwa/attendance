@@ -173,6 +173,7 @@
   }
   function reset() {
     alarmStop(); S.empId = ''; S.seenAt = null; S.notices = []; S.unread = 0; S.pushTried = false;
+    try { var T = window.AndroidTracker; if (isNative() && T && typeof T.setAuth === 'function') T.setAuth(''); } catch (x) { }   // the app stops answering for, and showing messages to, the person who left
     paintBell(); closeSheet();
     var p = document.getElementById('amkPop'); if (p) p.remove();
     var b = document.getElementById('amkPushBar'); if (b) b.remove();
@@ -194,7 +195,8 @@
     (function go() {
       if (!emp() || emp().id !== id) return;
       var tok = ''; try { if (typeof T.pushToken === 'function') tok = T.pushToken() || ''; } catch (x) { }
-      if (tok) { if (ls('amk_native_tok_' + id) !== tok) call('registerPushToken', { empId: id, pushToken: tok, platform: 'android' }).then(function () { ls('amk_native_tok_' + id, tok); }).catch(function () { }); }
+      var key = id + '|' + tok;   // one key for the phone: signing in as someone else and back must register again
+      if (tok) { if (ls('amk_native_tok') !== key) call('registerPushToken', { empId: id, pushToken: tok, platform: 'android' }).then(function () { ls('amk_native_tok', key); }).catch(function () { }); }
       else if (++tries < 8 && typeof T.pushToken === 'function') setTimeout(go, 5000);
     })();
     try { if (typeof T.setAuth === 'function' && typeof trackerTok === 'function') T.setAuth(JSON.stringify({ empId: id, token: trackerTok(id), scriptUrl: SCRIPT_URL, secret: API_SECRET })); } catch (x) { }

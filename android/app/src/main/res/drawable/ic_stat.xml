@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- notification icon: the "A" of the Amitek logo (only the shape counts, Android tints it) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M2.0,19.7L5.18,19.7L7.07,16.42L16.43,16.42L18.3,19.7L22.0,19.7L13.6,4.9L10.32,4.9zM11.81,7.75L14.92,13.72L8.51,13.72z" />
+</vector>

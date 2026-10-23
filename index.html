@@ -3177,11 +3177,12 @@ function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
 window.AmkApp={
   _want:'',
   route(name){
-    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices)$/.test(name)) return;
+    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices|store)$/.test(name)) return;
     if(!currentEmp||typeof wmOn!=='function'){ this._want=name; return; }
     this._want='';
     try{
       if(name==='notices'){ if(window.AmkNotify) AmkNotify.open(); return; }
+      if(name==='store'){ if(window.AmkStore) AmkStore.open(); return; }
       if(name==='tasks'){ if(typeof tkOpen==='function') tkOpen(); return; }
       if(!document.getElementById('homeScreen').classList.contains('active')) goHome();
       if(name!=='out') return;
@@ -3337,6 +3338,7 @@ function renderHomeActs(){
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   L.push(`<button onclick="openPhoneHelp()">📱 <span>Phone settings</span><small style="color:var(--soft)">location &amp; camera</small></button>`);
+  try{ if(window.AmkStore&&AmkStore.has()) L.push(AmkStore.row()); }catch(e){}   // the app's own store (Android app only)
   L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
   L.push(`<button class="hm-lo" onclick="logout()">⎋ <span>Sign out</span></button>`);
   lk.innerHTML=L.join('');
@@ -6252,6 +6254,7 @@ init();
 <script src="firebase-config.js"></script>
 <script>window.AMK_PAGE_VERSION='2026-10-22.13';</script>
 <script src="notify.js?v=2026-10-22.13"></script>
+<script src="appstore.js?v=2026-10-22.13"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
