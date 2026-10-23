@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   var PAGE_VERSION = window.AMK_PAGE_VERSION || '';   // stamped into index.html by tools/release.py, so a refreshed page always knows its own version
-  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false };
+  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false, nativeAt: 0 };
 
   function $(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
   function hx(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -47,10 +47,12 @@
       '.amk-btn{border:1px solid var(--border2,#c4c4b8);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}' +
       '.amk-btn.pri{background:var(--accent,#3d6b50);border-color:var(--accent,#3d6b50);color:#fff}' +
       '.amk-item{padding:10px 8px;border-top:1px solid var(--border,#dedfd4);cursor:pointer}.amk-item.unread{background:var(--accentBg,#d8e8dc);border-radius:8px}' +
-      '.amk-item b{display:block;font-size:14px}.amk-item span{font-size:13px;color:var(--ink2,#3a4840)}.amk-item small{display:block;font-size:11px;color:var(--soft,#6b7a70);margin-top:2px}' +
+      '.amk-item b{display:block;font-size:14px}.amk-item span{display:block;font-size:13px;color:var(--ink2,#3a4840);white-space:pre-line}.amk-item small{display:block;font-size:11px;color:var(--soft,#6b7a70);margin-top:2px}' +
+      '.amk-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.amk-act .amk-btn{min-height:40px;font-weight:600}' +
+      '.amk-note{margin-top:6px;font-size:12px;font-weight:600;color:var(--accent,#3d6b50)}.amk-note.err{color:var(--red,#a03428)}' +
       '.amk-empty{padding:18px 6px;text-align:center;color:var(--soft,#6b7a70);font-size:13px}' +
       '.amk-pop{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9800;max-width:460px;margin:0 auto;background:var(--surface,#fff);color:var(--ink,#18201c);border:2px solid var(--accent,#3d6b50);border-radius:14px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25)}' +
-      '.amk-pop b{display:block;font-size:15px;margin-bottom:2px}.amk-pop span{font-size:13px}.amk-pop .row{display:flex;gap:8px;margin-top:10px}' +
+      '.amk-pop b{display:block;font-size:15px;margin-bottom:2px}.amk-pop span{display:block;font-size:13px;white-space:pre-line}.amk-pop .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}' +
       '.amk-bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:9700;max-width:460px;margin:0 auto;background:var(--ink,#18201c);color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between}' +
       '.amk-bar .amk-btn{color:#fff;border-color:rgba(255,255,255,.5)}';
     document.head.appendChild(s);
@@ -89,12 +91,35 @@
   function paintSheet() {
     if (!S.sheet) return;
     var items = S.notices.map(function (n) {
-      return '<div class="amk-item' + (n.readAt ? '' : ' unread') + '" data-id="' + hx(n.id) + '"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span><small>' + when(n.createdAt) + '</small></div>';
+      return '<div class="amk-item' + (n.readAt ? '' : ' unread') + '" data-id="' + hx(n.id) + '"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' + leaveHtml(n) + '<small>' + when(n.createdAt) + '</small></div>';
     }).join('') || '<div class="amk-empty">No messages yet. Reminders will show up here.</div>';
     S.sheet.innerHTML = '<div class="amk-panel"><div class="amk-head"><b>Messages</b><span><button class="amk-btn" data-act="all">Mark all read</button> <button class="amk-btn" data-act="close">Close</button></span></div>' + items + '</div>';
     S.sheet.querySelector('[data-act=close]').onclick = closeSheet;
     S.sheet.querySelector('[data-act=all]').onclick = function () { markRead(null); };
     Array.prototype.forEach.call(S.sheet.querySelectorAll('.amk-item.unread'), function (el) { el.onclick = function () { markRead([el.getAttribute('data-id')]); }; });
+    Array.prototype.forEach.call(S.sheet.querySelectorAll('[data-leave]'), function (b) { b.onclick = function (ev) { ev.stopPropagation(); leaveAnswer(b.getAttribute('data-id'), b.getAttribute('data-leave') === 'yes'); }; });
+  }
+  /* "You seem to have left at 06:42 PM": two buttons while the prompt is today's and still open */
+  function isToday(n) { var t = ''; try { t = typeof todayStr === 'function' ? todayStr() : ''; } catch (e) { } return !t || (String(n.id || '').split('|')[2] || String(n.createdAt || '').slice(0, 10)) === t; }
+  function leaveOpen(n) { return n.kind === 'leftOffice' && !n.state && isToday(n); }
+  function leaveHtml(n) {
+    if (n.kind !== 'leftOffice') return '';
+    var st = String(n.state || ''), err = n._err ? '<div class="amk-note err">' + hx(n._err) + '</div>' : '';
+    if (st === 'done') return '<div class="amk-note">✓ Punched out at ' + hx(n.ref) + '</div>';
+    if (/^held/.test(st)) return '<div class="amk-note">Noted: you are still working</div>';
+    if (!leaveOpen(n)) return '';
+    return '<div class="amk-act"><button type="button" class="amk-btn pri" data-leave="yes" data-id="' + hx(n.id) + '">Yes, punch out at ' + hx(n.ref) + '</button><button type="button" class="amk-btn" data-leave="no" data-id="' + hx(n.id) + '">Still working</button></div>' + err;
+  }
+  function leaveAnswer(id, yes) {
+    var e = emp(), n = S.notices.filter(function (x) { return x.id === id; })[0]; if (!e || !n) return;
+    n._err = '';
+    call(yes ? 'confirmLeft' : 'stillWorking', { empId: e.id, date: String(n.id || '').split('|')[2] || String(n.createdAt || '').slice(0, 10) }).then(function () {
+      n.state = yes ? 'done' : 'held|now'; if (!n.readAt) n.readAt = 'now';
+      S.unread = S.notices.filter(function (x) { return !x.readAt; }).length; paintBell(); paintSheet();
+      var p = document.getElementById('amkPop'); if (p) p.remove();
+      if (yes) { try { if (typeof loadHome === 'function') loadHome(); } catch (x) { } }
+      refresh();
+    }).catch(function (err) { n._err = (err && err.message) || 'Could not save. Try again.'; paintSheet(); });
   }
   function markRead(ids) {
     var e = emp(); if (!e) return;
@@ -110,10 +135,16 @@
   function popup(n) {
     css();
     var old = document.getElementById('amkPop'); if (old) old.remove();
-    var el = $('div', 'amk-pop', '<b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span><div class="row"><button class="amk-btn pri" data-a="open">Open messages</button><button class="amk-btn" data-a="ok">OK</button></div>');
+    var ask = leaveOpen(n);
+    var el = $('div', 'amk-pop', '<b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span><div class="row">' + (ask
+      ? '<button class="amk-btn pri" data-a="yes">Yes, punch out at ' + hx(n.ref) + '</button><button class="amk-btn" data-a="no">Still working</button>'
+      : '<button class="amk-btn pri" data-a="open">Open messages</button><button class="amk-btn" data-a="ok">OK</button>') + '</div>');
     el.id = 'amkPop';
-    el.querySelector('[data-a=ok]').onclick = function () { el.remove(); };
-    el.querySelector('[data-a=open]').onclick = function () { el.remove(); openSheet(); };
+    var q = function (a) { return el.querySelector('[data-a=' + a + ']'); };
+    if (q('ok')) q('ok').onclick = function () { el.remove(); };
+    if (q('open')) q('open').onclick = function () { el.remove(); openSheet(); };
+    if (q('yes')) q('yes').onclick = function () { leaveAnswer(n.id, true); };
+    if (q('no')) q('no').onclick = function () { leaveAnswer(n.id, false); };
     document.body.appendChild(el);
   }
   function refresh() {
@@ -123,7 +154,7 @@
       if (S.empId !== id) return;
       S.notices = d.notices || []; S.unread = d.unread || 0; paintBell(); paintSheet();
       var seen = alertedSet(), fresh = S.notices.filter(function (n) {
-        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
+        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && n.kind !== 'weekly' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
       });
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
@@ -138,6 +169,7 @@
     var at = (d && d.noticeAt) || '';
     if (S.seenAt === null || at !== S.seenAt) { S.seenAt = at; if (at || S.notices.length) refresh(); }
     if (!S.pushTried) { S.pushTried = true; setTimeout(pushSetup, 3000); }
+    else if (isNative() && Date.now() - S.nativeAt > 600000) nativeSetup();
   }
   function reset() {
     alarmStop(); S.empId = ''; S.seenAt = null; S.notices = []; S.unread = 0; S.pushTried = false;
@@ -154,9 +186,23 @@
     actions.forEach(function (a) { var b = $('button', 'amk-btn', a.t); b.type = 'button'; b.onclick = function () { el.remove(); a.f(); }; el.lastChild.appendChild(b); });
     document.body.appendChild(el); return el;
   }
+  /* the Android app receives push itself (its own Firebase token); the page only tells the server which phone it is, and gives the app what it needs to answer buttons on a notification */
+  function nativeSetup() {
+    var T = window.AndroidTracker, e = emp(); if (!isNative() || !T || !e) return;
+    S.nativeAt = Date.now();
+    var tries = 0, id = e.id;
+    (function go() {
+      if (!emp() || emp().id !== id) return;
+      var tok = ''; try { if (typeof T.pushToken === 'function') tok = T.pushToken() || ''; } catch (x) { }
+      if (tok) { if (ls('amk_native_tok_' + id) !== tok) call('registerPushToken', { empId: id, pushToken: tok, platform: 'android' }).then(function () { ls('amk_native_tok_' + id, tok); }).catch(function () { }); }
+      else if (++tries < 8 && typeof T.pushToken === 'function') setTimeout(go, 5000);
+    })();
+    try { if (typeof T.setAuth === 'function' && typeof trackerTok === 'function') T.setAuth(JSON.stringify({ empId: id, token: trackerTok(id), scriptUrl: SCRIPT_URL, secret: API_SECRET })); } catch (x) { }
+  }
   function pushSetup() {
     var cfg = self.AMK_FIREBASE;
-    if (isNative() || !cfg || !cfg.apiKey || !cfg.vapidKey || !emp()) return;
+    if (isNative()) { nativeSetup(); return; }
+    if (!cfg || !cfg.apiKey || !cfg.vapidKey || !emp()) return;
     var ios = /iPad|iPhone|iPod/.test(navigator.userAgent), standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
     if (ios && !standalone) { if (!ls('amk_ios_hint')) { ls('amk_ios_hint', '1'); bar('amkPushBar', 'To get reminders on iPhone, add this page to your Home Screen (Share → Add to Home Screen).', [{ t: 'OK', f: function () { } }]); } return; }
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
@@ -223,5 +269,5 @@
   setInterval(function () { if (document.visibilityState === 'visible') checkVersion(); }, 300000);
   setTimeout(checkVersion, 4000);
 
-  window.AmkNotify = { version: function () { return PAGE_VERSION; }, checkNow: function () { return checkVersion(true); }, onPoll: onPoll, mount: mount, reset: reset, alarmStart: alarmStart, alarmStop: alarmStop, chime: chime, refresh: refresh, _state: S };
+  window.AmkNotify = { open: openSheet, version: function () { return PAGE_VERSION; }, checkNow: function () { return checkVersion(true); }, onPoll: onPoll, mount: mount, reset: reset, alarmStart: alarmStart, alarmStop: alarmStop, chime: chime, refresh: refresh, _state: S };
 })();

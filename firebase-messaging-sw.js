@@ -15,15 +15,19 @@ if (self.AMK_FIREBASE && self.AMK_FIREBASE.apiKey) {
       renotify: true,
       requireInteraction: alarm,
       vibrate: alarm ? [600, 200, 600, 200, 600, 200, 600] : [200, 100, 200],
-      data: { kind: d.kind || '', ref: d.ref || '' }
+      data: { kind: d.kind || '', ref: d.ref || '', route: d.route || '' }
     });
   });
 }
 
+/* a tap opens the app on the screen the message is about (today | out | tasks | notices) */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const route = (e.notification.data && e.notification.data.route) || '';
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-    for (const c of list) { if ('focus' in c) return c.focus(); }
-    return self.clients.openWindow('./');
+    for (const c of list) {
+      if ('focus' in c) { if (route) { try { c.postMessage({ amkRoute: route }); } catch (x) { } } return c.focus(); }
+    }
+    return self.clients.openWindow('./' + (route ? '?go=' + encodeURIComponent(route) : ''));
   }));
 });
