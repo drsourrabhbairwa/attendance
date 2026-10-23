@@ -1175,7 +1175,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <a href="#" class="help-link" onclick="openPhoneHelp();return false">📱 Phone settings for location &amp; camera</a>
     <a href="#" class="help-link" id="apkLink" style="display:none">📲 Download the Android app</a>
-    <a href="#" class="help-link" id="oldLoginLink" onclick="showOldLogin();return false">Old Supervisor / Admin login</a>
+    <a href="#" class="help-link" id="oldLoginLink" style="display:none" onclick="showOldLogin();return false">Old Supervisor / Admin login</a>
   </div>
   <!-- Supervisor login -->
   <div id="loginSupervisor" style="display:none">
@@ -4508,6 +4508,7 @@ async function testMyLocation(){
 ══════════════════════════════════════════════════════════════ */
 /* ── Manage / My work: one person, one sign-in. The manage panel opens with the manage token the server gave at sign-in. ── */
 function showOldLogin(){ document.getElementById('oldRoles').style.display='flex'; document.getElementById('oldLoginLink').style.display='none'; }
+if(/#old-login/.test(location.hash)) showOldLogin();   // the old Supervisor / Admin sign-in is no longer shown on the page; this address is the way back in for an account not yet linked to a person
 function syncManageBtn(){ const b=document.getElementById('hmManage'); if(!b) return; let hint=false; try{ hint=localStorage.getItem(MGR_HINT)==='1'; }catch(e){} b.style.display=(_mgr||hint)?'':'none'; }
 function pauseStaffHome(){ try{ stopEmpSafety(false,true); fmWatchStop(); clearInterval(officeTimerInt); clearInterval(homeTimerInt); homeTok++; }catch(e){} }   // staff polls must not run on a manage token
 async function openAdminPanel(r){   // r = a manager login reply {token, role, name, id, departments}
@@ -6254,9 +6255,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-23.2';</script>
-<script src="notify.js?v=2026-10-23.2"></script>
-<script src="appstore.js?v=2026-10-23.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-23.3';</script>
+<script src="notify.js?v=2026-10-23.3"></script>
+<script src="appstore.js?v=2026-10-23.3"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
