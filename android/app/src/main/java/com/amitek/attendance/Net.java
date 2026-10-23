@@ -25,10 +25,20 @@ final class Net {
         return m.startsWith("Please update") || m.startsWith("Session expired");
     }
 
-    static JSONObject post(String url, JSONObject body) throws IOException, Rejected {
+    /** How long one step may wait: the usual time, or what is left of an overall budget (never less than a second, so a last try is still real). */
+    static int timeoutFor(long endAt, long now, int normal) {
+        if (endAt <= 0) return normal;
+        return (int) Math.max(1000, Math.min(normal, endAt - now));
+    }
+
+    static JSONObject post(String url, JSONObject body) throws IOException, Rejected { return post(url, body, 0); }
+
+    /** @param budgetMs overall time allowed for the whole call including the redirect (0 = the usual waits); used where the system gives only a few seconds */
+    static JSONObject post(String url, JSONObject body, long budgetMs) throws IOException, Rejected {
+        final long end = budgetMs > 0 ? System.currentTimeMillis() + budgetMs : 0;
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-        c.setConnectTimeout(15000);
-        c.setReadTimeout(30000);
+        c.setConnectTimeout(timeoutFor(end, System.currentTimeMillis(), 15000));
+        c.setReadTimeout(timeoutFor(end, System.currentTimeMillis(), 30000));
         c.setInstanceFollowRedirects(false);
         c.setRequestMethod("POST");
         c.setDoOutput(true);
@@ -41,8 +51,8 @@ final class Net {
             c.disconnect();
             if (next == null) throw new IOException("redirect without location");
             HttpURLConnection g = (HttpURLConnection) new URL(next).openConnection();
-            g.setConnectTimeout(15000);
-            g.setReadTimeout(30000);
+            g.setConnectTimeout(timeoutFor(end, System.currentTimeMillis(), 15000));
+            g.setReadTimeout(timeoutFor(end, System.currentTimeMillis(), 30000));
             g.setInstanceFollowRedirects(true);
             code = g.getResponseCode();
             text = read(code < 400 ? g.getInputStream() : g.getErrorStream());

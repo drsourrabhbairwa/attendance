@@ -2626,7 +2626,7 @@ function callBtns(){
 
 /* ── Employee: location-check prompt ── */
 function startEmpSafety(){ stopEmpSafety(true); if(!USE_SHEETS) return; empSafetyPoll(); safetyEmpInt=setInterval(empSafetyPoll,60000); }
-function stopEmpSafety(keepPoll){ clearInterval(safetyEmpInt); safetyEmpInt=null; if(!keepPoll){ _empPoll=0; try{ if(window.AmkNotify) AmkNotify.reset(); }catch(e){} }   /* a re-render of Home keeps the poll in flight; signing out forgets it */ _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
+function stopEmpSafety(keepPoll,keepAuth){ clearInterval(safetyEmpInt); safetyEmpInt=null; if(!keepPoll){ _empPoll=0; try{ if(window.AmkNotify) AmkNotify.reset(keepAuth); }catch(e){} }   /* a re-render of Home keeps the poll in flight; signing out forgets it */ _sos={alert:null,sending:false,err:'',note:''}; _chkPending=[]; _chkShown=''; hideCheckPrompt(); const m=document.getElementById('sosModal'); if(m) m.classList.remove('open'); setHtml('hmSafety',''); }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; const t=Date.now(); if(safetyEmpInt&&t-_empPollAt>POLL_RESUME_GAP) empSafetyPoll(); if(safetyAdmInt&&t-_admPollAt>POLL_RESUME_GAP) safetyAdminPoll(); });
 /* One poll at a time per phone: a slow reply must never let the next timer tick or an app-resume pile another request on top (the server runs them one by one). */
 let _empPoll=0, _empPollN=0, _empPollAt=0, _admPoll=0, _admPollN=0, _admPollAt=0;
@@ -4507,7 +4507,7 @@ async function testMyLocation(){
 /* ── Manage / My work: one person, one sign-in. The manage panel opens with the manage token the server gave at sign-in. ── */
 function showOldLogin(){ document.getElementById('oldRoles').style.display='flex'; document.getElementById('oldLoginLink').style.display='none'; }
 function syncManageBtn(){ const b=document.getElementById('hmManage'); if(!b) return; let hint=false; try{ hint=localStorage.getItem(MGR_HINT)==='1'; }catch(e){} b.style.display=(_mgr||hint)?'':'none'; }
-function pauseStaffHome(){ try{ stopEmpSafety(); fmWatchStop(); clearInterval(officeTimerInt); clearInterval(homeTimerInt); homeTok++; }catch(e){} }   // staff polls must not run on a manage token
+function pauseStaffHome(){ try{ stopEmpSafety(false,true); fmWatchStop(); clearInterval(officeTimerInt); clearInterval(homeTimerInt); homeTok++; }catch(e){} }   // staff polls must not run on a manage token
 async function openAdminPanel(r){   // r = a manager login reply {token, role, name, id, departments}
   if(r.via==='emp') pauseStaffHome();
   _tok=r.token; _me={role:r.role,name:r.name,id:r.id,departments:r.departments||[],via:r.via||''};

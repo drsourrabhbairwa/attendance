@@ -381,9 +381,16 @@ public class MainActivity extends Activity {
 
         /** The signed-in person (json: empId, token, scriptUrl, secret), so notification buttons can answer; "" signs the phone out. */
         @JavascriptInterface public void setAuth(String json) {
+            JSONObject before = Store.auth(MainActivity.this);
             Store.auth(MainActivity.this, json);
-            if (json != null && !json.isEmpty()) new Thread(() -> Push.register(MainActivity.this)).start();
+            JSONObject after = Store.auth(MainActivity.this);
+            String was = before == null ? "" : before.optString("empId").toUpperCase(), now = after == null ? "" : after.optString("empId").toUpperCase();
+            if (!was.equals(now)) Push.clearAll(MainActivity.this);   // the old person's questions must not stay for the next one
+            if (after != null) new Thread(() -> Push.register(MainActivity.this)).start();
         }
+
+        /** A message was answered or read inside the app: its notification in the list goes too. */
+        @JavascriptInterface public void clearNotice(String id) { Push.clear(MainActivity.this, id); }
 
         /** The screen a notification tap asked for, once ("" when none). */
         @JavascriptInterface public String takeRoute() { return Store.takeRoute(MainActivity.this); }

@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.service.notification.StatusBarNotification;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -21,12 +22,14 @@ import java.util.Map;
 final class Push {
     private Push() {}
 
-    static final String CH_ALARM = "alarm", CH_REMINDERS = "reminders", CH_REPORTS = "reports", CH_UPDATES = "updates";
+    static final String CH_ALARM = "alarm", CH_REMINDERS = "reminders", CH_REPORTS = "reports", CH_UPDATES = "updates", CH_QUIET = "quiet";
+    static final int NOTICE_ID = 100;
+    private static final long QUESTION_LIFE_MS = 3 * 3600 * 1000L;   // a question with buttons does not linger all evening
     static final String EXTRA_ROUTE = "route";
     static final String ACT_YES = "com.amitek.attendance.LEFT_YES", ACT_NO = "com.amitek.attendance.LEFT_NO";
     private static final int BRAND = Color.parseColor("#3D6B50");
 
-    /** Four channels, so the person can silence reports without silencing a location check. */
+    /** Five channels, so the person can silence reports without silencing a location check. */
     static void channels(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
@@ -54,18 +57,10 @@ final class Push {
         NotificationChannel upd = new NotificationChannel(CH_UPDATES, "App updates", NotificationManager.IMPORTANCE_DEFAULT);
         upd.setDescription("A new version of this app is ready");
         nm.createNotificationChannel(upd);
-    }
 
-    /** Which channel a message uses; anything unknown is a reminder. */
-    static String channelOf(String name) {
-        if (CH_ALARM.equals(name) || CH_REPORTS.equals(name) || CH_UPDATES.equals(name)) return name;
-        return CH_REMINDERS;
-    }
-
-    /** The screen a tap opens; only the page's known screens are passed on. */
-    static String routeOf(String r) {
-        if ("today".equals(r) || "out".equals(r) || "tasks".equals(r) || "store".equals(r)) return r;
-        return "notices";
+        NotificationChannel quiet = new NotificationChannel(CH_QUIET, "Answers and confirmations", NotificationManager.IMPORTANCE_LOW);
+        quiet.setDescription("A short line after you answer from a notification");
+        nm.createNotificationChannel(quiet);
     }
 
     static PendingIntent open(Context c, int code, String route) {
@@ -80,27 +75,28 @@ final class Push {
         if (d == null || d.isEmpty()) return;
         // Only the person signed in on this phone gets it: a phone signed out, or handed to someone else, shows nothing
         JSONObject auth = Store.auth(c);
-        String to = d.get("empId") == null ? "" : d.get("empId");
-        if (auth == null || (!to.isEmpty() && !to.equalsIgnoreCase(auth.optString("empId")))) return;
+        String to = nz(d.get("empId"));
+        if (auth == null || !PushLogic.forPerson(to, auth.optString("empId"))) return;
         String title = nz(d.get("title")), body = nz(d.get("body"));
         if (title.isEmpty() && body.isEmpty()) return;
-        if (MainActivity.isVisible() && !CH_ALARM.equals(channelOf(d.get("channel")))) {
+        if (PushLogic.pageShows(nz(d.get("kind")), PushLogic.channelOf(d.get("channel")), MainActivity.isVisible())) {
             // the person is looking at the app: the page shows it itself, no need for a second one in the notification list
             MainActivity.evalInPage("window.AmkNotify&&AmkNotify.refresh&&AmkNotify.refresh()");
             return;
         }
-        try { show(c, d, title, body); } catch (Exception ignored) {}
+        try { show(c, d, title, body, to.isEmpty() ? auth.optString("empId") : to); } catch (Exception ignored) {}
         new Thread(() -> { try { Updater.maybeCheck(c); } catch (Exception ignored) {} }).start();   // a push is a good moment to look for a new app version
     }
 
-    private static void show(Context c, Map<String, String> d, String title, String body) {
+    private static void show(Context c, Map<String, String> d, String title, String body, String empId) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
         String kind = nz(d.get("kind")), noticeId = nz(d.get("noticeId")), ref = nz(d.get("ref"));
-        String channel = channelOf(d.get("channel")), route = routeOf(nz(d.get("route")));
+        String channel = PushLogic.channelOf(d.get("channel")), route = PushLogic.routeOf(nz(d.get("route")));
         String tag = noticeId.isEmpty() ? kind + ":" + System.currentTimeMillis() : noticeId;   // the same notice again replaces itself instead of stacking
         int code = (tag.hashCode() & 0x3fffffff);
 
+        boolean question = "leftOffice".equals(d.get("actions")) && noticeId.startsWith("left|");
         Notification.Builder b = new Notification.Builder(c, channel)
                 .setSmallIcon(R.drawable.ic_stat)
                 .setColor(BRAND)
@@ -108,24 +104,46 @@ final class Push {
                 .setContentText(firstLine(body))
                 .setStyle(new Notification.BigTextStyle().bigText(body))
                 .setContentIntent(open(c, code, route))
-                .setAutoCancel(true)
+                .setAutoCancel(!question)   // a question stays until it is answered, so a failed button press does not make it vanish
                 .setShowWhen(true)
                 .setWhen(System.currentTimeMillis())
                 .setCategory(CH_ALARM.equals(channel) ? Notification.CATEGORY_ALARM : CH_REPORTS.equals(channel) ? Notification.CATEGORY_RECOMMENDATION : Notification.CATEGORY_REMINDER)
                 .setVisibility(Notification.VISIBILITY_PRIVATE)
                 .setPublicVersion(new Notification.Builder(c, channel).setSmallIcon(R.drawable.ic_stat).setColor(BRAND).setContentTitle("Amitek Attendance").setContentText("You have a new message").build());
 
-        if ("leftOffice".equals(d.get("actions")) && noticeId.startsWith("left|")) {
-            b.addAction(new Notification.Action.Builder(null, ref.isEmpty() ? "Yes, punch out" : "Yes, punch out at " + ref, action(c, ACT_YES, noticeId, tag, ref, code + 1)).build());
-            b.addAction(new Notification.Action.Builder(null, "Still working", action(c, ACT_NO, noticeId, tag, ref, code + 2)).build());
+        if (question) {
+            b.setTimeoutAfter(QUESTION_LIFE_MS);
+            b.addAction(new Notification.Action.Builder(null, ref.isEmpty() ? "Yes, punch out" : "Yes, punch out at " + ref, action(c, ACT_YES, noticeId, tag, ref, empId, code + 1)).build());
+            b.addAction(new Notification.Action.Builder(null, "Still working", action(c, ACT_NO, noticeId, tag, ref, empId, code + 2)).build());
         }
-        nm.notify(tag, 100, b.build());
+        nm.notify(tag, NOTICE_ID, b.build());
     }
 
-    private static PendingIntent action(Context c, String act, String noticeId, String tag, String ref, int code) {
+    private static PendingIntent action(Context c, String act, String noticeId, String tag, String ref, String empId, int code) {
         Intent i = new Intent(c, NoticeActionReceiver.class).setAction(act)
-                .putExtra("noticeId", noticeId).putExtra("tag", tag).putExtra("ref", ref);
+                .putExtra("noticeId", noticeId).putExtra("tag", tag).putExtra("ref", ref).putExtra("empId", empId);
         return PendingIntent.getBroadcast(c, code, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /** One message is no longer needed (answered or read in the app): its notification goes. */
+    static void clear(Context c, String noticeId) {
+        if (noticeId == null || noticeId.isEmpty()) return;
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null) return;
+        nm.cancel(noticeId, NOTICE_ID);
+        nm.cancel(noticeId + ":retry", NOTICE_ID);
+    }
+
+    /** Someone else (or nobody) is signed in now: the previous person's messages and questions must not stay in the notification list. */
+    static void clearAll(Context c) {
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null) return;
+        try {
+            for (StatusBarNotification n : nm.getActiveNotifications()) {
+                String tag = n.getTag();
+                if (n.getId() == NOTICE_ID && (tag == null || !tag.startsWith("update"))) nm.cancel(tag, NOTICE_ID);   // the app-update notices belong to the phone, not a person
+            }
+        } catch (Exception ignored) {}
     }
 
     /** Tells the office this phone's push address, once per person and token. Runs on a background thread. */
@@ -147,11 +165,12 @@ final class Push {
 
     /** Asks Firebase for this phone's token (it may take a moment on first start) and registers it. */
     static void refreshToken(Context c) {
+        final Context app = c.getApplicationContext();   // the screen may be gone by the time Firebase answers
         try {
             FirebaseMessaging.getInstance().getToken().addOnSuccessListener(t -> {
                 if (t == null || t.isEmpty()) return;
-                Store.fcmToken(c, t);
-                new Thread(() -> register(c)).start();
+                Store.fcmToken(app, t);
+                new Thread(() -> register(app)).start();
             });
         } catch (Exception ignored) {}
     }

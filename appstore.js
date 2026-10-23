@@ -10,7 +10,8 @@
   var APK = 'https://github.com/drsourrabhbairwa/attendance/releases/latest/download/amitek-attendance.apk';
   var OWN = 'https://github.com/drsourrabhbairwa/attendance/releases/download/';
   var TITLE = '📦 App Store';
-  var S = { info: null, old: null, perm: false, min: 0 };
+  var S = { info: null, old: null, perm: false, min: 0, tm: 0 };
+  var GATE_OFF_MS = 3600e3;   // "Not now" keeps the cover away this long (for the same build on offer)
 
   function native() { try { return typeof NATIVE !== 'undefined' && !!NATIVE && !!window.AndroidTracker; } catch (e) { return false; } }
   function bridge() { return window.AndroidTracker; }
@@ -47,8 +48,18 @@
     if (!hasStore()) return null;
     try { return JSON.parse(bridge().updateInfo() || '{}'); } catch (e) { return null; }
   }
-  function refresh() { var i = readInfo(); if (i) S.info = i; paint(); gate(); }
-  function onUpdate(i) { if (i && typeof i === 'object') S.info = i; paint(); gate(); }
+  function setInfo(i) {
+    S.info = i;
+    if (i.canInstall !== false) S.perm = false;   // the person switched it on: the hint goes away
+    clearTimeout(S.tm);
+    if (i.state === 'installing' && !i.stuck) {
+      // the Android box can be lost; when it has waited long enough the screen offers "Try again" by itself
+      var wait = i.stateAt > 0 ? i.stateAt + 30000 - Date.now() + 500 : 31000;
+      S.tm = setTimeout(refresh, Math.max(500, Math.min(31000, wait)));
+    }
+  }
+  function refresh() { var i = readInfo(); if (i) setInfo(i); paint(); gate(); }
+  function onUpdate(i) { if (i && typeof i === 'object') setInfo(i); paint(); gate(); }
 
   /* an older app has no store: the page asks GitHub itself which build is newest */
   function oldCheck(force) {
@@ -78,6 +89,7 @@
       if (i.state === 'downloading') return 'Downloading… ' + (i.pct | 0) + '%';
       if (i.state === 'installing') return 'Installing…';
       if (i.newer) return 'Update ready';
+      if (i.checkFailed) return 'Could not check';
       return 'Up to date';
     }
     if (S.old && S.old.newer) return 'New app ready';
@@ -93,23 +105,29 @@
 
   /* ── pieces shared by the sheet and the cover ── */
   function bar(p) { return '<div class="as-bar"><i style="width:' + Math.max(0, Math.min(100, p | 0)) + '%"></i></div>'; }
+  function checkBtn(i, cover) { return '<button class="btn btn-outline" data-as="check" onclick="AmkStore.check()"' + (cover ? ' style="margin-top:8px"' : '') + '>' + (i.checking ? 'Checking…' : 'Check again') + '</button>'; }
   function actions(i, cover) {
     var st = i.state, h = '';
     if (st === 'downloading') return bar(i.pct) + '<p class="as-note">Downloading… ' + (i.pct | 0) + '%. Keep the internet on.</p>';
-    if (st === 'installing') return bar(100) + '<p class="as-note">Almost done. Android is asking you to confirm: tap <b>Update</b> in the box that appears. Cannot see it? Pull down the notification list.</p>';
+    if (st === 'installing') {
+      h += bar(100) + '<p class="as-note">Almost done. Android is asking you to confirm: tap <b>Update</b> in the box that appears. Cannot see it? Pull down the notification list.</p>';
+      if (i.stuck && i.newer) h += '<button class="btn btn-primary" data-as="update" onclick="AmkStore.update()">Try again</button>';
+      return h + (cover ? checkBtn(i, true) : '');
+    }
     if (st === 'error') h += '<div class="msg msg-error show" style="margin-top:10px">⚠️ ' + esc(i.err || 'The update did not finish.') + '</div>';
     if (i.newer) {
       if (S.perm || i.canInstall === false) h += '<p class="as-note">Android needs your OK first: switch on <b>Allow from this source</b> for this app, press Back, then tap Update again. You only do this once.</p>';
       h += '<button class="btn btn-primary" data-as="update" onclick="AmkStore.update()">' + (st === 'error' ? 'Try again' : '⬇ Update now') + '</button>';
+      if (cover) h += checkBtn(i, true);
     } else if (!cover) {
-      h += '<button class="btn btn-outline" data-as="check" onclick="AmkStore.check()">' + (i.checking ? 'Checking…' : 'Check again') + '</button>';
+      h += checkBtn(i, false);
     }
     return h;
   }
   function oldSteps() {
     return '<p class="as-note"><b>Install it once.</b> After that, updates arrive inside the app with one tap, and notifications reach you even when the app is closed.</p>' +
       '<ol class="as-steps"><li>Tap <b>Download new app</b>.</li><li>When it has downloaded, open the file (from the notification or the Downloads folder).</li><li>Tap <b>Install</b>. Allow it if Android asks. Your sign-in stays.</li></ol>' +
-      '<a class="btn btn-primary" data-as="download" href="' + APK + '" style="text-decoration:none;text-align:center">⬇ Download new app</a>';
+      '<a class="btn btn-primary" data-as="download" href="' + APK + '" onclick="AmkStore.tapped()" style="text-decoration:none;text-align:center">⬇ Download new app</a>';
   }
   function card(build, chip, isNew) {
     return '<div class="as-card"><div class="as-ic">📦</div><div style="min-width:0"><b>Amitek Attendance</b><span>Installed: version 1.0.' + esc(build) + '</span></div><span class="as-chip' + (isNew ? ' new' : '') + '">' + esc(chip) + '</span></div>';
@@ -119,8 +137,9 @@
   function sheetHtml() {
     if (hasStore()) {
       var i = S.info || {};
-      var h = card(i.build || '', i.newer ? 'Update ready' : 'Up to date', !!i.newer);
+      var h = card(i.build || '', i.newer ? 'Update ready' : i.checkFailed ? 'Not checked' : 'Up to date', !!i.newer);
       if (i.newer) h += '<div class="as-new"><b>Version 1.0.' + esc(i.latest) + (i.size ? ' · ' + mb(i.size) : '') + '</b>' + (i.notes ? '<p>' + esc(i.notes) + '</p>' : '') + '</div>';
+      else if (i.checkFailed) h += '<p class="as-note">Could not check for updates just now. Make sure the internet is on, then tap Check again.</p>';
       else h += '<p class="as-note">You have the newest version. The app also looks for updates by itself and tells you when one is ready.</p>';
       h += '<div data-as="state">' + actions(i, false) + '</div>';
       h += '<p class="as-note" style="color:var(--soft);font-size:11.5px">Web ' + esc(window.AMK_PAGE_VERSION || '') + '</p>';
@@ -159,14 +178,28 @@
   }
 
   /* ── forced update: the whole screen, nothing behind it can be used ── */
+  function gateOff(key) {
+    var v = (ls('amk_gate_off') || '').split('|'), at = +v[1] || 0;
+    return v[0] === String(key) && at <= Date.now() && Date.now() - at < GATE_OFF_MS;
+  }
+  function later() { var i = S.info, o = S.old; ls('amk_gate_off', String(hasStore() ? (i && i.latest) : (o && o.latest)) + '|' + Date.now()); gate(); }
+  function tapped() { ls('amk_old_tap', String(Date.now())); setTimeout(gate, 300); }
+  /* a forced cover must never become a trap: after three failed tries (or once the manual download was tried) the person can carry on for an hour */
+  function escapeHatch(i) {
+    var failed = hasStore() ? i && (i.fails | 0) >= 3 : !!ls('amk_old_tap');
+    if (!failed) return '';
+    return '<p class="as-note">Still not working? You can carry on for now and try again later.</p>' +
+      (hasStore() ? '<a class="btn btn-outline" data-as="download" href="' + APK + '" style="text-decoration:none;text-align:center;display:block;margin-top:8px">⬇ Download in browser</a>' : '') +
+      '<button class="btn btn-outline" data-as="dismiss" onclick="AmkStore.later()" style="margin-top:8px">Not now</button>';
+  }
   function gate() {
     var g = $('amkGate'), i = S.info, inner = '';
     if (hasStore()) {
-      if (i && i.forced && i.newer) inner = '<h3>📦 Update required</h3><p class="lead">This version of the app is too old to keep working. The update takes about a minute; your sign-in and data stay.</p>' +
-        '<div class="as-new" style="margin-top:0"><b>Version 1.0.' + esc(i.latest) + (i.size ? ' · ' + mb(i.size) : '') + '</b>' + (i.notes ? '<p>' + esc(i.notes) + '</p>' : '') + '</div>' + actions(i, true);
-    } else if (native() && S.old && S.old.newer && uaBuild() > 0 && S.min > uaBuild()) {
+      if (i && i.forced && i.newer && !gateOff(i.latest)) inner = '<h3>📦 Update required</h3><p class="lead">This version of the app is too old to keep working. The update takes about a minute; your sign-in and data stay.</p>' +
+        '<div class="as-new" style="margin-top:0"><b>Version 1.0.' + esc(i.latest) + (i.size ? ' · ' + mb(i.size) : '') + '</b>' + (i.notes ? '<p>' + esc(i.notes) + '</p>' : '') + '</div>' + actions(i, true) + escapeHatch(i);
+    } else if (native() && S.old && S.old.newer && uaBuild() > 0 && S.min > uaBuild() && !gateOff(S.old.latest)) {
       inner = '<h3>📦 New app required</h3><p class="lead">This version of the app is too old to keep working. Installing the new one takes about a minute; your sign-in and data stay.</p>' +
-        '<div class="as-new" style="margin-top:0"><b>Version 1.0.' + esc(S.old.latest) + (S.old.size ? ' · ' + mb(S.old.size) : '') + '</b>' + (S.old.notes ? '<p>' + esc(S.old.notes) + '</p>' : '') + '</div>' + oldSteps();
+        '<div class="as-new" style="margin-top:0"><b>Version 1.0.' + esc(S.old.latest) + (S.old.size ? ' · ' + mb(S.old.size) : '') + '</b>' + (S.old.notes ? '<p>' + esc(S.old.notes) + '</p>' : '') + '</div>' + oldSteps() + escapeHatch(null);
     }
     if (!inner) { if (g) g.remove(); return; }
     css();
@@ -189,7 +222,7 @@
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (hasStore()) refresh(); else oldCheck(false); } });
   }
 
-  window.AmkStore = { has: native, row: row, open: open, update: update, check: check, refresh: refresh, onUpdate: onUpdate, _state: S };
+  window.AmkStore = { has: native, row: row, open: open, update: update, check: check, refresh: refresh, onUpdate: onUpdate, later: later, tapped: tapped, _state: S };
   if (window.AmkApp) window.AmkApp.onUpdate = onUpdate;
   init();
 })();

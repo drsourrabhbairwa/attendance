@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   var PAGE_VERSION = window.AMK_PAGE_VERSION || '';   // stamped into index.html by tools/release.py, so a refreshed page always knows its own version
-  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false, nativeAt: 0 };
+  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false, nativeAt: 0, cleared: {} };
 
   function $(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
   function hx(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -110,11 +110,15 @@
     if (!leaveOpen(n)) return '';
     return '<div class="amk-act"><button type="button" class="amk-btn pri" data-leave="yes" data-id="' + hx(n.id) + '">Yes, punch out at ' + hx(n.ref) + '</button><button type="button" class="amk-btn" data-leave="no" data-id="' + hx(n.id) + '">Still working</button></div>' + err;
   }
+  /* the Android app also keeps these messages in the phone's notification list: answered or read here, they go from there too */
+  function clearNative(ids) {
+    try { var T = window.AndroidTracker; if (isNative() && T && typeof T.clearNotice === 'function') ids.forEach(function (id) { T.clearNotice(String(id)); }); } catch (x) { }
+  }
   function leaveAnswer(id, yes) {
     var e = emp(), n = S.notices.filter(function (x) { return x.id === id; })[0]; if (!e || !n) return;
     n._err = '';
     call(yes ? 'confirmLeft' : 'stillWorking', { empId: e.id, date: String(n.id || '').split('|')[2] || String(n.createdAt || '').slice(0, 10) }).then(function () {
-      n.state = yes ? 'done' : 'held|now'; if (!n.readAt) n.readAt = 'now';
+      n.state = yes ? 'done' : 'held|now'; if (!n.readAt) n.readAt = 'now'; clearNative([n.id]);
       S.unread = S.notices.filter(function (x) { return !x.readAt; }).length; paintBell(); paintSheet();
       var p = document.getElementById('amkPop'); if (p) p.remove();
       if (yes) { try { if (typeof loadHome === 'function') loadHome(); } catch (x) { } }
@@ -123,7 +127,9 @@
   }
   function markRead(ids) {
     var e = emp(); if (!e) return;
-    S.notices.forEach(function (n) { if (!n.readAt && (!ids || ids.indexOf(n.id) >= 0)) n.readAt = 'now'; });
+    var marked = [];
+    S.notices.forEach(function (n) { if (!n.readAt && (!ids || ids.indexOf(n.id) >= 0)) { n.readAt = 'now'; marked.push(n.id); } });
+    clearNative(marked);
     S.unread = S.notices.filter(function (n) { return !n.readAt; }).length; paintBell(); paintSheet();
     var p = { empId: e.id }; if (ids) p.ids = ids;
     call('markNoticesRead', p).catch(function () { });
@@ -153,6 +159,7 @@
     return call('getNotices', { empId: id }).then(function (d) {
       if (S.empId !== id) return;
       S.notices = d.notices || []; S.unread = d.unread || 0; paintBell(); paintSheet();
+      clearNative(S.notices.filter(function (n) { return n.readAt && !S.cleared[n.id] && (S.cleared[n.id] = 1); }).map(function (n) { return n.id; }));   // answered or read on another device: its notification here goes too
       var seen = alertedSet(), fresh = S.notices.filter(function (n) {
         return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && n.kind !== 'weekly' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
       });
@@ -165,15 +172,16 @@
   /* ── called from the existing 60-second poll ── */
   function onPoll(d) {
     var e = emp(); if (!e) return;
-    if (S.empId !== e.id) { S.empId = e.id; S.seenAt = null; S.notices = []; S.unread = 0; paintBell(); }
+    if (S.empId !== e.id) { S.empId = e.id; S.seenAt = null; S.notices = []; S.unread = 0; S.cleared = {}; paintBell(); }
     var at = (d && d.noticeAt) || '';
     if (S.seenAt === null || at !== S.seenAt) { S.seenAt = at; if (at || S.notices.length) refresh(); }
     if (!S.pushTried) { S.pushTried = true; setTimeout(pushSetup, 3000); }
     else if (isNative() && Date.now() - S.nativeAt > 600000) nativeSetup();
   }
-  function reset() {
-    alarmStop(); S.empId = ''; S.seenAt = null; S.notices = []; S.unread = 0; S.pushTried = false;
-    try { var T = window.AndroidTracker; if (isNative() && T && typeof T.setAuth === 'function') T.setAuth(''); } catch (x) { }   // the app stops answering for, and showing messages to, the person who left
+  /* keepAuth: the same person is still signed in on this phone (they only opened the admin panel), so the app keeps answering and showing messages for them */
+  function reset(keepAuth) {
+    alarmStop(); S.empId = ''; S.seenAt = null; S.notices = []; S.unread = 0; S.pushTried = false; S.cleared = {};
+    if (!keepAuth) { try { var T = window.AndroidTracker; if (isNative() && T && typeof T.setAuth === 'function') T.setAuth(''); } catch (x) { } }   // the app stops answering for, and showing messages to, the person who left
     paintBell(); closeSheet();
     var p = document.getElementById('amkPop'); if (p) p.remove();
     var b = document.getElementById('amkPushBar'); if (b) b.remove();
