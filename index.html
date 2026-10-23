@@ -1738,7 +1738,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <!-- ACTIONS LOG TAB -->
   <div id="tabLive" class="tab-pane">
     <div class="lv-chips lv-jump" aria-label="Jump to">
-      <button type="button" onclick="lvJump('lvSecPeople')">👁 People</button><button type="button" onclick="lvJump('lvSecSites')">🗺️ Site work</button><button type="button" onclick="lvJump('lvSecMonth')">📊 Site month</button><button type="button" onclick="lvJump('lvSecSup')">👷 Supervisors</button>
+      <button type="button" onclick="lvJump('lvSecPeople')">👁 People</button><button type="button" onclick="lvJump('lvSecSites')">🗺️ Site work</button><button type="button" onclick="lvJump('lvSecMonth')">📊 Site month</button>
     </div>
     <section id="lvSecPeople" class="lv-anchor">
       <div class="lv-top"><div class="lv-sum" id="lvSum"></div><button class="btn-sm" onclick="lvRefreshAll()" aria-label="Refresh">↻ Refresh</button></div>
@@ -1761,22 +1761,6 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       <div id="siteSummary"></div>
     </section>
 
-    <section id="lvSecSup" class="lv-sec lv-anchor">
-      <div class="lv-sh"><div><h3>👷 Supervisors</h3><div class="lv-ss">Who looks after which staff</div></div></div>
-      <div class="add-form">
-        <h3>➕ Add Supervisor</h3>
-        <div class="add-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;margin-top:9px">
-          <div id="newSupDeptWrap" style="display:none;grid-column:1/-1"><label style="margin:0 0 4px">Department (the supervisor will look after everyone in it)</label><select id="newSupDept"></select></div>
-          <div><label style="margin:0 0 4px">Name</label><input type="text" id="newSupName" placeholder="Supervisor name"></div>
-          <div><label style="margin:0 0 4px">Password</label><input type="password" id="newSupPass" placeholder="Set password"></div>
-          <div><label style="margin:0 0 4px">E-mail (alerts)</label><input type="text" id="newSupEmail" placeholder="optional"></div>
-          <div><button onclick="addSupervisor()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Add</button></div>
-        </div>
-        <div class="msg msg-error" id="supMgrErr"></div>
-        <div class="msg msg-success" id="supMgrOk"></div>
-      </div>
-      <div id="supList"></div>
-    </section>
   </div>
   <div id="tabSafety" class="tab-pane">
     <div id="safetyContent"><div class="empty"><div class="eicon">🚨</div>Loading…</div></div>
@@ -2971,13 +2955,6 @@ async function setEmpDept(id,val){
   try{ if(USE_SHEETS) await api('setDepartment',{id,department:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.department=val; saveCache(); }
   catch(err){ alert('Error: '+err.message); renderEmpList(); }
 }
-async function setSupEmail(id,val){
-  val=(val||'').trim();
-  if(val&&!/^\S+@\S+\.\S+$/.test(val)){ alert('That e-mail does not look right.'); renderSupList(); return; }
-  try{ if(USE_SHEETS) await api('updateSupEmail',{id,email:val}); const s=(_D.supervisors||[]).find(x=>x.id===id); if(s) s.email=val; saveCache(); }
-  catch(e){ alert('Error: '+e.message); }
-}
-
 /* ══════════════════════════════════════════════════════════════
    ALERTS, REMINDERS & PHOTOS (admin settings)
 ══════════════════════════════════════════════════════════════ */
@@ -6067,75 +6044,12 @@ async function loadSiteSummary(){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SUPERVISOR MANAGEMENT
-══════════════════════════════════════════════════════════════ */
-async function addSupervisor(){
-  const name=document.getElementById('newSupName').value.trim();
-  const pass=document.getElementById('newSupPass').value;
-  const err=document.getElementById('supMgrErr'),ok=document.getElementById('supMgrOk');
-  err.classList.remove('show');ok.classList.remove('show');
-  if(!name||!pass){err.textContent='Name and password required.';err.classList.add('show');return;}
-  loading(true,'Adding…');
-  try{
-    const id='sup-'+Date.now(),ph=await hashPass(pass);
-    const email=(document.getElementById('newSupEmail').value||'').trim();
-    if(email&&!/^\S+@\S+\.\S+$/.test(email)){ loading(false); err.textContent='That e-mail does not look right.'; err.classList.add('show'); return; }
-    let assignedEmp='', department='';
-    if(isDeptAdmin()){
-      department=(document.getElementById('newSupDept')||{}).value||myDepts()[0]||'';
-      assignedEmp=(_D.employees||[]).filter(e=>String(e.department||'').toLowerCase()===department.toLowerCase()).map(e=>e.id).join(',');
-      if(!assignedEmp){ loading(false); err.textContent='Add staff to '+department+' first — a supervisor must look after at least one person.'; err.classList.add('show'); return; }
-    }
-    if(USE_SHEETS) await api('addSupervisor',{id,name,passHash:ph,assignedEmp,email,department});
-    (_D.supervisors=_D.supervisors||[]).push({id,name,assignedEmp,email,department});
-    document.getElementById('newSupEmail').value='';
-    saveCache();
-    document.getElementById('newSupName').value='';document.getElementById('newSupPass').value='';
-    loading(false);ok.textContent='✅ '+name+' added as supervisor.';ok.classList.add('show');renderSupList();
-  }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
-}
-
-async function removeSupervisor(id){
-  if(!confirm('Remove this supervisor?')) return;
-  loading(true,'Removing…');
-  try{
-    if(USE_SHEETS) await api('removeSupervisor',{id});
-    _D.supervisors=(_D.supervisors||[]).filter(s=>s.id!==id);saveCache();loading(false);renderSupList();
-  }catch(e){loading(false);alert('Error: '+e.message);}
-}
-
-async function updateSupAssigned(id,empId,checked){
-  const sup=(_D.supervisors||[]).find(s=>s.id===id);if(!sup) return;
-  let list=(sup.assignedEmp||'').split(',').map(s=>s.trim()).filter(Boolean);
-  if(checked){if(!list.includes(empId))list.push(empId);}else list=list.filter(e=>e!==empId);
-  sup.assignedEmp=list.join(','); saveCache();
-  if(USE_SHEETS) await api('updateSupAssigned',{id,assignedEmp:sup.assignedEmp});
-}
-
-function renderSupList(){
-  const el=document.getElementById('supList');if(!el) return;
-  const sups=_D.supervisors||[],emps=_D.employees||[];
-  if(!sups.length){el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No supervisors yet.</div>';return;}
-  el.innerHTML=sups.map(s=>{
-    const assigned=(s.assignedEmp||'').split(',').map(e=>e.trim()).filter(Boolean);
-    return`<div class="sup-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:700">👷 ${hx(s.name)}</div><div style="font-size:12px;color:var(--soft)">${assigned.length} employee${assigned.length!==1?'s':''} assigned</div></div><button class="del-btn" onclick="removeSupervisor('${esc(s.id)}')">✕</button></div>
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:12px">📧</span><input type="text" value="${(s.email||'').replace(/"/g,'&quot;')}" placeholder="E-mail for alerts (optional)" onchange="setSupEmail('${esc(s.id)}',this.value)" style="margin:0;padding:6px 9px;font-size:12px"></div>
-      <details><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none">▼ Assign Employees</summary>
-      <div style="margin-top:8px">${emps.map(emp=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" ${assigned.includes(emp.id)?'checked':''} onchange="updateSupAssigned('${esc(s.id)}','${esc(emp.id)}',this.checked)" style="width:14px;height:14px"> ${hx(emp.name)} <span style="color:var(--soft);font-size:11px">${hx(emp.id)}</span></label>`).join('')||'<div style="color:var(--soft);font-size:12px">No employees yet.</div>'}</div>
-      </details></div>`;
-  }).join('');
-}
-
-
-/* ══════════════════════════════════════════════════════════════
    ROLE HELPERS, MANAGERS & HIERARCHY (Super Admin)
 ══════════════════════════════════════════════════════════════ */
 function fillEmpDeptSelect(){
   const sel=document.getElementById('nEmpDept'); if(!sel) return;
   const names=isDeptAdmin()?myDepts():deptList().map(d=>d.name);
   sel.innerHTML=(isDeptAdmin()?'':'<option value="">Company hours</option>')+names.map(n=>`<option value="${hx(n)}">${hx(n)}</option>`).join('');
-  const w=document.getElementById('newSupDeptWrap'), ss=document.getElementById('newSupDept');
-  if(w&&ss){ w.style.display=isDeptAdmin()&&myDepts().length>1?'block':'none'; ss.innerHTML=myDepts().map(n=>`<option value="${hx(n)}">${hx(n)}</option>`).join(''); }
 }
 let _org=null;
 async function loadOrg(){
@@ -6255,9 +6169,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-23.3';</script>
-<script src="notify.js?v=2026-10-23.3"></script>
-<script src="appstore.js?v=2026-10-23.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-23.4';</script>
+<script src="notify.js?v=2026-10-23.4"></script>
+<script src="appstore.js?v=2026-10-23.4"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7302,11 +7216,11 @@ const liveDur=m=>m==null?'':m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m';
 const liveWa=ph=>{ const d=String(ph||'').replace(/\D/g,''); return d.length===10?'91'+d:d.length>=11?d:''; };
 function liveStart(){ liveStop(); liveLoad(); _lv.timer=setInterval(()=>{ if(document.getElementById('tabLive')?.classList.contains('active')&&!document.hidden) liveLoad(); },60000); }
 function liveStop(){ if(_lv.timer){ clearInterval(_lv.timer); _lv.timer=null; } }
-// the site sections of the Live tab (the old Site Monitor tab): today's site work, the month summary, supervisors
+// the site sections of the Live tab (the old Site Monitor tab): today's site work and the month summary (supervisors are now assigned from the person's roles in Staff)
 function lvSiteOpen(){
   const sd=document.getElementById('siteDate'); if(sd) sd.value=todayStr();
   const sm=document.getElementById('siteMonth'); if(sm&&!sm.value) sm.value=todayStr().slice(0,7);
-  refreshSiteMonitor('admin'); renderSupList();
+  refreshSiteMonitor('admin');
 }
 function lvRefreshAll(){ liveLoad(true); refreshSiteMonitor('admin'); }
 function lvJump(id){ const e=document.getElementById(id); if(e) e.scrollIntoView({behavior:'smooth',block:'start'}); }
