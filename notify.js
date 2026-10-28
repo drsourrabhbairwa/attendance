@@ -153,6 +153,16 @@
     if (q('no')) q('no').onclick = function () { leaveAnswer(n.id, false); };
     document.body.appendChild(el);
   }
+  /* "Your meeting / site job was ended because you moved away": the page redraws the screen once for each such message, so it stops showing the job as running */
+  function endedHook(list) {
+    try {
+      var k = 'amk_ended_' + S.empId, seen = []; try { seen = JSON.parse(ls(k) || '[]'); } catch (x) { }
+      var fresh = (list || []).filter(function (n) { return (n.kind === 'meetingEnded' || n.kind === 'siteStopped') && seen.indexOf(n.id) < 0; });
+      if (!fresh.length) return;
+      ls(k, JSON.stringify(seen.concat(fresh.map(function (n) { return n.id; })).slice(-50)));
+      if (typeof window.amkServerEnded === 'function') window.amkServerEnded(fresh.map(function (n) { return n.kind; }));
+    } catch (x) { }
+  }
   function refresh() {
     var e = emp(); if (!e || S.fetching) return Promise.resolve();
     S.fetching = true; var id = e.id;
@@ -165,6 +175,7 @@
       });
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
+      endedHook(S.notices);
       if (fresh.length) { chime(); popup(fresh[0]); }
     }).catch(function () { }).then(function () { S.fetching = false; });
   }

@@ -369,6 +369,17 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .lc-leg{font-size:11px;color:var(--soft);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}
 .dept-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
 .dept-row:first-child{border-top:0}
+/* Departments & office hours: edit a row in place */
+.dp-acts{display:inline-flex;align-items:center;gap:2px;flex-shrink:0}
+.dp-edit{color:var(--accent,#1B7F6B)!important;font-size:19px!important}
+.dept-edit{display:block;padding:10px 12px;margin:6px 0;border:1px solid var(--accent,#1B7F6B);border-radius:12px;background:rgba(27,127,107,.06)}
+.dept-edit .dp-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.dept-edit label{margin:0 0 3px;font-size:12px}
+.dept-edit .dp-btns{display:flex;gap:8px;margin-top:9px}
+.dept-edit .dp-save{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px}
+.dept-edit .dp-cancel{padding:8px 14px;background:transparent;color:var(--soft);border:1px solid var(--border2);border-radius:var(--rs);cursor:pointer;font-weight:600;font-family:inherit;font-size:13px}
+.dept-edit .dp-note{font-size:11px;color:var(--soft);margin-top:7px}
+@media(max-width:560px){.dept-edit .dp-fields{grid-template-columns:1fr}}
 .wt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .wt-tab{border:1px solid var(--border);background:var(--card,#fff);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink2,#475467);display:flex;gap:6px;align-items:center}
 .wt-tab small{background:rgba(14,60,62,.08);color:inherit;border-radius:999px;padding:0 6px;font-size:11px}
@@ -704,7 +715,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 <style id="layoutSafety">
 /* the emergency bar is as tall as its text needs: the page and the sticky tab strip use its real height */
 body.sosOn{padding-top:var(--sosH,46px)}
-@media (min-width:1024px){#adminScreen .tab-row{top:calc(16px + var(--sosH,0px))}}
+@media (min-width:1024px){#adminScreen .tab-row{top:calc(16px + var(--sosH,0px));max-height:calc(100vh - 32px - var(--sosH,0px));overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(27,127,107,.45) transparent}#adminScreen .tab-row::-webkit-scrollbar{width:6px}#adminScreen .tab-row::-webkit-scrollbar-thumb{background:rgba(27,127,107,.4);border-radius:6px}}
 @media (max-width:1023px){#adminScreen .tab-row{top:calc(6px + var(--sosH,0px))}}
 /* ═══════════════════════════════════════════════════════════════════
    v22 — LAYOUT SAFETY + ONE GLASS SYSTEM (loaded after every other style block)
@@ -2319,9 +2330,12 @@ function awayMins(rec,kind){
     t+=m.backTime?calcMins(m.outTime,m.backTime):(rec.punchOut?0:Math.max(0,nowMins()-parseTimeMins(m.outTime))); });
   return Math.max(0,Math.round(t));
 }
+/* The trip the person is on right now (left, not yet back). With Work modes there is no "I am back" step after a field visit: once the visit is finished
+   (state done, whether the person stopped it or the office did) they are simply on the next piece of work, so it no longer counts as "out". */
 function getActiveMeeting(rec){
   if(!rec||!rec.meetings) return null;
-  return rec.meetings.find(m=>m.outTime&&!m.backTime)||null;
+  const W=typeof wmOn==='function'&&wmOn();
+  return rec.meetings.find(m=>m.outTime&&!m.backTime&&!(W&&m.state==='done'&&m.kind!=='personal'))||null;
 }
 
 /* Default employees */
@@ -2942,7 +2956,7 @@ function renderAudit(){
 /* ══════════════════════════════════════════════════════════════
    DEPARTMENTS (office hours per group)
 ══════════════════════════════════════════════════════════════ */
-function normTime(v){ v=String(v||'').trim(); const m=v.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/); if(!m) return null; let h=+m[1], ap=m[3]?m[3].toUpperCase():null; if(!ap){ ap=h>=12?'PM':'AM'; h=h%12||12; } if(h<1||h>12||+m[2]>59) return null; return String(h).padStart(2,'0')+':'+m[2]+' '+ap; }
+function normTime(v){ v=String(v||'').trim(); const m=v.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/); if(!m||(!m[3]&&+m[1]>23)) return null; let h=+m[1], ap=m[3]?m[3].toUpperCase():null; if(!ap){ ap=h>=12?'PM':'AM'; h=h%12||12; } if(h<1||h>12||+m[2]>59) return null; return String(h).padStart(2,'0')+':'+m[2]+' '+ap; }
 function deptList(){
   const s=_D.settings||{};
   return Object.keys(s).filter(k=>k.indexOf('dept|')===0&&s[k]).map(k=>{ const p=String(s[k]).split('|'); return {name:k.slice(5),start:p[0],grace:p[1]===undefined||p[1]===''?null:+p[1]}; }).sort((a,b)=>a.name<b.name?-1:1);
@@ -2956,10 +2970,44 @@ function limitFor(empId){
   const e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase()), s=settingsFor(e);
   return parseTimeMins(s.start)+s.grace;
 }
+let _dpEdit=null;   // the department being edited (its current name), or null
 function renderDeptList(){
   const el=document.getElementById('deptList'); if(!el) return;
-  const l=deptList();
-  el.innerHTML=l.length?l.map(d=>`<div class="dept-row"><div><b>${d.name.replace(/</g,'&lt;')}</b> <span style="color:var(--soft)">· starts ${d.start} · late after ${d.grace===null?settingsNow().grace:d.grace} min · ${(_D.employees||[]).filter(e=>e.department===d.name).length} people</span></div><button class="del-btn" onclick="removeDept('${esc(d.name)}')">✕</button></div>`).join(''):'<div style="font-size:12px;color:var(--soft)">No departments yet — everyone follows the company hours.</div>';
+  const l=deptList(), cnt=n=>(_D.employees||[]).filter(e=>e.department===n).length;
+  el.innerHTML=l.length?l.map(d=>{
+    if(d.name===_dpEdit) return `<div class="dept-row dept-edit"><div class="dp-fields">
+        <div><label>Department</label><input type="text" id="deName" value="${hx(d.name)}" maxlength="60" onkeydown="deptEditKey(event)"></div>
+        <div><label>Office start</label><input type="text" id="deStart" value="${hx(d.start)}" placeholder="09:00 AM" onkeydown="deptEditKey(event)"></div>
+        <div><label>Late after (min)</label><input type="number" id="deGrace" min="0" value="${d.grace===null?'':d.grace}" placeholder="${settingsNow().grace}" onkeydown="deptEditKey(event)"></div></div>
+      <div class="dp-btns"><button class="dp-save" onclick="saveDeptEdit()">Save</button><button class="dp-cancel" onclick="cancelDeptEdit()">Cancel</button></div>
+      <div class="dp-note">${cnt(d.name)} people${cnt(d.name)?' — if you change the name they move to the new name':''}. Leave "late after" empty to use the company number.</div></div>`;
+    return `<div class="dept-row"><div><b>${hx(d.name)}</b> <span style="color:var(--soft)">· starts ${hx(d.start)} · late after ${d.grace===null?settingsNow().grace:d.grace} min · ${cnt(d.name)} people</span></div><span class="dp-acts"><button class="del-btn dp-edit" title="Edit" aria-label="Edit ${hx(d.name)}" onclick="editDept('${esc(d.name)}')">✎</button><button class="del-btn" title="Remove" aria-label="Remove ${hx(d.name)}" onclick="removeDept('${esc(d.name)}')">✕</button></span></div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--soft)">No departments yet — everyone follows the company hours.</div>';
+}
+function editDept(n){ _dpEdit=n; renderDeptList(); const i=document.getElementById('deName'); if(i){ i.focus(); i.select(); } }
+function cancelDeptEdit(){ _dpEdit=null; renderDeptList(); }
+function deptEditKey(e){ if(e.key==='Enter'){ e.preventDefault(); saveDeptEdit(); } else if(e.key==='Escape') cancelDeptEdit(); }
+async function saveDeptEdit(){
+  const from=_dpEdit; if(from===null) return;
+  const g=id=>document.getElementById(id), n=g('deName').value.trim(), st=g('deStart').value.trim(), gr=g('deGrace').value.trim();
+  const err=g('dpErr'), ok=g('dpOk'); err.classList.remove('show'); ok.classList.remove('show');
+  const bad=m=>{ err.textContent=m; err.classList.add('show'); };
+  if(!n||/[|]/.test(n)) return bad('Give the department a name (no | sign).');
+  const t=normTime(st); if(!t) return bad('Office start like 09:00 AM.');
+  if(gr!==''&&!/^\d{1,3}$/.test(gr)) return bad('Late after: a number of minutes, 0 or more.');
+  if(n.toLowerCase()!==from.toLowerCase()&&deptList().some(d=>d.name.toLowerCase()===n.toLowerCase())) return bad('There is already a department with this name.');
+  const val=t+'|'+(gr===''?'':String(+gr));
+  loading(true,'Saving…');
+  try{
+    let st2=null;
+    if(USE_SHEETS) st2=await api('saveDepartment',{from,name:n,start:t,grace:gr});
+    else st2={['dept|'+from]:'',['dept|'+n]:val};
+    _D.settings=Object.assign({},_D.settings,st2&&typeof st2==='object'?st2:{['dept|'+from]:'',['dept|'+n]:val});
+    if(n!==from) (_D.employees||[]).forEach(e=>{ if(String(e.department||'').trim().toLowerCase()===from.toLowerCase()) e.department=n; });
+    saveCache(); loading(false); _dpEdit=null; renderDeptList();
+    try{ if(n!==from) renderEmpList(); }catch(e){}
+    ok.textContent=n!==from?'✅ Saved. "'+from+'" is now "'+n+'" and its people moved with it.':'✅ Saved.'; ok.classList.add('show');
+  }catch(e){ loading(false); bad(e.message); }
 }
 async function addDept(){
   const n=document.getElementById('dpName').value.trim(), st=document.getElementById('dpStart').value.trim(), g=document.getElementById('dpGrace').value;
@@ -3317,7 +3365,7 @@ async function loadHome(){
   if(!dayOff&&USE_SHEETS){
     const fresh=await freshRecordToday(emp.id);
     if(fresh!==undefined&&tok===homeTok){
-      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.poutAuto||'')+'|'+(r.edited||'')+'|'+(r.meetings||[]).map(m=>(m.outTime||'')+'-'+(m.backTime||'')).join(',')):'';
+      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.poutAuto||'')+'|'+(r.edited||'')+'|'+(r.meetings||[]).map(m=>(m.outTime||'')+'-'+(m.backTime||'')+'-'+(m.state||'')+'-'+(m.endTime||'')+'-'+(m.pausedAt?1:0)).join(',')):'';
       if(sig(fresh)!==sig(rec)){ rec=fresh; checkSiteWork(!!(rec&&rec.punchOut)); renderHomeToday(rec,dayOff); homeNudge(emp,tok,rec,dayOff); }
       ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
     }
@@ -3349,7 +3397,8 @@ function renderHomeToday(rec,dayOff,noLoad){
     b=btn('View today','btn-outline')+`<button class="btn btn-purple" style="margin-top:8px" onclick="openPunch('resume')">${W?'↩ Came back? Work ON again':'↩ Came back? Resume work'}</button>`;
   } else if(rec&&rec.punchIn){
     const am=getActiveMeeting(rec), half=isHalfDay(rec), late=!half&&parseTimeMins(rec.punchIn.time)>limit;
-    const pers=!!(am&&am.kind==='personal'); ico=am?(pers?'🏃':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':'In a meeting'):(W?'Work ON':'You are punched in'))+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
+    const pers=!!(am&&am.kind==='personal'), fin=!!(am&&!pers&&am.state==='done');   // fin: the visit is finished and only "I am back" is left (old home card)
+    ico=am?(pers?'🏃':fin?'✅':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':fin?'Meeting finished':'In a meeting'):(W?'Work ON':'You are punched in'))+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
     sub='Since '+fmt12(rec.punchIn.time);
     const since=parseTimeMins(rec.punchIn.time);
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
@@ -4503,6 +4552,16 @@ async function reconcileSites(){
     }
   }finally{ _siteOpenBusy=false; }
 }
+/* A message says the office side ended a site job or a meeting for this person (they moved away from the place): the screen must stop showing it as running now,
+   not only the next time the app is opened. notify.js calls this when such a message arrives. */
+window.amkServerEnded=async function(kinds){
+  try{
+    if(!currentEmp||!USE_SHEETS) return;
+    kinds=kinds||[];
+    if(kinds.indexOf('siteStopped')>=0){ for(const k of Object.keys(_siteOpenAt)) delete _siteOpenAt[k]; reconcileSites(); }
+    if(kinds.indexOf('meetingEnded')>=0){ await fmRefresh(); if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }
+  }catch(e){}
+};
 function siteTick(){
   autoTimeUp();
   const list=swAll();
@@ -4939,6 +4998,7 @@ function switchTab(tab){
   const tabs=['attendance','live','monthly','leaves','overtime','employees','places','holidays','leads','tasks','travel','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
+  try{ const ab=document.querySelector('#adminScreen .tab-btn.active'), row=ab&&ab.parentNode; if(ab&&innerWidth>=1024&&row.scrollHeight>row.clientHeight){ const top=ab.offsetTop, bot=top+ab.offsetHeight; if(top<row.scrollTop||bot>row.scrollTop+row.clientHeight) row.scrollTop=Math.max(0,top-(row.clientHeight-ab.offsetHeight)/2); } }catch(e){}
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(pane) pane.classList.add('active');
@@ -6552,9 +6612,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.3';</script>
-<script src="notify.js?v=2026-10-28.3"></script>
-<script src="appstore.js?v=2026-10-28.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.4';</script>
+<script src="notify.js?v=2026-10-28.4"></script>
+<script src="appstore.js?v=2026-10-28.4"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -6777,13 +6837,16 @@ function fmChoose(seq,preset){
     fmCall('setMeetingCustomer',{seq:seq,purpose:preset,purposeOther:''}).then(async r=>{ if(r) await fmRefresh(); else fmChoose(seq,''); }).catch(e=>{ fmChoose(seq,''); fmErr((e&&e.message)||'Could not save. Try again.'); });
     return;
   }
-  fmSheet(`<h3>${fmNeedsCust(preset)?'Who are you meeting?':'Field work'}</h3><div id="fmCustWrap"><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
+  // the Purpose comes first: it decides whether a customer is asked for at all, and it is the part that used to hide below the customer fields
+  fmSheet(`<h3>${wmOn()?'Field work':'Meeting details'}</h3>
+    <div class="fm-lbl" style="margin-top:2px">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?wtNames('field'):FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" maxlength="80" style="display:none">
+    <div id="fmCustWrap"><div class="fm-lbl">Who are you meeting?</div><input id="fmQ" placeholder="Search name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div>
     <div class="fm-or">or add a new customer</div><input id="fmName" placeholder="Customer name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" placeholder="Address (optional, saved from the meeting place)"></div>
-    <div class="fm-lbl">${wmOn()?'Purpose':'Reason for the meeting'}</div><div id="fmReason">${fmChips(wmOn()?wtNames('field'):FM_REASONS,preset||'','fmReasonPick')}</div><input id="fmOther" placeholder="What is the work? (required)" maxlength="80" style="display:none"><div class="fm-err" id="fmErr"></div>
+    <div class="fm-err" id="fmErr"></div>
     <button class="btn btn-green" style="width:100%" onclick="fmSaveCustomer()">Save and continue</button>`);
   fmSync(); if(fmNeedsCust(preset)) fmSearch();
 }
-function fmReasonPick(r){ _fm.reason=r; const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?wtNames('field'):FM_REASONS,r,'fmReasonPick'); fmSync(); if(fmNeedsCust(r)) fmSearch(); }
+function fmReasonPick(r){ _fm.reason=r; fmErr(''); const el=document.getElementById('fmReason'); if(el) el.innerHTML=fmChips(wmOn()?wtNames('field'):FM_REASONS,r,'fmReasonPick'); fmSync(); if(fmNeedsCust(r)) fmSearch(); }
 function fmSearch(){
   clearTimeout(_fm.t);
   _fm.t=setTimeout(async()=>{
@@ -6796,9 +6859,10 @@ function fmSearch(){
 function fmPick(id,name,phone,addr){ _fm.id=id; document.getElementById('fmName').value=name; document.getElementById('fmPhone').value=phone; document.getElementById('fmAddr').value=addr; }
 async function fmSaveCustomer(){
   const name=document.getElementById('fmName').value.trim(), phone=document.getElementById('fmPhone').value.trim(), addr=document.getElementById('fmAddr').value.trim(), ask=fmNeedsCust(_fm.reason);
+  const top=()=>{ try{ document.getElementById('fmReason').scrollIntoView({block:'nearest'}); }catch(e){} };   // the Purpose is the first thing in the sheet: show it when it is what is missing
+  if(!_fm.reason){ top(); return fmErr(wmOn()?'Choose the purpose.':'Choose the reason for the meeting.'); }
+  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&wtText('field',_fm.reason)&&!oth.trim()){ top(); return fmErr(wtTextErr(_fm.reason)); }
   if(ask&&!_fm.id&&(!name||phone.replace(/\D/g,'').length<7)) return fmErr('Pick a customer, or enter a name and a phone number.');
-  if(!_fm.reason) return fmErr(wmOn()?'Choose the purpose.':'Choose the reason for the meeting.');
-  const oth=(document.getElementById('fmOther')||{}).value||''; if(wmOn()&&wtText('field',_fm.reason)&&!oth.trim()) return fmErr(wtTextErr(_fm.reason));
   fmErr('Saving…');
   try{
     const body=wmOn()?{seq:_fm.seq,purpose:_fm.reason,purposeOther:wtText('field',_fm.reason)?oth.trim():''}:{seq:_fm.seq,reason:_fm.reason}; if(ask){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:name,phone:phone,address:addr}; }
