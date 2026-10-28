@@ -395,6 +395,16 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .bd-card{margin:10px 16px 0;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FFF6E0,#FDE8EF);border:1px solid #F0D9A8;color:#5a3d12;font-size:13px;line-height:1.5}
 .bd-card b{font-size:14px}
 .bd-me{font-size:15px}
+.hm-where{display:flex;align-items:center;gap:11px;width:calc(100% - 20px);margin:-4px 10px 14px;padding:11px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(24,32,28,.08)}
+.hm-where .hw-ic{font-size:20px;flex:none}.hm-where .hw-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hm-where .hw-t{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hm-where .hw-s{font-size:12px;color:var(--soft);overflow-wrap:anywhere}.hm-where .hw-go{font-size:20px;color:var(--soft);flex:none}
+.hm-where.bad{border-color:var(--red);background:var(--redBg)}.hm-where.bad .hw-t,.hm-where.bad .hw-s{color:var(--red)}
+.hm-where.warn{border-color:#e0c080;background:var(--amberBg)}
+.lg-sheet .lg-ic{font-size:42px;text-align:center;line-height:1.1;margin-bottom:4px}.lg-sheet .lg-why{font-size:14px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
+.lg-sheet .lg-steps{margin:0 0 12px;padding:0 0 0 20px;font-size:14px;line-height:1.55;color:var(--ink)}.lg-sheet .lg-steps li{margin-bottom:4px}
+.lg-sheet .lg-msg{min-height:18px;font-size:13px;color:var(--amber);margin:0 0 8px}.lg-sheet .btn{margin-top:8px}.lg-sheet .lg-foot{font-size:12px;color:var(--soft);text-align:center;margin-top:10px}
+.lg-sheet .lg-area{font-size:18px;font-weight:700;overflow-wrap:anywhere}.lg-sheet .lg-sub{font-size:13px;color:var(--soft);margin:2px 0 10px}
+.lg-sheet .lg-ver{font-size:13px;font-weight:600;padding:8px 10px;border-radius:12px;margin-bottom:10px}.lg-sheet .lg-ver.good{background:var(--greenBg);color:var(--green)}.lg-sheet .lg-ver.warn{background:var(--amberBg);color:var(--amber)}
 .trk-note{margin:10px 16px 0;padding:9px 12px;border-radius:12px;background:var(--surface2);color:var(--soft);font-size:12px;line-height:1.45}
 .sal-wrap{overflow-x:auto;margin-top:10px}.sal-wrap table{font-size:12px;white-space:nowrap}
 .ru-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:9px}
@@ -1206,6 +1216,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <section class="hm-pane on" id="hmPaneToday" data-pane="today">
   <button type="button" class="hm-smart" id="hmSmart" hidden></button>
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
+  <div id="hmWhere"></div>
   <div class="hm-quick" id="hmQuick"></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
@@ -3230,10 +3241,12 @@ async function loadHome(){
     if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
     otTick(); try{ wmTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){}
+    if(Date.now()-LOCG.checkAt>300000) locGuardCheck('tick');
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeTeamLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
   trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
+  locWhereDraw(); setTimeout(()=>{ if(tok===homeTok) locGuardCheck('home'); },700);
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
   if(!dayOff&&USE_SHEETS){
     const fresh=await freshRecordToday(emp.id);
@@ -3425,6 +3438,7 @@ function hmSmartDraw(){
   const show=(ic,txt,fn,tone)=>{ el.hidden=false; el.className='hm-smart'+(tone?' '+tone:''); el.innerHTML=`<span class="hm-si">${ic}</span><span class="hm-st">${txt}</span>${fn?'<span class="hm-sc" aria-hidden="true">›</span>':''}`; el.onclick=fn||null; el.style.cursor=fn?'pointer':'default'; };
   const hide=()=>{ el.hidden=true; };
   const rec=_hmRec, me=curRec()||{}; if(_hmOff||!me.id) return hide();
+  if(locBanner()) return show('📍',LOCG.state==='denied'?'Location is <b>blocked</b> — tap to fix (reminders &amp; auto punch-out need it)':'Location is <b>off</b> — tap to fix (reminders &amp; auto punch-out need it)',()=>locSheetOpen('fix'),'warn');
   if(!(rec&&rec.punchIn)&&leaveOn(me.id,todayStr())) return hide();
   const st=_D.settings||{}, set=settingsFor(me), start=parseTimeMins(set.start), limit=start+set.grace, now=nowMins(), T=hmTarget(), W=wmOn(), M=window._hmMon||{};
   if(!(rec&&rec.punchIn)){
@@ -3750,8 +3764,9 @@ async function reverseGeocode(lat,lng){
   try{ return await p; }finally{ if(geoPending&&geoPending.p===p) geoPending=null; }
 }
 
-function locBar(kind,msg,spin){
+function locBar(kind,msg,spin,fn){
   const lb=document.getElementById('locBar'); if(!lb) return;
+  lb.onclick=fn||null; lb.style.cursor=fn?'pointer':'';
   const c={blue:['var(--blueBg)','#b0c8f0','var(--blue)'],green:['var(--greenBg)','#a7d9b8','var(--green)'],
     amber:['var(--amberBg)','#e0c080','var(--amber)'],red:['var(--redBg)','var(--red)','var(--red)']}[kind];
   lb.style.cssText='display:flex;align-items:center;gap:7px;background:'+c[0]+';border:1px solid '+c[1]+';border-radius:var(--rs);padding:7px 11px;font-size:12px;color:'+c[2]+';margin-top:6px';
@@ -3804,11 +3819,13 @@ function onFixError(e){
     if(locWatcher!==null){navigator.geolocation.clearWatch(locWatcher);locWatcher=null;}
     capLat=null; capLng=null; capArea='';
     const btn=document.getElementById('captureBtn'); if(btn) btn.disabled=true;
-    locBar('red','❌ Location permission is blocked. Allow location for this site in your browser settings, then reload the page.');
+    locBar('red','❌ Location is blocked. Tap here to fix it.',false,()=>locGuardCheck('force'));
+    locGuardCheck('force');
   }else if(capLat){
     locBar('amber','📍 Weak GPS signal — using your last position'+(capArea?' ('+capArea+')':'')+'.');
   }else{
     locBar('blue','📍 Still looking for GPS… turn on Location and step into the open.',true);
+    if(e&&e.code===2){ clearTimeout(LOCG.camT); LOCG.camT=setTimeout(()=>{ if(!capLat&&locWanted) locGuardCheck('cam'); },4000); }   // "position unavailable" usually means the phone's location switch is off
   }
 }
 /* One up-to-date position for a site check. While a watch is running the browser holds back
@@ -3855,15 +3872,18 @@ function preciseFix(goodAcc,maxMs){
   });
 }
 
-let camTok=0;
+let camTok=0, camPlayAt=0;
+const CAM_SETTLE=500;   // ms the picture must have been flowing before a photo is taken: the first frames of a starting camera are black or badly lit
 async function startCamera(){
-  capBusy=false; faceWarm();   // a new camera session always starts with a working Save button (a finished save stays locked only until the person leaves the camera screen)
+  capBusy=false; faceWarm(); camPlayAt=0;   // a new camera session always starts with a working Save button (a finished save stays locked only until the person leaves the camera screen)
   stopCamera(); const my=camTok;
   try{
     const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:960},height:{ideal:960}},audio:false});
     if(my!==camTok){ s.getTracks().forEach(t=>t.stop()); return; }   // the screen was left, or a newer start took over, while the permission was being answered
     videoStream=s;
-    document.getElementById('videoFeed').srcObject=videoStream;
+    const vf=document.getElementById('videoFeed');
+    vf.onplaying=()=>{ if(my!==camTok) return; camPlayAt=Date.now(); const ce=document.getElementById('camErr'); if(ce&&/camera is still starting/i.test(ce.textContent)) setTimeout(()=>{ if(my===camTok&&/camera is still starting/i.test(ce.textContent)) ce.classList.remove('show'); },CAM_SETTLE+50); };
+    vf.srcObject=videoStream;
   }catch(e){
     if(my!==camTok) return;
     const er=document.getElementById('camErr');
@@ -3871,7 +3891,25 @@ async function startCamera(){
     er.classList.add('show'); document.getElementById('captureBtn').disabled=true;
   }
 }
-function stopCamera(){ camTok++; if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} }
+function stopCamera(){ camTok++; camPlayAt=0; if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} const vf=document.getElementById('videoFeed'); if(vf){ vf.onplaying=null; vf.srcObject=null; } }   // the picture element is emptied too: a stopped stream left in it still looks "ready" but only gives black frames
+/* True only when the camera is really delivering pictures: this session's stream is live, a frame has arrived and it has been flowing for a moment */
+function camLive(){
+  const v=document.getElementById('videoFeed'); if(!v||!videoStream||v.srcObject!==videoStream) return false;
+  const t=videoStream.getVideoTracks()[0]; if(!t||t.readyState!=='live') return false;
+  return v.videoWidth>0&&v.readyState>=2&&!v.paused&&camPlayAt>0&&Date.now()-camPlayAt>=CAM_SETTLE;
+}
+/* Is the picture usable? A covered lens or a camera that has not started gives an (almost) black or flat frame. Works without any face detector. */
+function photoQuality(c){
+  try{
+    const t=document.createElement('canvas'); t.width=t.height=24; const x=t.getContext('2d'); x.drawImage(c,0,0,24,24);
+    const d=x.getImageData(0,0,24,24).data; let s=0,s2=0,n=0;
+    for(let k=0;k<d.length;k+=4){ const l=.299*d[k]+.587*d[k+1]+.114*d[k+2]; s+=l; s2+=l*l; n++; }
+    const m=s/n, sd=Math.sqrt(Math.max(0,s2/n-m*m));
+    if(m<16&&sd<12) return {ok:false,msg:'📷 The photo came out too dark. Uncover the camera lens or move to better light, then take it again.'};
+    if(m>240&&sd<8) return {ok:false,msg:'📷 The photo came out blank white. Move away from the bright light and take it again.'};
+  }catch(e){}
+  return {ok:true};
+}
 
 /* The selfie: a square from the middle of the picture, 320 px, JPEG kept sharp but small (about 20-40 KB) */
 const PHOTO_PX=320, PHOTO_MAX=48000;
@@ -3923,7 +3961,7 @@ async function faceCheck(canvas){
 let currentEmp=null, punchMode='in', activeMeetingSeq=null, officeTimerInt=null;
 
 async function loadCameraScreen(opts){
-  capBusy=false; FACE.fails=0;
+  capBusy=false; FACE.fails=0; _pc.retries=0;
   showScreen('cameraScreen');
   refreshMyGeo();
   fillAv('empAvatar',curRec()||currentEmp);
@@ -4047,13 +4085,14 @@ function switchToMeeting(kind){
 
 /* Photo countdown. Work ON / Work OFF / Punch In / Punch Out opened from the Today card take the photo by themselves as soon as the camera, the
    location and (for Work ON) the kind of work are ready: one tap instead of two. The big button still takes it at once, "Stop timer" switches it off. */
-let _pc={t:null,state:'',end:0,want:false};
+let _pc={t:null,state:'',end:0,want:false,retries:0};
 function pcStop(){ clearInterval(_pc.t); _pc.t=null; _pc.state=''; const b=document.getElementById('pcBar'); if(b) b.style.display='none'; }
 function pcOk(){
   const v=document.getElementById('videoFeed'), btn=document.getElementById('captureBtn');
-  return !capBusy&&!!v&&!!v.srcObject&&v.videoWidth>0&&!!capLat&&!!capLng&&!!btn&&!btn.disabled&&(punchMode==='in'||punchMode==='out')&&document.body.dataset.screen==='cameraScreen'&&(punchMode!=='in'||!wmOn()||!!_wm.pick);
+  return !capBusy&&!!v&&camLive()&&!!capLat&&!!capLng&&!!btn&&!btn.disabled&&(punchMode==='in'||punchMode==='out')&&document.body.dataset.screen==='cameraScreen'&&(punchMode!=='in'||!wmOn()||!!_wm.pick);
 }
 function pcArm(){ pcStop(); _pc.state='wait'; _pc.t=setInterval(pcTick,400); }
+function pcRetry(){ if(_pc.retries>=2) return; _pc.retries++; setTimeout(()=>{ if(document.body.dataset.screen==='cameraScreen'&&!capBusy) pcArm(); },1500); }   // an automatic photo that came out unusable is tried again by itself, twice
 function pcCancel(){ pcStop(); _pc.want=false; const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }   // "Stop timer": the photo now waits for the big button
 function pcTick(){
   if(document.body.dataset.screen!=='cameraScreen'||capBusy||(punchMode!=='in'&&punchMode!=='out')){ pcStop(); return; }
@@ -4061,17 +4100,17 @@ function pcTick(){
   if(!pcOk()){ _pc.state='wait'; if(bar) bar.style.display='none'; return; }
   if(_pc.state!=='count'){ _pc.state='count'; _pc.end=Date.now()+3000; }
   const left=Math.ceil((_pc.end-Date.now())/1000);
-  if(left<=0){ pcStop(); captureAndMark(); return; }
+  if(left<=0){ pcStop(); captureAndMark(true); return; }
   if(bar){ bar.style.display='flex'; if(txt) txt.textContent='📸 Taking your photo in '+left+'…'; }
 }
 let capBusy=false;
-async function captureAndMark(){
+async function captureAndMark(byTimer){
   if(capBusy) return;   // already saving: a second tap must not send the same punch / visit again
   pcStop();
   const video=document.getElementById('videoFeed'),canvas=document.getElementById('snapCanvas'),btn=document.getElementById('captureBtn');
   const camErr=document.getElementById('camErr');
   if(!capLat||!capLng){camErr.textContent='📍 Location required. Please wait for GPS (green bar).';camErr.classList.add('show');return;}
-  if(!video.srcObject){camErr.textContent='Camera not ready.';camErr.classList.add('show');return;}
+  if(!camLive()){ if(!(camErr.classList.contains('show')&&/denied/i.test(camErr.textContent))){ camErr.textContent='📷 The camera is still starting. Wait a second, then tap again.'; camErr.classList.add('show'); } if(byTimer===true) pcRetry(); return; }   // not delivering pictures yet (or blocked: then the "denied" message stays)
   if(punchMode==='in'||punchMode==='out'){ const bm=geoBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; } }
   if(punchMode==='in'&&wmOn()&&!_wm.pick){ camErr.textContent='Choose Field Work, Office Work or Work From Home first.'; camErr.classList.add('show'); return; }
   if(punchMode==='ot_start'){ const bm=otBlockMsg(geoVerdict(curRec()||currentEmp,capLat,capLng,capAcc)); if(bm){ camErr.textContent='📍 '+bm; camErr.classList.add('show'); return; }
@@ -4081,6 +4120,7 @@ async function captureAndMark(){
   if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
   const btnLabel=btn.textContent;
   const shot=snapSquare(video,PHOTO_PX);
+  { const q=photoQuality(shot); if(!q.ok){ camErr.textContent=q.msg; camErr.classList.add('show'); if(byTimer===true) pcRetry(); return; } }   // never save a black or blank picture, whatever the face detector says
   let face='';
   if((punchMode==='in'||punchMode==='out')&&feat('face')){
     face=await faceCheck(shot);
@@ -4097,7 +4137,7 @@ async function captureAndMark(){
   let extra='';
   stopCamera(); stopLocWatch();
   document.getElementById('videoFeed').style.display='none';
-  canvas.width=120;canvas.height=120;canvas.getContext('2d').drawImage(video,0,0,120,120);
+  canvas.width=120;canvas.height=120;canvas.getContext('2d').drawImage(shot,0,0,120,120);   // the small preview is the photo just taken (the camera is already off)
   canvas.style.display='block';
   loading(true,'Saving attendance…');
   try{
@@ -4298,7 +4338,7 @@ async function beginSiteWork(){
   if(!currentEmp) return;
   const video=document.getElementById('videoFeed'), btn=document.getElementById('startSiteBtn');
   if(!capLat||!capLng){ alert('Wait for GPS to lock (green bar) before starting site work.'); return; }
-  if(!video||!video.srcObject){ alert('Camera not ready. Allow the camera for this site, then try again.'); return; }
+  if(!video||!video.srcObject||!camLive()){ alert('Camera not ready. Wait a second (or allow the camera for this site), then try again.'); return; }
   btn.disabled=true; btn.textContent='⏳ Getting exact location…';
   try{
     { const cur=mySite(); if(cur&&cur.mode==='auto') await stopSiteWork(true); }   // a real site session replaces the all-day check
@@ -4387,7 +4427,7 @@ function confirmStopSite(){ if(confirm('Stop site work for today? This will end 
 async function stopSiteWork(quiet,photo){
   const sw=mySite(), emp=currentEmp;
   if(!sw||!emp) return false;
-  if(!photo&&!quiet){ const v=document.getElementById('videoFeed'); if(v&&v.srcObject) photo=compressPhoto(v); }
+  if(!photo&&!quiet){ const v=document.getElementById('videoFeed'); if(v&&camLive()) photo=compressPhoto(v); }
   const stopTime=nowTime();
   try{
     if(USE_SHEETS) await api('stopSiteWork',{id:sw.id,empId:emp.id,date:sw.date||todayStr(),stopTime,lat:capLat||'',lng:capLng||'',area:capArea||'',accuracy:capAcc===null?'':capAcc,photo:photo||''});
@@ -4479,6 +4519,186 @@ async function testMyLocation(){
   }
   if(b){ b.disabled=false; b.textContent='📍 Test my location'; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LOCATION GUARD
+   Reminders and automatic punch-out both depend on the phone's location. When it is off or blocked, say so in plain words,
+   take the person straight to the right Settings screen, notice by itself when they come back, and show them where they are.
+══════════════════════════════════════════════════════════════ */
+var LOCG={state:'',soft:'',fix:null,at:0,area:'',busy:false,snooze:0,checkAt:0,view:'',camT:null,areaFor:''};
+function nativeCan(fn){ try{ return NATIVE&&typeof window.AndroidTracker[fn]==='function'; }catch(e){ return false; } }
+async function locPermState(){ try{ return navigator.permissions&&navigator.permissions.query?(await navigator.permissions.query({name:'geolocation'})).state:''; }catch(e){ return ''; } }
+/* One low-power reading (a recent one is reused): {lat,lng,acc} or {code} */
+function locProbe(){
+  return new Promise(res=>{
+    if(!navigator.geolocation) return res({code:0});
+    if(capLat&&capAt&&Date.now()-capAt<120000) return res({lat:+capLat,lng:+capLng,acc:capAcc});
+    let done=false; const t=setTimeout(()=>{ if(!done){ done=true; res({code:3}); } },12000);
+    navigator.geolocation.getCurrentPosition(
+      p=>{ if(done) return; done=true; clearTimeout(t); res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy||0)}); },
+      e=>{ if(done) return; done=true; clearTimeout(t); res({code:(e&&e.code)||2}); },
+      {enableHighAccuracy:false,timeout:10000,maximumAge:120000});
+  });
+}
+/* ok · off (phone's location switch is off) · denied (this app/site is not allowed) · ask (not asked yet) · unsupported;  soft = ok but background use is limited (the Android app only) */
+async function locDiagnose(){
+  if(!navigator.geolocation) return {state:'unsupported'};
+  const ni=nativeInfo();
+  if(ni&&ni.locationOn===false) return {state:'off'};
+  if(ni&&ni.locationPerm===false) return {state:'denied'};
+  const perm=await locPermState();
+  if(perm==='denied') return {state:'denied'};
+  if(perm==='prompt'&&!NATIVE) return {state:'ask'};
+  const r=await locProbe();
+  if(r.lat!==undefined){ const soft=ni&&ni.background===false?'always':ni&&ni.battery===false?'battery':''; return {state:'ok',fix:r,soft}; }
+  if(r.code===1) return {state:'denied'};
+  if(r.code===2) return {state:'off'};
+  return {state:'ok',fix:null};   // timed out: a weak signal, not a setting
+}
+function locBad(){ return !!LOCG&&!!LOCG.state&&LOCG.state!=='ok'; }
+function locPhone(){ return NATIVE||phoneKind()!=='other'; }   // a laptop without GPS is not nagged
+function locBanner(){ return locBad()&&locPhone()&&!locDayExempt(); }   // the top banner says it; the red line under Today only when the banner does not
+function locBusyScreen(){
+  if(!currentEmp) return true;
+  const sc=document.body.dataset.screen; if(sc!=='homeScreen'&&sc!=='cameraScreen') return true;
+  if(document.querySelector('#trkOv.on,.modal-bg.open,#fmSheet')) return true;
+  return false;
+}
+function locDayExempt(){
+  const me=curRec()||currentEmp||{}, rec=_hmRec;
+  if(rec&&rec.punchIn&&!rec.punchOut) return false;
+  if(rec&&rec.punchIn&&rec.punchOut) return true;
+  return !!_hmOff||!!leaveOn(me.id,todayStr());
+}
+const lgSoftKey=()=>'amk_lgsoft_'+(currentEmp?currentEmp.id:'')+'_'+todayStr();
+async function locGuardCheck(why){
+  if(!currentEmp||LOCG.busy) return;
+  const force=why==='force';
+  if(!force&&Date.now()-LOCG.checkAt<(why==='resume'?1500:8000)) return;   // coming back from Settings is checked at once; the timers wait
+  if((force||why==='resume')&&document.body.dataset.screen!=='cameraScreen') capAt=0;   // a reading from before the person changed a setting must not count
+  LOCG.busy=true; LOCG.checkAt=Date.now();
+  let d; try{ d=await locDiagnose(); }catch(e){ d={state:'ok'}; } finally{ LOCG.busy=false; }
+  if(!currentEmp) return;
+  LOCG.state=d.state; LOCG.soft=d.soft||'';
+  if(d.fix){ LOCG.fix=d.fix; LOCG.at=Date.now(); LOCG.areaFor=''; locAreaFill(); }
+  locWhereDraw(); try{ hmSmartDraw(); }catch(e){}
+  if(document.getElementById('locSheet')){ if(LOCG.view==='fix'){ if(d.state==='ok') locSheetDone(); else locSheetDraw(); } else if(LOCG.view==='here') locSheetDraw(); return; }
+  if(!force&&(Date.now()<LOCG.snooze||locBusyScreen()||!locPhone())) return;
+  if(locBad()){ if(force||!locDayExempt()) locSheetOpen('fix'); return; }
+  if(LOCG.soft&&NATIVE&&!force){ let seen=''; try{ seen=localStorage.getItem(lgSoftKey())||''; }catch(e){} const rec=_hmRec; if(!seen&&rec&&rec.punchIn&&!rec.punchOut) locSheetOpen('fix'); }
+}
+async function locAreaFill(){
+  const f=LOCG.fix; if(!f) return; const key=f.lat.toFixed(4)+','+f.lng.toFixed(4); if(LOCG.areaFor===key) return; LOCG.areaFor=key;
+  try{ const a=await reverseGeocode(f.lat,f.lng); if(LOCG.areaFor===key){ LOCG.area=a; locWhereDraw(); if(LOCG.view==='here'&&document.getElementById('locSheet')) locSheetDraw(); } }catch(e){}
+}
+/* The line on Today: where you are now, or what is wrong */
+function locWhereDraw(){
+  const el=document.getElementById('hmWhere'); if(!el) return;
+  if(!currentEmp){ el.innerHTML=''; return; }
+  let cls='', ic='📍', t='', s='';
+  if(locBanner()){ el.innerHTML=''; return; }
+  if(locBad()){ cls=' bad'; ic=LOCG.state==='denied'?'🚫':'📍'; t=LOCG.state==='denied'?'Location is blocked':LOCG.state==='ask'?'Location is not allowed yet':LOCG.state==='unsupported'?'No location on this device':'Location is off'; s='Tap to fix — reminders and automatic punch-out need it'; }
+  else if(LOCG.fix){
+    t=LOCG.area||('Near '+LOCG.fix.lat.toFixed(4)+', '+LOCG.fix.lng.toFixed(4));
+    const g=geoVerdict(curRec()||currentEmp,LOCG.fix.lat,LOCG.fix.lng,LOCG.fix.acc);
+    s='±'+LOCG.fix.acc+' m'+(g?(g.status==='YES'?' · ✅ inside '+hx(g.place):g.status==='NO'?' · ⚠️ '+g.dist+' m from '+hx(g.place):' · weak GPS near '+hx(g.place)):'');
+    if(LOCG.soft) { cls=' warn'; s+=' · tap to keep it working with the screen off'; }
+  } else { ic='📍'; t='Where am I?'; s='Tap to see your location'; }
+  el.innerHTML='<button type="button" class="hm-where'+cls+'" onclick="locWhereTap()"><span class="hw-ic" aria-hidden="true">'+ic+'</span><span class="hw-tx"><span class="hw-t">'+(locBad()?t:hx(t))+'</span><span class="hw-s">'+s+'</span></span><span class="hw-go" aria-hidden="true">›</span></button>';
+}
+function locWhereTap(){ if(locBad()||LOCG.soft) locSheetOpen('fix'); else locSheetOpen('here'); }
+/* ── the pop-up ── */
+function locSheetOpen(view){
+  LOCG.view=view;
+  let el=document.getElementById('locSheet');
+  if(!el){ el=document.createElement('div'); el.id='locSheet'; el.className='fm-back'; el.onclick=e=>{ if(e.target===el) locLater(); }; document.body.appendChild(el); }
+  locSheetDraw();
+  if(view==='here'&&!LOCG.fix) locHereRefresh();
+}
+function locSheetClose(){ const el=document.getElementById('locSheet'); if(el) el.remove(); LOCG.view=''; }
+function locLater(){ LOCG.snooze=Date.now()+30*60000; if(LOCG.soft&&!locBad()){ try{ localStorage.setItem(lgSoftKey(),'1'); }catch(e){} } locSheetClose(); }
+function locSheetDone(){
+  const el=document.getElementById('locSheet'); if(!el) return;
+  el.innerHTML='<div class="fm-sheet lg-sheet"><div class="lg-ic">✅</div><h3 style="text-align:center">Location is on</h3><div class="lg-why" style="text-align:center">Reminders and automatic punch-out can work now.</div></div>';
+  LOCG.view='done'; setTimeout(()=>{ if(LOCG.view==='done') locSheetClose(); },1400);
+}
+const LOC_COPY={
+  off:['📍','Location is off','Your phone’s location is switched off. Turn it on so we can remind you to punch out, close your day by itself if you forget, and show you where you are.'],
+  denied:['🚫','Location is blocked','This app is not allowed to use your location. Allow it so reminders and automatic punch-out can work.'],
+  ask:['📍','Allow location','When your phone asks, tap Allow. Your location is used to remind you to punch out, to close your day by itself if you forget, and to show you where you are.'],
+  unsupported:['📵','No location on this device','This device cannot give its location, so reminders and automatic punch-out cannot work here. Use your phone.'],
+};
+function locSteps(){
+  const st=LOCG.state, k=NATIVE?'app':phoneKind();
+  if(LOCG.soft&&st==='ok') return ['Tap “Fix now”.','Choose “Allow all the time” for location.','Allow the app to run in the background (battery: Unrestricted).'];
+  if(st==='off'){
+    if(NATIVE) return nativeCan('openLocationSettings')?['Tap “Turn on location”.','Switch Location ON.','Press back — this screen closes by itself.']:['Swipe down from the top of the screen and tap the Location icon.','Or open Settings → Location and switch it ON.','Come back here.'];
+    if(k==='android') return ['Swipe down from the top of the screen.','Tap the Location icon so it turns ON.','Come back here and tap “Check again”.'];
+    if(k==='ios-safari'||k==='ios-chrome') return ['Open Settings → Privacy & Security → Location Services.','Switch Location Services ON.','Come back here and tap “Check again”.'];
+    return ['Turn on location services for this device.','Come back here and tap “Check again”.'];
+  }
+  if(st==='denied'){
+    if(NATIVE) return ['Tap “Open app settings”.','Tap Permissions → Location.','Choose “Allow all the time” (or “While using the app”).','Press back — this screen closes by itself.'];
+    if(k==='android') return ['Tap the 🔒 icon next to the web address.','Tap Permissions → Location → Allow.','Come back here and tap “Check again”.'];
+    if(k==='ios-safari') return ['Open Settings → Privacy & Security → Location Services → Safari Websites.','Choose “While Using the App”.','Come back here and tap “Check again”.'];
+    if(k==='ios-chrome') return ['Open Settings → Chrome → Location.','Choose “While Using the App”.','Come back here and tap “Check again”.'];
+    return ['Allow location for this site in your browser settings.','Come back here and tap “Check again”.'];
+  }
+  return [];
+}
+function locSheetDraw(){
+  const el=document.getElementById('locSheet'); if(!el) return;
+  if(LOCG.view==='here'){
+    const f=LOCG.fix, g=f?geoVerdict(curRec()||currentEmp,f.lat,f.lng,f.acc):null;
+    const tm=LOCG.at?new Date(LOCG.at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';
+    el.innerHTML='<div class="fm-sheet lg-sheet" role="dialog" aria-modal="true" aria-label="Where you are"><h3>📍 Where you are</h3>'
+      +(f?'<div class="lg-area">'+hx(LOCG.area||('Near '+f.lat.toFixed(4)+', '+f.lng.toFixed(4)))+'</div><div class="lg-sub">±'+f.acc+' m · '+(f.acc<=100?'Precise':'Rough — step into the open')+(tm?' · updated '+tm:'')+'</div>'
+        +(g?'<div class="lg-ver '+(g.status==='YES'?'good':'warn')+'">'+(g.status==='YES'?'✅ Inside '+hx(g.place)+' · '+g.dist+' m from the centre':g.status==='NO'?'⚠️ '+g.dist+' m from '+hx(g.place)+' (boundary '+g.radius+' m)':'📍 Weak GPS near '+hx(g.place))+'</div>':'')
+        :'<div class="lg-sub">Looking for your location…</div>')
+      +'<div class="lg-msg" id="lgMsg"></div>'
+      +'<button class="btn btn-outline" id="lgRef" onclick="locHereRefresh()">↻ Refresh my location</button>'
+      +(f?'<a class="btn btn-outline" style="text-decoration:none;text-align:center" href="'+mapsUrl(f.lat,f.lng)+'" target="_blank" rel="noopener">🗺️ Open in Maps</a>':'')
+      +'<button class="btn btn-outline" onclick="locSheetClose();openPhoneHelp()">⚙️ Phone settings help</button>'
+      +'<button class="btn" onclick="locSheetClose()">Close</button></div>';
+    return;
+  }
+  const st=LOCG.state, soft=st==='ok'&&LOCG.soft;
+  const c=soft?['🔋',LOCG.soft==='always'?'Allow location all the time':'Let the app run in the background','To remind you and punch you out automatically while your screen is off, the app needs location “Allow all the time” and no battery limit.']:(LOC_COPY[st]||LOC_COPY.off);
+  const steps=locSteps().map(x=>'<li>'+x+'</li>').join('');
+  let main='';
+  if(soft) main='<button class="btn btn-primary" onclick="locFixGo()">Fix now</button>';
+  else if(st==='ask') main='<button class="btn btn-primary" onclick="locFixGo()">Allow location</button>';
+  else if(st==='unsupported') main='';
+  else if(NATIVE) main='<button class="btn btn-primary" onclick="locFixGo()">'+(st==='off'&&nativeCan('openLocationSettings')?'Turn on location':st==='denied'?'Open app settings':'Open settings')+'</button><button class="btn btn-outline" onclick="locRecheck()">Check again</button>';
+  else main='<button class="btn btn-primary" onclick="locRecheck()">Check again</button>';
+  el.innerHTML='<div class="fm-sheet lg-sheet" role="dialog" aria-modal="true" aria-label="'+hx(c[1])+'"><div class="lg-ic">'+c[0]+'</div><h3 style="text-align:center">'+hx(c[1])+'</h3><div class="lg-why">'+hx(c[2])+'</div>'
+    +(steps?'<ol class="lg-steps">'+steps+'</ol>':'')+'<div class="lg-msg" id="lgMsg"></div>'+main
+    +'<button class="btn btn-outline" onclick="locLater()">'+(soft?'Skip for today':'Later')+'</button>'
+    +'<div class="lg-foot">This screen closes by itself once location works.</div></div>';
+}
+function locFixGo(){
+  const st=LOCG.state;
+  if(st==='ask') return locAsk();
+  if(LOCG.soft&&st==='ok'){ try{ localStorage.setItem(lgSoftKey(),'1'); }catch(e){} try{ if(nativeCan('askAlways')) window.AndroidTracker.askAlways(); else window.AndroidTracker.openSettings(); }catch(e){} locSheetClose(); return; }
+  if(NATIVE){ try{ if(st==='off'&&nativeCan('openLocationSettings')) window.AndroidTracker.openLocationSettings(); else window.AndroidTracker.openSettings(); }catch(e){} return; }
+  locRecheck();
+}
+function locAsk(){
+  const m=document.getElementById('lgMsg'); if(m) m.textContent='Waiting for your answer…';
+  try{ navigator.geolocation.getCurrentPosition(()=>locGuardCheck('force'),()=>locGuardCheck('force'),{enableHighAccuracy:false,timeout:20000,maximumAge:0}); }catch(e){ locGuardCheck('force'); }
+}
+async function locRecheck(){
+  const m=document.getElementById('lgMsg'); if(m) m.textContent='Checking…';
+  capAt=0;   // a reading from before the change must not count
+  await locGuardCheck('force');
+  const m2=document.getElementById('lgMsg'); if(m2&&locBad()) m2.textContent='Still '+(LOCG.state==='denied'?'blocked':'off')+'. Follow the steps above, then tap again.';
+}
+async function locHereRefresh(){
+  const b=document.getElementById('lgRef'), m=document.getElementById('lgMsg'); if(b){ b.disabled=true; b.textContent='⏳ Getting your location…'; }
+  try{ const f=await freshFix(); LOCG.fix=f; LOCG.at=Date.now(); LOCG.areaFor=''; LOCG.state='ok'; await locAreaFill(); locWhereDraw(); if(LOCG.view==='here') locSheetDraw(); }
+  catch(e){ const h=gpsHelp(e); if(m) m.textContent='❌ '+h.why+'. '+h.tip; if(b){ b.disabled=false; b.textContent='↻ Refresh my location'; } if(e&&(e.code===1||e.code===2)) locGuardCheck('force'); }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') locGuardCheck('resume'); });
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN LOGIN
@@ -6169,9 +6389,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-23.4';</script>
-<script src="notify.js?v=2026-10-23.4"></script>
-<script src="appstore.js?v=2026-10-23.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.1';</script>
+<script src="notify.js?v=2026-10-28.1"></script>
+<script src="appstore.js?v=2026-10-28.1"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
