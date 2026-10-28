@@ -284,6 +284,7 @@ public class MainActivity extends Activity {
                         .put("background", Build.VERSION.SDK_INT < 29 || checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED)
                         .put("battery", pm != null && pm.isIgnoringBatteryOptimizations(getPackageName()))
                         .put("locationOn", Fix.locationOn(MainActivity.this))
+                        .put("locationPerm", hasLocation())
                         .toString();
             } catch (Exception e) { return "{}"; }
         }
@@ -405,6 +406,27 @@ public class MainActivity extends Activity {
 
         /** Downloads and installs the newer app. Returns ok, permission (Android must first allow installs from this app), none or busy. */
         @JavascriptInterface public String updateStart() { return Updater.start(MainActivity.this); }
+
+        /** Opens the phone's own Location screen, where the Location switch is. */
+        @JavascriptInterface public void openLocationSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                } catch (Exception e) {
+                    try { startActivity(new Intent(Settings.ACTION_SETTINGS)); } catch (Exception ignored) {}
+                }
+            });
+        }
+
+        /** Asks for location “Allow all the time” and for the battery limit to be lifted (so reminders and automatic punch-out work with the screen off). */
+        @JavascriptInterface public void askAlways() {
+            runOnUiThread(MainActivity.this::askBackgroundAndBattery);
+        }
+
+        /** Asks for the location (and camera) permission again, if the phone still allows asking. */
+        @JavascriptInterface public void askLocation() {
+            runOnUiThread(() -> { if (!hasLocation()) askBasic(); });
+        }
 
         /** Opens this app's settings page (permissions, battery). */
         @JavascriptInterface public void openSettings() {

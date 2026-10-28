@@ -1,4 +1,4 @@
 What is new
-• Notifications now reach you even when the app is closed, with Yes / Still working buttons if you forgot to punch out
-• Updates install from inside the app: Me → App Store → Update now
-• Reports and reminders come as notifications instead of e-mail
+• A pop-up tells you when Location is off or blocked and takes you straight to the right Settings screen, so reminders and automatic punch-out keep working
+• Today now shows where you are right now (tap it for the map)
+• Work OFF / Punch Out photos are never black or half-started any more: the camera is checked before the picture is taken
