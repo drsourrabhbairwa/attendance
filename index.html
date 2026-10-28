@@ -663,6 +663,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 #stCamera .cam-x{display:none}
 .hm-links button.hm-lo{flex:1 1 100%;color:#B42318;border-color:rgba(180,35,24,.25)}
 .wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
+.wm-away{margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:12.5px;font-weight:600;line-height:1.35}.wm-away small{display:block;font-weight:500;opacity:.85;margin-top:2px}
 .wm-say{font-size:13px;color:var(--soft);margin:8px 2px 0}.wm-say.bad{color:var(--red);background:var(--redBg);border-radius:12px;padding:9px 12px;font-weight:600;line-height:1.35}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
@@ -1656,6 +1657,11 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       <label class="pl-lab"><input type="checkbox" id="plModeRule" onchange="saveModeRule(this.checked)" checked> <b>Office work only from an office, Factory work only from a factory</b></label>
       <div class="pl-tip">When staff choose Office or Factory work — at Work ON, when they switch, or when they start a task — their phone must be inside one of the Offices or Factories added here. With two factories, being inside either one is enough. Work From Home and Field work are never checked, and neither is a kind with no place added yet.</div>
       <div class="msg msg-error" id="plRuleErr"></div>
+    </div>
+    <div class="add-form" id="plAwayBox" style="display:none">
+      <label class="pl-lab"><input type="checkbox" id="plAwayCut" onchange="saveAwayCut(this.checked)" checked> <b>Cut working hours for time away from the office, factory or home</b></label>
+      <div class="pl-tip">On an Office or Factory day, time outside every office and factory added here comes off the day's hours. On a Work From Home day, time more than 300 m from where WFH began counts as away. It starts when two location checks in a row are outside and runs from the first of them until a check is back inside, or until Work OFF. Meetings, customer visits, personal work and Field work are never cut. The person gets a message at the first check outside, so they can start a meeting or switch to Field work.</div>
+      <div class="msg msg-error" id="plAwayErr"></div>
     </div>
     <div id="placeList"></div>
   </div>
@@ -4308,13 +4314,15 @@ function buildTimeline(rec){
   });
   if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out${autoPill(rec)}</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+hx(rec.punchOut.area)+'</div>':''}</div></div>`;
   { const pm=awayMins(rec,'personal'); if(pm>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">🏃 Personal away: ${fmtMins(pm)}</div>`; }
+  { const am=+rec.awayMin||0; if(am>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">📍 Away from the place: ${fmtMins(am)} (not counted in hours)${(rec.away||[]).length?`<div style="font-size:11px;font-weight:500;margin-top:2px">${rec.away.map(x=>fmt12(x.from)+' → '+fmt12(x.to)).join(' · ')}</div>`:''}</div>`; }
   return html;
 }
-/* Time in office = punch-in to punch-out, minus time out on meetings and personal work */
+/* Time in office = punch-in to punch-out, minus time out on meetings and personal work, and time away from the place */
 function officeMins(rec){
   if(!rec||!rec.punchIn||!rec.punchOut) return 0;
   let m=calcMins(rec.punchIn.time,rec.punchOut.time);
   (rec.meetings||[]).filter(mt=>mt.outTime&&mt.backTime).forEach(mt=>m-=calcMins(mt.outTime,mt.backTime));
+  m-=+rec.awayMin||0;   // time away from the office / factory / WFH place is not working time
   return Math.max(0,m);
 }
 function calcTotalHrs(rec){ const m=officeMins(rec); return m>0?fmtMins(m):null; }
@@ -5708,10 +5716,16 @@ async function saveModeRule(on){
   try{ const v=on?'1':'0'; if(USE_SHEETS) await api('saveSettings',{settings:{modePlace:v}}); _D.settings=Object.assign({},_D.settings,{modePlace:v}); saveCache(); }
   catch(e){ if(cb) cb.checked=!on; if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
 }
+async function saveAwayCut(on){
+  const er=document.getElementById('plAwayErr'), cb=document.getElementById('plAwayCut'); if(er) er.classList.remove('show');
+  try{ const v=on?'1':'0'; if(USE_SHEETS) await api('saveSettings',{settings:{awayCut:v}}); _D.settings=Object.assign({},_D.settings,{awayCut:v}); saveCache(); }
+  catch(e){ if(cb) cb.checked=!on; if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
+}
 async function renderPlaces(){
   const el=document.getElementById('placeList'); if(!el) return;
   document.getElementById('placeAddBox').style.display=canEditPlaces()?'block':'none';
   { const rb=document.getElementById('plRuleBox'); if(rb){ rb.style.display=canEditPlaces()?'block':'none'; document.getElementById('plModeRule').checked=String((_D.settings||{}).modePlace)!=='0'; } }
+  { const ab=document.getElementById('plAwayBox'); if(ab){ ab.style.display=canEditPlaces()?'block':'none'; document.getElementById('plAwayCut').checked=String((_D.settings||{}).awayCut)!=='0'; } }
   await refreshPlaces();
   const list=placesNow();
   if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No offices or factories yet.'+(canEditPlaces()?' Add the first one above.':' The Super Admin adds them.')+'</div>'; return; }
@@ -6075,7 +6089,7 @@ function perHtml(mode,d){
     return head+(off?`<div style="font-size:12px;color:var(--soft);margin-bottom:8px">${hx(off)} — no attendance is needed today.</div>`:'')+
       `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Employee</th><th>Status</th><th>In</th><th>Out</th><th>Hours</th><th>Notes</th></tr></thead><tbody>${rows.map(r=>{
         const c=r.cells[0]||{st:''}, notes=[];
-        if(c.late) notes.push('⏰ Late'); if(c.meet) notes.push(c.meet+' meeting'+(c.meet>1?'s':'')); if(c.out) notes.push('📍 Outside place'); if(c.ot) notes.push('⏱ OT '+fmtMins(c.ot)); if(c.st==='N') notes.push('No punch-out');
+        if(c.late) notes.push('⏰ Late'); if(c.meet) notes.push(c.meet+' meeting'+(c.meet>1?'s':'')); if(c.out) notes.push('📍 Outside place'); if(c.away) notes.push('📍 Away '+fmtMins(c.away)); if(c.ot) notes.push('⏱ OT '+fmtMins(c.ot)); if(c.st==='N') notes.push('No punch-out');
         return `<tr><td>${who(r)}</td><td>${perChip(c.st,PER_ST[c.st]?PER_ST[c.st][0]:'',c.st==='H'||c.st==='S'?off:'')}</td><td>${c.i?hx(perShort(c.i)):'—'}</td><td>${c.o?hx(perShort(c.o))+(c.auto?autoPill({poutAuto:c.auto}):''):'—'}</td><td>${c.o&&c.m?fmtMins(c.m):'—'}</td><td style="font-size:11px">${notes.join(' · ')||'—'}</td></tr>`;
       }).join('')}</tbody></table></div>`+legend;
   }
@@ -6624,9 +6638,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.5';</script>
-<script src="notify.js?v=2026-10-28.5"></script>
-<script src="appstore.js?v=2026-10-28.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.6';</script>
+<script src="notify.js?v=2026-10-28.6"></script>
+<script src="appstore.js?v=2026-10-28.6"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7515,18 +7529,18 @@ async function wmLoad(){
   try{
     const r=await api('workToday',{empId:emp,date:todayStr()});
     if(!currentEmp||String(currentEmp.id)!==String(emp)||!r) return;
-    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,at:Date.now()});
-    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,at:_wm.at});
+    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,away:r.awayMin||0,at:Date.now()});
+    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,away:_wm.away,at:_wm.at});
   }catch(e){
     if(/unknown action/i.test(String(e&&e.message))) _wm.ok=false;   // an older backend: keep the old home card
     else return;                                                    // offline: keep what is shown
   }
   try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
 }
-function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false}; }
+function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,away:0,at:Date.now(),pick:'',busy:false}; }
 function wmRestore(){   // paint instantly from the last answer of today, then refresh
   if(_wm.ok===false||!currentEmp) return;
-  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,at:c.at||Date.now()});
+  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,away:c.away||0,at:c.at||Date.now()});
 }
 function wmLive(){   // minutes since the last server answer, so both figures keep moving between refreshes
   const rec=_hmRec, gone=(Date.now()-_wm.at)/60000, out=!!(rec&&rec.punchOut);
@@ -7534,7 +7548,8 @@ function wmLive(){   // minutes since the last server answer, so both figures ke
   const total=_wm.total+(out?0:gone), prod=Math.min(total,_wm.prod+(running&&!out?gone:0));
   return {total:total,prod:prod};
 }
-function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
+function wmAwayHtml(){ return _wm.away>0?`<div class="wm-away">📍 Away from the place: <b>${fmtMins(_wm.away)}</b> — not counted in your working hours<small>Out for work? Start a meeting or switch to Field work, and that time is not cut.</small></div>`:''; }
+function wmHoursHtml(){ const h=wmLive(); return wmAwayHtml()+`<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, lock=!!_wm.open;
@@ -7581,6 +7596,7 @@ async function wmSetMode(k){
   if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
   try{
     let loc={}; if(wmPlaced(k)){ wmSay('📍 Checking your location…'); loc=await wmLoc(); }
+    else loc=await Promise.race([wmLoc(),new Promise(r=>setTimeout(()=>r({}),8000))]);   // WFH and Field are never refused for the place, but the server keeps it: it is where WFH began / where the Field trip started
     await api('setDayMode',Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k},loc)); _wm.mode=k; _wm.say=null; await wmLoad();
   }
   catch(e){ if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true); else{ wmSay(''); alert(e.message||'Could not change the mode.'); } }

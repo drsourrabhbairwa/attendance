@@ -1,1 +1,1 @@
-{"web": "2026-10-28.5", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Office / Factory work now only from an office / a factory place (either of several factories counts); clear 'You are not at the factory' message; admin switch in Places"}
+{"web": "2026-10-28.6", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Time away from the office / factory / WFH place is no longer counted in working hours (2 checks in a row outside); away line on the home card and timeline; admin switch in Places"}
