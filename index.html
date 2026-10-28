@@ -1693,7 +1693,13 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <div class="add-form" id="plAwayBox" style="display:none">
       <label class="pl-lab"><input type="checkbox" id="plAwayCut" onchange="saveAwayCut(this.checked)" checked> <b>Cut working hours for time away from the office, factory or home</b></label>
-      <div class="pl-tip">On an Office or Factory day, time outside every office and factory added here comes off the day's hours. On a Work From Home day, time more than 300 m from where WFH began counts as away. It starts when two location checks in a row are outside and runs from the first of them until a check is back inside, or until Work OFF. Meetings, customer visits, personal work and Field work are never cut. The person gets a message at the first check outside, so they can start a meeting or switch to Field work.</div>
+      <div class="pl-tip">On an Office or Factory day, time outside every office and factory added here comes off the day's hours once it lasts the minutes set below (from the first location check outside until a check is back inside, or until Work OFF). Going from one office or factory to another, for example factory to office, is <b>Travelling</b>: it shows as Travelling on the Live tab and is cut however short. On a Work From Home day, time more than 300 m from where WFH began counts as away. Meetings, customer visits, personal work and Field work are never cut. The person gets a message once the phone has been away for 10 minutes, so they can start a meeting or switch to Field work.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div><label style="margin:0 0 4px">Location check every (minutes)</label><input type="number" id="plCheckEvery" min="2" max="60" inputmode="numeric" placeholder="5"></div>
+        <div><label style="margin:0 0 4px">Cut time outside after (minutes)</label><input type="number" id="plAwayMins" min="0" max="240" inputmode="numeric" placeholder="30"></div>
+      </div>
+      <div class="pl-tip">A new check interval reaches phones the next time someone switches Work ON. A check every 5 minutes uses more battery and data than one every hour; 5 shows Travelling within minutes of leaving a place.</div>
+      <div class="pl-row" style="margin-top:8px"><button class="pl-btn" id="plAwayNumsBtn" onclick="saveAwayNums()">Save</button></div>
       <div class="msg msg-error" id="plAwayErr"></div>
     </div>
     <div id="placeList"></div>
@@ -1797,7 +1803,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">“Has left” means farther than (metres)</label><input type="number" id="alLeftDist" min="100" step="50" placeholder="300"></div>
         <div><label style="margin:0 0 4px">End a site job / meeting that was walked away from after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
       </div>
-      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work or a meeting and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away, it is ended at the time of the first one (shown as “Auto”) and the person is told. Needs the phone's location checks to be running.</p>
+      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work or a meeting and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away <b>that also span the “cut time outside after” minutes set in the Places tab</b> (30 by default), it is ended at the time of the first one (shown as “Auto”) and the person is told. Needs the phone's location checks to be running. Set the number of checks to 1 to end it at the first check far away.</p>
       <label class="al-chk"><input type="checkbox" id="alLeftAsk"> Ask a person “You seem to have left. Punch out?” when their phone is far from the workplace after that time</label>
       <label class="al-chk"><input type="checkbox" id="alLeftAuto"> If they do not answer and are still away after closing time, punch them out automatically (shown as “Auto”)</label>
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
@@ -4345,7 +4351,7 @@ function buildTimeline(rec){
   });
   if(rec.punchOut) html+=`<div class="tl-item">${photoEl(rec.punchOut.photo,'Punch Out')}<div><div class="tl-label">🔵 Punch Out${autoPill(rec)}</div><div class="tl-time">${fmt12(rec.punchOut.time)}</div>${rec.punchOut.area?'<div class="tl-area">📍 '+hx(rec.punchOut.area)+'</div>':''}</div></div>`;
   { const pm=awayMins(rec,'personal'); if(pm>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">🏃 Personal away: ${fmtMins(pm)}</div>`; }
-  { const am=+rec.awayMin||0; if(am>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">📍 Away from the place: ${fmtMins(am)} (not counted in hours)${(rec.away||[]).length?`<div style="font-size:11px;font-weight:500;margin-top:2px">${rec.away.map(x=>fmt12(x.from)+' → '+fmt12(x.to)).join(' · ')}</div>`:''}</div>`; }
+  { const am=+rec.awayMin||0; if(am>0) html+=`<div class="total-hrs" style="background:var(--amberBg);color:var(--amber)">📍 Away from the place: ${fmtMins(am)} (not counted in hours)${(rec.away||[]).length?`<div style="font-size:11px;font-weight:500;margin-top:2px">${rec.away.map(x=>(x.travel?'🚗 Travelling '+x.travel.from+' → '+x.travel.to+' · ':'')+fmt12(x.from)+' → '+fmt12(x.to)).join(' · ')}</div>`:''}</div>`; }
   return html;
 }
 /* Time in office = punch-in to punch-out, minus time out on meetings and personal work, and time away from the place */
@@ -4371,7 +4377,10 @@ function openModal(name,label,src,lat,lng,area){
    even after Logout. Employees are not shown when checks happen or their
    result, only problems they must fix (GPS off, permission blocked).
 ══════════════════════════════════════════════════════════════ */
-const SITE_RADIUS=50, CHECK_MIN=45, CHECK_MAX=75, RETRY_MINS=5, GAP_MINS=90;
+const SITE_RADIUS=50, RETRY_MINS=5, GAP_MINS=90;
+// Minutes between location checks: the admin's setting (Places tab), 5 by default. The phone picks each gap a little either side of it so the checks are not on a fixed clock.
+const checkEvery=()=>{ const v=parseInt((_D.settings||{}).checkEvery,10); return v>=2&&v<=90?v:5; };
+const checkMin=()=>Math.max(2,Math.round(checkEvery()*0.8)), checkMax=()=>Math.max(checkMin()+1,Math.round(checkEvery()*1.2));
 let siteTimer=null, pingBusy=false;
 const swLive={};   // today's site sessions on this phone, by employee ID (also kept in localStorage)
 
@@ -4530,12 +4539,12 @@ function nativeStart(sw){
   try{
     const eve=sw.mode==='auto'&&(_D.settings||{}).leftPrompt!=='0'?(parseTimeMins((_D.settings||{}).leftFromAt||'04:00 PM')||0):0;   // from this minute of the day the phone checks every eveGap minutes, so a departure is seen within about a quarter of an hour
     return window.AndroidTracker.start(JSON.stringify({endMin:sw.mode==='auto'?trackEndMins():0,eveMin:eve,eveGap:15,scriptUrl:SCRIPT_URL,secret:API_SECRET,siteId:String(sw.id),empId:sw.empId,
-      name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:sw.radius||SITE_RADIUS,minGap:CHECK_MIN,maxGap:CHECK_MAX,retry:RETRY_MINS,token:trackerTok(sw.empId)}));
+      name:sw.empName||empNameOf(sw.empId),date:sw.date,siteLat:+sw.siteLat,siteLng:+sw.siteLng,radius:sw.radius||SITE_RADIUS,minGap:checkMin(),maxGap:checkMax(),retry:RETRY_MINS,token:trackerTok(sw.empId)}));
   }catch(e){ return false; }
 }
 function nativeStop(id){ try{ if(NATIVE) window.AndroidTracker.stop(String(id||'')); }catch(e){} }
 function nativeInfo(){ try{ return NATIVE?JSON.parse(window.AndroidTracker.info()||'{}'):null; }catch(e){ return null; } }
-function nextGapMs(){ return Math.round((CHECK_MIN+Math.random()*(CHECK_MAX-CHECK_MIN))*60000); }
+function nextGapMs(){ return Math.round((checkMin()+Math.random()*(checkMax()-checkMin()))*60000); }
 async function doSiteChecks(){
   if(pingBusy) return;
   const startedAt=Date.now();   // the next check is timed from when this one began
@@ -5752,11 +5761,18 @@ async function saveAwayCut(on){
   try{ const v=on?'1':'0'; if(USE_SHEETS) await api('saveSettings',{settings:{awayCut:v}}); _D.settings=Object.assign({},_D.settings,{awayCut:v}); saveCache(); }
   catch(e){ if(cb) cb.checked=!on; if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
 }
+async function saveAwayNums(){
+  const er=document.getElementById('plAwayErr'), ce=document.getElementById('plCheckEvery'), am=document.getElementById('plAwayMins'); if(er) er.classList.remove('show');
+  const every=Math.round(Number(ce.value||5)), mins=Math.round(Number(am.value===''?30:am.value));
+  if(!(every>=2&&every<=60)||!(mins>=0&&mins<=240)){ if(er){ er.textContent='Check every: 2 to 60 minutes. Cut after: 0 to 240 minutes.'; er.classList.add('show'); } return; }
+  try{ const st={checkEvery:String(every),awayMins:String(mins)}; if(USE_SHEETS) await api('saveSettings',{settings:st}); _D.settings=Object.assign({},_D.settings,st); saveCache(); safToast('Saved'); }
+  catch(e){ if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
+}
 async function renderPlaces(){
   const el=document.getElementById('placeList'); if(!el) return;
   document.getElementById('placeAddBox').style.display=canEditPlaces()?'block':'none';
   { const rb=document.getElementById('plRuleBox'); if(rb){ rb.style.display=canEditPlaces()?'block':'none'; document.getElementById('plModeRule').checked=String((_D.settings||{}).modePlace)!=='0'; } }
-  { const ab=document.getElementById('plAwayBox'); if(ab){ ab.style.display=canEditPlaces()?'block':'none'; document.getElementById('plAwayCut').checked=String((_D.settings||{}).awayCut)!=='0'; } }
+  { const ab=document.getElementById('plAwayBox'); if(ab){ ab.style.display=canEditPlaces()?'block':'none'; document.getElementById('plAwayCut').checked=String((_D.settings||{}).awayCut)!=='0'; document.getElementById('plCheckEvery').value=checkEvery(); const am=parseInt((_D.settings||{}).awayMins,10); document.getElementById('plAwayMins').value=am>=0?am:30; } }
   await refreshPlaces();
   const list=placesNow();
   if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No offices or factories yet.'+(canEditPlaces()?' Add the first one above.':' The Super Admin adds them.')+'</div>'; return; }
@@ -6669,9 +6685,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.7';</script>
-<script src="notify.js?v=2026-10-28.7"></script>
-<script src="appstore.js?v=2026-10-28.7"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.8';</script>
+<script src="notify.js?v=2026-10-28.8"></script>
+<script src="appstore.js?v=2026-10-28.8"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7560,18 +7576,18 @@ async function wmLoad(){
   try{
     const r=await api('workToday',{empId:emp,date:todayStr()});
     if(!currentEmp||String(currentEmp.id)!==String(emp)||!r) return;
-    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,away:r.awayMin||0,at:Date.now()});
-    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,away:_wm.away,at:_wm.at});
+    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,away:r.awayMin||0,travel:r.travelMin||0,at:Date.now()});
+    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,away:_wm.away,travel:_wm.travel,at:_wm.at});
   }catch(e){
     if(/unknown action/i.test(String(e&&e.message))) _wm.ok=false;   // an older backend: keep the old home card
     else return;                                                    // offline: keep what is shown
   }
   try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
 }
-function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,away:0,at:Date.now(),pick:'',busy:false}; }
+function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,away:0,travel:0,at:Date.now(),pick:'',busy:false}; }
 function wmRestore(){   // paint instantly from the last answer of today, then refresh
   if(_wm.ok===false||!currentEmp) return;
-  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,away:c.away||0,at:c.at||Date.now()});
+  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,away:c.away||0,travel:c.travel||0,at:c.at||Date.now()});
 }
 function wmLive(){   // minutes since the last server answer, so both figures keep moving between refreshes
   const rec=_hmRec, gone=(Date.now()-_wm.at)/60000, out=!!(rec&&rec.punchOut);
@@ -7579,7 +7595,11 @@ function wmLive(){   // minutes since the last server answer, so both figures ke
   const total=_wm.total+(out?0:gone), prod=Math.min(total,_wm.prod+(running&&!out?gone:0));
   return {total:total,prod:prod};
 }
-function wmAwayHtml(){ return _wm.away>0?`<div class="wm-away">📍 Away from the place: <b>${fmtMins(_wm.away)}</b> — not counted in your working hours<small>Out for work? Start a meeting or switch to Field work, and that time is not cut.</small></div>`:''; }
+function wmAwayHtml(){
+  const t=Math.min(_wm.travel||0,_wm.away||0), a=Math.max(0,(_wm.away||0)-t);
+  return (t>0?`<div class="wm-away">🚗 Travelling between places: <b>${fmtMins(t)}</b> — not counted in your working hours</div>`:'')
+    +(a>0?`<div class="wm-away">📍 Away from the place: <b>${fmtMins(a)}</b> — not counted in your working hours<small>Out for work? Start a meeting or switch to Field work, and that time is not cut.</small></div>`:'');
+}
 function wmHoursHtml(){ const h=wmLive(); return wmAwayHtml()+`<div class="wm-hrs"><div><b id="wmProd">${fmtMins(h.prod)}</b><span>Productive working hours</span></div><div><b id="wmTot">${fmtMins(h.total)}</b><span>Total working hours</span></div></div>`; }
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
@@ -7769,7 +7789,7 @@ async function liveLoad(manual){
   catch(e){ const g=document.getElementById('lvGrid'); if(g&&!_lv.data) g.innerHTML='<div class="empty">Could not load. '+hx(e&&e.message||'')+'</div>'; }
   finally{ _lv.busy=false; if(_lv.again){ _lv.again=false; liveLoad(); } }
 }
-const liveWhat=x=>{ const k=kindLbl(x.kind,x.kindOther); return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
+const liveWhat=x=>{ const k=kindLbl(x.kind,x.kindOther); if(x.state==='travelling'&&!k&&x.travelFrom) return 'from '+x.travelFrom; return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
 const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
 // site work by person (a stop and a restart on the same day are one person's day)
 function lvSiteBy(list){
@@ -7873,7 +7893,7 @@ function lvTimeline(x,pd){
     L.push(row(a,'meet','<b>🚗 Meeting '+(i+1)+(m.customerName?' · '+hx(m.customerName):'')+'</b>',[hx(lvClock(out))+(back?' → '+hx(lvClock(back))+' · '+hx(fmtMins(calcMins(out,back))):' · out now'),why?hx(why):'',m.outArea?'📍 '+hx(m.outArea):'',(m.outcome||m.result)?'“'+hx(m.outcome||m.result)+'”':''],m.outPhoto||m.backPhoto,'Meeting '+(i+1)));
   });
   (pd.visits||[]).forEach(v=>L.push(row(parseTimeMins(v.time),'visit','<b>🏢 Customer visit · '+hx(v.customer||'customer')+'</b>',[v.note?hx(v.note):'',loc(v.area,v)],v.photo,'Visit')));
-  ((rec&&rec.away)||[]).forEach(a=>L.push(row(parseTimeMins(a.from),'away','<b>📍 Away from the place</b>',[hx(lvClock(a.from))+' → '+hx(lvClock(a.to))+' · '+hx(fmtMins(a.min))+' · not counted in hours'])));
+  ((rec&&rec.away)||[]).forEach(a=>L.push(row(parseTimeMins(a.from),'away',a.travel?'<b>🚗 Travelling · '+hx(a.travel.from)+' → '+hx(a.travel.to)+'</b>':'<b>📍 Away from the place</b>',[hx(lvClock(a.from))+' → '+hx(lvClock(a.to))+' · '+hx(fmtMins(a.min))+' · not counted in hours'])));
   (pd.sessions||[]).forEach(d=>{ const s=d.session||{};
     if(s.startTime) L.push(row(parseTimeMins(s.startTime),'site','<b>▶ Site work started</b>',[loc(s.startArea,{lat:s.startLat,lng:s.startLng}),s.mode==='auto'?'all-day location tracking':''],s.startPhoto,'Site work started'));
     if(s.stopTime) L.push(row(parseTimeMins(s.stopTime),'site','<b>⏹ Site work stopped'+(s.stopAuto?' · Auto, walked away':'')+'</b>',[loc(s.stopArea,{lat:s.stopLat,lng:s.stopLng})],s.stopPhoto,'Site work stopped'));
