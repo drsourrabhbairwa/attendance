@@ -25,6 +25,12 @@ final class Net {
         return m.startsWith("Please update") || m.startsWith("Session expired");
     }
 
+    /** The server's reply to a location check says the job is over (it was ended for the person, e.g. they walked away from the site): the phone should stop checking. */
+    static boolean jobIsOver(JSONObject reply) {
+        JSONObject d = reply == null ? null : reply.optJSONObject("data");
+        return d != null && d.optBoolean("stopped", false);
+    }
+
     /** How long one step may wait: the usual time, or what is left of an overall budget (never less than a second, so a last try is still real). */
     static int timeoutFor(long endAt, long now, int normal) {
         if (endAt <= 0) return normal;

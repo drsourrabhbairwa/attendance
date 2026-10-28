@@ -163,6 +163,7 @@ public class TrackerService extends Service {
         if (Store.session(this) == null) return;   // stopped while we were waiting for GPS
         if (loc != null) {
             report(loc, null);
+            if (Store.session(this) == null) return;   // the server ended this job with that check
             Store.failAt(this, 0);
             // By day the usual 45-75 minutes; from the evening time every eveGap minutes, so a forgotten punch-out is noticed soon
             int gap = Cadence.nextGapMinutes(Store.minutesNow(), s.optInt("minGap", 45), s.optInt("maxGap", 75), s.optInt("eveMin", 0), s.optInt("eveGap", 0), new Random());
@@ -172,6 +173,7 @@ public class TrackerService extends Service {
             long failAt = Store.failAt(this);
             if (failAt == 0 || System.currentTimeMillis() - failAt >= 3600000L || force) {
                 report(null, why);
+                if (Store.session(this) == null) return;
                 Store.failAt(this, System.currentTimeMillis());
             }
             Store.nextAt(this, startedAt + s.optInt("retry", 5) * 60000L);
@@ -218,7 +220,12 @@ public class TrackerService extends Service {
                         .put("accuracy", acc);
             }
             String url = s.optString("scriptUrl");
-            try { Net.post(url, p); }
+            try {
+                if (Net.jobIsOver(Net.post(url, p))) {   // the office side ended this job for the person: stop checking and tracking
+                    JSONObject cur = Store.session(this);
+                    if (cur != null && cur.optString("siteId").equals(p.optString("siteId"))) stop(this);
+                }
+            }
             catch (Net.Rejected r) {
                 if (Net.signInNeeded(r)) { Store.enqueue(this, url, p); signInNeeded(); }   // keep the check until the person signs in again
                 /* any other refusal: don't retry */
