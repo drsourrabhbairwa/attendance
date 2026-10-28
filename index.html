@@ -1189,6 +1189,49 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 @media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:860px} }
 @media(prefers-reduced-motion:reduce){#homeScreen .hm-pane.on,.hm-smart{animation:none}.hm-bar i,.hm-ring-fg{transition:none}}
 
+
+/* ── Policies: the admin tab, the staff accept screen and the reader ── */
+.pl-doc{font-size:14px;line-height:1.6;color:var(--ink);overflow-wrap:anywhere}
+.pl-doc h3{font-size:15px;margin:16px 0 4px;font-weight:800}.pl-doc h3:first-child{margin-top:4px}
+.pl-doc h4{font-size:13px;margin:12px 0 2px;font-weight:800}
+.pl-doc p{margin:6px 0}.pl-doc ul{margin:6px 0 6px 20px;padding:0}.pl-doc li{margin:3px 0}
+.pl-doc a{color:var(--accent);text-decoration:underline}
+.pl-blank{background:#fde8c4;color:#7a4b00;border-radius:4px;padding:0 4px;font-weight:700}
+#polOv{z-index:1250}
+.pol-box{width:100%;max-width:440px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:#fff;color:var(--ink);border-radius:18px;padding:16px 16px 14px;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+.pol-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.pol-head h3{margin:0;font-size:17px;line-height:1.3;overflow-wrap:anywhere}
+.pol-count{flex:none;font-size:12px;font-weight:700;color:var(--soft);background:#eef3f1;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.pol-meta{font-size:12px;color:var(--soft);margin:4px 0 8px;line-height:1.5}
+.pol-meta b{color:#8a5a00}
+.pol-scroll{flex:1 1 auto;min-height:120px;overflow:auto;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 2px;margin:2px 0 12px;-webkit-overflow-scrolling:touch}
+.pol-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pol-two{display:flex;gap:8px;margin-top:8px}.pol-two .btn{margin-top:0;flex:1}
+.pol-two .pol-langb{flex:none}
+.pol-langb{border:1.5px solid var(--border2);background:#fff;color:var(--accent);border-radius:12px;font:inherit;font-size:13px;font-weight:700;padding:0 16px;min-height:48px;cursor:pointer}
+.pol-errm{display:none;color:var(--red);font-size:13px;margin:0 0 8px}.pol-errm.show{display:block}
+.pol-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:11px 12px;margin:6px 0;border-radius:12px;border:1px solid var(--border);background:#fff;font:inherit;color:var(--ink);cursor:pointer}
+.pol-row b{display:block;font-size:14px;overflow-wrap:anywhere}.pol-row small{display:block;color:var(--soft);font-size:12px;margin-top:2px}
+.pol-st{flex:none;font-size:12px;font-weight:700;color:var(--soft)}.pol-st.ok{color:var(--green)}.pol-st.need{color:#8a5a00}
+.pol-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pol-back{border:none;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:13px;padding:2px 0;cursor:pointer}
+.pol-small{padding:6px 12px;border-radius:var(--rs);border:1.5px solid var(--border2);background:var(--surface);color:var(--accent);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pol-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.pol-grid .wide{grid-column:1/-1}.pol-grid label{margin:0 0 4px}
+@media(max-width:560px){.pol-grid{grid-template-columns:1fr}}
+.pol-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px;flex-wrap:wrap}
+.pol-bar h3{font-size:15px;margin:0}
+.pol-card{background:var(--surface2);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.pol-card-t{font-weight:800;font-size:14px;overflow-wrap:anywhere}
+.pol-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.pol-chip{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--border2);color:var(--soft)}
+.pol-chip.g{background:var(--greenBg);border-color:transparent;color:var(--green)}.pol-chip.a{background:var(--amberBg);border-color:transparent;color:#7a4b00}
+.pol-wait{font-size:12px;color:var(--soft);margin:0 0 8px;line-height:1.5}
+.pol-flags{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
+.pol-warn{display:none;background:var(--amberBg);border:1px solid var(--amber);color:#5c3b00;border-radius:var(--rs);padding:9px 12px;font-size:13px;margin-top:10px;line-height:1.5}.pol-warn.show{display:block}
+.pol-warn ul{margin:4px 0 0 18px;padding:0}
+.pol-prev{display:none;background:#fff;border:1px solid var(--border);border-radius:var(--rs);padding:6px 14px 10px;margin-top:10px;max-height:420px;overflow:auto}.pol-prev.show{display:block}
+#polBody,#polBodyHi{min-height:240px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -1365,6 +1408,15 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div class="msg msg-error" id="trkErr"></div>
 </div></div>
 
+<div id="polOv" class="pf-cam-ov"><div class="pol-box" role="dialog" aria-modal="true" aria-labelledby="polOvTitle">
+  <div class="pol-head"><h3 id="polOvTitle"></h3><span class="pol-count" id="polOvCount"></span></div>
+  <div class="pol-meta" id="polOvMeta"></div>
+  <div class="pol-scroll" id="polOvBody"></div>
+  <div class="pol-errm" id="polOvErr"></div>
+  <button type="button" class="btn btn-primary" id="polAccept" style="margin-top:0" onclick="polAcceptTap()">✅ I have read this, Accept</button>
+  <div class="pol-two"><button type="button" class="pol-langb" id="polLang" onclick="polToggleLang()">हिन्दी</button><button type="button" class="btn btn-outline" id="polOut" onclick="polSignOut()">Sign out</button></div>
+</div></div>
+
 <!-- ══ CAMERA SCREEN ══ -->
 <div id="cameraScreen" class="screen">
 <div class="card">
@@ -1530,6 +1582,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     <button class="tab-btn" onclick="switchTab('employees')">👥 Staff</button>
     <button class="tab-btn" onclick="switchTab('places')">📍 Places</button>
     <button class="tab-btn sa-only" onclick="switchTab('holidays')">🗓 Holidays</button>
+    <button class="tab-btn sa-only" onclick="switchTab('policies')">📜 Policies</button>
     <button class="tab-btn" onclick="switchTab('leads')">🤝 Leads</button>
     <button class="tab-btn" onclick="switchTab('tasks')">✅ Tasks</button>
     <button class="tab-btn" onclick="switchTab('travel')">🚗 Travel km</button>
@@ -1672,6 +1725,63 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     <div id="holList"></div>
   </div>
 
+  <!-- POLICIES TAB -->
+  <div id="tabPolicies" class="tab-pane">
+    <div class="add-form" id="polCoBox">
+      <h3>🏢 Company details</h3>
+      <div class="pl-tip" style="margin-top:2px">These fill the spots like <b>{{company}}</b>, <b>{{address}}</b>, <b>{{email}}</b>, <b>{{phone}}</b> and <b>{{officer}}</b> in your policies, and the footer of the public page.</div>
+      <div class="pol-grid">
+        <div><label for="polCoName">Company name</label><input type="text" id="polCoName" autocomplete="off" placeholder="e.g. Amitek Waterproofing"></div>
+        <div><label for="polCoOfficer">Grievance officer</label><input type="text" id="polCoOfficer" autocomplete="off" placeholder="Name of the person to write to"></div>
+        <div><label for="polCoEmail">Contact e-mail</label><input type="text" id="polCoEmail" autocomplete="off" inputmode="email" placeholder="hr@yourcompany.com"></div>
+        <div><label for="polCoPhone">Contact phone</label><input type="text" id="polCoPhone" autocomplete="off" inputmode="tel" placeholder="Office phone"></div>
+        <div class="wide"><label for="polCoAddress">Address</label><input type="text" id="polCoAddress" autocomplete="off" placeholder="Registered office address"></div>
+      </div>
+      <div class="pol-btns" style="margin-top:10px"><button type="button" class="pl-btn" id="polCoSave" onclick="polCoSave()">Save details</button></div>
+      <div class="msg msg-error" id="polCoErr"></div>
+    </div>
+    <div class="add-form" id="polStarterBox" style="display:none">
+      <h3>📚 Start from ready-made text</h3>
+      <div class="pl-tip" style="margin-top:2px">Adds Privacy, Terms, Location &amp; Tracking, Attendance, Leave and Travelling policies in English and Hindi as <b>drafts</b>: staff cannot see them until you switch one on. Read each one, fill the <b>[prompts]</b>, and have your owner or a lawyer check the legal ones before you publish.</div>
+      <div class="pol-btns" style="margin-top:10px"><button type="button" class="pl-btn" id="polStarter" onclick="polAddStarter()">➕ Add the starter policies</button></div>
+      <div class="msg msg-error" id="polStarterErr"></div>
+    </div>
+    <div class="pol-bar"><h3>📜 Policies</h3><button type="button" class="pl-btn" id="polNew" onclick="polEdOpen('')">➕ New policy</button></div>
+    <div class="add-form" id="polEditor" style="display:none">
+      <h3 id="polEdTitle">New policy</h3>
+      <div class="pol-grid">
+        <div><label for="polSlug">Page name</label><input type="text" id="polSlug" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="privacy-policy"></div>
+        <div><label for="polKind">Kind</label><select id="polKind"><option value="legal">Legal (privacy, terms…)</option><option value="hr">HR rules</option></select></div>
+        <div class="wide"><label for="polTitle">Title</label><input type="text" id="polTitle" autocomplete="off" maxlength="120"></div>
+        <div class="wide"><label for="polTitleHi">Title in Hindi (optional)</label><input type="text" id="polTitleHi" autocomplete="off" maxlength="120" lang="hi"></div>
+        <div><label for="polSort">Order in the list</label><input type="number" id="polSort" inputmode="numeric" min="-999" max="999"></div>
+      </div>
+      <div class="pl-tip" style="margin-top:6px">The page name is the address of the public page: <b>policy.html?p=page-name</b>. Small letters, numbers and dashes. It cannot be changed later.</div>
+      <label for="polBody" style="margin-top:12px">Text</label>
+      <textarea id="polBody" spellcheck="true"></textarea>
+      <div class="pl-tip" style="margin-top:4px"><b>## Heading</b> · <b>- bullet</b> · <b>**bold**</b> · <b>[text](https://link)</b> · a blank line starts a new paragraph · <b>{{company}}</b> <b>{{address}}</b> <b>{{email}}</b> <b>{{phone}}</b> <b>{{officer}}</b> are filled from the company details above.</div>
+      <label for="polBodyHi" style="margin-top:12px">Text in Hindi (optional)</label>
+      <textarea id="polBodyHi" spellcheck="false" lang="hi"></textarea>
+      <div class="pol-flags">
+        <label class="pl-lab"><input type="checkbox" id="polDraft"> <span><b>Draft</b>: staff cannot see it yet</span></label>
+        <label class="pl-lab"><input type="checkbox" id="polPub"> <span><b>Public</b>: anyone with the link can read it</span></label>
+        <label class="pl-lab"><input type="checkbox" id="polMust"> <span><b>Must accept</b>: every staff member has to accept it before using the app</span></label>
+        <label class="pl-lab" id="polBumpRow"><input type="checkbox" id="polBump"> <span><b>Everyone must accept again</b>: publish this as a new version</span></label>
+      </div>
+      <div class="pl-tip">Fixing a typo? Leave the last box empty: the version and everyone's acceptance stay as they are. Changed the meaning? Tick it.</div>
+      <div class="pol-warn" id="polWarn"></div>
+      <div class="msg msg-error" id="polErr"></div>
+      <div class="pol-btns" style="margin-top:12px">
+        <button type="button" class="pl-btn" id="polSave" onclick="polSave()">Save</button>
+        <button type="button" class="pl-btn ghost" id="polPreviewBtn" onclick="polPreview()">👁 Preview</button>
+        <button type="button" class="pl-btn ghost" id="polCancel" onclick="polEdClose()">Cancel</button>
+        <button type="button" class="pl-btn ghost" id="polDelete" onclick="polDelete()" style="margin-left:auto;color:var(--red)">🗑 Delete</button>
+      </div>
+      <div class="pol-prev" id="polPrev"></div>
+    </div>
+    <div id="polList"></div>
+  </div>
+
   <!-- PLACES TAB -->
   <div id="tabPlaces" class="tab-pane">
     <div class="add-form" id="placeAddBox">
@@ -1701,6 +1811,17 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       <div class="pl-tip">A new check interval reaches phones the next time someone switches Work ON. A check every 5 minutes uses more battery and data than one every hour; 5 shows Travelling within minutes of leaving a place.</div>
       <div class="pl-row" style="margin-top:8px"><button class="pl-btn" id="plAwayNumsBtn" onclick="saveAwayNums()">Save</button></div>
       <div class="msg msg-error" id="plAwayErr"></div>
+    </div>
+    <div class="add-form" id="plGpsBox" style="display:none">
+      <label class="pl-lab"><input type="checkbox" id="plGpsOff" onchange="saveGpsOff(this.checked)" checked> <b>Location off: tell the staff, then the owner, then close the day</b></label>
+      <div class="pl-tip">While Work is ON (Office, Factory or Work From Home), if the phone sends no real location for the minutes set below, the person gets a message, then you and their supervisor get an e-mail, and if it stays off the day is closed at the last real location and marked Auto (the person can tap Resume work if that is wrong). Field work, meetings and customer visits are never touched. A phone that sends nothing at all (switched off, no signal, app closed) counts the same way.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;align-items:end">
+        <div><label style="margin:0 0 4px">Tell the staff after (min)</label><input type="number" id="plGpsWarn" min="5" max="240" inputmode="numeric" placeholder="45"></div>
+        <div><label style="margin:0 0 4px">Tell the owner after (min)</label><input type="number" id="plGpsAlert" min="5" max="480" inputmode="numeric" placeholder="90"></div>
+        <div><label style="margin:0 0 4px">Close the day after (min, 0 = never)</label><input type="number" id="plGpsAuto" min="0" max="600" inputmode="numeric" placeholder="120"></div>
+      </div>
+      <div class="pl-row" style="margin-top:8px"><button class="pl-btn" id="plGpsNumsBtn" onclick="saveGpsNums()">Save</button></div>
+      <div class="msg msg-error" id="plGpsErr"></div>
     </div>
     <div id="placeList"></div>
   </div>
@@ -2764,6 +2885,7 @@ async function empSafetyPoll(){
 }
 function handleEmpPoll(d){
   try{ if(window.AmkNotify) AmkNotify.onPoll(d); }catch(e){}
+  try{ if(typeof polOnPoll==='function') polOnPoll(d); }catch(e){}
   _chkPending=(d.checks||[]).filter(c=>!_chkDone[c.id]);
   const due=_chkPending.filter(c=>!_chkSnooze[c.id]||Date.now()>_chkSnooze[c.id])[0];
   if(due) showCheckPrompt(due); else if(!_chkPending.length) hideCheckPrompt();
@@ -3330,12 +3452,13 @@ function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
 window.AmkApp={
   _want:'',
   route(name){
-    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices|store|leave)$/.test(name)) return;
+    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices|store|leave|policies)$/.test(name)) return;
     if(!currentEmp||typeof wmOn!=='function'){ this._want=name; return; }
     this._want='';
     try{
       if(name==='notices'){ if(window.AmkNotify) AmkNotify.open(); return; }
       if(name==='leave'){ if(typeof showLeavePanel==='function') showLeavePanel(); return; }
+      if(name==='policies'){ if(typeof polOpenList==='function') polOpenList(); return; }
       if(name==='store'){ if(window.AmkStore) AmkStore.open(); return; }
       if(name==='tasks'){ if(typeof tkOpen==='function') tkOpen(); return; }
       if(!document.getElementById('homeScreen').classList.contains('active')) goHome();
@@ -3409,7 +3532,7 @@ async function loadHome(){
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeTeamLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
-  trkConsentCheck(emp); ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
+  trkConsentCheck(emp); try{ if(typeof polHome==='function') polHome(); }catch(e){} ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
   locWhereDraw(); setTimeout(()=>{ if(tok===homeTok) locGuardCheck('home'); },700);
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
   if(!dayOff&&USE_SHEETS){
@@ -3494,6 +3617,7 @@ function renderHomeActs(){
   L.push(`<button onclick="showTeamLeave()">👥 <span>Team leave</span><small id="hmTlSub"></small></button>`);
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
+  try{ if(_pol.list.length) L.push(`<button type="button" data-pol-link onclick="polOpenList()">📜 <span>Policies</span></button>`); }catch(e){}
   L.push(`<button onclick="openPhoneHelp()">📱 <span>Phone settings</span><small style="color:var(--soft)">location &amp; camera</small></button>`);
   try{ if(window.AmkStore&&AmkStore.has()) L.push(AmkStore.row()); }catch(e){}   // the app's own store (Android app only)
   L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
@@ -4337,7 +4461,7 @@ async function captureAndMark(byTimer){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ try{ fmClose(); }catch(e){} _mgr=null; _mgrAll=[]; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ try{ fmClose(); }catch(e){} try{ if(typeof polReset==='function') polReset(); }catch(e){} _mgr=null; _mgrAll=[]; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -5050,7 +5174,7 @@ function supLogout(){ stopSafetyWatch(); currentSupervisor=null; if(_tok){ viaEm
    ADMIN TABS
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab){
-  const tabs=['attendance','live','monthly','leaves','overtime','employees','places','holidays','leads','tasks','travel','reports','corrections','log','safety','org'];
+  const tabs=['attendance','live','monthly','leaves','overtime','employees','places','holidays','policies','leads','tasks','travel','reports','corrections','log','safety','org'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   try{ const ab=document.querySelector('.tab-btn.active'); if(ab&&ab.scrollIntoView&&innerWidth<1024) ab.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); }catch(e){}
   try{ const ab=document.querySelector('#adminScreen .tab-btn.active'), row=ab&&ab.parentNode; if(ab&&innerWidth>=1024&&row.scrollHeight>row.clientHeight){ const top=ab.offsetTop, bot=top+ab.offsetHeight; if(top<row.scrollTop||bot>row.scrollTop+row.clientHeight) row.scrollTop=Math.max(0,top-(row.clientHeight-ab.offsetHeight)/2); } }catch(e){}
@@ -5065,6 +5189,7 @@ function switchTab(tab){
   if(tab==='employees')  renderEmpList();
   if(tab==='places')     { renderPlaces(); if(canEditPlaces()) plInitMap(); }
   if(tab==='holidays')   renderHolList();
+  if(tab==='policies')   renderPolicies();
   if(tab==='reports') initReports();
   if(tab==='corrections') loadCorrectionsTab();
   if(tab==='leads') ldLoad();
@@ -5769,11 +5894,26 @@ async function saveAwayNums(){
   try{ const st={checkEvery:String(every),awayMins:String(mins)}; if(USE_SHEETS) await api('saveSettings',{settings:st}); _D.settings=Object.assign({},_D.settings,st); saveCache(); safToast('Saved'); }
   catch(e){ if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
 }
+async function saveGpsOff(on){
+  const er=document.getElementById('plGpsErr'), cb=document.getElementById('plGpsOff'); if(er) er.classList.remove('show');
+  try{ const v=on?'1':'0'; if(USE_SHEETS) await api('saveSettings',{settings:{gpsOff:v}}); _D.settings=Object.assign({},_D.settings,{gpsOff:v}); saveCache(); }
+  catch(e){ if(cb) cb.checked=!on; if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
+}
+async function saveGpsNums(){
+  const er=document.getElementById('plGpsErr'); if(er) er.classList.remove('show');
+  const w=Math.round(Number(document.getElementById('plGpsWarn').value||45)), a=Math.round(Number(document.getElementById('plGpsAlert').value||90)), c=Math.round(Number(document.getElementById('plGpsAuto').value===''?120:document.getElementById('plGpsAuto').value));
+  const bad=!(w>=5&&w<=240)?'Tell the staff after: 5 to 240 minutes.':!(a>=w&&a<=480)?'Tell the owner after: at least the staff time, up to 480 minutes.':!(c===0||(c>=a&&c<=600))?'Close the day after: 0 (never) or at least the owner time, up to 600 minutes.':'';
+  if(bad){ if(er){ er.textContent=bad; er.classList.add('show'); } return; }
+  try{ const st={gpsOffWarn:String(w),gpsOffAlert:String(a),gpsOffAuto:String(c)}; if(USE_SHEETS) await api('saveSettings',{settings:st}); _D.settings=Object.assign({},_D.settings,st); saveCache(); safToast('Saved'); }
+  catch(e){ if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
+}
+const gpsOffCfg=()=>{ const st=_D.settings||{}, n=(k,d)=>{ const v=parseInt(st[k],10); return v>=0?v:d; }; return { on:String(st.gpsOff)!=='0', warn:Math.max(5,n('gpsOffWarn',45)) }; };
 async function renderPlaces(){
   const el=document.getElementById('placeList'); if(!el) return;
   document.getElementById('placeAddBox').style.display=canEditPlaces()?'block':'none';
   { const rb=document.getElementById('plRuleBox'); if(rb){ rb.style.display=canEditPlaces()?'block':'none'; document.getElementById('plModeRule').checked=String((_D.settings||{}).modePlace)!=='0'; } }
   { const ab=document.getElementById('plAwayBox'); if(ab){ ab.style.display=canEditPlaces()?'block':'none'; document.getElementById('plAwayCut').checked=String((_D.settings||{}).awayCut)!=='0'; document.getElementById('plCheckEvery').value=checkEvery(); const am=parseInt((_D.settings||{}).awayMins,10); document.getElementById('plAwayMins').value=am>=0?am:30; } }
+  { const gb=document.getElementById('plGpsBox'); if(gb){ gb.style.display=canEditPlaces()?'block':'none'; const st=_D.settings||{}, n=(k,d)=>{ const v=parseInt(st[k],10); return v>=0?v:d; }; document.getElementById('plGpsOff').checked=String(st.gpsOff)!=='0'; document.getElementById('plGpsWarn').value=n('gpsOffWarn',45); document.getElementById('plGpsAlert').value=n('gpsOffAlert',90); document.getElementById('plGpsAuto').value=n('gpsOffAuto',120); } }
   await refreshPlaces();
   const list=placesNow();
   if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No offices or factories yet.'+(canEditPlaces()?' Add the first one above.':' The Super Admin adds them.')+'</div>'; return; }
@@ -6689,6 +6829,267 @@ init();
 <script>window.AMK_PAGE_VERSION='2026-10-28.9';</script>
 <script src="notify.js?v=2026-10-28.9"></script>
 <script src="appstore.js?v=2026-10-28.9"></script>
+<script src="policy-lib.js?v=2026-10-28.9"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   POLICIES — legal pages and HR rules.
+   Staff: a must-accept screen, a list (Me → Policies) and a reader.   Admin: the Policies tab.
+   Cost: a phone loads the policies once after sign-in; after that the free one-minute poll carries the versions
+   (polVer) and the phone only asks again when they change.
+══════════════════════════════════════════════════════════════ */
+const POL_KIND={legal:'Legal',hr:'HR rules'};
+const POL_CO={company:'coName',address:'coAddress',email:'coEmail',phone:'coPhone',officer:'coOfficer'};
+const polE=s=>AmkPolicy.esc(s);
+const polEl=id=>document.getElementById(id);
+const polDate=s=>{ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||'')); return m?(+m[3])+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]+' '+m[1]:''; };
+const polPageUrl=slug=>new URL('policy.html?p='+encodeURIComponent(slug)+(COMPANY?'&c='+encodeURIComponent(COMPANY):''),location.href).href;
+
+/* ── staff ── */
+let _pol={list:[],due:[],co:{},ver:'',loaded:false,busy:false,done:0}, _polLangMem='en', _polRead='';
+function polLang(){ try{ const v=localStorage.getItem('amk_pol_lang'); if(v) return v==='hi'?'hi':'en'; }catch(e){} return _polLangMem; }
+function polSetLang(v){ _polLangMem=v; try{ localStorage.setItem('amk_pol_lang',v); }catch(e){} }
+function polView(p){   // the policy in the person's language (English when there is no Hindi text for it)
+  const can=!!String(p.bodyHi||'').trim(), hi=polLang()==='hi'&&can;
+  return {hi:hi, can:can, title:hi?(p.titleHi||p.title):p.title, html:AmkPolicy.render(hi?p.bodyHi:p.body,_pol.co)};
+}
+function polReset(){ _pol={list:[],due:[],co:{},ver:'',loaded:false,busy:false,done:0}; _polRead=''; const ov=polEl('polOv'); if(ov) ov.classList.remove('on'); }
+async function polFetch(){
+  const emp=currentEmp; if(!emp||!USE_SHEETS) return false;
+  const d=await api('getPolicies',{empId:emp.id}); if(currentEmp!==emp) return false;
+  const had=_pol.list.length>0;
+  _pol.list=d.policies||[]; _pol.due=d.due||[]; _pol.co=d.company||{}; _pol.loaded=true;
+  _pol.ver=_pol.list.filter(p=>p.must).map(p=>p.slug+':'+p.version).join(',');
+  if(had!==(_pol.list.length>0)){ try{ if(typeof renderHomeActs==='function'&&polEl('hmLinks')) renderHomeActs(); }catch(e){} }   // the Me → Policies row appears once there is something to read
+  return true;
+}
+async function polCheck(){
+  if(_pol.busy||!currentEmp) return;
+  if(polEl('trkOv').classList.contains('on')) return;   // the location notice goes first; accepting it brings us back here
+  _pol.busy=true;
+  try{ if(await polFetch()) polOvDraw(); }catch(e){}
+  finally{ _pol.busy=false; }
+}
+function polOnPoll(d){ if(_pol.busy||!d||typeof d.polVer!=='string') return; if(_pol.loaded?d.polVer!==_pol.ver:d.polVer!=='') polCheck(); }
+function polOvDraw(){
+  const ov=polEl('polOv'); if(!ov) return;
+  const p=_pol.due.length?_pol.list.find(x=>x.slug===_pol.due[0]):null;
+  if(!p||polEl('trkOv').classList.contains('on')){ ov.classList.remove('on'); _pol.done=0; return; }
+  if(!ov.classList.contains('on')) _pol.done=0;
+  const v=polView(p), upd=p.accepted>0&&p.accepted<p.version, key=p.slug+':'+p.version+':'+(v.hi?'hi':'en');
+  polEl('polOvTitle').textContent=v.title;
+  polEl('polOvCount').textContent=(_pol.done+1)+' of '+(_pol.done+_pol.due.length);
+  polEl('polOvMeta').innerHTML=(upd?'<b>Updated:</b> this policy has a new version. Please read it and accept again.':'Please read this and accept to continue.')+' · Version '+p.version;
+  polEl('polOvBody').innerHTML=v.html;
+  { const b=polEl('polLang'); b.style.display=v.can?'':'none'; b.textContent=v.hi?'English':'हिन्दी'; }
+  polEl('polOvErr').classList.remove('show');
+  if(ov.dataset.key!==key){ ov.dataset.key=key; polEl('polOvBody').scrollTop=0; }
+  ov.classList.add('on');
+}
+async function polDoAccept(p){   // '' when it worked, else the words to show
+  const emp=currentEmp; if(!emp) return 'Please sign in again.';
+  try{
+    const r=await api('acceptPolicy',{empId:emp.id,slug:p.slug,version:p.version});
+    p.accepted=p.version; _pol.due=(r&&r.due)||[];
+    if(p.slug==='tracking'){ try{ await updateEmpLocal(emp.id,{trackConsent:new Date().toISOString()}); }catch(e){} }   // accepting this policy is also the location notice
+    return '';
+  }catch(e){
+    if(/updated|new version/i.test(e.message||'')){ try{ await polFetch(); }catch(x){} }
+    return e.message||'Could not save. Please try again.';
+  }
+}
+async function polAcceptTap(){
+  const p=_pol.due.length?_pol.list.find(x=>x.slug===_pol.due[0]):null; if(!p) return;
+  const b=polEl('polAccept'), er=polEl('polOvErr'); b.disabled=true; er.classList.remove('show');
+  const m=await polDoAccept(p); b.disabled=false;
+  if(m){ polOvDraw(); er.textContent=m; er.classList.add('show'); return; }
+  _pol.done++;
+  if(!_pol.due.length){ _pol.done=0; polOvDraw(); safToast('✅ Thank you, saved'); return; }
+  polOvDraw();
+}
+function polSignOut(){ polEl('polOv').classList.remove('on'); logout(); }
+function polToggleLang(){
+  polSetLang(polLang()==='hi'?'en':'hi');
+  if(polEl('polOv').classList.contains('on')) polOvDraw();
+  if(_polRead&&polEl('detailModal').classList.contains('open')) polRead(_polRead);
+}
+async function polOpenList(){
+  if(!currentEmp||!USE_SHEETS) return;
+  const m=polEl('detailModal'); _polRead='';
+  polEl('modalTitle').textContent='📜 Policies'; polEl('modalBody').innerHTML='<div class="pol-meta">Loading…</div>'; m.classList.add('open');
+  try{ await polFetch(); }
+  catch(e){ polEl('modalBody').innerHTML='<div class="msg msg-error show">⚠️ '+polE(e.message)+'</div>'; return; }
+  if(_pol.due.length){ m.classList.remove('open'); polOvDraw(); return; }   // something is waiting to be accepted: that screen comes first
+  polListDraw();
+}
+function polListDraw(){
+  _polRead='';
+  polEl('modalTitle').textContent='📜 Policies';
+  const body=polEl('modalBody');
+  if(!_pol.list.length){ body.innerHTML='<div class="pol-meta">No policies have been published yet.</div>'; return; }
+  body.innerHTML=_pol.list.map(p=>{
+    const v=polView(p), done=p.must&&p.accepted>=p.version;
+    const st=p.must?(done?'<span class="pol-st ok">✓ Accepted</span>':'<span class="pol-st need">Needs your OK</span>'):'<span class="pol-st">Read ›</span>';
+    return '<button type="button" class="pol-row" data-slug="'+polE(p.slug)+'"><span><b>'+polE(v.title)+'</b><small>'+(POL_KIND[p.kind]||'Legal')+' · Version '+p.version+'</small></span>'+st+'</button>';
+  }).join('');
+  body.querySelectorAll('.pol-row').forEach(b=>{ b.onclick=()=>polRead(b.dataset.slug); });
+}
+function polRead(slug){
+  const p=_pol.list.find(x=>x.slug===slug); if(!p) return; _polRead=slug;
+  const v=polView(p), need=p.must&&p.accepted<p.version;
+  polEl('modalTitle').textContent=v.title;
+  polEl('modalBody').innerHTML='<div class="pol-top"><button type="button" class="pol-back" id="polBack">← All policies</button>'+(v.can?'<button type="button" class="pol-small" id="polLangR">'+(v.hi?'English':'हिन्दी')+'</button>':'')+'</div>'
+    +'<div class="pol-meta">'+(POL_KIND[p.kind]||'Legal')+' · Version '+p.version+(p.updatedAt?' · Updated '+polE(polDate(p.updatedAt)):'')+'</div>'+v.html
+    +(need?'<button type="button" class="btn btn-primary" id="polAcceptInline">✅ Accept</button>':'');
+  polEl('polBack').onclick=polListDraw;
+  { const l=polEl('polLangR'); if(l) l.onclick=polToggleLang; }
+  { const a=polEl('polAcceptInline'); if(a) a.onclick=async()=>{ a.disabled=true; const m=await polDoAccept(p); a.disabled=false; if(m){ safToast(m,true); return; } safToast('✅ Accepted'); polListDraw(); }; }
+}
+
+/* ── admin ── */
+let _polA={items:[],ed:null,warned:'',delAt:0,defs:null};
+function polDefs(){   // the ready-made texts sit in their own file so staff phones never download them
+  if(window.AmkPolicyDefaults) return Promise.resolve(window.AmkPolicyDefaults);
+  return new Promise(res=>{ const s=document.createElement('script'); s.src='policy-defaults.js?v='+encodeURIComponent(window.AMK_PAGE_VERSION||''); s.onload=()=>res(window.AmkPolicyDefaults||[]); s.onerror=()=>res([]); document.head.appendChild(s); });
+}
+async function renderPolicies(){
+  const st=_D.settings||{};
+  [['polCoName','coName'],['polCoAddress','coAddress'],['polCoEmail','coEmail'],['polCoPhone','coPhone'],['polCoOfficer','coOfficer']].forEach(a=>{ const el=polEl(a[0]); if(el) el.value=st[a[1]]||''; });
+  polEdClose();
+  await polAdmRefresh();
+}
+async function polCoSave(){
+  const er=polEl('polCoErr'); er.classList.remove('show');
+  const st={coName:polEl('polCoName').value.trim(),coAddress:polEl('polCoAddress').value.trim(),coEmail:polEl('polCoEmail').value.trim(),coPhone:polEl('polCoPhone').value.trim(),coOfficer:polEl('polCoOfficer').value.trim()};
+  try{ if(USE_SHEETS) await api('saveSettings',{settings:st}); _D.settings=Object.assign({},_D.settings,st); saveCache(); safToast('Saved'); }
+  catch(e){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); }
+}
+async function polAdmRefresh(){
+  const list=polEl('polList');
+  if(!USE_SHEETS){ list.innerHTML='<div class="msg msg-error show">Policies need the new server.</div>'; return; }
+  try{ const a=await Promise.all([api('policyStatus',{}),polDefs()]); _polA.items=(a[0]&&a[0].items)||[]; _polA.defs=a[1]||[]; }
+  catch(e){ list.innerHTML='<div class="msg msg-error show">⚠️ '+polE(e.message)+'</div>'; return; }
+  polAdmDraw();
+}
+function polAdmDraw(){
+  const have=new Set(_polA.items.map(i=>i.slug)), todo=(_polA.defs||[]).filter(d=>!have.has(d.slug));
+  polEl('polStarterBox').style.display=todo.length?'':'none';
+  polEl('polStarter').textContent='➕ Add the '+todo.length+' starter polic'+(todo.length===1?'y':'ies');
+  const list=polEl('polList');
+  if(!_polA.items.length){ list.innerHTML='<div class="empty">No policies yet. Add the starter set above, or write your own with <b>New policy</b>.</div>'; return; }
+  list.innerHTML=_polA.items.map(polCardHtml).join('');
+}
+function polCardHtml(i){
+  const chips=['<span class="pol-chip">'+(POL_KIND[i.kind]||'Legal')+'</span>','<span class="pol-chip">v'+i.version+'</span>'];
+  if(i.draft) chips.push('<span class="pol-chip a">Draft · staff cannot see it</span>');
+  else{
+    if(i.pub) chips.push('<span class="pol-chip g">Public</span>');
+    if(i.must) chips.push('<span class="pol-chip g">Must accept</span>');
+    if(!i.pub&&!i.must) chips.push('<span class="pol-chip">Staff can read</span>');
+  }
+  if(i.must) chips.push('<span class="pol-chip">'+i.accepted+' of '+i.total+' accepted</span>');
+  const miss=(i.missing||[]), names=miss.slice(0,8).map(m=>polE(m.name||m.id)).join(', ')+(miss.length>8?' and '+(miss.length-8)+' more':'');
+  return '<div class="pol-card" data-slug="'+polE(i.slug)+'"><div class="pol-card-t">'+polE(i.title)+'</div><div class="pol-chips">'+chips.join('')+'</div>'
+    +(miss.length?'<div class="pol-wait">Not yet accepted: '+names+'</div>':'')
+    +'<div class="pol-btns"><button type="button" class="pol-small" data-a="edit">✏️ Edit</button>'
+    +(i.pub?'<button type="button" class="pol-small" data-a="open">🔗 Open page</button><button type="button" class="pol-small" data-a="copy">📋 Copy link</button>':'')
+    +(i.must&&miss.length?'<button type="button" class="pol-small" data-a="remind">🔔 Remind</button>':'')
+    +'</div></div>';
+}
+async function polAddStarter(){
+  const b=polEl('polStarter'), er=polEl('polStarterErr'); er.classList.remove('show');
+  const have=new Set(_polA.items.map(i=>i.slug)), todo=(_polA.defs||[]).filter(d=>!have.has(d.slug));
+  if(!todo.length) return;
+  b.disabled=true;
+  try{
+    for(let k=0;k<todo.length;k++){
+      const d=todo[k]; b.textContent='Adding '+(k+1)+' of '+todo.length+'…';
+      await api('savePolicy',{policy:{slug:d.slug,title:d.title,titleHi:d.titleHi,body:d.body,bodyHi:d.bodyHi,kind:d.kind,sort:d.sort,pub:'0',must:'0',draft:'1'}});
+    }
+  }catch(e){ er.textContent=e.message||'Could not add them.'; er.classList.add('show'); }
+  b.disabled=false;
+  await polAdmRefresh();
+}
+function polEdClose(){ const e=polEl('polEditor'); if(e) e.style.display='none'; _polA.ed=null; _polA.warned=''; _polA.delAt=0; const p=polEl('polPrev'); if(p) p.classList.remove('show'); }
+function polEdReset(){   // clears the warning, the error and the two-step delete whenever the text or a switch changes
+  _polA.warned=''; _polA.delAt=0;
+  polEl('polWarn').classList.remove('show'); polEl('polErr').classList.remove('show');
+  polEl('polSave').textContent='Save'; polEl('polDelete').textContent='🗑 Delete';
+}
+function polFlagsSync(){ const lock=polEl('polPub').checked||polEl('polMust').checked, d=polEl('polDraft'); d.disabled=lock; if(lock) d.checked=false; }
+function polEdOpen(slug){
+  const i=slug?_polA.items.find(x=>x.slug===slug):null; _polA.ed=i||{};
+  polEl('polEdTitle').textContent=i?'Edit policy':'New policy';
+  polEl('polSlug').value=i?i.slug:''; polEl('polSlug').disabled=!!i;
+  polEl('polTitle').value=i?i.title:''; polEl('polTitleHi').value=i?i.titleHi:'';
+  polEl('polKind').value=i?i.kind:'hr';
+  polEl('polSort').value=i?i.sort:(_polA.items.reduce((m,x)=>Math.max(m,x.sort),0)+1);
+  polEl('polBody').value=i?i.body:''; polEl('polBodyHi').value=i?i.bodyHi:'';
+  polEl('polPub').checked=!!(i&&i.pub); polEl('polMust').checked=!!(i&&i.must); polEl('polDraft').checked=i?!!i.draft:true; polEl('polBump').checked=false;
+  polEl('polBumpRow').style.display=i?'':'none'; polEl('polDelete').style.display=i?'':'none';
+  polFlagsSync(); polEdReset(); polEl('polPrev').classList.remove('show');
+  const ed=polEl('polEditor'); ed.style.display='block';
+  try{ ed.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+}
+function polCo(){ const st=_D.settings||{}, o={}; Object.keys(POL_CO).forEach(k=>{ o[k]=st[POL_CO[k]]||''; }); return o; }
+function polPreview(){
+  const box=polEl('polPrev');
+  const en=AmkPolicy.render(polEl('polBody').value,polCo()), hiT=polEl('polBodyHi').value.trim();
+  box.innerHTML='<div class="pol-meta">This is how staff will read it.</div>'+en+(hiT?'<div class="pol-meta" style="margin-top:14px">हिन्दी</div>'+AmkPolicy.render(hiT,polCo()):'');
+  box.classList.add('show');
+}
+async function polSave(){
+  const er=polEl('polErr'); er.classList.remove('show');
+  const pol={slug:polEl('polSlug').value.trim(),title:polEl('polTitle').value,titleHi:polEl('polTitleHi').value,body:polEl('polBody').value,bodyHi:polEl('polBodyHi').value,kind:polEl('polKind').value,sort:polEl('polSort').value,
+    pub:polEl('polPub').checked?'1':'0',must:polEl('polMust').checked?'1':'0',draft:polEl('polDraft').checked?'1':'0'};
+  const live=pol.pub==='1'||pol.must==='1', sig=JSON.stringify([pol.body,pol.bodyHi,pol.pub,pol.must]);
+  if(live&&_polA.warned!==sig){   // text that goes to people must not still carry a prompt, a typo'd {{name}} or an empty company detail
+    const both=pol.body+'\n'+pol.bodyHi, prompts=AmkPolicy.blanks(pol.body).concat(AmkPolicy.blanks(pol.bodyHi)), unknown=AmkPolicy.unknownKeys(both);
+    const used=Object.keys(POL_CO).filter(k=>new RegExp('\\{\\{\\s*'+k+'\\s*\\}\\}').test(both)&&!String((_D.settings||{})[POL_CO[k]]||'').trim());
+    const items=[].concat(prompts.slice(0,6).map(t=>'Still to fill in: <b>'+polE(t)+'</b>'),unknown.map(k=>'<b>{{'+polE(k)+'}}</b> is not a company detail we know'),used.map(k=>'The company detail <b>'+polE(AmkPolicy.KEYS[k])+'</b> is empty: add it above'));
+    if(items.length){
+      _polA.warned=sig;
+      const w=polEl('polWarn'); w.innerHTML='<b>Check before you publish</b><ul>'+items.map(t=>'<li>'+t+'</li>').join('')+'</ul>Fix these, or tap <b>Save anyway</b>.';
+      w.classList.add('show'); polEl('polSave').textContent='Save anyway'; return;
+    }
+  }
+  const b=polEl('polSave'); b.disabled=true;
+  try{
+    await api('savePolicy',{policy:pol,bump:!!(_polA.ed&&_polA.ed.slug&&polEl('polBump').checked)});
+    polEdClose(); await polAdmRefresh(); safToast('✅ Saved');
+  }catch(e){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); b.textContent=_polA.warned?'Save anyway':'Save'; }
+  b.disabled=false;
+}
+async function polDelete(){
+  const b=polEl('polDelete');
+  if(!_polA.delAt||Date.now()-_polA.delAt>6000){ _polA.delAt=Date.now(); b.textContent='Tap again to delete'; return; }
+  const er=polEl('polErr'); er.classList.remove('show'); b.disabled=true;
+  try{ await api('deletePolicy',{slug:polEl('polSlug').value.trim()}); polEdClose(); await polAdmRefresh(); safToast('Deleted'); }
+  catch(e){ er.textContent=e.message||'Could not delete.'; er.classList.add('show'); }
+  b.disabled=false;
+}
+async function polRemind(slug,b){
+  b.disabled=true;
+  try{ const r=await api('remindPolicy',{slug:slug}); safToast(r&&r.sent?'🔔 Reminder sent to '+r.sent+(r.sent===1?' person':' people'):'Everyone who has not accepted was already reminded about this version.'); }
+  catch(e){ safToast(e.message||'Could not send.',true); }
+  b.disabled=false;
+}
+async function polCopy(url){
+  try{ await navigator.clipboard.writeText(url); safToast('📋 Link copied'); }
+  catch(e){ safToast(url); }
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('#polList [data-a]'); if(!b) return;
+  const card=b.closest('.pol-card'), slug=card&&card.dataset.slug, a=b.dataset.a; if(!slug) return;
+  if(a==='edit') polEdOpen(slug);
+  else if(a==='open') window.open(polPageUrl(slug),'_blank');
+  else if(a==='copy') polCopy(polPageUrl(slug));
+  else if(a==='remind') polRemind(slug,b);
+});
+document.addEventListener('input',ev=>{ if(ev.target.closest&&ev.target.closest('#polEditor')) polEdReset(); });
+document.addEventListener('change',ev=>{ const t=ev.target; if(t.closest&&t.closest('#polEditor')){ if(t.id==='polPub'||t.id==='polMust') polFlagsSync(); polEdReset(); } });
+function polHome(){ if(!_pol.loaded) polCheck(); }   // Home asks once after sign-in; the free one-minute poll says when to ask again
+try{ if(currentEmp&&polEl('homeScreen').classList.contains('active')) polHome(); }catch(e){}   // Home was drawn before this script was ready
+</script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7812,23 +8213,25 @@ function liveDraw(){
   const st=d.staff||[], cnt={}; st.forEach(x=>{ cnt[x.state]=(cnt[x.state]||0)+1; });
   const working=(cnt.active||0)+(cnt.meeting||0)+(cnt.travelling||0);
   document.getElementById('lvSum').textContent=st.length+' staff · '+working+' working · '+(cnt.idle||0)+' idle · '+(cnt.notin||0)+' not in yet'+(st.some(x=>x.late)?' · '+st.filter(x=>x.late).length+' late':'')+(st.some(x=>x.sos)?' · 🚨 '+st.filter(x=>x.sos).length+' SOS':'');
-  const chips=[['all','All '+st.length]].concat(LV_ORDER.filter(k=>cnt[k]).map(k=>[k,LV_STATE[k]+' '+cnt[k]]));
+  const noApp=x=>lvIsToday()&&x.state==='notin'&&!x.appSeen, nNoApp=st.filter(noApp).length;
+  const chips=[['all','All '+st.length]].concat(LV_ORDER.filter(k=>cnt[k]).map(k=>[k,LV_STATE[k]+' '+cnt[k]])).concat(nNoApp?[['noapp','App not opened '+nNoApp]]:[]);
   document.getElementById('lvChips').innerHTML=chips.map(c=>`<button type="button" class="${_lv.filter===c[0]?'on':''}" onclick="_lv.filter='${c[0]}';liveDraw()">${hx(c[1])}</button>`).join('');
   const depts=[...new Set(st.map(x=>x.department).filter(Boolean))].sort();
   if(_lv.dept&&depts.indexOf(_lv.dept)<0) _lv.dept='';
   document.getElementById('lvDepts').innerHTML=depts.length>1?[['','All departments']].concat(depts.map(x=>[x,x])).map(c=>`<button type="button" class="${_lv.dept===c[0]?'on':''}" onclick="_lv.dept=this.dataset.d;liveDraw()" data-d="${hx(c[0])}">${hx(c[1])}</button>`).join(''):'';
   const q=String(_lv.q||'').trim().toLowerCase(), idleBad=x=>x.state==='idle'&&x.idleMin!=null&&x.idleMin>=IDLE_FLAG;
-  const list=st.filter(x=>(_lv.filter==='all'||x.state===_lv.filter)&&(!_lv.dept||x.department===_lv.dept)&&(!q||[x.name,x.empId,x.department].join(' ').toLowerCase().indexOf(q)>=0))
+  const list=st.filter(x=>(_lv.filter==='all'||(_lv.filter==='noapp'?noApp(x):x.state===_lv.filter))&&(!_lv.dept||x.department===_lv.dept)&&(!q||[x.name,x.empId,x.department].join(' ').toLowerCase().indexOf(q)>=0))
     .sort((a,b)=>(b.sos?1:0)-(a.sos?1:0)||(idleBad(b)?1:0)-(idleBad(a)?1:0)||LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
   document.getElementById('lvGrid').innerHTML=list.length?list.map(x=>{
-    const what=liveWhat(x), seen=x.lastSeen, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30, ss=lvSiteSum(x);
+    const gps=gpsOffCfg(), what=liveWhat(x), seen=x.lastSeen, ss=lvSiteSum(x), noLoc=gps.on&&lvIsToday()&&ss&&ss.run&&ss.auto&&x.punchIn&&!x.punchOut&&x.state!=='out'&&x.state!=='meeting'&&x.mode!=='field'&&seen&&seen.ageMin!=null&&seen.ageMin>=gps.warn, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30;
     return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}${swKey(_lv.sel)===swKey(x.empId)?' sel':''}" onclick="lvPick('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
-      ${x.sos||x.late||idleBad(x)?`<span class="s">${x.sos?'<span class="lv-tag bad">🚨 SOS</span>':''}${x.late?'<span class="lv-tag">Late</span>':''}${idleBad(x)?'<span class="lv-tag bad">Idle '+hx(liveDur(x.idleMin))+'</span>':''}</span>`:''}
+      ${x.sos||x.late||idleBad(x)||noLoc?`<span class="s">${x.sos?'<span class="lv-tag bad">🚨 SOS</span>':''}${x.late?'<span class="lv-tag">Late</span>':''}${idleBad(x)?'<span class="lv-tag bad">Idle '+hx(liveDur(x.idleMin))+'</span>':''}${noLoc?'<span class="lv-tag bad">📵 No location '+hx(liveDur(Math.round(seen.ageMin)))+'</span>':''}</span>`:''}
       <span class="s">${hx(x.empId)}${x.department?' · '+hx(x.department):''}</span>
       ${what?`<span class="s">${hx(what)}${x.clientName?' · '+hx(x.clientName):''}${x.placeTag?' · '+hx(x.placeTag):''}</span>`:''}
       ${x.since?`<span class="s">since ${hx(wmClk(x.since))}</span>`:x.punchIn&&x.state!=='out'?`<span class="s">in at ${hx(x.punchIn)}${x.state==='idle'&&x.idleMin>0&&!idleBad(x)?' · idle '+hx(liveDur(x.idleMin)):''}</span>`:''}
       ${ss?`<span class="s">${ss.never?'<span class="lv-tag bad">⚠️ Site work never stopped</span>':ss.run?(ss.auto?'🟢 Tracking':'🟡 On site'):'✅ Site work done'} · ${ss.checks} check${ss.checks===1?'':'s'}${ss.out?' <span class="lv-tag bad">⚠ '+ss.out+' outside</span>':''}${ss.gap>GAP_MINS?' <span class="lv-tag bad">No check for '+hx(fmtMins(ss.gap))+'</span>':''}</span>`:''}
-      ${seen?`<span class="s${stale?' lv-stale':''}">📍 ${hx(seen.area||'Location known')} · ${hx(liveAge(seen.ageMin)||seen.time)}${stale?' (no recent update)':''}</span>`:''}</button>`;
+      ${seen?`<span class="s${stale?' lv-stale':''}">📍 ${hx(seen.area||'Location known')} · ${hx(liveAge(seen.ageMin)||seen.time)}${stale?' (no recent update)':''}</span>`:''}
+      ${x.appSeen?`<span class="s">📱 App opened ${hx(x.appSeen.ageMin!=null?liveAge(x.appSeen.ageMin):'at '+x.appSeen.time)}</span>`:noApp(x)?'<span class="s lv-stale">📱 App not opened today</span>':''}</button>`;
   }).join(''):'<div class="empty">Nobody here.</div>';
   document.getElementById('lvNote').textContent=(lvIsToday()?'Updates every minute. ':'')+'"Idle" means punched in with no work item running. Location is the latest check or punch. Tap a person for the whole day.';
 }

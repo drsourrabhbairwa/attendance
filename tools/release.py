@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stamp a new web version: version.json, the version inside index.html, and the ?v= on notify.js.
+"""Stamp a new web version: version.json, the version inside index.html, and the ?v= on notify.js, appstore.js and policy-lib.js.
 Run it as the last step before pushing a release:  python3 tools/release.py ["what changed, one line"] [--force]
 Phones that have the app open see an "Update now" pop-up within about 5 minutes."""
 import json, re, sys, datetime, pathlib
@@ -20,6 +20,12 @@ s = ix.read_text()
 s, a = re.subn(r"window\.AMK_PAGE_VERSION='[^']*'", f"window.AMK_PAGE_VERSION='{ver}'", s)
 s, b = re.subn(r'src="notify\.js\?v=[^"]*"', f'src="notify.js?v={ver}"', s)
 s, c = re.subn(r'src="appstore\.js\?v=[^"]*"', f'src="appstore.js?v={ver}"', s)
-if a != 1 or b != 1 or c != 1: sys.exit('index.html is missing the version stamp')
+s, d = re.subn(r'src="policy-lib\.js\?v=[^"]*"', f'src="policy-lib.js?v={ver}"', s)
+if a != 1 or b != 1 or c != 1 or d != 1: sys.exit('index.html is missing the version stamp')
 ix.write_text(s)
+pp = root / 'policy.html'
+t = pp.read_text()
+t, e = re.subn(r'src="policy-lib\.js\?v=[^"]*"', f'src="policy-lib.js?v={ver}"', t)
+if e != 1: sys.exit('policy.html is missing the version stamp')
+pp.write_text(t)
 print('released', ver)

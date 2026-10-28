@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Policies</title>
+<style>
+@font-face{font-family:'Figtree';font-weight:400;font-display:swap;src:url(fonts/figtree-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:600;font-display:swap;src:url(fonts/figtree-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:700;font-display:swap;src:url(fonts/figtree-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-weight:800;font-display:swap;src:url(fonts/figtree-latin-800-normal.woff2) format('woff2')}
+:root{
+  --ink:#0E211D;--soft:#4A6560;--line:rgba(14,33,29,.10);--edge:rgba(255,255,255,.78);--accent:#0B7A6B;--bad:#B3261E;
+  --panel:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.66));
+  --shadow:0 12px 32px rgba(18,70,60,.14);--blur:blur(26px) saturate(170%);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:#DCEFEA}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,'Noto Sans Devanagari',sans-serif;
+  background:radial-gradient(560px 520px at 6% 4%,#98E0C9 0,rgba(152,224,201,0) 72%),radial-gradient(600px 560px at 100% 24%,#B7D4F7 0,rgba(183,212,247,0) 72%),radial-gradient(640px 600px at 0% 78%,#D8CBF3 0,rgba(216,203,243,0) 72%),#DCEFEA;
+  background-attachment:fixed}
+.wrap{max-width:780px;margin:0 auto;padding:18px 16px 56px}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.85);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);padding:22px 20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:15px;color:var(--accent);overflow-wrap:anywhere}
+.btn{font:inherit;font-weight:700;font-size:13px;min-height:40px;border-radius:12px;border:1px solid var(--edge);padding:0 16px;cursor:pointer;background:rgba(255,255,255,.9);color:var(--accent);text-decoration:none;display:inline-flex;align-items:center}
+h1{font-size:25px;line-height:1.25;margin:0 0 4px;font-weight:800;letter-spacing:-.2px;overflow-wrap:anywhere}
+.meta{color:var(--soft);font-size:13px;margin:0 0 14px}
+.pl-doc{font-size:15px;line-height:1.7;overflow-wrap:anywhere}
+.pl-doc h3{font-size:17px;margin:22px 0 4px;font-weight:800}.pl-doc h3:first-child{margin-top:6px}
+.pl-doc h4{font-size:14px;margin:14px 0 2px;font-weight:800}
+.pl-doc p{margin:8px 0}.pl-doc ul{margin:8px 0 8px 22px;padding:0}.pl-doc li{margin:4px 0}
+.pl-doc a{color:var(--accent);text-decoration:underline}
+.pl-blank{background:#fde8c4;color:#7a4b00;border-radius:4px;padding:0 4px;font-weight:700}
+.foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--soft);line-height:1.7;overflow-wrap:anywhere}
+.foot b{color:var(--ink)}
+.err{color:var(--bad);font-weight:700;padding:14px 0;font-size:15px}
+.pl-card{display:block;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.7);border:1px solid var(--edge);border-radius:16px;padding:14px 16px;margin:10px 0;box-shadow:0 6px 18px rgba(18,70,60,.08)}
+.pl-card b{display:block;font-size:16px;overflow-wrap:anywhere}.pl-card small{color:var(--soft);font-size:12px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <div class="top"><span class="brand" id="plBrand"></span><span><button type="button" class="btn hide" id="plLang">हिन्दी</button> <a class="btn hide" id="plAll" href="policy.html">All policies</a></span></div>
+  <div id="plErr" class="err hide" role="alert"></div>
+  <div id="plHead" class="hide"><h1 id="plTitle"></h1><p class="meta" id="plMeta"></p></div>
+  <div id="plBody"></div>
+  <div id="plList"></div>
+  <div class="foot hide" id="plFoot"></div>
+</div></div>
+<script src="policy-lib.js?v=2026-10-28.9"></script>
+<script>
+(function(){
+'use strict';
+var API='https://asia-south1-amitek-attendance-59ccc.cloudfunctions.net/api', SECRET='CHANGE_THIS_SECRET';
+var Q=new URLSearchParams(location.search), SLUG=(Q.get('p')||'').trim().toLowerCase(), COMPANY=(Q.get('c')||'').trim();
+var $=function(id){ return document.getElementById(id); };
+var lang='en', P=null, CO={};
+try{ if(localStorage.getItem('amk_pol_lang')==='hi') lang='hi'; }catch(e){}
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dt(s){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||'')); return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:''; }
+function show(id,on){ $(id).classList.toggle('hide',!on); }
+function fail(msg){ show('plHead',false); show('plFoot',false); show('plLang',false); $('plBody').innerHTML=''; $('plList').innerHTML=''; $('plErr').textContent=msg; show('plErr',true); show('plAll',!!SLUG); }
+function foot(){
+  var parts=[];
+  if(CO.name) parts.push('<b>'+AmkPolicy.esc(CO.name)+'</b>');
+  if(CO.address) parts.push(AmkPolicy.esc(CO.address));
+  if(CO.email) parts.push('E-mail: <a href="mailto:'+AmkPolicy.esc(CO.email)+'">'+AmkPolicy.esc(CO.email)+'</a>');
+  if(CO.phone) parts.push('Phone: '+AmkPolicy.esc(CO.phone));
+  if(CO.officer) parts.push('Grievance officer: '+AmkPolicy.esc(CO.officer));
+  $('plFoot').innerHTML=parts.join('<br>'); show('plFoot',parts.length>0);
+  $('plBrand').textContent=CO.name||'Policies'; document.title=(P?P.title+' · ':'')+(CO.name||'Policies');
+}
+function draw(){
+  if(!P) return;
+  var can=!!String(P.bodyHi||'').trim(), hi=lang==='hi'&&can;
+  $('plTitle').textContent=hi?(P.titleHi||P.title):P.title;
+  $('plMeta').textContent='Version '+P.version+(dt(P.updatedAt)?' · Updated '+dt(P.updatedAt):'');
+  $('plBody').innerHTML=AmkPolicy.render(hi?P.bodyHi:P.body,CO);
+  $('plBody').setAttribute('lang',hi?'hi':'en');
+  var b=$('plLang'); b.textContent=hi?'English':'हिन्दी'; show('plLang',can);
+  show('plHead',true); show('plErr',false); show('plAll',true); foot();
+}
+function list(items){
+  show('plAll',false); show('plLang',false); show('plHead',false); $('plBody').innerHTML='';
+  if(!items.length){ fail('No policies are published here yet.'); return; }
+  $('plList').innerHTML='<h1>Policies</h1><p class="meta">Tap one to read it.</p>'+items.map(function(p){
+    return '<a class="pl-card" href="policy.html?p='+encodeURIComponent(p.slug)+(COMPANY?'&c='+encodeURIComponent(COMPANY):'')+'"><b>'+AmkPolicy.esc(p.title)+'</b><small>Version '+p.version+(dt(p.updatedAt)?' · Updated '+dt(p.updatedAt):'')+'</small></a>';
+  }).join('');
+  foot();
+}
+$('plLang').addEventListener('click',function(){ lang=lang==='hi'?'en':'hi'; try{ localStorage.setItem('amk_pol_lang',lang); }catch(e){} draw(); });
+if(COMPANY) $('plAll').href='policy.html?c='+encodeURIComponent(COMPANY);
+var body={action:'publicPolicies',secret:SECRET}; if(SLUG) body.slug=SLUG; if(COMPANY) body.company=COMPANY;
+fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    if(!j||!j.ok){ fail(/not found/i.test((j&&j.error)||'')||SLUG?'This policy was not found, or it is not available to the public.':'The policies could not be loaded right now. Please try again in a minute.'); return; }
+    CO=j.data.company||{};
+    if(SLUG){ P=(j.data.policies||[])[0]||null; if(!P){ fail('This policy was not found, or it is not available to the public.'); return; } draw(); }
+    else list(j.data.policies||[]);
+  })
+  .catch(function(){ fail('The policies could not be loaded. Please check your internet connection and try again.'); });
+})();
+</script>
+</body>
+</html>

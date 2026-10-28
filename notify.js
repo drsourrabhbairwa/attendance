@@ -97,12 +97,13 @@
     punchIn: { i: '⏰', c: 'att', l: 'Attendance', go: 'today' }, punchOut: { i: '⏰', c: 'att', l: 'Attendance', go: 'out' },
     punchInDone: { i: '✅', c: 'att', l: 'Attendance' }, punchOutDone: { i: '✅', c: 'att', l: 'Attendance' },
     autoPunchOut: { i: '🔵', c: 'att', l: 'Attendance', go: 'today', imp: 1 }, hoursAway: { i: '🚶', c: 'warn', l: 'Attendance', go: 'today' },
-    leftOffice: { i: '🚪', c: 'warn', l: 'Attendance', imp: 1 },
+    leftOffice: { i: '🚪', c: 'warn', l: 'Attendance', imp: 1 }, gpsOff: { i: '📵', c: 'warn', l: 'Location', go: 'today', imp: 1 },
     siteAway: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 }, siteStopped: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 },
     meetingAway: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 }, meetingEnded: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 },
     locationCheck: { i: '📍', c: 'warn', l: 'Location', imp: 1 }, alert: { i: '🚨', c: 'red', l: 'Alert', imp: 1 }, report: { i: '📋', c: 'red', l: 'Report' },
     task: { i: '✅', c: 'task', l: 'Task', go: 'tasks' }, leave: { i: '🌴', c: 'leave', l: 'Leave', go: 'leave' },
-    plan: { i: '🗓️', c: 'plan', l: 'Plan', go: 'today' }, weekly: { i: '📊', c: 'plan', l: 'Weekly' }, announce: { i: '📣', c: 'ann', l: 'Announcement', imp: 1 }
+    plan: { i: '🗓️', c: 'plan', l: 'Plan', go: 'today' }, weekly: { i: '📊', c: 'plan', l: 'Weekly' }, announce: { i: '📣', c: 'ann', l: 'Announcement', imp: 1 },
+    policy: { i: '📜', c: 'att', l: 'Policies', go: 'policies', imp: 1 }
   };
   function meta(n) { return KIND[n && n.kind] || { i: '🔔', c: 'att', l: 'Message' }; }
   function isImp(n) { return !!meta(n).imp || leaveOpen(n); }
@@ -242,6 +243,7 @@
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
       endedHook(S.notices);
+      var pov = document.getElementById('polOv'); if (pov && pov.classList.contains('on')) fresh = fresh.filter(function (n) { return n.kind !== 'policy'; });   // the accept screen is already up: no pop-up asking for the same thing on top of it
       if (fresh.length) { chime(); if (!(S.sheet && S.sheet.classList.contains('open'))) popup(fresh[0], fresh.length - 1); }   // the list is already open and has just redrawn: no pop-up on top of it
     }).catch(function () { }).then(function () { S.fetching = false; });
   }
