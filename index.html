@@ -952,10 +952,43 @@ label{color:var(--ag-ink)}
 .lv-sc input{width:auto!important;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-family:inherit}
 .lv-sc button{padding:7px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit}
 .lv-stale{color:#9a2a24!important;font-weight:700}.lv-note{font-size:11.5px;color:var(--soft);margin-top:12px}
-.lv-box{max-width:520px}.lv-box h3{margin:0 0 2px;font-size:18px}.lv-box .sub{font-size:12.5px;color:var(--soft);margin-bottom:10px}
-.lv-box .kv{display:grid;grid-template-columns:110px 1fr;gap:5px 10px;font-size:13px;margin:10px 0}.lv-box .kv span{color:var(--soft)}
-.lv-box ul{list-style:none;margin:6px 0 0;padding:0}.lv-box li{border-top:1px solid var(--border);padding:8px 0;font-size:13px}.lv-box li small{display:block;color:var(--soft);font-size:11.5px}
-.lv-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.lv-acts a{text-decoration:none}
+.lv-top{flex-wrap:wrap}
+.lv-day{display:flex;align-items:center;gap:6px}
+.lv-day button{border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit}
+.lv-day .lv-today{font-size:12px;padding:6px 12px}
+.lv-day input{width:auto!important;padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-size:13px}
+.lv-c.sel{outline:2.5px solid var(--accent);outline-offset:-1px}
+.lv-row{cursor:pointer}.lv-row:hover td{background:var(--surface2)}
+/* one employee panel: beside the list on a wide screen, over the whole screen on a phone */
+.lv-split{display:block}.lv-panel{display:none}
+.lv-split.has-sel .lv-panel{display:block;position:fixed;inset:0;z-index:60;overflow-y:auto;overscroll-behavior:contain;background:#F4F8F6;color:var(--ink);padding:14px 14px 48px}
+@media(min-width:1180px){
+  .lv-split.has-sel{display:grid;grid-template-columns:minmax(0,1fr) minmax(400px,470px);gap:14px;align-items:start}
+  .lv-split.has-sel .lv-panel{position:sticky;top:10px;inset:auto;z-index:auto;max-height:calc(100vh - 24px);padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 18px rgba(4,26,30,.10)}
+  .lv-split.has-sel .lv-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+}
+.lvp-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.lvp-t b{display:block;font-size:18px;overflow-wrap:anywhere}.lvp-t small{color:var(--soft);font-size:12.5px;overflow-wrap:anywhere}
+.lvp-x{flex-shrink:0;border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px}
+.lvp-x .m{display:none}@media(max-width:1179px){.lvp-x .d{display:none}.lvp-x .m{display:inline}}
+.lvp-day{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0;background:var(--surface2);border-radius:12px;padding:5px 8px}
+.lvp-day button{border:none;background:transparent;font-size:16px;cursor:pointer;padding:4px 12px;color:var(--text)}.lvp-day button:disabled{opacity:.3;cursor:default}
+.lvp-day span{font-weight:700;font-size:13px;text-align:center}
+.lvp-st{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:4px 0 2px}.lvp-do{font-size:12.5px;color:var(--soft);overflow-wrap:anywhere}
+.lvp-acts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.lvp-acts .btn{display:inline-flex;align-items:center;justify-content:center;width:auto;flex:1 1 calc(50% - 8px);margin:0;min-height:42px;padding:8px 12px;font-size:13.5px;text-decoration:none;color:var(--ink)}
+.lvp-sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}
+.lvp-sum div{background:var(--surface2);border-radius:10px;padding:7px 10px;font-size:11px;color:var(--soft);min-width:0}
+.lvp-sum span{display:block}.lvp-sum b{display:block;font-size:15px;color:var(--ink);overflow-wrap:anywhere}
+.lvp-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:14px 0 6px}.lvp-tt .lv-chips{margin:0}
+.lvt{list-style:none;margin:0;padding:0}
+.lvt-i{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:8px;padding:9px 0;border-top:1px solid var(--border);font-size:13px;align-items:start}
+.lvt-i time{font-size:11.5px;color:var(--soft);font-weight:700;padding-top:2px}
+.lvt-i b{display:block;overflow-wrap:anywhere}.lvt-i small{display:block;color:var(--soft);font-size:11.5px;margin-top:1px;overflow-wrap:anywhere}
+.lvt-i.chk{font-size:12px}.lvt-i.chk b{font-weight:600}.lvt-i .ok{color:#0d6b47}.lvt-i .bad{color:#B42318}.lvt-i .warn{color:#8a5a00}
+.lvt-i.away{background:var(--amberBg);border-radius:10px;padding-left:8px;padding-right:8px}
+.lvt-ph{width:48px;height:48px;border-radius:8px;object-fit:cover;cursor:pointer}
+.lvt-i .map-link{display:inline-block;width:auto;padding:2px 8px;margin:3px 0 0;font-size:11px}
+.lvt.f-work .lvt-i.chk{display:none}.lvt.f-chk .lvt-i:not(.chk){display:none}
 
 /* Working now: a card per person */
 .wl{background:var(--ag-panel2);border:1px solid var(--ag-edge);border-radius:20px;padding:16px 18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(4,26,30,.08)}
@@ -1798,25 +1831,24 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <!-- ACTIONS LOG TAB -->
   <div id="tabLive" class="tab-pane">
     <div class="lv-chips lv-jump" aria-label="Jump to">
-      <button type="button" onclick="lvJump('lvSecPeople')">👁 People</button><button type="button" onclick="lvJump('lvSecSites')">🗺️ Site work</button><button type="button" onclick="lvJump('lvSecMonth')">📊 Site month</button>
+      <button type="button" onclick="lvJump('lvSecPeople')">👁 People</button><button type="button" onclick="lvJump('lvSecMonth')">📊 Site month</button>
     </div>
     <section id="lvSecPeople" class="lv-anchor">
-      <div class="lv-top"><div class="lv-sum" id="lvSum"></div><button class="btn-sm" onclick="lvRefreshAll()" aria-label="Refresh">↻ Refresh</button></div>
+      <div class="lv-top"><div class="lv-sum" id="lvSum"></div>
+        <div class="lv-day"><button type="button" data-lvd="prev" onclick="lvShift(-1)" aria-label="Previous day">◀</button><input type="date" id="lvDate" aria-label="Date" onchange="lvSetDate(this.value)"><button type="button" data-lvd="next" onclick="lvShift(1)" aria-label="Next day">▶</button><button type="button" class="lv-today" onclick="lvSetDate('')">Today</button></div>
+        <button class="btn-sm" onclick="lvRefreshAll()" aria-label="Refresh">↻ Refresh</button></div>
       <input type="search" id="lvQ" class="lv-q" placeholder="Search name, ID or department" oninput="_lv.q=this.value;liveDraw()" autocomplete="off">
       <div class="lv-chips" id="lvChips"></div>
       <div class="lv-chips" id="lvDepts"></div>
-      <div class="lv-grid" id="lvGrid"><div class="empty">⏳ Loading…</div></div>
+      <div class="lv-split" id="lvSplit">
+        <div class="lv-listcol"><div class="lv-grid" id="lvGrid"><div class="empty">⏳ Loading…</div></div></div>
+        <aside class="lv-panel" id="lvPanel" aria-label="Employee day"></aside>
+      </div>
       <div class="lv-note" id="lvNote"></div>
     </section>
 
-    <section id="lvSecSites" class="lv-sec lv-anchor">
-      <div class="lv-sh"><div><h3>🗺️ Site work</h3><div class="lv-ss"><span class="live-dot" style="margin-right:4px"></span>Who is on site, with checks, photos and time on site</div></div>
-        <div class="lv-sc"><input type="date" id="siteDate" aria-label="Date"><button type="button" onclick="refreshSiteMonitor('admin')">🔄 Refresh</button></div></div>
-      <div id="siteContent"><div class="empty"><div class="eicon">🗺️</div>Click Refresh to load site status.</div></div>
-    </section>
-
     <section id="lvSecMonth" class="lv-sec lv-anchor">
-      <div class="lv-sh"><div><h3>📊 Site work — month summary</h3><div class="lv-ss">Time on site and how often each person was really there</div></div>
+      <div class="lv-sh"><div><h3>📊 Site work — month summary</h3><div class="lv-ss">Time on site and how often each person was really there. Tap a row to open that person's day.</div></div>
         <div class="lv-sc"><input type="month" id="siteMonth" aria-label="Month"><button type="button" onclick="loadSiteSummary()">Show</button></div></div>
       <div id="siteSummary"></div>
     </section>
@@ -1885,7 +1917,6 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 </div>
 
 <div id="sosBar"></div>
-<div class="modal-bg" id="liveModal" onclick="if(event.target===this)liveClose()"><div class="modal-box lv-box" id="liveBody"></div></div>
 <div class="modal-bg" id="sosModal"><div class="modal-box" id="sosBody"></div></div>
 <div class="modal-bg" id="chkModal"><div class="modal-box" id="chkBody"></div></div>
 <!-- Detail Modal -->
@@ -2404,7 +2435,7 @@ async function init(){
     syncLogin();
   }
   document.getElementById('filterDate').value=todayStr();
-  document.getElementById('siteDate').value=todayStr();
+  { const ld=document.getElementById('lvDate'); if(ld){ ld.value=todayStr(); ld.max=todayStr(); } }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -5017,7 +5048,7 @@ function switchTab(tab){
   const pane=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(pane) pane.classList.add('active');
   if(tab==='attendance') loadAttTab();
-  if(tab==='live'){ liveStart(); lvSiteOpen(); } else liveStop();
+  if(tab==='live'){ lvSiteOpen(); liveStart(); } else liveStop();
   if(tab==='monthly')    initMonthly();
   if(tab==='leaves')     loadLeavesTab();
   if(tab==='overtime')   loadOtTab();
@@ -6505,7 +6536,7 @@ async function loadSiteSummary(){
       const pct=e.checks?Math.round(e.inside*100/e.checks):null;
       const col=pct===null?'var(--soft)':pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
       const bad=v=>v?`<span style="color:var(--red);font-weight:700">${v}</span>`:'0';
-      return `<tr><td><b>${hx(e.name)}</b><div style="color:var(--soft);font-size:11px">${hx(e.id)}</div></td><td>${e.days.size}</td><td>${e.sessions}</td><td>${fmtMins(e.mins)}</td><td>${e.checks}</td><td style="color:${col};font-weight:700">${pct===null?'—':pct+'%'}</td><td>${bad(e.outside)}</td><td>${bad(e.noGps)}</td><td>${bad(e.open)}</td><td style="${e.gap>GAP_MINS?'color:var(--red);font-weight:700':''}">${fmtMins(e.gap)}</td></tr>`;
+      return `<tr class="lv-row" data-emp="${hx(e.id)}" onclick="lvPick('${esc(e.id)}',true)"><td><b>${hx(e.name)}</b><div style="color:var(--soft);font-size:11px">${hx(e.id)}</div></td><td>${e.days.size}</td><td>${e.sessions}</td><td>${fmtMins(e.mins)}</td><td>${e.checks}</td><td style="color:${col};font-weight:700">${pct===null?'—':pct+'%'}</td><td>${bad(e.outside)}</td><td>${bad(e.noGps)}</td><td>${bad(e.open)}</td><td style="${e.gap>GAP_MINS?'color:var(--red);font-weight:700':''}">${fmtMins(e.gap)}</td></tr>`;
     }).join('');
     el.innerHTML=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Sessions</th><th>Time on site</th><th>Checks</th><th>Inside site</th><th>Outside</th><th>GPS off</th><th>Never stopped</th><th>Longest silence</th></tr></thead><tbody>${rowsH}</tbody></table></div>
       <div style="font-size:11px;color:var(--soft);margin-top:6px">“Inside site” = checks within ${SITE_RADIUS} m of where site work was started. Time on site counts sessions that were stopped.</div>`;
@@ -6638,9 +6669,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.6';</script>
-<script src="notify.js?v=2026-10-28.6"></script>
-<script src="appstore.js?v=2026-10-28.6"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.7';</script>
+<script src="notify.js?v=2026-10-28.7"></script>
+<script src="appstore.js?v=2026-10-28.7"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7699,31 +7730,62 @@ function wmTimeline(){
 /* Work mode names (Live tab, Work report) */
 const WL_MODE={field:'Field',office:'Office',factory:'Factory',wfh:'Work From Home'};
 
-/* ── Live tab: everyone in scope, what they are doing right now; tap for the detail ── */
+/* ── Live tab: everyone in scope and what they are doing; one tap opens ONE panel with that person's whole day (work, meetings, visits, site checks, photos, hours) ── */
 const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused',travelling:'Travelling',notin:'Not in yet',leave:'On leave',out:'Punched out'};
 const LV_ORDER=['active','meeting','travelling','paused','idle','notin','leave','out'];
-let _lv={data:null,filter:'all',dept:'',q:'',timer:null,busy:false};
+let _lv={data:null,filter:'all',dept:'',q:'',timer:null,busy:false,again:false,date:'',sel:'',site:{},tl:'all',pd:null,pn:0};
 const IDLE_FLAG=30;   // minutes of idle time after which a card turns red
 const liveDur=m=>m==null?'':m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m';
 const liveWa=ph=>{ const d=String(ph||'').replace(/\D/g,''); return d.length===10?'91'+d:d.length>=11?d:''; };
-function liveStart(){ liveStop(); liveLoad(); _lv.timer=setInterval(()=>{ if(document.getElementById('tabLive')?.classList.contains('active')&&!document.hidden) liveLoad(); },60000); }
+const lvDay=()=>_lv.date||todayStr();
+const lvIsToday=()=>lvDay()===todayStr();
+function liveStart(){ liveStop(); liveLoad(); _lv.timer=setInterval(()=>{ if(document.getElementById('tabLive')?.classList.contains('active')&&!document.hidden&&lvIsToday()) liveLoad(); },60000); }
 function liveStop(){ if(_lv.timer){ clearInterval(_lv.timer); _lv.timer=null; } }
-// the site sections of the Live tab (the old Site Monitor tab): today's site work and the month summary (supervisors are now assigned from the person's roles in Staff)
+// opening the tab: today, nobody picked yet, and the month picker ready
 function lvSiteOpen(){
-  const sd=document.getElementById('siteDate'); if(sd) sd.value=todayStr();
+  _lv.date=''; _lv.sel=''; _lv.pd=null; _lv.pn++;
+  const d=document.getElementById('lvDate'); if(d){ d.value=todayStr(); d.max=todayStr(); }
   const sm=document.getElementById('siteMonth'); if(sm&&!sm.value) sm.value=todayStr().slice(0,7);
-  refreshSiteMonitor('admin');
+  lvPanelDraw();
 }
-function lvRefreshAll(){ liveLoad(true); refreshSiteMonitor('admin'); }
+function lvRefreshAll(){ liveLoad(true); }
 function lvJump(id){ const e=document.getElementById(id); if(e) e.scrollIntoView({behavior:'smooth',block:'start'}); }
+// the day the whole tab shows: the board, the site facts and the open panel all follow it
+function lvSetDate(v){
+  v=String(v||''); if(v>todayStr()) v='';
+  _lv.date=(v&&v!==todayStr())?v:''; _lv.data=null; _lv.site={}; _lv.pd=null; _lv.pn++;
+  const el=document.getElementById('lvDate'); if(el) el.value=lvDay();
+  const g=document.getElementById('lvGrid'); if(g) g.innerHTML='<div class="empty">⏳ Loading…</div>';
+  lvPanelDraw(); liveLoad(true);
+}
+function lvShift(n){ const d=new Date(lvDay()+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); const s=d.toISOString().slice(0,10); if(s>todayStr()) return; lvSetDate(s); }
 async function liveLoad(manual){
-  if(_lv.busy) return; _lv.busy=true;
-  try{ const r=await api('liveBoard',{date:todayStr()}); _lv.data=r; liveDraw(); }
+  if(_lv.busy){ if(manual) _lv.again=true; return; }
+  _lv.busy=true; const day=lvDay();
+  try{
+    const [r,sites]=await Promise.all([api('liveBoard',{date:day}),api('getSiteStatus',{date:day}).catch(()=>[])]);
+    if(day===lvDay()){ _lv.data=r; _lv.site=lvSiteBy(sites); liveDraw(); if(_lv.sel) lvPanelLoad(true); }
+  }
   catch(e){ const g=document.getElementById('lvGrid'); if(g&&!_lv.data) g.innerHTML='<div class="empty">Could not load. '+hx(e&&e.message||'')+'</div>'; }
-  finally{ _lv.busy=false; }
+  finally{ _lv.busy=false; if(_lv.again){ _lv.again=false; liveLoad(); } }
 }
 const liveWhat=x=>{ const k=kindLbl(x.kind,x.kindOther); return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
 const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
+// site work by person (a stop and a restart on the same day are one person's day)
+function lvSiteBy(list){
+  const by={}; (list||[]).forEach(s=>{ const k=swKey(s.empId); (by[k]=by[k]||[]).push(s); });
+  Object.keys(by).forEach(k=>by[k].sort((a,b)=>parseTimeMins(a.startTime)-parseTimeMins(b.startTime)));
+  return by;
+}
+// what the card says about site work: tracking / on site / done, how many checks, how many outside, a long silence
+function lvSiteSum(x){
+  const L=_lv.site[swKey(x.empId)]; if(!L||!L.length) return null;
+  const run=L.filter(s=>s.status==='working'), today=lvIsToday(), auto=L.some(s=>s.mode==='auto');
+  const checks=L.reduce((t,s)=>t+(parseInt(s.pingCount||0,10)||0),0), out=L.reduce((t,s)=>t+(parseInt(s.violations||0,10)||0),0);
+  let last=-1; L.forEach(s=>{ if(s.latestPing) last=Math.max(last,parseTimeMins(s.latestPing.time)); });
+  let gap=0; if(run.length&&today){ const st=Math.max.apply(null,run.map(s=>parseTimeMins(s.startTime))); gap=Math.round(nowMins()-Math.max(last,st)); }
+  return {run:run.length>0,auto,checks,out,gap,never:run.length>0&&!today};
+}
 function liveDraw(){
   const d=_lv.data; if(!d) return;
   const st=d.staff||[], cnt={}; st.forEach(x=>{ cnt[x.state]=(cnt[x.state]||0)+1; });
@@ -7738,34 +7800,132 @@ function liveDraw(){
   const list=st.filter(x=>(_lv.filter==='all'||x.state===_lv.filter)&&(!_lv.dept||x.department===_lv.dept)&&(!q||[x.name,x.empId,x.department].join(' ').toLowerCase().indexOf(q)>=0))
     .sort((a,b)=>(b.sos?1:0)-(a.sos?1:0)||(idleBad(b)?1:0)-(idleBad(a)?1:0)||LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
   document.getElementById('lvGrid').innerHTML=list.length?list.map(x=>{
-    const what=liveWhat(x), seen=x.lastSeen, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30;
-    return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}" onclick="liveOpen('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
+    const what=liveWhat(x), seen=x.lastSeen, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30, ss=lvSiteSum(x);
+    return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}${swKey(_lv.sel)===swKey(x.empId)?' sel':''}" onclick="lvPick('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
       ${x.sos||x.late||idleBad(x)?`<span class="s">${x.sos?'<span class="lv-tag bad">🚨 SOS</span>':''}${x.late?'<span class="lv-tag">Late</span>':''}${idleBad(x)?'<span class="lv-tag bad">Idle '+hx(liveDur(x.idleMin))+'</span>':''}</span>`:''}
       <span class="s">${hx(x.empId)}${x.department?' · '+hx(x.department):''}</span>
       ${what?`<span class="s">${hx(what)}${x.clientName?' · '+hx(x.clientName):''}${x.placeTag?' · '+hx(x.placeTag):''}</span>`:''}
       ${x.since?`<span class="s">since ${hx(wmClk(x.since))}</span>`:x.punchIn&&x.state!=='out'?`<span class="s">in at ${hx(x.punchIn)}${x.state==='idle'&&x.idleMin>0&&!idleBad(x)?' · idle '+hx(liveDur(x.idleMin)):''}</span>`:''}
+      ${ss?`<span class="s">${ss.never?'<span class="lv-tag bad">⚠️ Site work never stopped</span>':ss.run?(ss.auto?'🟢 Tracking':'🟡 On site'):'✅ Site work done'} · ${ss.checks} check${ss.checks===1?'':'s'}${ss.out?' <span class="lv-tag bad">⚠ '+ss.out+' outside</span>':''}${ss.gap>GAP_MINS?' <span class="lv-tag bad">No check for '+hx(fmtMins(ss.gap))+'</span>':''}</span>`:''}
       ${seen?`<span class="s${stale?' lv-stale':''}">📍 ${hx(seen.area||'Location known')} · ${hx(liveAge(seen.ageMin)||seen.time)}${stale?' (no recent update)':''}</span>`:''}</button>`;
   }).join(''):'<div class="empty">Nobody here.</div>';
-  document.getElementById('lvNote').textContent='Updates every minute. "Idle" means punched in with no work item running. Location is the latest check or punch.';
+  document.getElementById('lvNote').textContent=(lvIsToday()?'Updates every minute. ':'')+'"Idle" means punched in with no work item running. Location is the latest check or punch. Tap a person for the whole day.';
 }
-function liveClose(){ document.getElementById('liveModal').classList.remove('open'); }
-function liveOpen(id){
-  const x=((_lv.data||{}).staff||[]).find(r=>String(r.empId)===String(id)); if(!x) return;
-  const seen=x.lastSeen, what=liveWhat(x);
-  const items=(x.items||[]).map(i=>`<li><b>${hx(liveWhat(i)||'Work')}</b>${i.clientName?' · '+hx(i.clientName):''}<small>${i.startAt?hx(wmClk(i.startAt)):''}${i.endAt?' – '+hx(wmClk(i.endAt)):i.status==='Done'?'':' · '+hx(i.status.toLowerCase())}${i.activeMin?' · '+hx(wrMin(i.activeMin)):''}${i.placeTag?' · '+hx(i.placeTag):''}${i.outcome?' · '+hx(i.outcome):''}</small></li>`).join('');
-  document.getElementById('liveBody').innerHTML=`<h3>${hx(x.name)}</h3><div class="sub">${hx(x.empId)}${x.designation?' · '+hx(x.designation):''}${x.department?' · '+hx(x.department):''}</div>
-    <span class="lv-b" style="font-size:12.5px">${hx(LV_STATE[x.state]||x.state)}</span>${x.late?' <span class="lv-tag">Late</span>':''}
-    ${x.sos?'<div class="lv-sos">🚨 Open SOS from this person. Open the Safety tab to respond.</div>':''}
-    <div class="kv"><span>Doing now</span><b>${hx(what||'—')}${x.clientName?'<br><small style="font-weight:400">'+hx(x.clientName)+(x.clientPhone?' · <a href="tel:'+hx(x.clientPhone)+'">'+hx(x.clientPhone)+'</a>':'')+'</small>':''}</b>
-      <span>Since</span><b>${x.since?hx(wmClk(x.since)):'—'}</b>
-      <span>Punched in</span><b>${hx(x.punchIn||'—')}</b><span>Punched out</span><b>${hx(x.punchOut||'—')}${x.punchOut?autoPill(x):''}</b>
-      <span>Work mode</span><b>${hx(WL_MODE[x.mode]||'—')}</b>
-      <span>Worked today</span><b>${x.workedMin!=null?hx(liveDur(x.workedMin)):'—'}</b>${x.idleMin!=null&&x.state==='idle'?'<span>Idle for</span><b'+(x.idleMin>=IDLE_FLAG?' style="color:#B42318"':'')+'>'+hx(liveDur(x.idleMin))+'</b>':''}
-      <span>Last location</span><b>${seen?hx(seen.area||'Known')+'<br><small style="font-weight:400">'+hx(seen.time)+' · '+hx(seen.how)+(seen.ageMin!=null?' · '+hx(liveAge(seen.ageMin)):'')+'</small>':'—'}</b></div>
-    <div style="font-weight:800;font-size:13px">Today</div>${items?'<ul>'+items+'</ul>':'<div class="sub" style="margin-top:4px">Nothing logged yet today.</div>'}
-    <div class="lv-acts">${x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${liveWa(x.phone)?`<a class="btn btn-outline" href="https://wa.me/${liveWa(x.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}</div>
-    <button class="modal-close" onclick="liveClose()">Close</button>`;
-  document.getElementById('liveModal').classList.add('open');
+
+/* ── the panel: one person, one day ── */
+const lvClockM=m=>{ m=Math.max(0,Math.floor(+m||0)); const h=Math.floor(m/60)%24; return String((h%12)||12).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+' '+(h<12?'AM':'PM'); };
+const lvClock=t=>t?lvClockM(parseTimeMins(t)):'';
+const lvStampM=s=>{ s=String(s||''); return s.length>=16?(+s.slice(11,13))*60+(+s.slice(14,16)):0; };
+function lvDayLabel(d){ let s=d; try{ s=new Date(d+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }catch(e){} return s+(d===todayStr()?' · Today':''); }
+function lvPick(id,jump){ _lv.sel=String(id); _lv.tl='all'; _lv.pd=null; _lv.pn++; lvPanelDraw(); liveDraw(); lvPanelLoad(false); if(jump) lvJump('lvSecPeople'); }
+function lvClosePanel(){ _lv.sel=''; _lv.pd=null; _lv.pn++; lvPanelDraw(); liveDraw(); }
+function lvTl(k){ _lv.tl=k; const ol=document.querySelector('#lvPanel .lvt'); if(ol) ol.className='lvt'+(k==='all'?'':' f-'+k); document.querySelectorAll('#lvPanel [data-tl]').forEach(b=>b.classList.toggle('on',b.dataset.tl===k)); }
+async function lvPanelLoad(quiet){
+  const id=_lv.sel, day=lvDay(); if(!id) return;
+  const key=swKey(id)+'|'+day, tok=++_lv.pn;
+  if(!quiet||!_lv.pd||_lv.pd.key!==key){ _lv.pd=null; lvPanelDraw(); }
+  let pd;
+  try{
+    const sess=_lv.site[swKey(id)]||[];
+    const [route,sd]=await Promise.all([
+      api('getDayRoute',{empId:id,date:day}).catch(()=>null),
+      Promise.all(sess.map(s=>api('getSiteSession',{id:s.id}).then(d=>d||{session:s,checks:[]}).catch(()=>({session:s,checks:[]}))))
+    ]);
+    let att=route?route.att:null;
+    if(!route){ const all=await getAttRange(day,day).catch(()=>[]); att=all.find(r=>swKey(r.empId)===swKey(id))||null; }
+    pd={key,att:att||null,visits:(route&&route.visits)||[],sessions:sd};
+  }catch(e){ pd={key,err:(e&&e.message)||'Could not load'}; }
+  if(tok!==_lv.pn||swKey(id)!==swKey(_lv.sel)||day!==lvDay()) return;
+  _lv.pd=pd; lvPanelDraw();
+}
+function lvPanelDraw(){
+  const el=document.getElementById('lvPanel'), sp=document.getElementById('lvSplit'); if(!el||!sp) return;
+  sp.classList.toggle('has-sel',!!_lv.sel);
+  if(!_lv.sel){ el.innerHTML=''; return; }
+  const keep=el.scrollTop, x=((_lv.data||{}).staff||[]).find(r=>swKey(r.empId)===swKey(_lv.sel))||null;
+  el.innerHTML=lvPanelHtml(x,_lv.pd); el.scrollTop=keep;
+}
+// one result of a location check, in words
+function lvChk(c){
+  const st=String(c.withinBound||'').toUpperCase(), d=parseInt(c.distMeters||0,10)||0, acc=c.accuracy!==''&&c.accuracy!==undefined&&c.accuracy!==null?' · GPS ±'+c.accuracy+' m':'';
+  if(st==='YES'||st==='TRUE') return ['ok','✅ Inside the site · '+d+' m'+acc];
+  if(st==='NO'||st==='FALSE') return ['bad','⚠️ Outside the site · '+d+' m'+acc];
+  if(st==='OUT') return ['bad','🚶 Outside the place · '+d+' m'+acc];
+  if(st==='ROUGH') return ['warn','≈ Unclear (weak GPS) · '+d+' m'+acc];
+  if(st==='AWAY') return ['','➜ '+d+' m from punch-in'+acc];
+  if(st==='NO GPS') return ['bad','📵 GPS off or blocked'];
+  if(st==='FAKE GPS') return ['bad','🚫 Fake GPS app'+(d?' · shows '+d+' m':'')];
+  return ['','⚠️ '+d+' m'+acc];
+}
+// everything that happened, one line each, in time order
+function lvTimeline(x,pd){
+  const rec=pd.att, L=[], nm=(x&&x.name)||empNameOf(_lv.sel);
+  const row=(m,cls,title,subs,photo,plabel)=>({m:m,html:`<li class="lvt-i ${cls}" data-m="${m.toFixed(2)}"><time>${hx(lvClockM(m))}</time><div>${title}${(subs||[]).filter(Boolean).map(s=>'<small>'+s+'</small>').join('')}</div>${photo?`<img class="lvt-ph" src="${hx(photo)}" alt="" onclick="openModal('${esc(nm)}','${esc(plabel||'Photo')}','${esc(photo)}','','','')">`:'<span></span>'}</li>`});
+  const mapA=p=>p&&p.lat?`<a class="map-link" href="${hx(mapsUrl(p.lat,p.lng))}" target="_blank" rel="noopener">📍 Map</a>`:'';
+  const loc=(area,pt)=>[area?'📍 '+hx(area):'',mapA(pt)].filter(Boolean).join(' · ');
+  if(rec&&rec.punchIn){ const p=rec.punchIn; L.push(row(parseTimeMins(p.time),'in','<b>🟢 Punch In</b>',[loc(p.area,p),geoFlag(p)],p.photo,'Punch In')); }
+  ((x&&x.items)||[]).filter(i=>i.source==='work').forEach(i=>{ const a=lvStampM(i.startAt), e=i.endAt?lvStampM(i.endAt):null;
+    L.push(row(a,'work','<b>🛠 '+hx(liveWhat(i)||'Work')+(i.clientName?' · '+hx(i.clientName):'')+'</b>',[hx(lvClockM(a))+(e!=null?' → '+hx(lvClockM(e)):' · '+hx(String(i.status||'').toLowerCase()))+(i.activeMin?' · '+hx(wrMin(i.activeMin)):''),i.placeTag?'📍 '+hx(i.placeTag):'',i.outcome?'“'+hx(i.outcome)+'”':''])); });
+  ((rec&&rec.meetings)||[]).forEach((m,i)=>{
+    const out=m.outTime||m.startTime; if(!out) return; const a=parseTimeMins(out), back=m.backTime||m.endTime;
+    if(m.kind==='personal'){ L.push(row(a,'meet','<b>🏃 Personal work</b>',[hx(lvClock(out))+(back?' → '+hx(lvClock(back))+' · '+hx(fmtMins(calcMins(out,back))):' · still out'),m.note?hx(m.note):''],m.outPhoto,'Out · personal work')); return; }
+    const why=m.purpose?kindLbl(m.purpose,m.purposeOther):m.reason;
+    L.push(row(a,'meet','<b>🚗 Meeting '+(i+1)+(m.customerName?' · '+hx(m.customerName):'')+'</b>',[hx(lvClock(out))+(back?' → '+hx(lvClock(back))+' · '+hx(fmtMins(calcMins(out,back))):' · out now'),why?hx(why):'',m.outArea?'📍 '+hx(m.outArea):'',(m.outcome||m.result)?'“'+hx(m.outcome||m.result)+'”':''],m.outPhoto||m.backPhoto,'Meeting '+(i+1)));
+  });
+  (pd.visits||[]).forEach(v=>L.push(row(parseTimeMins(v.time),'visit','<b>🏢 Customer visit · '+hx(v.customer||'customer')+'</b>',[v.note?hx(v.note):'',loc(v.area,v)],v.photo,'Visit')));
+  ((rec&&rec.away)||[]).forEach(a=>L.push(row(parseTimeMins(a.from),'away','<b>📍 Away from the place</b>',[hx(lvClock(a.from))+' → '+hx(lvClock(a.to))+' · '+hx(fmtMins(a.min))+' · not counted in hours'])));
+  (pd.sessions||[]).forEach(d=>{ const s=d.session||{};
+    if(s.startTime) L.push(row(parseTimeMins(s.startTime),'site','<b>▶ Site work started</b>',[loc(s.startArea,{lat:s.startLat,lng:s.startLng}),s.mode==='auto'?'all-day location tracking':''],s.startPhoto,'Site work started'));
+    if(s.stopTime) L.push(row(parseTimeMins(s.stopTime),'site','<b>⏹ Site work stopped'+(s.stopAuto?' · Auto, walked away':'')+'</b>',[loc(s.stopArea,{lat:s.stopLat,lng:s.stopLng})],s.stopPhoto,'Site work stopped'));
+    (d.checks||[]).forEach(c=>{ const r=lvChk(c);
+      L.push(row(parseTimeMins(c.time),'chk','<b class="'+r[0]+'">'+hx(r[1])+'</b>',[[c.area?hx(c.area):'',battBadge(c),c.source==='app'?'📱 app':'',mapA(c)].filter(Boolean).join(' · ')])); });
+  });
+  if(rec&&rec.punchOut){ const p=rec.punchOut; L.push(row(parseTimeMins(p.time),'out','<b>🔵 Punch Out'+autoPill(rec)+'</b>',[loc(p.area,p),geoFlag(p)],p.photo,'Punch Out')); }
+  return L.sort((a,b)=>a.m-b.m);
+}
+// time on site and the check results across the person's site sessions of the day
+function lvSiteFacts(pd,today){
+  const nowM=nowMins(); let tot=0,checks=0,inn=0,out=0,rough=0,nog=0,fake=0,longest=0,never=0;
+  (pd.sessions||[]).forEach(d=>{ const s=d.session||{}, ck=d.checks||[], run=s.status==='working';
+    const a=parseTimeMins(s.startTime), b=s.stopTime?parseTimeMins(s.stopTime):(run&&today?nowM:a);
+    tot+=Math.max(0,b-a); checks+=ck.length; if(run&&!today) never++;
+    const c=k=>ck.filter(z=>String(z.withinBound).toUpperCase()===k).length;
+    inn+=c('YES')+c('TRUE'); out+=c('NO')+c('FALSE')+c('OUT'); rough+=c('ROUGH'); nog+=c('NO GPS'); fake+=c('FAKE GPS');
+    const mk=[a].concat(ck.map(z=>parseTimeMins(z.time))).concat(s.stopTime||(run&&today)?[b]:[]);
+    for(let k=1;k<mk.length;k++) longest=Math.max(longest,mk[k]-mk[k-1]);
+  });
+  return {tot,checks,inn,out,rough,nog,fake,longest,never};
+}
+// total hours of the day: punch-in to punch-out (or to now), less meetings, personal work and time away from the place
+function lvHours(rec,today){
+  if(!rec||!rec.punchIn) return null;
+  const r=rec.punchOut?rec:(today?Object.assign({},rec,{punchOut:{time:nowTime()}}):null);
+  return r?officeMins(r):null;
+}
+function lvPanelBody(x,pd,today){
+  const id=_lv.sel, name=(x&&x.name)||empNameOf(id), rec=pd.att, has=!!(rec&&rec.punchIn), sf=lvSiteFacts(pd,today), ns=(pd.sessions||[]).length, items=lvTimeline(x,pd);
+  if(!has&&!ns&&!items.length) return `<div class="empty">${x&&x.state==='leave'?'On leave this day.':'Nothing recorded for this day — did not punch in.'}</div>`;
+  const hrs=lvHours(rec,today), tile=(l,v,c)=>`<div><span>${l}</span><b${c?` style="color:${c}"`:''}>${v}</b></div>`;
+  let sum=tile('Punched in',has?hx(lvClock(rec.punchIn.time)):'—')
+    +tile('Punched out',rec&&rec.punchOut?hx(lvClock(rec.punchOut.time))+autoPill(rec):(has&&!today?'<span style="color:var(--red)">No punch out</span>':'—'))
+    +tile('Total hours',hrs==null?'—':hx(fmtMins(hrs)))
+    +(rec&&rec.awayMin>0?tile('Away (not counted)',hx(fmtMins(rec.awayMin)),'var(--amber)'):'')
+    +tile('Work mode',hx(WL_MODE[(rec&&rec.workMode)||(x&&x.mode)]||'—'));
+  if(ns) sum+=tile('Time on site',hx(fmtMins(sf.tot)))+tile('Location checks',sf.checks)+tile('Inside the site',sf.inn,'var(--green)')+tile('Outside the site',sf.out,sf.out?'var(--red)':'')
+    +tile('Unclear (weak GPS)',sf.rough,sf.rough?'var(--amber)':'')+tile('GPS off / blocked',sf.nog,sf.nog?'var(--red)':'')+(sf.fake?tile('Fake GPS app',sf.fake,'var(--red)'):'')
+    +tile('Longest time with no check',hx(fmtMins(sf.longest)),sf.longest>GAP_MINS?'var(--red)':'');
+  const seen=x&&x.lastSeen, run=today&&(pd.sessions||[]).some(d=>(d.session||{}).status==='working');
+  const stat=x?`<div class="lvp-st st-${hx(x.state)}"><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span>${x.late?' <span class="lv-tag">Late</span>':''}${x.sos?' <span class="lv-tag bad">🚨 SOS</span>':''}${today&&liveWhat(x)?'<span class="lvp-do">'+hx(liveWhat(x))+(x.clientName?' · '+hx(x.clientName):'')+(x.since?' · since '+hx(wmClk(x.since)):'')+'</span>':''}</div>`:'';
+  const notes=(sf.never?'<div class="lv-sos">⚠️ Site work was never stopped on this day.</div>':'')+(x&&x.sos?'<div class="lv-sos">🚨 Open SOS from this person. Open the Safety tab to respond.</div>':'');
+  const acts=`<div class="lvp-acts">${x&&x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${x&&liveWa(x.phone)?`<a class="btn btn-outline" href="https://wa.me/${liveWa(x.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}${has?`<button type="button" class="btn btn-outline" onclick="openRoute('${esc(id)}','${esc(name)}','${esc(lvDay())}')">🧭 Route</button>`:''}${run?`<button type="button" class="btn btn-outline" onclick="askCheck('${esc(id)}')">📍 Check now</button>`:''}</div>`;
+  const chips=[['all','All'],['work','Work'],['chk','Checks']].map(c=>`<button type="button" data-tl="${c[0]}" class="${_lv.tl===c[0]?'on':''}" onclick="lvTl('${c[0]}')">${c[1]}</button>`).join('');
+  return stat+notes+acts+`<div class="lvp-sum">${sum}</div><div class="lvp-tt"><b>Day timeline</b><div class="lv-chips">${chips}</div></div><ol class="lvt${_lv.tl==='all'?'':' f-'+_lv.tl}">${items.map(i=>i.html).join('')||'<li class="empty">Nothing on the timeline.</li>'}</ol>`;
+}
+function lvPanelHtml(x,pd){
+  const id=_lv.sel, today=lvIsToday(), name=(x&&x.name)||empNameOf(id);
+  const head=`<div class="lvp-h"><div class="lvp-t"><b>${hx(name)}</b><small>${hx(id)}${x&&x.designation?' · '+hx(x.designation):''}${x&&x.department?' · '+hx(x.department):''}</small></div><button type="button" class="lvp-x" data-lv="close" onclick="lvClosePanel()" aria-label="Close"><span class="d">✕ Close</span><span class="m">← Back</span></button></div>
+    <div class="lvp-day"><button type="button" data-lv="prev" onclick="lvShift(-1)" aria-label="Previous day">◀</button><span>${hx(lvDayLabel(lvDay()))}</span><button type="button" data-lv="next" onclick="lvShift(1)" ${today?'disabled':''} aria-label="Next day">▶</button></div>`;
+  return head+(!pd?'<div class="empty">⏳ Loading…</div>':pd.err?'<div class="msg msg-error show">⚠️ '+hx(pd.err)+'</div>':lvPanelBody(x,pd,today));
 }
 
 /* ── Work report: multi-select filters, then CSV or PDF of exactly the filtered rows ── */
