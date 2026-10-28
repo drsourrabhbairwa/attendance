@@ -224,6 +224,17 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .leave-actions{display:flex;gap:7px;margin-top:10px}
 .btn-approve{flex:1;padding:8px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit}
 .btn-reject{flex:1;padding:8px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit}
+.btn-approve[disabled]{opacity:.4;cursor:not-allowed}
+/* Leave rules: the rule under the type, and the medical-documents strip on a medical leave */
+.lv-rule{font-size:12px;line-height:1.5;color:var(--soft);background:var(--surface2);border-radius:var(--rs);padding:8px 10px;margin:8px 0 2px}
+.lv-rule:empty{display:none}
+.lv-rule.bad{background:var(--redBg);color:var(--red)}
+.lv-doc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px;padding:8px 10px;border-radius:var(--rs);font-size:12px;font-weight:600;line-height:1.4}
+.lv-doc.warn{background:var(--amberBg);color:var(--amber)}
+.lv-doc.bad{background:var(--redBg);color:var(--red)}
+.lv-doc.ok{background:var(--greenBg);color:var(--green)}
+.lv-doc a{color:inherit;text-decoration:underline;font-weight:700}
+.lv-up{padding:6px 11px;border:none;border-radius:var(--rs);background:var(--accent);color:#fff;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;min-height:34px}
 /* Balance grid */
 .bal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
 .bal-item{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:11px}
@@ -1399,7 +1410,8 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div class="add-form">
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
-    <select id="lvType"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option></select>
+    <select id="lvType" onchange="lvTypeChanged()"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option></select>
+    <div class="lv-rule" id="lvRule"></div>
     <div class="g2">
       <div><label>From</label><input type="date" id="lvFrom" oninput="lvDatesChanged()"></div>
       <div><label>To</label><input type="date" id="lvTo" oninput="lvDatesChanged()"></div>
@@ -1412,6 +1424,8 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     <div class="msg msg-success" id="lvOk"></div>
   </div>
   <div style="font-weight:700;font-size:14px;margin-bottom:8px">My Requests</div>
+  <input type="file" id="lvDocFile" accept="image/*,application/pdf" style="display:none" onchange="lvDocPicked(this)">
+  <div class="msg msg-error" id="lvDocErr" style="margin:0 0 9px"></div>
   <div id="lvHistory"></div>
   <button class="btn btn-outline" onclick="hideLeavePanel()" style="margin-top:10px">← Back</button>
 </div>
@@ -1559,6 +1573,13 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">VL per year</label><input type="number" id="lpVl" min="0" max="60"></div>
         <div><label style="margin:0 0 4px">ML per year</label><input type="number" id="lpMl" min="0" max="60"></div>
         <div><label style="margin:0 0 4px">Leave year starts</label><select id="lpSm"></select></div>
+      </div>
+      <div style="font-weight:700;font-size:13px;margin:16px 0 4px">Rules for asking</div>
+      <p style="font-size:12px;color:var(--soft);margin-bottom:6px">Casual and vacation leave have to be asked for in time. Medical leave cannot be asked for in advance: after the employee asks, they upload their medical documents in the app, and you can approve the leave only once they are there. Put 0 to switch a rule off.</p>
+      <div class="ru-grid">
+        <div><label style="margin:0 0 4px">CL: ask at least … days before</label><input type="number" id="lpClN" min="0" max="365"></div>
+        <div><label style="margin:0 0 4px">VL: ask at least … days before <span style="font-weight:400">(30 ≈ 1 month)</span></label><input type="number" id="lpVlN" min="0" max="365"></div>
+        <div><label style="margin:0 0 4px">ML: days to upload medical documents</label><input type="number" id="lpMlD" min="0" max="60"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button onclick="saveLeavePolicy()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save policy</button><span id="lpMsg" style="font-size:12px;color:var(--green)"></span></div>
       <div style="font-weight:700;font-size:13px;margin:16px 0 4px">Extra days for one person</div>
@@ -2439,6 +2460,29 @@ function leaveBal(empId,type,asOf){
   const used=leaveUsedIn(type,empId,ws,we,['approved']), all=leaveUsedIn(type,empId,ws,we,['approved','pending']);
   return {ent,used,pending:all-used,left:Math.max(0,ent-all)};
 }
+/* ── Rules the admin sets (same as the server): how early CL / VL must be asked for; medical leave cannot be asked for in advance and has days to upload its documents ── */
+function leaveRules(){
+  const st=_D.settings||{}, n=(k,d)=>{ const v=parseInt(st[k]); return isNaN(v)?d:Math.max(0,v); };
+  return {cl:n('clNoticeDays',2),vl:n('vlNoticeDays',30),mlDays:n('mlDocDays',7)};
+}
+const MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function niceDay(ds){ return +ds.slice(8,10)+' '+MON3[+ds.slice(5,7)-1]+' '+ds.slice(0,4); }
+function dayGap(a,b){ return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5); }
+const _s=n=>n===1?'':'s';
+/* '' when the first day respects the rule of its type, otherwise what to do */
+function noticeProblem(type,from){
+  const R=leaveRules(), t=todayStr();
+  if(type==='ML') return from>t?'Medical leave cannot be asked for in advance. Ask from the day you are unwell'+(R.mlDays?' and upload your medical documents within '+R.mlDays+' days':'')+'.':'';
+  const need=type==='CL'?R.cl:type==='VL'?R.vl:0;
+  if(!need||dayGap(t,from)>=need) return '';
+  return (type==='CL'?'Casual leave':'Vacation leave')+' has to be asked for at least '+need+' day'+_s(need)+' before it starts. The earliest first day you can pick is '+niceDay(isoAdd(t,need))+'.';
+}
+function lvRuleText(type){
+  const R=leaveRules(), t=todayStr();
+  if(type==='ML') return 'Medical leave cannot be asked for in advance — pick today or a day that has passed.'+(R.mlDays?' After you ask, upload your medical documents in the app within '+R.mlDays+' days (by '+niceDay(isoAdd(t,R.mlDays))+'); the office can approve it only after that.':'');
+  const need=type==='CL'?R.cl:R.vl;
+  return need?(type==='CL'?'Casual leave':'Vacation leave')+' has to be asked for at least '+need+' day'+_s(need)+' before it starts — the earliest first day is '+niceDay(isoAdd(t,need))+'.':'';
+}
 function policyText(){
   const P=leavePolicy();
   return 'CL: '+P.cl+' a month — unused days carry forward within the year · VL: '+P.vl+' a year · ML: '+P.ml+' a year · Everything starts fresh on 1 '+MONTH_NAMES[P.sm-1]+'.';
@@ -2474,7 +2518,24 @@ function leaveSpan(l){ if(!l.fromDate) return ''; const f=d=>new Date(d+'T12:00:
 async function refreshMyLeaves(empId){
   try{ const f=await api('getLeaves',{empId}); const e=String(empId).toUpperCase(); _D.leaves=(_D.leaves||[]).filter(l=>String(l.empId).toUpperCase()!==e).concat(f||[]); saveCache(); }catch(err){}
 }
+/* the calendar only offers the days the rule allows, and the rule is written under the type */
+function lvTypeChanged(){
+  const type=document.getElementById('lvType').value, R=leaveRules(), t=todayStr(), f=document.getElementById('lvFrom'), to=document.getElementById('lvTo');
+  const min=type==='ML'?'':(type==='CL'?R.cl:R.vl)?isoAdd(t,type==='CL'?R.cl:R.vl):'', max=type==='ML'?t:'';
+  f.min=min; to.min=min; f.max=max; to.removeAttribute('max');
+  const was=f.value;
+  if(min&&f.value<min) f.value=min;
+  if(max&&f.value>max) f.value=max;
+  if(f.value!==was||!to.value||to.value<f.value) to.value=f.value;   // a first day that had to move takes the last day with it
+  lvDatesChanged();
+}
+function lvRuleDraw(){
+  const el=document.getElementById('lvRule'); if(!el) return;
+  const type=document.getElementById('lvType').value, from=document.getElementById('lvFrom').value, pr=from?noticeProblem(type,from):'';
+  el.textContent=pr||lvRuleText(type); el.classList.toggle('bad',!!pr);
+}
 function lvDatesChanged(){
+  lvRuleDraw();
   const f=document.getElementById('lvFrom').value, t=document.getElementById('lvTo').value||f, n=document.getElementById('lvDaysNote');
   if(!f){ n.textContent=''; return; }
   if(t<f){ n.textContent='The last day is before the first day.'; return; }
@@ -5043,7 +5104,8 @@ async function loadLeavesTab(){
           </div>
           <div style="font-size:12px;color:var(--soft);margin-top:3px">${hx(l.empId)} · ${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
           <div style="font-size:13px;color:var(--ink);margin-top:6px">"${hx(l.reason||'—')}"</div>
-          ${l.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideLeave('${esc(l.id)}','approved')">✅ Approve</button><button class="btn-reject" onclick="decideLeave('${esc(l.id)}','rejected')">❌ Reject</button></div>`:''}
+          ${lvDocHtml(l,'admin')}
+          ${l.status==='pending'?`<div class="leave-actions"><button class="btn-approve"${lvNeedsDocs(l)?' disabled title="Waiting for the medical documents"':''} onclick="decideLeave('${esc(l.id)}','approved')">✅ Approve</button><button class="btn-reject" onclick="decideLeave('${esc(l.id)}','rejected')">❌ Reject</button></div>`:''}
         </div>`).join('');
     }
     renderLeaveCal();
@@ -5078,12 +5140,13 @@ async function decideLeave(id,status){
 function initLeavePolicy(){
   const P=leavePolicy(), g=id=>document.getElementById(id); if(!g('lpCl')) return;
   g('lpCl').value=P.cl; g('lpVl').value=P.vl; g('lpMl').value=P.ml;
+  { const R=leaveRules(); g('lpClN').value=R.cl; g('lpVlN').value=R.vl; g('lpMlD').value=R.mlDays; }
   g('lpSm').innerHTML=MONTH_NAMES.map((m,i)=>`<option value="${i+1}"${i+1===P.sm?' selected':''}>${m}</option>`).join('');
 }
 async function saveLeavePolicy(){
   const g=id=>document.getElementById(id), msg=g('lpMsg');
   const v=(id,lo,hi,d)=>{ const n=parseInt(g(id).value); return String(isNaN(n)?d:Math.max(lo,Math.min(hi,n))); };
-  const settings={clPerMonth:v('lpCl',0,10,2),vlYear:v('lpVl',0,60,5),mlYear:v('lpMl',0,60,5),leaveYearStart:v('lpSm',1,12,1)};
+  const settings={clPerMonth:v('lpCl',0,10,2),vlYear:v('lpVl',0,60,5),mlYear:v('lpMl',0,60,5),leaveYearStart:v('lpSm',1,12,1),clNoticeDays:v('lpClN',0,365,2),vlNoticeDays:v('lpVlN',0,365,30),mlDocDays:v('lpMlD',0,60,7)};
   loading(true,'Saving…');
   try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); msg.textContent='✅ Saved'; setTimeout(()=>msg.textContent='',2500); initLeavePolicy(); }
   catch(e){ loading(false); msg.style.color='var(--red)'; msg.textContent=e.message; }
@@ -5103,7 +5166,7 @@ function showLeavePanel(){
   fillAv('lvAvatar',curRec()||currentEmp);
   document.getElementById('lvName').textContent=currentEmp.name;
   showScreen('leavePanel');
-  { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvDatesChanged(); }
+  { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvTypeChanged(); }
   refreshMyLeaves(currentEmp.id).then(()=>{ loadLeaveBalance(); loadLeaveHistory(); });
   loadLeaveBalance();
   loadLeaveHistory();
@@ -5133,8 +5196,67 @@ async function loadLeaveHistory(){
       </div>
       <div style="font-size:12px;color:var(--soft);margin-top:3px">${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
       <div style="font-size:13px;margin-top:5px">${hx(l.reason)}</div>
+      ${lvDocHtml(l,'emp')}
     </div>`).join('');
   }catch(e){}
+}
+
+/* ── Medical documents: what a medical leave still needs, the strip on its card, and the upload ── */
+function lvDocLinks(l){ return String(l.docs||'').split('|').filter(Boolean); }
+function lvDocDue(l){   // the last day to upload; '' when none are needed
+  const R=leaveRules(); if(l.type!=='ML'||!R.mlDays) return '';
+  const asked=String(l.requestedAt||'').slice(0,10);
+  return l.docsDue||(asked?isoAdd(asked,R.mlDays):'');
+}
+function lvNeedsDocs(l){ return l.type==='ML'&&l.status==='pending'&&!!lvDocDue(l)&&!lvDocLinks(l).length; }
+function lvDocHtml(l,who){
+  if(l.type!=='ML') return '';
+  const links=lvDocLinks(l), open=l.status==='pending', emp=who==='emp';
+  if(links.length){
+    const files=links.map((u,i)=>/^https:\/\//.test(u)?`<a href="${hx(u)}" target="_blank" rel="noopener">File ${i+1}</a>`:`<span>File ${i+1}</span>`).join(' · ');
+    return `<div class="lv-doc ok"><span>📎 Documents uploaded (${links.length}) · ${files}</span>${emp&&open&&links.length<5?`<button class="lv-up" onclick="lvPickDoc('${esc(l.id)}')">+ Add another</button>`:''}</div>`;
+  }
+  const due=lvDocDue(l); if(!open||!due) return '';
+  const left=dayGap(todayStr(),due), late=left<0;
+  const when=late?'overdue by '+(-left)+' day'+_s(-left):left===0?'due today':'due '+niceDay(due)+' · '+left+' day'+_s(left)+' left';
+  return `<div class="lv-doc ${late?'bad':'warn'}"><span>📎 ${emp?'Medical documents needed':'Medical documents pending'} — ${when}</span>${emp?`<button class="lv-up" onclick="lvPickDoc('${esc(l.id)}')">Upload documents</button>`:''}</div>`;
+}
+let _lvDocFor='';
+function lvPickDoc(id){ _lvDocFor=id; const el=document.getElementById('lvDocFile'); if(el) el.click(); }
+function lvReadFile(f){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result)); r.onerror=()=>no(new Error('read')); r.readAsDataURL(f); }); }
+function lvImageData(f){   // a photo of a report: longest side 1600 px, JPEG, small enough to send over mobile data
+  return new Promise((ok,no)=>{
+    const url=URL.createObjectURL(f), im=new Image();
+    im.onload=()=>{
+      const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)), c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(im.naturalWidth*k)); c.height=Math.max(1,Math.round(im.naturalHeight*k));
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); let q=0.82, d=c.toDataURL('image/jpeg',q);
+      while(d.length>1500000&&q>0.4){ q=parseFloat((q-0.1).toFixed(2)); d=c.toDataURL('image/jpeg',q); }
+      ok(d);
+    };
+    im.onerror=()=>{ URL.revokeObjectURL(url); no(new Error('image')); };
+    im.src=url;
+  });
+}
+async function lvDocPicked(inp){
+  const f=inp.files&&inp.files[0], id=_lvDocFor; inp.value=''; _lvDocFor=''; if(!f||!id) return;
+  const err=document.getElementById('lvDocErr'); err.classList.remove('show');
+  const bad=m=>{ err.textContent=m; err.classList.add('show'); };
+  let data;
+  try{
+    if(/^image\//.test(f.type)) data=await lvImageData(f);
+    else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){
+      if(f.size>4*1024*1024) return bad('That PDF is too big (over 4 MB). Take a photo of its pages instead.');
+      data=(await lvReadFile(f)).replace(/^data:[^;,]*/,'data:application/pdf');
+    } else return bad('Please pick a photo or a PDF.');
+  }catch(e){ return bad('That file could not be read. Try another one.'); }
+  loading(true,'Uploading…');
+  try{
+    const r=await api('uploadLeaveDoc',{id,empId:currentEmp.id,photo:data});
+    const l=(_D.leaves||[]).find(x=>x.id===id); if(l&&r){ l.docs=r.docs; l.docsAt=r.docsAt; saveCache(); }
+    loading(false); loadLeaveHistory();
+  }catch(e){ loading(false); bad(e.message); }
 }
 
 let lvBusy=false;
@@ -5153,17 +5275,18 @@ async function submitLeaveNow(){
   const days=workDaysBetween(from,to);
   if(!days){err.textContent='Those days are Sunday or a holiday — no leave needed.';err.classList.add('show');return;}
   if(!reason){err.textContent='Please add a reason.';err.classList.add('show');return;}
+  { const np=noticeProblem(type,from); if(np){err.textContent=np;err.classList.add('show');return;} }
   await refreshMyLeaves(currentEmp.id);
   if((_D.leaves||[]).some(l=>l.fromDate&&String(l.empId).toUpperCase()===String(currentEmp.id).toUpperCase()&&['pending','approved'].includes(l.status)&&from<=(l.toDate||l.fromDate)&&to>=l.fromDate)){err.textContent='You already have a leave request covering some of those days.';err.classList.add('show');return;}
   { const pr=leaveProblem(currentEmp.id,type,from,to); if(pr){err.textContent=pr;err.classList.add('show');return;} }
   loading(true,'Submitting…');
   try{
     const leave={id:'lv-'+Date.now(),empId:currentEmp.id,name:currentEmp.name,type,reason,status:'pending',requestedAt:new Date().toISOString(),decidedAt:'',fromDate:from,toDate:to,days};
-    if(USE_SHEETS) await api('submitLeave',leave);
+    if(USE_SHEETS){ const res=await api('submitLeave',leave); if(res&&res.docsDue) leave.docsDue=res.docsDue; }
     else{const all=JSON.parse(localStorage.getItem('att_leaves')||'[]');all.push(leave);localStorage.setItem('att_leaves',JSON.stringify(all));}
     (_D.leaves=_D.leaves||[]).push(leave); saveCache();
     document.getElementById('lvReason').value='';
-    loading(false);ok.textContent='✅ Leave request submitted for '+days+' working day'+(days>1?'s':'')+'.';ok.classList.add('show');
+    loading(false);ok.textContent='✅ Leave request submitted for '+days+' working day'+(days>1?'s':'')+'.'+(type==='ML'&&leave.docsDue?' Upload your medical documents below by '+niceDay(leave.docsDue)+'.':'');ok.classList.add('show');
     loadLeaveBalance();loadLeaveHistory();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
@@ -6389,9 +6512,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.1';</script>
-<script src="notify.js?v=2026-10-28.1"></script>
-<script src="appstore.js?v=2026-10-28.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.2';</script>
+<script src="notify.js?v=2026-10-28.2"></script>
+<script src="appstore.js?v=2026-10-28.2"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
