@@ -3330,11 +3330,12 @@ function goHome(){ if(currentEmp) loadHome(); else showScreen('loginScreen'); }
 window.AmkApp={
   _want:'',
   route(name){
-    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices|store)$/.test(name)) return;
+    name=String(name||'').toLowerCase(); if(!/^(today|out|tasks|notices|store|leave)$/.test(name)) return;
     if(!currentEmp||typeof wmOn!=='function'){ this._want=name; return; }
     this._want='';
     try{
       if(name==='notices'){ if(window.AmkNotify) AmkNotify.open(); return; }
+      if(name==='leave'){ if(typeof showLeavePanel==='function') showLeavePanel(); return; }
       if(name==='store'){ if(window.AmkStore) AmkStore.open(); return; }
       if(name==='tasks'){ if(typeof tkOpen==='function') tkOpen(); return; }
       if(!document.getElementById('homeScreen').classList.contains('active')) goHome();
@@ -6685,9 +6686,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.8';</script>
-<script src="notify.js?v=2026-10-28.8"></script>
-<script src="appstore.js?v=2026-10-28.8"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.9';</script>
+<script src="notify.js?v=2026-10-28.9"></script>
+<script src="appstore.js?v=2026-10-28.9"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}

@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   var PAGE_VERSION = window.AMK_PAGE_VERSION || '';   // stamped into index.html by tools/release.py, so a refreshed page always knows its own version
-  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false, nativeAt: 0, cleared: {} };
+  var S = { empId: '', seenAt: null, notices: [], unread: 0, bell: null, sheet: null, host: null, alarmTimer: 0, ac: null, fetching: false, pushTried: false, nativeAt: 0, cleared: {}, filter: 'all' };
 
   function $(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
   function hx(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -40,19 +40,34 @@
       '.amk-bell.show{display:flex}.amk-bell.in-host{position:static;box-shadow:none}' +
       '.amk-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red,#a03428);color:#fff;font:700 11px/18px sans-serif;text-align:center;display:none}' +
       '.amk-badge.show{display:block}' +
-      '.amk-sheet{position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 56px) 12px 12px}' +
+      '.amk-sheet{position:fixed;inset:0;z-index:9500;background:rgba(10,18,14,.5);display:none;align-items:flex-end;justify-content:center;padding:0}' +
       '.amk-sheet.open{display:flex}' +
-      '.amk-panel{width:100%;max-width:460px;max-height:80vh;overflow:auto;background:var(--surface,#fff);color:var(--ink,#18201c);border-radius:14px;padding:14px;font-family:inherit}' +
-      '.amk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.amk-head b{font-size:16px}' +
+      '.amk-panel{width:100%;max-width:520px;height:min(86vh,720px);display:flex;flex-direction:column;background:#fff;color:var(--ink,#18201c);border-radius:18px 18px 0 0;font-family:inherit;overflow:hidden;animation:amkUp .22s ease-out}' +
+      '@keyframes amkUp{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}@keyframes amkDown{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}' +
+      '@media(prefers-reduced-motion:reduce){.amk-panel,.amk-pop{animation:none}}' +
+      '@media(min-width:700px){.amk-sheet{align-items:center}.amk-panel{border-radius:18px;height:min(80vh,680px)}}' +
+      '.amk-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 8px}.amk-head b{font-size:18px}.amk-head b small{font-weight:600;font-size:12px;color:var(--soft,#6b7a70);margin-left:8px}' +
+      '.amk-head .amk-btn[disabled]{opacity:.45;cursor:default}' +
+      '.amk-chips{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto}' +
+      '.amk-chip{flex:none;min-height:34px;border:1px solid var(--border2,#c4c4b8);background:transparent;color:inherit;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer}' +
+      '.amk-chip.on{background:var(--ink,#18201c);border-color:var(--ink,#18201c);color:#fff}' +
+      '.amk-list{flex:1;overflow:auto;padding:0 8px 18px;-webkit-overflow-scrolling:touch}' +
+      '.amk-day{position:sticky;top:0;z-index:1;background:#fff;padding:10px 8px 4px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--soft,#6b7a70)}' +
+      '.amk-item{display:flex;gap:10px;align-items:flex-start;padding:10px 8px;margin:2px 0;border-radius:12px;cursor:pointer}.amk-item:hover{background:#f3f6f4}.amk-item:focus-visible{outline:2px solid var(--accent,#3d6b50);outline-offset:1px}' +
+      '.amk-item.unread{background:#e3f1ec}' +
+      '.amk-ic{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-style:normal;background:var(--cb,#e8ece6);color:var(--c,#3d6b50)}' +
+      '.amk-tx{flex:1;min-width:0}.amk-item b{display:block;font-size:14px;line-height:1.3}.amk-item span{display:block;font-size:13px;color:var(--ink2,#3a4840);white-space:pre-line;line-height:1.35;margin-top:1px}' +
+      '.amk-item small{display:block;font-size:11px;color:var(--soft,#6b7a70);margin-top:3px}.amk-item small .amk-go{display:inline;margin:0;font-size:11px;font-weight:700;color:var(--accent,#3d6b50)}' +
+      '.amk-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--accent,#3d6b50);margin-top:7px;display:none}.amk-item.unread .amk-dot{display:block}' +
       '.amk-btn{border:1px solid var(--border2,#c4c4b8);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}' +
       '.amk-btn.pri{background:var(--accent,#3d6b50);border-color:var(--accent,#3d6b50);color:#fff}' +
-      '.amk-item{padding:10px 8px;border-top:1px solid var(--border,#dedfd4);cursor:pointer}.amk-item.unread{background:var(--accentBg,#d8e8dc);border-radius:8px}' +
-      '.amk-item b{display:block;font-size:14px}.amk-item span{display:block;font-size:13px;color:var(--ink2,#3a4840);white-space:pre-line}.amk-item small{display:block;font-size:11px;color:var(--soft,#6b7a70);margin-top:2px}' +
       '.amk-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.amk-act .amk-btn{min-height:40px;font-weight:600}' +
       '.amk-note{margin-top:6px;font-size:12px;font-weight:600;color:var(--accent,#3d6b50)}.amk-note.err{color:var(--red,#a03428)}' +
-      '.amk-empty{padding:18px 6px;text-align:center;color:var(--soft,#6b7a70);font-size:13px}' +
-      '.amk-pop{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9800;max-width:460px;margin:0 auto;background:var(--surface,#fff);color:var(--ink,#18201c);border:2px solid var(--accent,#3d6b50);border-radius:14px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25)}' +
-      '.amk-pop b{display:block;font-size:15px;margin-bottom:2px}.amk-pop span{display:block;font-size:13px;white-space:pre-line}.amk-pop .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}' +
+      '.amk-empty{padding:34px 10px;text-align:center;color:var(--soft,#6b7a70);font-size:14px}' +
+      '.amk-k-att{--c:var(--blue,#2048a0);--cb:var(--blueBg,#d4e0f5)}.amk-k-warn{--c:var(--orange,#b86018);--cb:var(--orangeBg,#f8e4cc)}.amk-k-red{--c:var(--red,#a03428);--cb:var(--redBg,#f5d8d4)}' +
+      '.amk-k-task{--c:var(--green,#2d7a48);--cb:var(--greenBg,#d4ebd8)}.amk-k-leave{--c:var(--purple,#6040b0);--cb:var(--purpleBg,#e4dcf8)}.amk-k-plan{--c:var(--amber,#a87020);--cb:var(--amberBg,#f5e4c4)}.amk-k-ann{--c:#0e6e7e;--cb:#d2ecf0}' +
+      '.amk-pop{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9800;max-width:460px;margin:0 auto;display:flex;gap:10px;align-items:flex-start;background:#fff;color:var(--ink,#18201c);border:1px solid var(--border,#dedfd4);border-left:5px solid var(--c,#3d6b50);border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:amkDown .22s ease-out}' +
+      '.amk-pop .tx{flex:1;min-width:0}.amk-pop b{display:block;font-size:15px;margin-bottom:2px}.amk-pop span{display:block;font-size:13px;white-space:pre-line}.amk-pop small{display:block;font-size:12px;font-weight:600;color:var(--soft,#6b7a70);margin-top:4px}.amk-pop .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}' +
       '.amk-bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:9700;max-width:460px;margin:0 auto;background:var(--ink,#18201c);color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between}' +
       '.amk-bar .amk-btn{color:#fff;border-color:rgba(255,255,255,.5)}';
     document.head.appendChild(s);
@@ -77,26 +92,75 @@
     var b = S.bell.querySelector('.amk-badge');
     b.textContent = S.unread > 99 ? '99+' : String(S.unread); b.classList.toggle('show', S.unread > 0);
   }
-  function when(ts) { return hx(String(ts || '').replace('T', ' ').slice(0, 16)); }
+  /* what each kind of message looks like (icon, colour, label) and where a tap on it goes: today | out | tasks | leave. imp = shows under "Important". */
+  var KIND = {
+    punchIn: { i: '⏰', c: 'att', l: 'Attendance', go: 'today' }, punchOut: { i: '⏰', c: 'att', l: 'Attendance', go: 'out' },
+    punchInDone: { i: '✅', c: 'att', l: 'Attendance' }, punchOutDone: { i: '✅', c: 'att', l: 'Attendance' },
+    autoPunchOut: { i: '🔵', c: 'att', l: 'Attendance', go: 'today', imp: 1 }, hoursAway: { i: '🚶', c: 'warn', l: 'Attendance', go: 'today' },
+    leftOffice: { i: '🚪', c: 'warn', l: 'Attendance', imp: 1 },
+    siteAway: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 }, siteStopped: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 },
+    meetingAway: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 }, meetingEnded: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 },
+    locationCheck: { i: '📍', c: 'warn', l: 'Location', imp: 1 }, alert: { i: '🚨', c: 'red', l: 'Alert', imp: 1 }, report: { i: '📋', c: 'red', l: 'Report' },
+    task: { i: '✅', c: 'task', l: 'Task', go: 'tasks' }, leave: { i: '🌴', c: 'leave', l: 'Leave', go: 'leave' },
+    plan: { i: '🗓️', c: 'plan', l: 'Plan', go: 'today' }, weekly: { i: '📊', c: 'plan', l: 'Weekly' }, announce: { i: '📣', c: 'ann', l: 'Announcement', imp: 1 }
+  };
+  function meta(n) { return KIND[n && n.kind] || { i: '🔔', c: 'att', l: 'Message' }; }
+  function isImp(n) { return !!meta(n).imp || leaveOpen(n); }
+  function goOf(n) { return leaveOpen(n) ? '' : (meta(n).go || ''); }
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function dayKey(n) { return String(n.createdAt || '').slice(0, 10); }
+  function todayKey() { try { if (typeof todayStr === 'function') return todayStr(); } catch (e) { } var d = new Date(), z = function (x) { return ('0' + x).slice(-2); }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+  function addDay(k, delta) { var t = Date.parse(k + 'T12:00:00Z'); return isNaN(t) ? '' : new Date(t + delta * 86400000).toISOString().slice(0, 10); }
+  function groupOf(n) { var k = dayKey(n), t = todayKey(); return k === t ? 'Today' : k === addDay(t, -1) ? 'Yesterday' : 'Earlier'; }
+  function clock(ts) { var m = /(\d{2}):(\d{2})/.exec(String(ts || '').replace('T', ' ').slice(11)); if (!m) return ''; var h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + ' ' + (h >= 12 ? 'PM' : 'AM'); }
+  function ago(n) {
+    var g = groupOf(n), t = Date.parse(String(n.createdAt || '').replace(' ', 'T') + '+05:30'), d = Date.now() - t;
+    if (g === 'Today') { if (isNaN(t) || d < 0) return clock(n.createdAt); if (d < 60000) return 'just now'; if (d < 3600000) return Math.floor(d / 60000) + ' min ago'; return clock(n.createdAt); }
+    if (g === 'Yesterday') return clock(n.createdAt);
+    var k = dayKey(n).split('-'); return k.length === 3 ? (+k[2]) + ' ' + (MON[+k[1] - 1] || '') + ' · ' + clock(n.createdAt) : '';
+  }
   function openSheet() {
-    css();
+    css(); S.filter = 'all';
     if (!S.sheet) {
       S.sheet = $('div', 'amk-sheet');
       S.sheet.onclick = function (e) { if (e.target === S.sheet) closeSheet(); };
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.sheet && S.sheet.classList.contains('open')) closeSheet(); });
       document.body.appendChild(S.sheet);
     }
     paintSheet(); S.sheet.classList.add('open');
   }
   function closeSheet() { if (S.sheet) S.sheet.classList.remove('open'); }
+  function itemHtml(n) {
+    var m = meta(n), go = goOf(n);
+    return '<div class="amk-item' + (n.readAt ? '' : ' unread') + '" data-id="' + hx(n.id) + '" data-k="' + hx(n.kind) + '"' + (go ? ' data-go="' + go + '"' : '') + ' role="button" tabindex="0">' +
+      '<i class="amk-ic amk-k-' + m.c + '" aria-hidden="true">' + m.i + '</i><div class="amk-tx"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' + leaveHtml(n) +
+      '<small>' + hx(ago(n)) + ' · ' + hx(m.l) + (go ? ' · <span class="amk-go">Open ›</span>' : '') + '</small></div><em class="amk-dot" aria-label="Unread"></em></div>';
+  }
   function paintSheet() {
     if (!S.sheet) return;
-    var items = S.notices.map(function (n) {
-      return '<div class="amk-item' + (n.readAt ? '' : ' unread') + '" data-id="' + hx(n.id) + '"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' + leaveHtml(n) + '<small>' + when(n.createdAt) + '</small></div>';
-    }).join('') || '<div class="amk-empty">No messages yet. Reminders will show up here.</div>';
-    S.sheet.innerHTML = '<div class="amk-panel"><div class="amk-head"><b>Messages</b><span><button class="amk-btn" data-act="all">Mark all read</button> <button class="amk-btn" data-act="close">Close</button></span></div>' + items + '</div>';
+    var all = S.notices, f = S.filter || 'all', un = all.filter(function (n) { return !n.readAt; }).length, imp = all.filter(isImp).length;
+    var list = all.filter(function (n) { return f === 'unread' ? !n.readAt : f === 'imp' ? isImp(n) : true; });
+    var body = '', last = '';
+    list.forEach(function (n) { var g = groupOf(n); if (g !== last) { body += '<div class="amk-day">' + g + '</div>'; last = g; } body += itemHtml(n); });
+    if (!body) body = '<div class="amk-empty">' + (f === 'unread' ? 'You are all caught up. 🎉' : f === 'imp' ? 'Nothing important right now.' : 'No messages yet. Reminders will show up here.') + '</div>';
+    var chip = function (k, t) { return '<button type="button" class="amk-chip' + (f === k ? ' on' : '') + '" data-f="' + k + '">' + t + '</button>'; };
+    var keep = 0, old = S.sheet.querySelector('.amk-list'); if (old) keep = old.scrollTop;
+    S.sheet.innerHTML = '<div class="amk-panel" role="dialog" aria-modal="true" aria-label="Messages"><div class="amk-head"><b>Messages' + (un ? '<small>' + un + ' unread</small>' : '') + '</b><span>' +
+      '<button class="amk-btn" data-act="all"' + (un ? '' : ' disabled') + '>Mark all read</button> <button class="amk-btn" data-act="close" aria-label="Close">✕</button></span></div>' +
+      '<div class="amk-chips">' + chip('all', 'All') + chip('unread', 'Unread' + (un ? ' (' + un + ')' : '')) + chip('imp', 'Important' + (imp ? ' (' + imp + ')' : '')) + '</div><div class="amk-list">' + body + '</div></div>';
+    var ls2 = S.sheet.querySelector('.amk-list'); if (ls2 && keep) ls2.scrollTop = keep;
     S.sheet.querySelector('[data-act=close]').onclick = closeSheet;
     S.sheet.querySelector('[data-act=all]').onclick = function () { markRead(null); };
-    Array.prototype.forEach.call(S.sheet.querySelectorAll('.amk-item.unread'), function (el) { el.onclick = function () { markRead([el.getAttribute('data-id')]); }; });
+    Array.prototype.forEach.call(S.sheet.querySelectorAll('.amk-chip'), function (b) { b.onclick = function () { S.filter = b.getAttribute('data-f'); paintSheet(); }; });
+    Array.prototype.forEach.call(S.sheet.querySelectorAll('.amk-item'), function (el) {
+      var act = function () {
+        var id = el.getAttribute('data-id'), go = el.getAttribute('data-go') || '';
+        if (el.classList.contains('unread')) markRead([id]);
+        if (go) { closeSheet(); try { if (window.AmkApp) window.AmkApp.route(go); } catch (e) { } }
+      };
+      el.onclick = act;
+      el.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); act(); } };
+    });
     Array.prototype.forEach.call(S.sheet.querySelectorAll('[data-leave]'), function (b) { b.onclick = function (ev) { ev.stopPropagation(); leaveAnswer(b.getAttribute('data-id'), b.getAttribute('data-leave') === 'yes'); }; });
   }
   /* "You seem to have left at 06:42 PM": two buttons while the prompt is today's and still open */
@@ -138,20 +202,22 @@
   /* ── pop-up for new notices ── */
   function alertedKey() { return 'amk_alerted_' + S.empId; }
   function alertedSet() { try { return JSON.parse(ls(alertedKey()) || '[]'); } catch (e) { return []; } }
-  function popup(n) {
-    css();
+  function popup(n, more) {
+    css(); more = more || 0;
     var old = document.getElementById('amkPop'); if (old) old.remove();
-    var ask = leaveOpen(n);
-    var el = $('div', 'amk-pop', '<b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span><div class="row">' + (ask
-      ? '<button class="amk-btn pri" data-a="yes">Yes, punch out at ' + hx(n.ref) + '</button><button class="amk-btn" data-a="no">Still working</button>'
-      : '<button class="amk-btn pri" data-a="open">Open messages</button><button class="amk-btn" data-a="ok">OK</button>') + '</div>');
-    el.id = 'amkPop';
+    var ask = leaveOpen(n), m = meta(n);
+    var el = $('div', 'amk-pop amk-k-' + m.c, '<i class="amk-ic amk-k-' + m.c + '" aria-hidden="true">' + m.i + '</i><div class="tx"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' +
+      (more > 0 ? '<small>+' + more + ' more new message' + (more > 1 ? 's' : '') + '</small>' : '') + '<div class="row">' + (ask
+        ? '<button class="amk-btn pri" data-a="yes">Yes, punch out at ' + hx(n.ref) + '</button><button class="amk-btn" data-a="no">Still working</button>'
+        : '<button class="amk-btn pri" data-a="open">' + (more > 0 ? 'Open messages' : 'Open messages') + '</button><button class="amk-btn" data-a="ok">OK</button>') + '</div></div>');
+    el.id = 'amkPop'; el.setAttribute('role', 'alert');
     var q = function (a) { return el.querySelector('[data-a=' + a + ']'); };
     if (q('ok')) q('ok').onclick = function () { el.remove(); };
     if (q('open')) q('open').onclick = function () { el.remove(); openSheet(); };
     if (q('yes')) q('yes').onclick = function () { leaveAnswer(n.id, true); };
     if (q('no')) q('no').onclick = function () { leaveAnswer(n.id, false); };
     document.body.appendChild(el);
+    if (!ask && !isImp(n)) setTimeout(function () { if (el.parentNode && !el.matches(':hover')) el.remove(); }, 12000);   // an ordinary message fades by itself; questions and important messages wait for a tap
   }
   /* "Your meeting / site job was ended because you moved away": the page redraws the screen once for each such message, so it stops showing the job as running */
   function endedHook(list) {
@@ -176,7 +242,7 @@
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
       endedHook(S.notices);
-      if (fresh.length) { chime(); popup(fresh[0]); }
+      if (fresh.length) { chime(); if (!(S.sheet && S.sheet.classList.contains('open'))) popup(fresh[0], fresh.length - 1); }   // the list is already open and has just redrawn: no pop-up on top of it
     }).catch(function () { }).then(function () { S.fetching = false; });
   }
 
