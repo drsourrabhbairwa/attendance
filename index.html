@@ -663,6 +663,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 #stCamera .cam-x{display:none}
 .hm-links button.hm-lo{flex:1 1 100%;color:#B42318;border-color:rgba(180,35,24,.25)}
 .wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
+.wm-say{font-size:13px;color:var(--soft);margin:8px 2px 0}.wm-say.bad{color:var(--red);background:var(--redBg);border-radius:12px;padding:9px 12px;font-weight:600;line-height:1.35}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
 .wm-cap{font-size:13px;color:var(--soft);margin:6px 0}.wm-cap b{color:var(--ink,inherit)}
@@ -1650,6 +1651,11 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       <div class="msg msg-error" id="plErr"></div><div class="msg msg-success" id="plOk"></div>
       <div class="pl-row"><button class="pl-btn" id="plSaveBtn" onclick="savePlace()">Save place</button><button class="pl-btn ghost" onclick="plReset()">Clear form</button></div>
       <div class="pl-tip">Tap the map (or drag the pin) to set the centre; stand at the gate and use <b>My location</b> for the best result. Phones read GPS to within about 10–50 m, so use <b>100 m or more</b> for a factory. Switch <b>Strict</b> on only where GPS is reliable; with Strict off, a punch from outside still goes through but your admin is told.</div>
+    </div>
+    <div class="add-form" id="plRuleBox" style="display:none">
+      <label class="pl-lab"><input type="checkbox" id="plModeRule" onchange="saveModeRule(this.checked)" checked> <b>Office work only from an office, Factory work only from a factory</b></label>
+      <div class="pl-tip">When staff choose Office or Factory work — at Work ON, when they switch, or when they start a task — their phone must be inside one of the Offices or Factories added here. With two factories, being inside either one is enough. Work From Home and Field work are never checked, and neither is a kind with no place added yet.</div>
+      <div class="msg msg-error" id="plRuleErr"></div>
     </div>
     <div id="placeList"></div>
   </div>
@@ -5697,9 +5703,15 @@ const canEditPlaces=()=>!!_me&&(_me.role==='S'||_me.role==='A');
 const staffAt=pid=>(_D.employees||[]).filter(e=>placeIds(e).includes(pid));
 function placeApiErr(e){ return e.message; }
 async function refreshPlaces(){ try{ if(USE_SHEETS){ const l=await api('getPlaces',{}); if(l) _D.places=l; } }catch(e){} }
+async function saveModeRule(on){
+  const er=document.getElementById('plRuleErr'), cb=document.getElementById('plModeRule'); if(er) er.classList.remove('show');
+  try{ const v=on?'1':'0'; if(USE_SHEETS) await api('saveSettings',{settings:{modePlace:v}}); _D.settings=Object.assign({},_D.settings,{modePlace:v}); saveCache(); }
+  catch(e){ if(cb) cb.checked=!on; if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
+}
 async function renderPlaces(){
   const el=document.getElementById('placeList'); if(!el) return;
   document.getElementById('placeAddBox').style.display=canEditPlaces()?'block':'none';
+  { const rb=document.getElementById('plRuleBox'); if(rb){ rb.style.display=canEditPlaces()?'block':'none'; document.getElementById('plModeRule').checked=String((_D.settings||{}).modePlace)!=='0'; } }
   await refreshPlaces();
   const list=placesNow();
   if(!list.length){ el.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No offices or factories yet.'+(canEditPlaces()?' Add the first one above.':' The Super Admin adds them.')+'</div>'; return; }
@@ -6612,9 +6624,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.4';</script>
-<script src="notify.js?v=2026-10-28.4"></script>
-<script src="appstore.js?v=2026-10-28.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.5';</script>
+<script src="notify.js?v=2026-10-28.5"></script>
+<script src="appstore.js?v=2026-10-28.5"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
@@ -7526,7 +7538,7 @@ function wmHoursHtml(){ const h=wmLive(); return `<div class="wm-hrs"><div><b id
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, lock=!!_wm.open;
-  return (lock?'':`<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',false,'sm')}</div>`)+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+  return (lock?'':`<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',false,'sm')}</div>`)+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(_wm.say?`<div class="wm-say${_wm.say.bad?' bad':''}" role="status">${hx(_wm.say.t)}</div>`:'')+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
 }
 /* Work ON: the kind of work is chosen right on the Today card; one tap opens the camera, which takes the photo by itself */
 function wmStartHtml(){
@@ -7556,10 +7568,22 @@ function wmPickReset(){
   if(_wm.pre){ const k=_wm.pre; _wm.pre=''; wmPickSet(k); }   // chosen on the Today card already
 }
 function wmPickSet(k){ if(_pc.t) pcArm(); _wm.pick=k; document.querySelectorAll('#wmPick .wm-opt').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); const e=document.getElementById('camErr'); if(e) e.classList.remove('show'); }
+/* Office and Factory work are for someone standing at an office / a factory: the phone's place goes with the request and the server says if it is the wrong place
+   ("You are not at the factory …"). The message is written on the card, under the mode buttons, where the person is looking. */
+const wmPlaced=k=>k==='office'||k==='factory';
+async function wmLoc(){ try{ const f=await freshFix(); return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),accuracy:f.acc||0}; }catch(e){ return {lat:'',lng:'',accuracy:0}; } }   // no reading = an empty place, which the server refuses for these two
+function wmSay(t,bad){
+  _wm.say=t?{t:t,bad:!!bad}:null; try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
+  if(t&&bad) setTimeout(()=>{ if(_wm.say&&_wm.say.t===t) wmSay(''); },25000);
+}
+const wmPlaceMsg=m=>/not at the (factory|office)|Location is required/i.test(String(m||''));
 async function wmSetMode(k){
   if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
-  try{ await api('setDayMode',{empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k}); _wm.mode=k; await wmLoad(); }
-  catch(e){ alert(e.message||'Could not change the mode.'); }
+  try{
+    let loc={}; if(wmPlaced(k)){ wmSay('📍 Checking your location…'); loc=await wmLoc(); }
+    await api('setDayMode',Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k},loc)); _wm.mode=k; _wm.say=null; await wmLoad();
+  }
+  catch(e){ if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true); else{ wmSay(''); alert(e.message||'Could not change the mode.'); } }
   finally{ _wm.busy=false; }
 }
 
@@ -7619,12 +7643,17 @@ async function wmTaskGo(){
   const k=_fm.task, cl=wtClient(_wm.mode||'office',k), g=id=>((document.getElementById(id)||{}).value||'').trim();
   if(wtText(_wm.mode||'office',k)&&!g('fmOther')) return fmErr(wtTextErr(k));
   if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
-  if(_wm.busy) return; _wm.busy=true; fmErr('Starting…');
+  if(_wm.busy) return; _wm.busy=true; fmErr(wmPlaced(_wm.mode)?'Checking your location…':'Starting…');
   try{
     const body={empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:_wm.mode,kind:k,kindOther:g('fmOther'),wid:_fm.wid};
+    if(wmPlaced(_wm.mode)){ if(!document.getElementById('fmErr')) wmSay('📍 Checking your location…'); Object.assign(body,await wmLoc()); }
     if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
-    await api('workStart',body); fmClose(); await wmLoad();
-  }catch(e){ if(document.getElementById('fmErr')) fmErr(e.message||'Could not start.'); else alert(e.message||'Could not start.'); if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
+    await api('workStart',body); fmClose(); _wm.say=null; await wmLoad();
+  }catch(e){
+    if(document.getElementById('fmErr')) fmErr(e.message||'Could not start.');
+    else if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true);
+    else{ wmSay(''); alert(e.message||'Could not start.'); }
+    if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
   finally{ _wm.busy=false; }
 }
 async function wmItem(action,extra){
