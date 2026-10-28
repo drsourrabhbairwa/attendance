@@ -1,1 +1,1 @@
-{"web": "2026-10-28.2", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Leave rules: CL ask 2 days before, VL 30 days before; Medical leave: upload medical documents in the app within 7 days, admin approves only after; admin edits the numbers"}
+{"web": "2026-10-28.3", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Medical documents stay in the cloud only for a limited time (admin sets the days, default 15) — download them within that time; a site job or meeting the person walked away from is ended automatically"}

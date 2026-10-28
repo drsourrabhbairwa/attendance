@@ -234,6 +234,8 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .lv-doc.bad{background:var(--redBg);color:var(--red)}
 .lv-doc.ok{background:var(--greenBg);color:var(--green)}
 .lv-doc a{color:inherit;text-decoration:underline;font-weight:700}
+.lv-keep{flex-basis:100%;font-weight:600;font-size:11.5px;opacity:.9}
+.lv-keep.soon{color:var(--amber);font-weight:700}
 .lv-up{padding:6px 11px;border:none;border-radius:var(--rs);background:var(--accent);color:#fff;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;min-height:34px}
 /* Balance grid */
 .bal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
@@ -1575,11 +1577,12 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">Leave year starts</label><select id="lpSm"></select></div>
       </div>
       <div style="font-weight:700;font-size:13px;margin:16px 0 4px">Rules for asking</div>
-      <p style="font-size:12px;color:var(--soft);margin-bottom:6px">Casual and vacation leave have to be asked for in time. Medical leave cannot be asked for in advance: after the employee asks, they upload their medical documents in the app, and you can approve the leave only once they are there. Put 0 to switch a rule off.</p>
+      <p style="font-size:12px;color:var(--soft);margin-bottom:6px">Casual and vacation leave have to be asked for in time. Medical leave cannot be asked for in advance: after the employee asks, they upload their medical documents in the app, and you can approve the leave only once they are there. The files are not kept for good: they are deleted from the cloud after the number of days you set, so download what you need before then. Put 0 to switch a rule off (not for the days the files stay).</p>
       <div class="ru-grid">
         <div><label style="margin:0 0 4px">CL: ask at least … days before</label><input type="number" id="lpClN" min="0" max="365"></div>
         <div><label style="margin:0 0 4px">VL: ask at least … days before <span style="font-weight:400">(30 ≈ 1 month)</span></label><input type="number" id="lpVlN" min="0" max="365"></div>
         <div><label style="margin:0 0 4px">ML: days to upload medical documents</label><input type="number" id="lpMlD" min="0" max="60"></div>
+        <div><label style="margin:0 0 4px">ML: days the files stay in the cloud <span style="font-weight:400">(then deleted)</span></label><input type="number" id="lpMlK" min="1" max="90"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button onclick="saveLeavePolicy()" style="padding:9px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Save policy</button><span id="lpMsg" style="font-size:12px;color:var(--green)"></span></div>
       <div style="font-weight:700;font-size:13px;margin:16px 0 4px">Extra days for one person</div>
@@ -1736,7 +1739,9 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">Reports &amp; reminders go by</label><select id="alVia" style="margin-top:0"><option value="push">Phone notification only</option><option value="both">Notification and e-mail</option><option value="mail">E-mail only (old way)</option></select></div>
         <div><label style="margin:0 0 4px">Forgot-to-punch-out check starts at</label><input type="text" id="alLeftAt" placeholder="04:00 PM"></div>
         <div><label style="margin:0 0 4px">“Has left” means farther than (metres)</label><input type="number" id="alLeftDist" min="100" step="50" placeholder="300"></div>
+        <div><label style="margin:0 0 4px">End a site job / meeting that was walked away from after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
       </div>
+      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work or a meeting and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away, it is ended at the time of the first one (shown as “Auto”) and the person is told. Needs the phone's location checks to be running.</p>
       <label class="al-chk"><input type="checkbox" id="alLeftAsk"> Ask a person “You seem to have left. Punch out?” when their phone is far from the workplace after that time</label>
       <label class="al-chk"><input type="checkbox" id="alLeftAuto"> If they do not answer and are still away after closing time, punch them out automatically (shown as “Auto”)</label>
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
@@ -2463,7 +2468,7 @@ function leaveBal(empId,type,asOf){
 /* ── Rules the admin sets (same as the server): how early CL / VL must be asked for; medical leave cannot be asked for in advance and has days to upload its documents ── */
 function leaveRules(){
   const st=_D.settings||{}, n=(k,d)=>{ const v=parseInt(st[k]); return isNaN(v)?d:Math.max(0,v); };
-  return {cl:n('clNoticeDays',2),vl:n('vlNoticeDays',30),mlDays:n('mlDocDays',7)};
+  return {cl:n('clNoticeDays',2),vl:n('vlNoticeDays',30),mlDays:n('mlDocDays',7),keepDays:Math.max(1,n('mlKeepDays',15))};
 }
 const MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function niceDay(ds){ return +ds.slice(8,10)+' '+MON3[+ds.slice(5,7)-1]+' '+ds.slice(0,4); }
@@ -2479,7 +2484,7 @@ function noticeProblem(type,from){
 }
 function lvRuleText(type){
   const R=leaveRules(), t=todayStr();
-  if(type==='ML') return 'Medical leave cannot be asked for in advance — pick today or a day that has passed.'+(R.mlDays?' After you ask, upload your medical documents in the app within '+R.mlDays+' days (by '+niceDay(isoAdd(t,R.mlDays))+'); the office can approve it only after that.':'');
+  if(type==='ML') return 'Medical leave cannot be asked for in advance — pick today or a day that has passed.'+(R.mlDays?' After you ask, upload your medical documents in the app within '+R.mlDays+' days (by '+niceDay(isoAdd(t,R.mlDays))+'); the office can approve it only after that. The files are deleted from the cloud '+R.keepDays+' days after your last upload.':'');
   const need=type==='CL'?R.cl:R.vl;
   return need?(type==='CL'?'Casual leave':'Vacation leave')+' has to be asked for at least '+need+' day'+_s(need)+' before it starts — the earliest first day is '+niceDay(isoAdd(t,need))+'.':'';
 }
@@ -3033,7 +3038,7 @@ async function setEmpDept(id,val){
 function initAlerts(){
   const s=_D.settings||{}, g=id=>document.getElementById(id); if(!g('alMail')) return;
   g('alMail').value=s.adminEmail||''; g('alInAt').value=s.remindInAt||'10:00 AM'; g('alOutAt').value=s.remindOutAt||'07:30 PM'; g('alSumAt').value=s.absentSummaryAt||'10:30 AM'; g('alSilent').value=s.silentMins||90; g('alPhone').value=s.adminPhone||''; g('alSos').value=s.sosNumber||'';
-  g('alVia').value=['push','both','mail'].indexOf(s.reportVia)>=0?s.reportVia:'push'; g('alLeftAt').value=s.leftFromAt||'04:00 PM'; g('alLeftDist').value=s.leftDist||300;
+  g('alVia').value=['push','both','mail'].indexOf(s.reportVia)>=0?s.reportVia:'push'; g('alLeftAt').value=s.leftFromAt||'04:00 PM'; g('alLeftDist').value=s.leftDist||300; g('alAwayN').value=(s.awayStopChecks===undefined||s.awayStopChecks==='')?2:s.awayStopChecks;
   g('alLeftAsk').checked=s.leftPrompt!=='0'; g('alLeftAuto').checked=s.leftAuto!=='0';
   g('alRem').checked=s.reminders!=='0'; g('alSite').checked=s.alertsSite!=='0'; g('alDrive').checked=s.photosToDrive!=='0';
   g('alWeekly').checked=s.weeklyEmail!=='0'; g('alBday').checked=s.birthdayMail!=='0';
@@ -3051,7 +3056,7 @@ function alertSettings(){
   if(mail&&!/^\S+@\S+\.\S+$/.test(mail)) return {error:'Your e-mail does not look right.'};
   if(!inAt||!outAt||!sumAt) return {error:'Times like 07:30 PM.'};
   const leftAt=normTime(g('alLeftAt').value); if(!leftAt) return {error:'The forgot-to-punch-out time should look like 04:00 PM.'};
-  return {settings:{reportVia:g('alVia').value,leftFromAt:leftAt,leftDist:String(Math.max(100,parseInt(g('alLeftDist').value)||300)),leftPrompt:g('alLeftAsk').checked?'1':'0',leftAuto:g('alLeftAuto').checked?'1':'0',adminEmail:mail,remindInAt:inAt,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),adminPhone:g('alPhone').value.trim(),sosNumber:g('alSos').value.replace(/[^\d+]/g,''),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
+  return {settings:{reportVia:g('alVia').value,leftFromAt:leftAt,leftDist:String(Math.max(100,parseInt(g('alLeftDist').value)||300)),awayStopChecks:String((n=>isNaN(n)?2:Math.max(0,Math.min(6,n)))(parseInt(g('alAwayN').value))),leftPrompt:g('alLeftAsk').checked?'1':'0',leftAuto:g('alLeftAuto').checked?'1':'0',adminEmail:mail,remindInAt:inAt,remindOutAt:outAt,absentSummaryAt:sumAt,silentMins:String(Math.max(30,parseInt(g('alSilent').value)||90)),adminPhone:g('alPhone').value.trim(),sosNumber:g('alSos').value.replace(/[^\d+]/g,''),reminders:g('alRem').checked?'1':'0',alertsSite:g('alSite').checked?'1':'0',weeklyEmail:g('alWeekly').checked?'1':'0',birthdayMail:g('alBday').checked?'1':'0',photosToDrive:g('alDrive').checked?'1':'0',appUrl:location.href.split('#')[0].split('?')[0]}};
 }
 async function saveAlerts(quiet){
   const err=document.getElementById('alErr'), ok=document.getElementById('alOk'); err.classList.remove('show'); ok.classList.remove('show');
@@ -4457,7 +4462,9 @@ async function doSiteChecks(){
           const dist=Math.round(distMeters(sw.siteLat,sw.siteLng,pos.lat,pos.lng));
           // "outside" only when even the GPS error margin can't put the reading inside the radius
           const R=sw.radius||SITE_RADIUS, status=dist<=R?'YES':dist-(pos.acc||0)>R?'NO':'ROUGH';
-          if(USE_SHEETS) await api('logSitePing',Object.assign(base,{lat:pos.lat.toFixed(6),lng:pos.lng.toFixed(6),area,distMeters:dist,status,withinBound:status==='YES',accuracy:pos.acc}));
+          let rp=null;
+          if(USE_SHEETS) rp=await api('logSitePing',Object.assign(base,{lat:pos.lat.toFixed(6),lng:pos.lng.toFixed(6),area,distMeters:dist,status,withinBound:status==='YES',accuracy:pos.acc}));
+          if(rp&&rp.stopped){ siteEndedByServer(sw); continue; }   // the job was ended for this person (they moved away from the site)
           Object.assign(sw,{failAt:0,alert:'',nextCheckAt:startedAt+nextGapMs()});
         }else{
           // no location: the office is told (at most once an hour) and the phone retries every few minutes
@@ -4471,10 +4478,36 @@ async function doSiteChecks(){
     }
   }finally{ pingBusy=false; updateSiteBar(); }
 }
+/* A site job the office side ended (the person walked away from the site and did not stop it): forget it here too, and stop the phone's tracker */
+function siteEndedByServer(sw){
+  swDel(sw.empId); nativeStop(sw.id);
+  const eid=swKey(sw.empId);
+  _D.siteActive=(_D.siteActive||[]).filter(x=>!(swKey(x.empId)===eid&&x.date===sw.date)); saveCache();
+  updateSiteBar();
+  const ok=document.getElementById('camOk'); if(ok){ ok.textContent='🔵 Site work was stopped automatically because your phone moved away from the site. Start it again if you are on a site.'; ok.classList.add('show'); }
+  if(currentEmp&&swKey(currentEmp.id)===swKey(sw.empId)) setTimeout(()=>{ try{ loadCameraScreen(); }catch(e){} },1500);
+}
+/* While the phone's own tracker does the checks this page does not hear the server's answer: ask now and then which of my jobs are still running */
+const _siteOpenAt={}; let _siteOpenBusy=false;
+async function reconcileSites(){
+  if(!USE_SHEETS||_siteOpenBusy||!currentEmp) return;
+  const list=swAll().filter(x=>x.mode!=='auto'&&Date.now()-(_siteOpenAt[x.id]||0)>=5*60000);
+  if(!list.length) return;
+  _siteOpenBusy=true;
+  try{
+    for(const sw of list){
+      _siteOpenAt[sw.id]=Date.now();
+      let t=null; try{ t=await api('myTrail',{empId:sw.empId,date:sw.date}); }catch(e){ continue; }   // no internet: try again later
+      const cur=swGet(sw.empId); if(!cur||cur.id!==sw.id) continue;   // stopped by the person meanwhile
+      if(t&&Array.isArray(t.open)&&t.open.indexOf(sw.id)<0) siteEndedByServer(sw);
+    }
+  }finally{ _siteOpenBusy=false; }
+}
 function siteTick(){
   autoTimeUp();
   const list=swAll();
   if(!list.length){ if(siteTimer){ clearInterval(siteTimer); siteTimer=null; } updateSiteBar(); return; }
+  reconcileSites();
   if(!pingBusy&&list.some(s=>!nativeRunning(s)&&Date.now()>=(s.nextCheckAt||0)-30000)) doSiteChecks(); else updateSiteBar();
 }
 function startSiteTimer(){ if(!siteTimer) siteTimer=setInterval(siteTick,60000); }
@@ -5140,13 +5173,13 @@ async function decideLeave(id,status){
 function initLeavePolicy(){
   const P=leavePolicy(), g=id=>document.getElementById(id); if(!g('lpCl')) return;
   g('lpCl').value=P.cl; g('lpVl').value=P.vl; g('lpMl').value=P.ml;
-  { const R=leaveRules(); g('lpClN').value=R.cl; g('lpVlN').value=R.vl; g('lpMlD').value=R.mlDays; }
+  { const R=leaveRules(); g('lpClN').value=R.cl; g('lpVlN').value=R.vl; g('lpMlD').value=R.mlDays; g('lpMlK').value=R.keepDays; }
   g('lpSm').innerHTML=MONTH_NAMES.map((m,i)=>`<option value="${i+1}"${i+1===P.sm?' selected':''}>${m}</option>`).join('');
 }
 async function saveLeavePolicy(){
   const g=id=>document.getElementById(id), msg=g('lpMsg');
   const v=(id,lo,hi,d)=>{ const n=parseInt(g(id).value); return String(isNaN(n)?d:Math.max(lo,Math.min(hi,n))); };
-  const settings={clPerMonth:v('lpCl',0,10,2),vlYear:v('lpVl',0,60,5),mlYear:v('lpMl',0,60,5),leaveYearStart:v('lpSm',1,12,1),clNoticeDays:v('lpClN',0,365,2),vlNoticeDays:v('lpVlN',0,365,30),mlDocDays:v('lpMlD',0,60,7)};
+  const settings={clPerMonth:v('lpCl',0,10,2),vlYear:v('lpVl',0,60,5),mlYear:v('lpMl',0,60,5),leaveYearStart:v('lpSm',1,12,1),clNoticeDays:v('lpClN',0,365,2),vlNoticeDays:v('lpVlN',0,365,30),mlDocDays:v('lpMlD',0,60,7),mlKeepDays:v('lpMlK',1,90,15)};
   loading(true,'Saving…');
   try{ if(USE_SHEETS) await api('saveSettings',{settings}); _D.settings=Object.assign({},_D.settings,settings); saveCache(); loading(false); msg.textContent='✅ Saved'; setTimeout(()=>msg.textContent='',2500); initLeavePolicy(); }
   catch(e){ loading(false); msg.style.color='var(--red)'; msg.textContent=e.message; }
@@ -5208,14 +5241,21 @@ function lvDocDue(l){   // the last day to upload; '' when none are needed
   const asked=String(l.requestedAt||'').slice(0,10);
   return l.docsDue||(asked?isoAdd(asked,R.mlDays):'');
 }
-function lvNeedsDocs(l){ return l.type==='ML'&&l.status==='pending'&&!!lvDocDue(l)&&!lvDocLinks(l).length; }
+function lvNeedsDocs(l){ return l.type==='ML'&&l.status==='pending'&&!!lvDocDue(l)&&!lvDocLinks(l).length&&!l.docsGone; }
+function lvDocDeleteOn(l){   // the day the files leave the cloud
+  const from=String(l.docsAt||'').slice(0,10)||String(l.requestedAt||'').slice(0,10);
+  return from?isoAdd(from,leaveRules().keepDays):'';
+}
 function lvDocHtml(l,who){
   if(l.type!=='ML') return '';
   const links=lvDocLinks(l), open=l.status==='pending', emp=who==='emp';
   if(links.length){
     const files=links.map((u,i)=>/^https:\/\//.test(u)?`<a href="${hx(u)}" target="_blank" rel="noopener">File ${i+1}</a>`:`<span>File ${i+1}</span>`).join(' · ');
-    return `<div class="lv-doc ok"><span>📎 Documents uploaded (${links.length}) · ${files}</span>${emp&&open&&links.length<5?`<button class="lv-up" onclick="lvPickDoc('${esc(l.id)}')">+ Add another</button>`:''}</div>`;
+    const on=lvDocDeleteOn(l), left=on?dayGap(todayStr(),on):99, soon=left<=3;
+    const keep=on?`<span class="lv-keep${soon?' soon':''}">${emp?'Deleted from the cloud':'Download them'} ${left<=0?(emp?'today':'today — they are deleted tonight'):emp?'on '+niceDay(on):'within '+left+' day'+_s(left)+' — deleted on '+niceDay(on)}</span>`:'';
+    return `<div class="lv-doc ok"><span>📎 Documents uploaded (${links.length}) · ${files}</span>${emp&&open&&links.length<5?`<button class="lv-up" onclick="lvPickDoc('${esc(l.id)}')">+ Add another</button>`:''}${keep}</div>`;
   }
+  if(l.docsGone) return `<div class="lv-doc ok"><span>📎 Documents were received · deleted from the cloud on ${niceDay(String(l.docsGone).slice(0,10))}</span></div>`;
   const due=lvDocDue(l); if(!open||!due) return '';
   const left=dayGap(todayStr(),due), late=left<0;
   const when=late?'overdue by '+(-left)+' day'+_s(-left):left===0?'due today':'due '+niceDay(due)+' · '+left+' day'+_s(left)+' left';
@@ -6335,7 +6375,7 @@ function siteBodyHtml(d){
     const img=src=>src?`<img src="${src}" alt="">`:'<div class="sd-noimg">👤</div>';
     const acc=a=>a!==''&&a!==undefined&&a!==null?' · GPS ±'+a+'m':'';
     const mapA=(a,b)=>a?` <a class="map-link" href="${mapsUrl(a,b)}" target="_blank">📍 Map</a>`:'';
-    const stopHtml=s.stopTime?`<b>⏹ Stopped ${fmt12(s.stopTime)}</b><div>📍 ${hx(s.stopArea||'—')}${acc(s.stopAcc)}</div><div>${mapA(s.stopLat,s.stopLng)}</div>`
+    const stopHtml=s.stopTime?`<b>⏹ Stopped ${fmt12(s.stopTime)}${s.stopAuto?' · <span style="color:var(--blue,#2563eb)">Auto (walked away)</span>':''}</b><div>📍 ${hx(s.stopArea||'—')}${acc(s.stopAcc)}</div><div>${mapA(s.stopLat,s.stopLng)}</div>`
       :running?(isToday?'<b style="color:var(--orange)">🟡 Still on site</b>':'<b style="color:var(--red)">⚠️ Never stopped</b>'):'—';
     return `<div style="font-weight:700;font-size:14px">${hx(s.name||'')} <span style="font-weight:400;color:var(--soft)">· ${hx(s.date||'')}</span></div>
       ${s.empId&&running&&isToday?`<button class="btn btn-outline" style="margin:8px 0" onclick="askCheck('${esc(s.empId)}')">📍 Check now — ask ${hx(s.name||'')} to confirm location</button>`:''}
@@ -6512,9 +6552,9 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.2';</script>
-<script src="notify.js?v=2026-10-28.2"></script>
-<script src="appstore.js?v=2026-10-28.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-28.3';</script>
+<script src="notify.js?v=2026-10-28.3"></script>
+<script src="appstore.js?v=2026-10-28.3"></script>
 <style>
 
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
