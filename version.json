@@ -1,1 +1,1 @@
-{"web": "2026-10-29.5", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "On the way between places (auto), plan a task at another place with green Start on arrival, next follow-up date on client tasks"}
+{"web": "2026-10-29.6", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "A task stays where it was started: it pauses when you move away, runs again when you come back, ends by itself after an hour away (day and night). Client sheet shows the chosen client at the top; the bottom bar hides while scrolling. Security clean-up."}

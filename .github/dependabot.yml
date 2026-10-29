@@ -1,0 +1,13 @@
+# Keeps the build tools of the Android app and the GitHub workflow actions up to date: a pull request is opened when a new version or a security fix is out.
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

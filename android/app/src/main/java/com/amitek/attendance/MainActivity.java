@@ -354,6 +354,10 @@ public class MainActivity extends Activity {
                     final String job = (title == null || title.isEmpty()) ? "Attendance" : title;
                     final boolean[] started = {false};
                     WebView pv = new WebView(MainActivity.this);
+                    // The print copy is only text and tables built by the page: no script, and no files, ever run inside it.
+                    pv.getSettings().setJavaScriptEnabled(false);
+                    pv.getSettings().setAllowFileAccess(false);
+                    pv.getSettings().setAllowContentAccess(false);
                     pv.setWebViewClient(new WebViewClient() {
                         @Override public void onPageFinished(WebView v, String url) {
                             if (started[0]) return;
