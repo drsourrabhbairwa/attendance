@@ -1828,11 +1828,11 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <div class="add-form" id="plGpsBox" style="display:none">
       <label class="pl-lab"><input type="checkbox" id="plGpsOff" onchange="saveGpsOff(this.checked)" checked> <b>Location off: tell the staff, then the owner, then close the day</b></label>
-      <div class="pl-tip">While Work is ON (Office, Factory or Work From Home), if the phone sends no real location for the minutes set below, the person gets a message, then you and their supervisor get an e-mail, and if it stays off the day is closed at the last real location and marked Auto (the person can tap Resume work if that is wrong). Field work, meetings and customer visits are never touched. A phone that sends nothing at all (switched off, no signal, app closed) counts the same way.</div>
+      <div class="pl-tip">While Work is ON (Office or Factory), if the phone sends no real location for the minutes set below, the person gets a message, then you and their supervisor get an e-mail. The day is never closed in the middle of the day: only if the location is still off at office end, the day is closed at the last real location (or at office end if the phone never sent one) and marked Auto. The person can tap Resume work or ask for a Fix punch if that is wrong. Work From Home, Field work, meetings and customer visits are never touched.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;align-items:end">
         <div><label style="margin:0 0 4px">Tell the staff after (min)</label><input type="number" id="plGpsWarn" min="5" max="240" inputmode="numeric" placeholder="45"></div>
         <div><label style="margin:0 0 4px">Tell the owner after (min)</label><input type="number" id="plGpsAlert" min="5" max="480" inputmode="numeric" placeholder="90"></div>
-        <div><label style="margin:0 0 4px">Close the day after (min, 0 = never)</label><input type="number" id="plGpsAuto" min="0" max="600" inputmode="numeric" placeholder="120"></div>
+        <div><label style="margin:0 0 4px">At office end, close if off for (min, 0 = never)</label><input type="number" id="plGpsAuto" min="0" max="600" inputmode="numeric" placeholder="120"></div>
       </div>
       <div class="pl-row" style="margin-top:8px"><button class="pl-btn" id="plGpsNumsBtn" onclick="saveGpsNums()">Save</button></div>
       <div class="msg msg-error" id="plGpsErr"></div>
@@ -3593,7 +3593,7 @@ function renderHomeToday(rec,dayOff,noLoad){
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
     const amB=W&&am&&am.state==='done'?null:am;   // a finished field item is in the timeline; the block goes back to the idle choices
-    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?(offBtn=wmOffBtn(),wmModeHtml()+wmTimeline()):btn('📸 Punch Out','btn-blue',true));
+    b=amB?(pers?'':fmCardHtml(am))+(W&&am.state==='in_meeting'&&!pers?'':btn(W&&!pers?(am.state==='done'?'🔙 Done with field work':'🔙 Cancel trip — I am back'):'🔙 I am back — confirm',pers||am.state!=='done'&&am.state!=='in_meeting'&&!am.customerId?'btn-purple':'btn-outline')):(W?(offBtn=wmOffBtn(),wmModeHtml()+wmTimeline()):`<button class="btn btn-blue" style="margin-top:14px" onclick="offGuard(()=>openPunch('auto'))">📸 Punch Out</button>`);
   } else { title=W?'Work is OFF':'Not punched in yet'; sub='Office starts at '+set.start; b=W?wmStartHtml():btn('📸 Punch In','btn-green',true); }
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
@@ -5986,7 +5986,7 @@ async function saveGpsOff(on){
 async function saveGpsNums(){
   const er=document.getElementById('plGpsErr'); if(er) er.classList.remove('show');
   const w=Math.round(Number(document.getElementById('plGpsWarn').value||45)), a=Math.round(Number(document.getElementById('plGpsAlert').value||90)), c=Math.round(Number(document.getElementById('plGpsAuto').value===''?120:document.getElementById('plGpsAuto').value));
-  const bad=!(w>=5&&w<=240)?'Tell the staff after: 5 to 240 minutes.':!(a>=w&&a<=480)?'Tell the owner after: at least the staff time, up to 480 minutes.':!(c===0||(c>=a&&c<=600))?'Close the day after: 0 (never) or at least the owner time, up to 600 minutes.':'';
+  const bad=!(w>=5&&w<=240)?'Tell the staff after: 5 to 240 minutes.':!(a>=w&&a<=480)?'Tell the owner after: at least the staff time, up to 480 minutes.':!(c===0||(c>=a&&c<=600))?'Close at office end if off for: 0 (never) or at least the owner time, up to 600 minutes.':'';
   if(bad){ if(er){ er.textContent=bad; er.classList.add('show'); } return; }
   try{ const st={gpsOffWarn:String(w),gpsOffAlert:String(a),gpsOffAuto:String(c)}; if(USE_SHEETS) await api('saveSettings',{settings:st}); _D.settings=Object.assign({},_D.settings,st); saveCache(); safToast('Saved'); }
   catch(e){ if(er){ er.textContent=e.message||'Could not save.'; er.classList.add('show'); } }
@@ -6910,10 +6910,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-29.1';</script>
-<script src="notify.js?v=2026-10-29.1"></script>
-<script src="appstore.js?v=2026-10-29.1"></script>
-<script src="policy-lib.js?v=2026-10-29.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-29.2';</script>
+<script src="notify.js?v=2026-10-29.2"></script>
+<script src="appstore.js?v=2026-10-29.2"></script>
+<script src="policy-lib.js?v=2026-10-29.2"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -8101,7 +8101,15 @@ function wmStartHtml(){
 function wmStartMode(k){ if(_opBusy||_wm.busy) return; _wm.pre=k; openPunch('auto'); }
 /* Work OFF: a task still running is finished (with its note) in the same step, then the camera opens */
 function wmOffBtn(){ return `<button type="button" class="hm-off" onclick="wmOffTap()">⏹ Work OFF</button>`; }
-function wmOffTap(){ if(_wm.open) return wmOffAsk(); openPunch('auto'); }
+function wmOffTap(){ offGuard(()=>{ if(_wm.open) return wmOffAsk(); openPunch('auto'); }); }
+/* A Work OFF within 15 minutes of Work ON is nearly always a stray tap (the camera takes the photo by itself): ask once first */
+const OFF_GUARD_MIN=15;
+function offGuard(go){
+  const r=_hmRec, m=r&&r.punchIn&&!r.punchOut?hmSince(r.punchIn.time):OFF_GUARD_MIN;
+  if(m>=OFF_GUARD_MIN) return go();
+  window._offGo=go;
+  fmSheet(`<h3>Work OFF now?</h3><p style="margin:0 0 12px;color:var(--soft)">You started work only <b>${hmDur(m)}</b> ago (${hmClk(r.punchIn.time)}). Work OFF ends your day.</p><button class="btn btn-blue" style="width:100%" onclick="fmClose();const g=window._offGo;window._offGo=null;if(g)g()">Yes, Work OFF</button><button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="window._offGo=null;fmClose()">No, keep working</button>`);
+}
 function wmOffAsk(){
   const o=_wm.open; if(!o) return openPunch('auto');
   fmSheet(`<h3>Work OFF</h3><div class="fm-lbl">“${hx(wmLbl(o))}” is still running. How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmOffGo()">⏹ Save and Work OFF</button>`);
@@ -8243,7 +8251,7 @@ const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused
 const LV_ORDER=['active','meeting','travelling','paused','idle','notin','leave','out'];
 let _lv={data:null,filter:'all',dept:'',q:'',timer:null,busy:false,again:false,date:'',sel:'',site:{},tl:'all',pd:null,pn:0};
 const IDLE_FLAG=30;   // minutes of idle time after which a card turns red
-const liveDur=m=>m==null?'':m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m';
+const liveDur=m=>{ if(m==null||m==='') return ''; m=Math.max(0,Math.round(+m||0)); return m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m'; };
 const liveWa=ph=>{ const d=String(ph||'').replace(/\D/g,''); return d.length===10?'91'+d:d.length>=11?d:''; };
 const lvDay=()=>_lv.date||todayStr();
 const lvIsToday=()=>lvDay()===todayStr();
