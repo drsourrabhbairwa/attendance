@@ -678,6 +678,7 @@ body[data-screen="loginScreen"],body[data-screen="setupScreen"]{background:linea
 .hm-links button.hm-lo{flex:1 1 100%;color:#B42318;border-color:rgba(180,35,24,.25)}
 .wm-one{display:block}.wm-tag{font-size:12px;color:var(--soft);margin:6px 2px 0;min-height:0}.wm-tag:empty{display:none}
 .wm-away{margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:12.5px;font-weight:600;line-height:1.35}.wm-away small{display:block;font-weight:500;opacity:.85;margin-top:2px}
+.wm-plan{border-color:rgba(25,118,210,.35)}.wm-plan.ready{border-color:rgba(22,160,90,.55)}.wm-wait{opacity:.72}.wm-link{display:block;margin-top:8px;background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--blue);text-decoration:underline;cursor:pointer}.wm-pp{margin:0 0 10px;color:var(--soft);font-size:13.5px;line-height:1.4}
 .wm-say{font-size:13px;color:var(--soft);margin:8px 2px 0}.wm-say.bad{color:var(--red);background:var(--redBg);border-radius:12px;padding:9px 12px;font-weight:600;line-height:1.35}
 .wm-q{font-size:13px;font-weight:700;color:var(--ink2);margin:10px 0 2px}.wm-q span{font-weight:500;color:var(--soft)}
 .wm-warn{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-size:13px;font-weight:600;overflow-wrap:anywhere}
@@ -1817,7 +1818,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <div class="add-form" id="plAwayBox" style="display:none">
       <label class="pl-lab"><input type="checkbox" id="plAwayCut" onchange="saveAwayCut(this.checked)" checked> <b>Cut working hours for time away from the office, factory or home</b></label>
-      <div class="pl-tip">On an Office or Factory day, time outside every office and factory added here comes off the day's hours once it lasts the minutes set below (from the first location check outside until a check is back inside, or until Work OFF). Going from one office or factory to another, for example factory to office, is <b>Travelling</b>: it shows as Travelling on the Live tab and is cut however short. On a Work From Home day, time more than 300 m from where WFH began counts as away. Meetings, customer visits, personal work and Field work are never cut. The person gets a message once the phone has been away for 10 minutes, so they can start a meeting or switch to Field work.</div>
+      <div class="pl-tip">On an Office or Factory day, time outside every office and factory added here comes off the day's hours once it lasts the minutes set below (from the first location check outside until a check is back inside, or until Work OFF). Going from one office or factory to another, for example factory to office, is <b>Travelling</b>: it shows as On the way on the Live tab and is cut however short. Someone at the office can also plan a factory task (or the other way round): the Live tab shows them on the way to it, and Start turns green on their phone once they reach the place. On a Work From Home day, time more than 300 m from where WFH began counts as away. Meetings, customer visits, personal work and Field work are never cut. The person gets a message once the phone has been away for 10 minutes, so they can start a meeting or switch to Field work.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
         <div><label style="margin:0 0 4px">Location check every (minutes)</label><input type="number" id="plCheckEvery" min="2" max="60" inputmode="numeric" placeholder="5"></div>
         <div><label style="margin:0 0 4px">Cut time outside after (minutes)</label><input type="number" id="plAwayMins" min="0" max="240" inputmode="numeric" placeholder="30"></div>
@@ -3541,7 +3542,7 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
-    otTick(); try{ wmTick(); }catch(e){} try{ hmHeadTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){}
+    otTick(); try{ wmTick(); }catch(e){} try{ hmHeadTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){} try{ wmPlanPoll(); wmTravTick(); }catch(e){}
     if(Date.now()-LOCG.checkAt>300000) locGuardCheck('tick');
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
@@ -3621,13 +3622,21 @@ function hmMeetRun(m){   // active minutes of a started meeting, without the pau
 /* GPS "you reached the customer" is remembered for the day, so reopening the app still shows Reached */
 const fmArrK=()=>currentEmp?'fmarr_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
 function fmArrAt(m){ if(!m) return ''; if(m.arrivedAt) return m.arrivedAt; if(_fm.arrived[m.seq]) return _fm.arrived[m.seq]; const o=lsGet(fmArrK())||{}; return o[m.seq]||''; }
+function hmStepsRow(L,step){   // L = [[label, time already written out or ''], …]; the last step shows as done once reached
+  return '<ol class="hm-steps" id="hmSteps" aria-label="Trip progress">'+L.map((x,i)=>{ const c=i<step||(step===L.length-1&&i===L.length-1)?'done':i===step?'now':'todo'; return `<li class="${c}"${i===step?' aria-current="step"':''}>${x[0]}${(c==='done'||c==='now')&&x[1]?'<small>'+x[1]+'</small>':''}</li>`; }).join('')+'</ol>';
+}
 function hmStepsHtml(m,step){
-  const L=[['On the way',m.outTime],['Reached',fmArrAt(m)||(step>=2?m.startTime:'')],['In meeting',m.startTime],['Done',m.endTime]];
-  return '<ol class="hm-steps" id="hmSteps" aria-label="Trip progress">'+L.map((x,i)=>{ const c=i<step||(step===3&&i===3)?'done':i===step?'now':'todo'; return `<li class="${c}"${i===step?' aria-current="step"':''}>${x[0]}${(c==='done'||c==='now')&&x[1]?'<small>'+hmClk(x[1])+'</small>':''}</li>`; }).join('')+'</ol>';
+  const f=t=>t?hmClk(t):'';
+  return hmStepsRow([['On the way',f(m.outTime)],['Reached',f(fmArrAt(m)||(step>=2?m.startTime:''))],['In meeting',f(m.startTime)],['Done',f(m.endTime)]],step);
 }
 function hmStatus(rec){   // {ico,title,sub,steps} for someone who is punched in and not out
   const W=wmOn(), am=getActiveMeeting(rec);
   if(am&&am.kind==='personal') return {ico:'🏃',title:'Away · personal work',sub:'Since '+hmClk(am.outTime)+' · '+hmDur(hmSince(am.outTime)),steps:''};
+  if(W&&_wm.plan&&!_wm.open&&(!am||am.state==='done')){   // a task planned at another place (also right after a meeting): on the way there, then reached (Start is ready)
+    const p=_wm.plan, where=p.placeName||(p.mode==='factory'?'the factory':'the office'), task=hx(wmLbl(p)), L=[['On the way',wmClk(p.at)],['Reached',''],['Working','']];
+    if(p.ready) return {ico:'📍',title:'Reached '+hx(where),sub:'Tap Start to begin '+task,steps:hmStepsRow(L,1)};
+    return {ico:'🚗',title:'On the way to '+hx(where),sub:task+' planned · '+(p.distM!=null?hx(wmDist(p.distM))+' to go':'finding your location…'),steps:hmStepsRow(L,0)};
+  }
   if(am){
     const who=am.customerName?hx(am.customerName):'', what=am.purpose?hx(kindLbl(am.purpose,am.purposeOther)):'';
     if(am.state==='done') return {ico:'✅',title:'Meeting finished'+(am.result?' · '+hx(am.result):''),sub:(am.endTime?'Ended '+hmClk(am.endTime)+' · ':'')+'tap “I am back” when you return',steps:hmStepsHtml(am,3)};
@@ -3644,6 +3653,10 @@ function hmStatus(rec){   // {ico,title,sub,steps} for someone who is punched in
     const o=_wm.open, run=wmRunMin();
     if(o.status==='Paused') return {ico:'⏸',title:'Paused · '+hx(wmLbl(o)),sub:'Active '+hmDur(run)+' so far · tap Resume to carry on',steps:''};
     return {ico:'🟢',title:'Working · '+hx(wmLbl(o)),sub:'Since '+wmClk(o.startAt)+' · '+hmDur(run),steps:''};
+  }
+  if(W&&_wm.trav){   // the phone is moving between places (no meeting, no plan): the server noticed
+    const t=_wm.trav;
+    return {ico:'🚗',title:'On the way'+(t.from?' · from '+hx(t.from):''),sub:t.since?'Left '+hx(t.since)+' · '+hmDur(hmSince(t.since))+' on the road':'Moving between places',steps:''};
   }
   if(W){
     const ends=(_wm.items||[]).map(i=>i.endAt).filter(Boolean).sort(), from=ends.length?hmStampM(ends[ends.length-1]):Math.round(parseTimeMins(rec.punchIn.time)), idle=from===null?0:nowMins()-from;
@@ -6911,10 +6924,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-29.4';</script>
-<script src="notify.js?v=2026-10-29.4"></script>
-<script src="appstore.js?v=2026-10-29.4"></script>
-<script src="policy-lib.js?v=2026-10-29.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-29.5';</script>
+<script src="notify.js?v=2026-10-29.5"></script>
+<script src="appstore.js?v=2026-10-29.5"></script>
+<script src="policy-lib.js?v=2026-10-29.5"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -8052,31 +8065,40 @@ const WMI={
 };
 const WM_MODES=[{k:'wfh',t:'Work From Home',s:'WFH'},{k:'office',t:'Office Work',s:'Office'},{k:'factory',t:'Factory Work',s:'Factory'},{k:'field',t:'Field Work',s:'Field'}];
 const wmTitle=k=>(WM_MODES.find(m=>m.k===k)||{t:''}).t;
-let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,at:Date.now(),pick:'',busy:false};
+let _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,trav:null,plan:null,at:Date.now(),pick:'',busy:false};
 const feat=k=>!(_D.features&&_D.features[k]===false);   /* the platform team can switch a feature off for a company; unset means on */
 const wmOn=()=>_wm.ok!==false&&feat('workModes');
 const wmCk=()=>currentEmp?'wm_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
 function wmCards(cur,fn,hintK,hintTxt,lock,cls){
   return '<div class="wm-row'+(cls?' '+cls:'')+'" role="group" aria-label="Kind of work">'+WM_MODES.map(m=>`<button type="button" class="wm-opt${m.k===cur?' on':''}" data-k="${m.k}"${lock?' disabled':''} onclick="${fn}('${m.k}')" title="${hx(m.t)}"><span class="ic">${WMI[m.k]}</span><b>${m.s}</b>${m.k===hintK?`<small>${hx(hintTxt||'Suggested')}</small>`:''}</button>`).join('')+'</div>';
 }
-async function wmLoad(){
+/* The newest position the phone already has (no waiting): it goes with workToday so a planned task knows how far the place is */
+function wmQuick(){
+  if(capLat&&capAt&&Date.now()-capAt<300000) return {lat:capLat,lng:capLng,accuracy:capAcc||0};
+  if(_wmLastLoc&&Date.now()-_wmLastLoc.at<300000) return {lat:_wmLastLoc.lat,lng:_wmLastLoc.lng,accuracy:_wmLastLoc.accuracy};
+  return {};
+}
+const wmDist=m=>m==null?'':m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m';
+async function wmLoad(loc){
   if(!currentEmp||!USE_SHEETS) return;
   const emp=currentEmp.id;
   try{
-    const r=await api('workToday',{empId:emp,date:todayStr()});
+    const r=await api('workToday',Object.assign({empId:emp,date:todayStr()},loc&&loc.lat!==undefined?loc:wmQuick()));
     if(!currentEmp||String(currentEmp.id)!==String(emp)||!r) return;
-    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,away:r.awayMin||0,travel:r.travelMin||0,at:Date.now()});
-    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,away:_wm.away,travel:_wm.travel,at:_wm.at});
+    _wm=Object.assign(_wm,{ok:true,mode:r.dayMode||'',open:r.open||null,items:r.items||[],placeTag:r.placeTag||'',total:r.totalMin||0,prod:r.productiveMin||0,away:r.awayMin||0,travel:r.travelMin||0,trav:r.travel||null,plan:r.plan||null,at:Date.now()});
+    lsSet(wmCk(),{mode:_wm.mode,open:_wm.open,items:_wm.items,total:_wm.total,prod:_wm.prod,away:_wm.away,travel:_wm.travel,plan:_wm.plan,at:_wm.at});
+    if(_wm.say&&!_wm.say.bad&&/turns green/.test(_wm.say.t)&&(!_wm.plan||_wm.plan.ready)) _wm.say=null;   // the "not there yet" hint goes once the place is reached
   }catch(e){
     if(/unknown action/i.test(String(e&&e.message))) _wm.ok=false;   // an older backend: keep the old home card
     else return;                                                    // offline: keep what is shown
   }
   try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
+  if(_wm.plan&&!_wm.plan.ready&&_wm.plan.distM==null&&!(loc&&loc.lat!==undefined)) setTimeout(()=>{ try{ wmPlanPoll(); }catch(e){} },400);   // opened without a reading yet: ask the phone where it is
 }
-function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,away:0,travel:0,at:Date.now(),pick:'',busy:false}; }
+function wmReset(){ _wm={ok:null,mode:'',open:null,items:[],placeTag:'',total:0,prod:0,away:0,travel:0,trav:null,plan:null,at:Date.now(),pick:'',busy:false}; }
 function wmRestore(){   // paint instantly from the last answer of today, then refresh
   if(_wm.ok===false||!currentEmp) return;
-  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,away:c.away||0,travel:c.travel||0,at:c.at||Date.now()});
+  const c=lsGet(wmCk()); if(c&&_wm.ok===null) Object.assign(_wm,{mode:c.mode||'',open:c.open||null,items:c.items||[],total:c.total||0,prod:c.prod||0,away:c.away||0,travel:c.travel||0,plan:c.plan||null,at:c.at||Date.now()});
 }
 function wmLive(){   // minutes since the last server answer, so both figures keep moving between refreshes
   const rec=_hmRec, gone=(Date.now()-_wm.at)/60000, out=!!(rec&&rec.punchOut);
@@ -8093,7 +8115,7 @@ function wmHoursHtml(){ const h=wmLive(); return wmAwayHtml()+`<div class="wm-hr
 function wmTick(){ const rt=document.getElementById('wmRunT'); if(rt) rt.textContent=fmtMins(wmRunMin()); const h=wmLive(), a=document.getElementById('wmProd'), b=document.getElementById('wmTot'); if(a) a.textContent=fmtMins(h.prod); if(b) b.textContent=fmtMins(h.total); }
 function wmModeHtml(){
   const k=_wm.mode, lock=!!_wm.open;
-  return (lock?'':`<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',false,'sm')}</div>`)+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(_wm.say?`<div class="wm-say${_wm.say.bad?' bad':''}" role="status">${hx(_wm.say.t)}</div>`:'')+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips()):'');
+  return (lock?'':`<div class="wm-mode wm-one">${wmCards(k,'wmSetMode','','',false,'sm')}</div>`)+`<div class="wm-tag">${k?hx(wmTitle(k))+(_wm.placeTag?' · '+hx(_wm.placeTag):''):'Tap what you are doing'}</div>`+(_wm.say?`<div class="wm-say${_wm.say.bad?' bad':''}" role="status">${hx(_wm.say.t)}${_wm.say.plan?`<button type="button" class="wm-link" onclick="wmPlanOpen('${_wm.say.plan}')">🚗 Plan a ${_wm.say.plan==='factory'?'factory':'office'} task instead</button>`:''}</div>`:'')+(_wm.plan&&!_wm.open?wmPlanHtml():'')+(k==='field'&&!_wm.open?wmFieldChips():(k==='office'||k==='wfh'||k==='factory')?(_wm.open?wmRunHtml():wmTaskChips(!!_wm.plan)):'');
 }
 /* Work ON: the kind of work is chosen right on the Today card; one tap opens the camera, which takes the photo by itself */
 function wmStartHtml(){
@@ -8134,12 +8156,14 @@ function wmPickSet(k){ if(_pc.t) pcArm(); _wm.pick=k; document.querySelectorAll(
 /* Office and Factory work are for someone standing at an office / a factory: the phone's place goes with the request and the server says if it is the wrong place
    ("You are not at the factory …"). The message is written on the card, under the mode buttons, where the person is looking. */
 const wmPlaced=k=>k==='office'||k==='factory';
-async function wmLoc(){ try{ const f=await freshFix(); return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),accuracy:f.acc||0}; }catch(e){ return {lat:'',lng:'',accuracy:0}; } }   // no reading = an empty place, which the server refuses for these two
-function wmSay(t,bad){
-  _wm.say=t?{t:t,bad:!!bad}:null; try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
+let _wmLastLoc=null;
+async function wmLoc(){ try{ const f=await freshFix(); const o={lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),accuracy:f.acc||0}; _wmLastLoc=Object.assign({at:Date.now()},o); return o; }catch(e){ return {lat:'',lng:'',accuracy:0}; } }   // no reading = an empty place, which the server refuses for these two
+function wmSay(t,bad,plan){
+  _wm.say=t?{t:t,bad:!!bad,plan:plan||''}:null; try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){}
   if(t&&bad) setTimeout(()=>{ if(_wm.say&&_wm.say.t===t) wmSay(''); },25000);
 }
 const wmPlaceMsg=m=>/not at the (factory|office)|Location is required/i.test(String(m||''));
+const wmPlanFor=(m,k)=>wmPlaced(k)&&/not at the (factory|office)/i.test(String(m||''))?k:'';   // refused only because the phone is elsewhere: a task can be planned for that place
 async function wmSetMode(k){
   if(_wm.busy||k===_wm.mode) return; if(_wm.open) return; _wm.busy=true;
   try{
@@ -8147,7 +8171,10 @@ async function wmSetMode(k){
     else loc=await Promise.race([wmLoc(),new Promise(r=>setTimeout(()=>r({}),8000))]);   // WFH and Field are never refused for the place, but the server keeps it: it is where WFH began / where the Field trip started
     await api('setDayMode',Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k},loc)); _wm.mode=k; _wm.say=null; await wmLoad();
   }
-  catch(e){ if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true); else{ wmSay(''); alert(e.message||'Could not change the mode.'); } }
+  catch(e){
+    if(wmPlaceMsg(e&&e.message)){ const pk=wmPlanFor(e.message,k); wmSay(e.message,true,pk); if(pk) wmPlanOpen(pk); }
+    else{ wmSay(''); alert(e.message||'Could not change the mode.'); }
+  }
   finally{ _wm.busy=false; }
 }
 
@@ -8193,15 +8220,85 @@ const wtTextHint=k=>k==='Other'?'What is the work? (required)':'Remark (required
 const wtTextErr=k=>k==='Other'?'Write what the work is.':'Write your remark.';
 const wmLbl=i=>kindLbl(i.kind,i.kindOther);
 const wmClk=st=>{ const h=+String(st).slice(11,13), m=String(st).slice(14,16); return ((h%12)||12)+':'+m+(h<12?' AM':' PM'); };
-function wmTaskChips(){ return '<div class="wm-q">What are you working on?</div>'+fmChips(wtNames(_wm.mode||'office'),'','wmTaskPick'); }
+function wmTaskChips(alt){ return '<div class="wm-q">'+(alt?'Or start something here now':'What are you working on?')+'</div>'+fmChips(wtNames(_wm.mode||'office'),'','wmTaskPick'); }
 function wmTaskPick(k){
   _fm=Object.assign(_fm,{id:'',task:k,wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)});
   const cl=wtClient(_wm.mode||'office',k);
   const tx=wtText(_wm.mode||'office',k);
   if(!cl&&!tx){ wmTaskGo(); return; }   // one tap starts it
-  fmSheet(`<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
-    (tx?`<input id="fmOther" placeholder="${wtTextHint(k)}" maxlength="80">`:'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="wmTaskGo()">▶ Start</button>`);
+  fmSheet(wmTaskForm(k,cl,tx,'wmTaskGo()','▶ Start'));
   if(cl) fmSearch();
+}
+function wmTaskForm(k,cl,tx,go,label){   // the client / words a task asks for, then the button that starts (or plans) it
+  return `<h3>${hx(k)}</h3>`+(cl?`<input id="fmQ" placeholder="Search client name or phone" oninput="fmSearch()" autocomplete="off"><div class="fm-res" id="fmRes"></div><div class="fm-or">or a new client</div><input id="fmName" placeholder="Client name" oninput="_fm.id=''"><input id="fmPhone" inputmode="tel" placeholder="Phone number" oninput="_fm.id=''"><input id="fmAddr" type="hidden">`:'')+
+    (tx?`<input id="fmOther" placeholder="${wtTextHint(k)}" maxlength="80">`:'')+`<div class="fm-err" id="fmErr"></div><button class="btn btn-green" style="width:100%" onclick="${go}">${label}</button>`;
+}
+/* A task for another place: picked where the person is now (the office) for the place it belongs to (the factory). The header says "On the way" until the phone is inside that place,
+   then Start turns green. WFH has no place to reach, and Field work is a meeting trip, so neither is planned. */
+function wmPlanHtml(){
+  const p=_wm.plan, where=p.placeName||(p.mode==='factory'?'the factory':'the office'), ready=!!p.ready;
+  return `<div class="fm-card wm-plan${ready?' ready':''}"><div class="fm-step">${ready?'📍 Reached '+hx(where):'🚗 On the way to '+hx(where)} · ${hx(wmLbl(p))}</div>`
+    +(p.clientName?`<div class="fm-cust"><div><b>${hx(p.clientName)}</b><span>${hx(p.clientPhone)}</span></div>${p.clientPhone?`<a href="tel:${hx(p.clientPhone)}" title="Call">📞</a>`:''}</div>`:'')
+    +`<div class="wm-cap" id="wmPlanCap">${ready?'You are at '+hx(where)+'. Tap Start.':p.distM!=null?'<b>'+hx(wmDist(p.distM))+'</b> to go · Start turns green when you reach it':'Finding your location…'}</div>`
+    +`<div class="wm-run"><button type="button" class="btn ${ready?'btn-green':'btn-outline wm-wait'}" id="wmPlanGoBtn" onclick="wmPlanStart()">▶ Start</button><button type="button" class="btn btn-outline" onclick="wmPlanCancel()">✕ Cancel</button></div></div>`;
+}
+function wmPlanOpen(k){
+  _fm=Object.assign(_fm,{pmode:k});
+  const place=k==='factory'?'factory':'office';
+  fmSheet(`<h3>Plan a ${place} task</h3><p class="wm-pp">You are not at the ${place} yet. Pick the task you will do there. The app shows “On the way”, and <b>Start</b> turns green when you reach it.</p>`+fmChips(wtNames(k),'','wmPlanPick')+`<button class="btn btn-outline" style="width:100%;margin-top:10px" onclick="fmClose()">Not now</button>`);
+}
+function wmPlanPick(t){
+  const k=_fm.pmode||'office'; _fm=Object.assign(_fm,{id:'',task:t});
+  const cl=wtClient(k,t), tx=wtText(k,t);
+  if(!cl&&!tx){ wmPlanGo(); return; }
+  fmSheet(wmTaskForm(t,cl,tx,'wmPlanGo()','🚗 Plan this task'));
+  if(cl) fmSearch();
+}
+async function wmPlanGo(){
+  const k=_fm.pmode||'office', t=_fm.task, cl=wtClient(k,t), g=id=>((document.getElementById(id)||{}).value||'').trim();
+  if(wtText(k,t)&&!g('fmOther')) return fmErr(wtTextErr(t));
+  if(cl&&!_fm.id&&(!g('fmName')||g('fmPhone').replace(/\D/g,'').length<7)) return fmErr('Pick a client, or enter a name and a phone number.');
+  if(_wm.busy) return; _wm.busy=true; fmErr('Checking your location…');
+  try{
+    const body=Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),mode:k,kind:t,kindOther:g('fmOther')},await wmLoc());
+    if(cl){ if(_fm.id) body.customerId=_fm.id; else body.customer={name:g('fmName'),phone:g('fmPhone')}; }
+    const r=await api('workPlan',body); fmClose(); _wm.say=null; _wm.plan=(r&&r.plan)||null; try{ renderHomeToday(_hmRec,_hmOff,true); }catch(e){} await wmLoad();
+  }catch(e){ if(document.getElementById('fmErr')) fmErr(e.message||'Could not plan.'); else alert(e.message||'Could not plan.'); }
+  finally{ _wm.busy=false; }
+}
+async function wmPlanCancel(){
+  if(_wm.busy) return; _wm.busy=true;
+  try{ await api('workPlanCancel',{empId:currentEmp.id,date:todayStr()}); _wm.plan=null; await wmLoad(); }
+  catch(e){ alert(e.message||'Could not cancel.'); }
+  finally{ _wm.busy=false; }
+}
+async function wmPlanStart(){
+  const p=_wm.plan; if(!p||_wm.busy) return;
+  if(!p.ready){ const t='📍 '+(p.distM!=null?wmDist(p.distM)+' to go. ':'')+'Start turns green when you reach '+(p.placeName||(p.mode==='factory'?'the factory':'the office'))+'.'; wmSay(t,false); setTimeout(()=>{ if(_wm.say&&_wm.say.t===t) wmSay(''); },8000); return; }
+  _wm.busy=true; wmSay('📍 Checking your location…');
+  try{
+    const loc=await wmLoc(), base={empId:currentEmp.id,name:currentEmp.name,date:todayStr()};
+    if(_wm.mode!==p.mode) await api('setDayMode',Object.assign({mode:p.mode},base,loc));   // the day's mode follows the planned work
+    const body=Object.assign({mode:p.mode,kind:p.kind,kindOther:p.kindOther||'',wid:'w'+Date.now()+Math.random().toString(36).slice(2,6)},base,loc);
+    if(p.customerId) body.customerId=p.customerId; else if(p.clientName) body.customer={name:p.clientName,phone:p.clientPhone};
+    await api('workStart',body); _wm.say=null; _wm.plan=null; _wm.mode=p.mode; await wmLoad();
+  }catch(e){
+    if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true);
+    else{ wmSay(''); alert(e.message||'Could not start.'); }
+    wmLoad();
+  }
+  finally{ _wm.busy=false; }
+}
+/* While a task is planned the phone's position is asked for every 30 s (the home timer) until Start is ready; otherwise "On the way" is refreshed every 3 minutes */
+let _wmPlanBusy=false;
+async function wmPlanPoll(){
+  if(!wmOn()||!_wm.plan||_wm.plan.ready||_wmPlanBusy||_wm.busy||_wm.open||document.hidden) return; _wmPlanBusy=true;
+  try{ await wmLoad(await wmLoc()); if(_wm.plan&&_wm.plan.ready){ try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){} } }
+  catch(e){} finally{ _wmPlanBusy=false; }
+}
+function wmTravTick(){
+  if(!wmOn()||_wm.plan||_wm.open||_wm.busy||document.hidden||!_hmRec||!_hmRec.punchIn||_hmRec.punchOut||document.getElementById('fmSheet')) return;
+  if(Date.now()-_wm.at>=170000) wmLoad();
 }
 async function wmTaskGo(){
   const k=_fm.task, cl=wtClient(_wm.mode||'office',k), g=id=>((document.getElementById(id)||{}).value||'').trim();
@@ -8215,7 +8312,7 @@ async function wmTaskGo(){
     await api('workStart',body); fmClose(); _wm.say=null; await wmLoad();
   }catch(e){
     if(document.getElementById('fmErr')) fmErr(e.message||'Could not start.');
-    else if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true);
+    else if(wmPlaceMsg(e&&e.message)) wmSay(e.message,true,wmPlanFor(e.message,_wm.mode));
     else{ wmSay(''); alert(e.message||'Could not start.'); }
     if(/already running/i.test(e.message||'')){ fmClose(); wmLoad(); } }
   finally{ _wm.busy=false; }
@@ -8228,13 +8325,15 @@ async function wmItem(action,extra){
 }
 function wmStopAsk(){
   const o=_wm.open; if(!o) return;
-  fmSheet(`<h3>${hx(wmLbl(o))} · finish</h3><div class="fm-lbl">How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea><div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmStopGo()">⏹ Stop and save</button>`);
+  fmSheet(`<h3>${hx(wmLbl(o))} · finish</h3><div class="fm-lbl">How did it go? (required)</div><textarea id="fmNote" rows="3" placeholder="One or two lines"></textarea>`+
+    (o.customerId?`<div class="fm-lbl">Next follow-up with ${hx(o.clientName||'the client')} (optional)</div><input id="fmFollow" type="date">`:'')+
+    `<div class="fm-err" id="fmErr"></div><button class="btn btn-blue" style="width:100%" onclick="wmStopGo()">⏹ Stop and save</button>`);
 }
-function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(v.length<3) return fmErr('Write a short note first.'); fmErr('Saving…'); wmItem('workStop',{remarks:v}); }
+function wmStopGo(){ const v=document.getElementById('fmNote').value.trim(); if(v.length<3) return fmErr('Write a short note first.'); const f=document.getElementById('fmFollow'); fmErr('Saving…'); wmItem('workStop',{remarks:v,followUpDate:f?f.value:''}); }
 function wmRunMin(){ const o=_wm.open; return o?o.activeMin+(o.status==='Active'?(Date.now()-_wm.at)/60000:0):0; }
 function wmRunHtml(){
   const o=_wm.open, ps=o.status==='Paused';
-  return `<div class="fm-card"><div class="fm-step">${hx(wmLbl(o))} · ${ps?'paused':'running since '+wmClk(o.startAt)}</div>${o.clientName?`<div class="fm-cust"><div><b>${hx(o.clientName)}</b><span>${hx(o.clientPhone)}</span></div>${o.clientPhone?`<a href="tel:${hx(o.clientPhone)}" title="Call">📞</a>`:''}</div>`:''}<div class="wm-cap">Active <b id="wmRunT">${fmtMins(wmRunMin())}</b></div><div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="wmItem('${ps?'workResume':'workPause'}')">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="wmStopAsk()">⏹ Stop</button></div></div>`;
+  return `<div class="fm-card"><div class="fm-step">${hx(wmLbl(o))} · ${ps?'paused':'running since '+wmClk(o.startAt)}</div>${o.clientName?`<div class="fm-cust"><div><b>${hx(o.clientName)}</b><span>${hx(o.clientPhone)}</span></div>${o.clientPhone?`<a href="tel:${hx(o.clientPhone)}" title="Call">📞</a>`:''}</div>`:''}${o.customerId?fmQ({customerId:o.customerId,customerName:o.clientName}):''}<div class="wm-cap">Active <b id="wmRunT">${fmtMins(wmRunMin())}</b></div><div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="wmItem('${ps?'workResume':'workPause'}')">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="wmStopAsk()">⏹ Stop</button></div></div>`;
 }
 function wmTimeline(){
   const L=[]; (_wm.items||[]).forEach(i=>L.push({t:i.startAt,h:`<li><b>${hx(wmLbl(i))}</b><span>${wmClk(i.startAt)}${i.endAt?' – '+wmClk(i.endAt):' · '+i.status.toLowerCase()} · ${fmtMins(i.status==='Done'?i.activeMin:wmRunMin())}${i.clientName?' · '+hx(i.clientName):''}</span>${i.outcome?`<em>${hx(i.outcome)}</em>`:''}</li>`}));
@@ -8248,7 +8347,7 @@ function wmTimeline(){
 const WL_MODE={field:'Field',office:'Office',factory:'Factory',wfh:'Work From Home'};
 
 /* ── Live tab: everyone in scope and what they are doing; one tap opens ONE panel with that person's whole day (work, meetings, visits, site checks, photos, hours) ── */
-const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused',travelling:'Travelling',notin:'Not in yet',leave:'On leave',out:'Punched out'};
+const LV_STATE={active:'Working',meeting:'In meeting',idle:'Idle',paused:'Paused',travelling:'On the way',notin:'Not in yet',leave:'On leave',out:'Punched out'};
 const LV_ORDER=['active','meeting','travelling','paused','idle','notin','leave','out'];
 let _lv={data:null,filter:'all',dept:'',q:'',timer:null,busy:false,again:false,date:'',sel:'',site:{},tl:'all',pd:null,pn:0};
 const IDLE_FLAG=30;   // minutes of idle time after which a card turns red
@@ -8286,7 +8385,13 @@ async function liveLoad(manual){
   catch(e){ const g=document.getElementById('lvGrid'); if(g&&!_lv.data) g.innerHTML='<div class="empty">Could not load. '+hx(e&&e.message||'')+'</div>'; }
   finally{ _lv.busy=false; if(_lv.again){ _lv.again=false; liveLoad(); } }
 }
-const liveWhat=x=>{ const k=kindLbl(x.kind,x.kindOther); if(x.state==='travelling'&&!k&&x.travelFrom) return 'from '+x.travelFrom; return [WL_MODE[x.mode]||'',k].filter(Boolean).join(' · '); };
+const liveWhat=x=>{
+  const k=kindLbl(x.kind,x.kindOther), base=[WL_MODE[x.mode]||'',k].filter(Boolean).join(' · ');
+  if(x.planTo) return x.planReady?base:(x.travelFrom?'from '+x.travelFrom+' ':'')+'to '+base;   // a task planned at another place: on the way there, or reached and about to start
+  if(x.state==='travelling'&&!k&&x.travelFrom) return 'from '+x.travelFrom;
+  return base;
+};
+const lvLbl=x=>x.planTo&&x.planReady&&x.state==='idle'?'Reached '+(WL_MODE[x.planTo]||'the place'):(LV_STATE[x.state]||x.state);
 const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
 // site work by person (a stop and a restart on the same day are one person's day)
 function lvSiteBy(list){
@@ -8319,7 +8424,7 @@ function liveDraw(){
     .sort((a,b)=>(b.sos?1:0)-(a.sos?1:0)||(idleBad(b)?1:0)-(idleBad(a)?1:0)||LV_ORDER.indexOf(a.state)-LV_ORDER.indexOf(b.state)||String(a.name).localeCompare(b.name));
   document.getElementById('lvGrid').innerHTML=list.length?list.map(x=>{
     const gps=gpsOffCfg(), what=liveWhat(x), seen=x.lastSeen, ss=lvSiteSum(x), noLoc=gps.on&&lvIsToday()&&ss&&ss.run&&ss.auto&&x.punchIn&&!x.punchOut&&x.state!=='out'&&x.state!=='meeting'&&x.mode!=='field'&&seen&&seen.ageMin!=null&&seen.ageMin>=gps.warn, stale=x.state!=='out'&&x.state!=='notin'&&x.state!=='leave'&&seen&&seen.ageMin!=null&&seen.ageMin>=30;
-    return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}${swKey(_lv.sel)===swKey(x.empId)?' sel':''}" onclick="lvPick('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span></div>
+    return `<button type="button" class="lv-c st-${hx(x.state)}${x.sos?' sos':''}${swKey(_lv.sel)===swKey(x.empId)?' sel':''}" onclick="lvPick('${esc(x.empId)}')"><div class="h"><b>${hx(x.name)}</b><span class="lv-b">${hx(lvLbl(x))}</span></div>
       ${x.sos||x.late||idleBad(x)||noLoc?`<span class="s">${x.sos?'<span class="lv-tag bad">🚨 SOS</span>':''}${x.late?'<span class="lv-tag">Late</span>':''}${idleBad(x)?'<span class="lv-tag bad">Idle '+hx(liveDur(x.idleMin))+'</span>':''}${noLoc?'<span class="lv-tag bad">📵 No location '+hx(liveDur(Math.round(seen.ageMin)))+'</span>':''}</span>`:''}
       <span class="s">${hx(x.empId)}${x.department?' · '+hx(x.department):''}</span>
       ${what?`<span class="s">${hx(what)}${x.clientName?' · '+hx(x.clientName):''}${x.placeTag?' · '+hx(x.placeTag):''}</span>`:''}
@@ -8434,7 +8539,7 @@ function lvPanelBody(x,pd,today){
     +tile('Unclear (weak GPS)',sf.rough,sf.rough?'var(--amber)':'')+tile('GPS off / blocked',sf.nog,sf.nog?'var(--red)':'')+(sf.fake?tile('Fake GPS app',sf.fake,'var(--red)'):'')
     +tile('Longest time with no check',hx(fmtMins(sf.longest)),sf.longest>GAP_MINS?'var(--red)':'');
   const seen=x&&x.lastSeen, run=today&&(pd.sessions||[]).some(d=>(d.session||{}).status==='working');
-  const stat=x?`<div class="lvp-st st-${hx(x.state)}"><span class="lv-b">${hx(LV_STATE[x.state]||x.state)}</span>${x.late?' <span class="lv-tag">Late</span>':''}${x.sos?' <span class="lv-tag bad">🚨 SOS</span>':''}${today&&liveWhat(x)?'<span class="lvp-do">'+hx(liveWhat(x))+(x.clientName?' · '+hx(x.clientName):'')+(x.since?' · since '+hx(wmClk(x.since)):'')+'</span>':''}</div>`:'';
+  const stat=x?`<div class="lvp-st st-${hx(x.state)}"><span class="lv-b">${hx(lvLbl(x))}</span>${x.late?' <span class="lv-tag">Late</span>':''}${x.sos?' <span class="lv-tag bad">🚨 SOS</span>':''}${today&&liveWhat(x)?'<span class="lvp-do">'+hx(liveWhat(x))+(x.clientName?' · '+hx(x.clientName):'')+(x.since?' · since '+hx(wmClk(x.since)):'')+'</span>':''}</div>`:'';
   const notes=(sf.never?'<div class="lv-sos">⚠️ Site work was never stopped on this day.</div>':'')+(x&&x.sos?'<div class="lv-sos">🚨 Open SOS from this person. Open the Safety tab to respond.</div>':'');
   const acts=`<div class="lvp-acts">${x&&x.phone?`<a class="btn btn-outline" href="tel:${hx(x.phone)}">📞 Call</a>`:''}${x&&liveWa(x.phone)?`<a class="btn btn-outline" href="https://wa.me/${liveWa(x.phone)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}${seen&&seen.lat?`<a class="btn btn-outline" href="${hx(mapsUrl(seen.lat,seen.lng))}" target="_blank" rel="noopener">🗺️ Map</a>`:''}${has?`<button type="button" class="btn btn-outline" onclick="openRoute('${esc(id)}','${esc(name)}','${esc(lvDay())}')">🧭 Route</button>`:''}${run?`<button type="button" class="btn btn-outline" onclick="askCheck('${esc(id)}')">📍 Check now</button>`:''}</div>`;
   const chips=[['all','All'],['work','Work'],['chk','Checks']].map(c=>`<button type="button" data-tl="${c[0]}" class="${_lv.tl===c[0]?'on':''}" onclick="lvTl('${c[0]}')">${c[1]}</button>`).join('');
