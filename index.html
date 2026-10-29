@@ -1828,7 +1828,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     </div>
     <div class="add-form" id="plGpsBox" style="display:none">
       <label class="pl-lab"><input type="checkbox" id="plGpsOff" onchange="saveGpsOff(this.checked)" checked> <b>Location off: tell the staff, then the owner, then close the day</b></label>
-      <div class="pl-tip">While Work is ON (Office or Factory), if the phone sends no real location for the minutes set below, the person gets a message, then you and their supervisor get an e-mail. The day is never closed in the middle of the day: only if the location is still off at office end, the day is closed at the last real location (or at office end if the phone never sent one) and marked Auto. The person can tap Resume work or ask for a Fix punch if that is wrong. Work From Home, Field work, meetings and customer visits are never touched.</div>
+      <div class="pl-tip">While Work is ON (Office or Factory), if the phone sends no real location for the minutes set below, the person gets a message, then you and their supervisor get an e-mail. The day is never closed in the middle of the day: only if the location is still off at office end, the day is closed at the last real location (or at office end if the phone never sent one) and marked Auto. The person can tap Resume work or ask for a Fix punch if that is wrong. Work From Home, Field work, meetings and customer visits are never touched.<br><b>Leaving in the middle of a task:</b> if a running Office or Factory task (Training, Office Work ...) is on and the phone is clearly away from the workplace (farther than the “has left” distance, for the number of checks and minutes set in Alerts), only that task is stopped, at the time the phone first showed them away, and marked Auto. The day stays punched in; the staff can start the next task when back. Punch-out is judged separately by the forgot-to-punch-out check.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;align-items:end">
         <div><label style="margin:0 0 4px">Tell the staff after (min)</label><input type="number" id="plGpsWarn" min="5" max="240" inputmode="numeric" placeholder="45"></div>
         <div><label style="margin:0 0 4px">Tell the owner after (min)</label><input type="number" id="plGpsAlert" min="5" max="480" inputmode="numeric" placeholder="90"></div>
@@ -1936,9 +1936,9 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">Reports &amp; reminders go by</label><select id="alVia" style="margin-top:0"><option value="push">Phone notification only</option><option value="both">Notification and e-mail</option><option value="mail">E-mail only (old way)</option></select></div>
         <div><label style="margin:0 0 4px">Forgot-to-punch-out check starts at</label><input type="text" id="alLeftAt" placeholder="04:00 PM"></div>
         <div><label style="margin:0 0 4px">“Has left” means farther than (metres)</label><input type="number" id="alLeftDist" min="100" step="50" placeholder="300"></div>
-        <div><label style="margin:0 0 4px">End a site job / meeting that was walked away from after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
+        <div><label style="margin:0 0 4px">End a site job / meeting / running task that was walked away from after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
       </div>
-      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work or a meeting and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away <b>that also span the “cut time outside after” minutes set in the Places tab</b> (30 by default), it is ended at the time of the first one (shown as “Auto”) and the person is told. Needs the phone's location checks to be running. Set the number of checks to 1 to end it at the first check far away.</p>
+      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work, a meeting or an Office / Factory task and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away <b>that also span the “cut time outside after” minutes set in the Places tab</b> (30 by default), it is ended at the time of the first one (shown as “Auto”) and the person is told. Needs the phone's location checks to be running. Set the number of checks to 1 to end it at the first check far away.</p>
       <label class="al-chk"><input type="checkbox" id="alLeftAsk"> Ask a person “You seem to have left. Punch out?” when their phone is far from the workplace after that time</label>
       <label class="al-chk"><input type="checkbox" id="alLeftAuto"> If they do not answer and are still away after closing time, punch them out automatically (shown as “Auto”)</label>
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
@@ -6910,10 +6910,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-29.2';</script>
-<script src="notify.js?v=2026-10-29.2"></script>
-<script src="appstore.js?v=2026-10-29.2"></script>
-<script src="policy-lib.js?v=2026-10-29.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-29.3';</script>
+<script src="notify.js?v=2026-10-29.3"></script>
+<script src="appstore.js?v=2026-10-29.3"></script>
+<script src="policy-lib.js?v=2026-10-29.3"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
