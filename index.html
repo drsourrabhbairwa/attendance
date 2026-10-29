@@ -1413,7 +1413,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <h3>📍 Location during office hours</h3>
   <p>To keep attendance fair for <b>everyone</b>, the same location check applies to <b>every employee</b>:</p>
   <ul>
-    <li>Your phone records its location <b>only while you are punched in</b> — from punch-in until punch-out, and never after <b id="trkEndTxt">7:30 PM</b><span id="trkTaskTxt">, except while a task you started is still running (it stops as soon as you stop the task or punch out)</span>.</li>
+    <li>Your phone records its location <b>only while you are punched in</b> — from punch-in until punch-out, and never after <b id="trkEndTxt">7:30 PM</b><span id="trkTaskTxt">, except while a task or meeting you started is still running (it stops as soon as you stop it or punch out)</span>.</li>
     <li>Nothing is recorded before you punch in, after you punch out, on holidays or on leave.</li>
     <li>The office sees the places recorded during office hours, and you can see how many checks were made today.</li>
   </ul>
@@ -1937,12 +1937,12 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div><label style="margin:0 0 4px">Reports &amp; reminders go by</label><select id="alVia" style="margin-top:0"><option value="push">Phone notification only</option><option value="both">Notification and e-mail</option><option value="mail">E-mail only (old way)</option></select></div>
         <div><label style="margin:0 0 4px">Forgot-to-punch-out check starts at</label><input type="text" id="alLeftAt" placeholder="04:00 PM"></div>
         <div><label style="margin:0 0 4px">“Has left” means farther than (metres)</label><input type="number" id="alLeftDist" min="100" step="50" placeholder="300"></div>
-        <div><label style="margin:0 0 4px">End a site job / meeting that was walked away from, and pause a running task that was left, after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
-        <div><label style="margin:0 0 4px">A task stays where it was started: this far from that spot counts as away (metres)</label><input type="number" id="alTaskRadius" min="50" max="1000" placeholder="150"></div>
-        <div><label style="margin:0 0 4px">A task that was left ends by itself, at the time it was left, after (minutes away, 0 = never)</label><input type="number" id="alTaskEnd" min="0" max="600" placeholder="60"></div>
+        <div><label style="margin:0 0 4px">End a site job that was walked away from, and pause a running task or meeting that was left, after (location checks in a row, 0 = never)</label><input type="number" id="alAwayN" min="0" max="6" placeholder="2"></div>
+        <div><label style="margin:0 0 4px">A task or meeting stays where it was started: this far from that spot counts as away (metres)</label><input type="number" id="alTaskRadius" min="50" max="1000" placeholder="150"></div>
+        <div><label style="margin:0 0 4px">A task or meeting that was left ends by itself, at the time it was left, after (minutes away, 0 = never)</label><input type="number" id="alTaskEnd" min="0" max="600" placeholder="60"></div>
       </div>
-      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work or a meeting and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away <b>that also span the “cut time outside after” minutes set in the Places tab</b> (30 by default), it is ended at the time of the first one (shown as “Auto”) and the person is told. <b>A task</b> (Office, Factory, Work From Home) stays where it was started: when the person moves away it is <b>paused</b> at that time, it <b>runs again</b> when they come back, and if they stay away for the minutes set above it <b>ends</b> at the time they left — and if that was at or after the office closing time, the day is punched out then too. This works all day and night while a task is running. Needs the phone's location checks to be running. Set the number of checks to 1 to act at the first check far away.</p>
-      <label class="al-chk"><input type="checkbox" id="alTaskNight"> Keep location checks going after closing time while a task is still running (so the rule above works at night too)</label>
+      <p style="font-size:11px;color:var(--soft);margin:2px 0 6px">If a person starts site work and then moves away without stopping it, the phone's location checks show it. After this many checks in a row far away <b>that also span the “cut time outside after” minutes set in the Places tab</b> (30 by default), it is ended at the time of the first one (shown as “Auto”) and the person is told. <b>A task</b> (Office, Factory, Work From Home) <b>or a meeting</b> stays where it was started: when the person moves away it is <b>paused</b> at that time, it <b>runs again</b> when they come back, and if they stay away for the minutes set above it <b>ends</b> at the time they left — for a task, if that was at or after the office closing time, the day is punched out then too (a meeting never punches the day out). This works all day and night while a task or meeting is running. Needs the phone's location checks to be running. Set the number of checks to 1 to act at the first check far away.</p>
+      <label class="al-chk"><input type="checkbox" id="alTaskNight"> Keep location checks going after closing time while a task or meeting is still running (so the rule above works at night too)</label>
       <label class="al-chk"><input type="checkbox" id="alLeftAsk"> Ask a person “You seem to have left. Punch out?” when their phone is far from the workplace after that time</label>
       <label class="al-chk"><input type="checkbox" id="alLeftAuto"> If they do not answer and are still away after closing time, punch them out automatically (shown as “Auto”)</label>
       <label class="al-chk"><input type="checkbox" id="alRem"> Remind employees who forgot to punch in / out</label>
@@ -3645,6 +3645,7 @@ function hmStatus(rec){   // {ico,title,sub,steps} for someone who is punched in
     if(am.state==='done') return {ico:'✅',title:'Meeting finished'+(am.result?' · '+hx(am.result):''),sub:(am.endTime?'Ended '+hmClk(am.endTime)+' · ':'')+'tap “I am back” when you return',steps:hmStepsHtml(am,3)};
     if(am.state==='in_meeting'){
       const run=hmMeetRun(am);
+      if(am.pausedAt&&am.awayPaused) return {ico:'⏸',title:'Meeting paused'+(who||what?' · '+(who||what):''),sub:'You moved away from where it started · active '+hmDur(run)+' so far · it runs again when you are back'+(am.awayEndAt?' · ends by itself at '+wmClk(am.awayEndAt)+' if you stay away':''),steps:hmStepsHtml(am,2)};
       if(am.pausedAt) return {ico:'⏸',title:'Meeting paused'+(who||what?' · '+(who||what):''),sub:'Paused '+hmDur(Math.max(0,nowMins()-(hmStampM(am.pausedAt)||nowMins())))+' · active '+hmDur(run),steps:hmStepsHtml(am,2)};
       return {ico:'🤝',title:'In a meeting'+(who?' with '+who:what?' · '+what:''),sub:'Started '+hmClk(am.startTime)+' · '+hmDur(run),steps:hmStepsHtml(am,2)};
     }
@@ -4648,7 +4649,13 @@ function mySiteManual(){ const s=mySite(); return s&&s.mode!=='auto'?s:null; }  
 function trkLabel(e){ return trackOn()?(e.trackConsent?' · 📍 notice accepted':' · ⏳ notice not accepted yet'):''; }
 /* ── Tracking for every employee: punch-in → punch-out, never after the closing time ── */
 /* A running task keeps the location checks going after the closing time (a task stays where it was started — day and night); when it ends they stop at the closing time again */
-function taskOpenNow(){ try{ return !!(typeof _wm!=='undefined'&&_wm&&_wm.open&&typeof _hmRec!=='undefined'&&_hmRec&&_hmRec.punchIn&&!_hmRec.punchOut); }catch(e){ return false; } }
+function taskOpenNow(){   // a running task, or a meeting the person is in
+  try{
+    const r=typeof _hmRec!=='undefined'?_hmRec:null; if(!(r&&r.punchIn&&!r.punchOut)) return false;
+    if(typeof _wm!=='undefined'&&_wm&&_wm.open) return true;
+    const am=getActiveMeeting(r); return !!(am&&am.state==='in_meeting'&&am.kind!=='personal');
+  }catch(e){ return false; }
+}
 function taskTrackWanted(){ const st=_D.settings||{}; return taskOpenNow()&&st.taskTrackAfter!=='0'&&String(st.awayStopChecks)!=='0'; }
 function taskTrackSync(){   // the running task started or ended: the phone's own tracker (which stops at the closing time on its own) is started again to match
   try{
@@ -4709,7 +4716,7 @@ async function homeTrack(emp,tok,rec,dayOff){
   const on=rec&&rec.punchIn&&!rec.punchOut&&(nowMins()<trackEndMins()||taskTrackWanted());
   let extra='';
   if(on&&USE_SHEETS){ try{ const t=await api('myTrail',{empId:emp.id,date:todayStr()}); if(tok!==homeTok) return; window._hmLastCheck=t&&t.last?t.last.time:''; if(t&&t.count) extra=' Today: <b>'+t.count+'</b> check'+(t.count>1?'s':'')+(t.last?' · last at '+fmt12(t.last.time)+(t.last.area?' · '+t.last.area:''):'')+'.'; }catch(e){} }
-  el.innerHTML='<div class="trk-note">📍 '+(on?'Location is being recorded while you are punched in':'Location is recorded only from punch-in to punch-out')+' — never after '+endTxt+(((_D.settings||{}).taskTrackAfter!=='0'&&String((_D.settings||{}).awayStopChecks)!=='0')?', except while a task you started is still running':'')+'.'+extra+'</div>';
+  el.innerHTML='<div class="trk-note">📍 '+(on?'Location is being recorded while you are punched in':'Location is recorded only from punch-in to punch-out')+' — never after '+endTxt+(((_D.settings||{}).taskTrackAfter!=='0'&&String((_D.settings||{}).awayStopChecks)!=='0')?', except while a task or meeting you started is still running':'')+'.'+extra+'</div>';
 }
 function empNameOf(id){ const e=(_D.employees||[]).find(x=>swKey(x.id)===swKey(id)); return e?e.name:String(id); }
 function siteFromServer(s){
@@ -4866,7 +4873,7 @@ window.amkServerEnded=async function(kinds){
     if(!currentEmp||!USE_SHEETS) return;
     kinds=kinds||[];
     if(kinds.indexOf('siteStopped')>=0){ for(const k of Object.keys(_siteOpenAt)) delete _siteOpenAt[k]; reconcileSites(); }
-    if(kinds.indexOf('meetingEnded')>=0){ await fmRefresh(); if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }
+    if(kinds.indexOf('meetingEnded')>=0||kinds.indexOf('meetingPaused')>=0||kinds.indexOf('meetingResumed')>=0){ await fmRefresh(); if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }
     else if(kinds.indexOf('workStopped')>=0||kinds.indexOf('workPaused')>=0||kinds.indexOf('workResumed')>=0){ if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }   // a running Office / Factory task was stopped: the heading and the running card follow
   }catch(e){}
 };
@@ -7423,8 +7430,8 @@ function fmCardHtml(m){
   const W=wmOn(), pu=m.purpose?hx(kindLbl(m.purpose,m.purposeOther))+' · ':'';
   if(st==='in'){
     if(!W) return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
-    const ps=!!m.pausedAt;
-    return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(hmClk(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
+    const ps=!!m.pausedAt, ap=ps&&m.awayPaused;
+    return `<div class="fm-card"><div class="fm-step">${pu}${ps?(ap?'paused · you moved away from the meeting place':'paused'):'running since '+hx(hmClk(m.startTime))}</div>${ap?`<div class="wm-q">It runs again when you are back${m.awayEndAt?' · ends by itself at '+hx(wmClk(m.awayEndAt))+' if you stay away':''}</div>`:''}${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
   }
   return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(wtNames('field'),'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
@@ -7437,7 +7444,7 @@ async function fmCall(action,extra){
   try{ return await api(action,Object.assign({empId:currentEmp.id,name:currentEmp.name,date:todayStr(),time:nowTime()},extra||{})); }
   finally{ _fm.busy=false; }
 }
-async function fmRefresh(){ const r=await freshRecordToday(currentEmp.id); if(r!==undefined) renderHomeToday(r,_hmOff); }
+async function fmRefresh(){ const r=await freshRecordToday(currentEmp.id); if(r!==undefined){ renderHomeToday(r,_hmOff); try{ taskTrackSync(); }catch(e){} } }
 async function fmPlace(){
   const f=await freshFix(); let area=''; try{ area=await reverseGeocode(f.lat,f.lng); }catch(e){}
   return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
@@ -8459,7 +8466,7 @@ const liveWhat=x=>{
   if(x.state==='travelling'&&!k&&x.travelFrom) return 'from '+x.travelFrom;
   return base;
 };
-const lvLbl=x=>x.planTo&&x.planReady&&x.state==='idle'?'Reached '+(WL_MODE[x.planTo]||'the place'):(x.awayPaused&&x.state==='paused'?'Paused · away from the task place':(LV_STATE[x.state]||x.state));
+const lvLbl=x=>x.planTo&&x.planReady&&x.state==='idle'?'Reached '+(WL_MODE[x.planTo]||'the place'):(x.awayPaused&&x.state==='paused'?'Paused · away from the '+(x.mode==='field'?'meeting':'task')+' place':(LV_STATE[x.state]||x.state));
 const liveAge=m=>m==null?'':m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+'h '+(m%60)+'m ago';
 // site work by person (a stop and a restart on the same day are one person's day)
 function lvSiteBy(list){
