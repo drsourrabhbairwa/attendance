@@ -313,6 +313,20 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .hm-ic{width:46px;height:46px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;overflow:hidden}
 .hm-ic img{width:100%;height:100%;object-fit:cover}
 .hm-tt{font-size:16px;font-weight:700}.hm-ts{font-size:12px;color:var(--soft);margin-top:2px}
+.hm-tt,.hm-ts{overflow-wrap:anywhere}
+/* field trip tracker: On the way → Reached → In meeting → Done */
+.hm-steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:12px 0 2px;padding:0;counter-reset:hs}
+.hm-steps li{position:relative;text-align:center;font-size:11px;line-height:1.25;color:var(--soft);padding-top:22px;min-width:0;overflow-wrap:anywhere}
+.hm-steps li::before{content:'';position:absolute;top:4px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);box-sizing:border-box;z-index:1}
+.hm-steps li::after{content:'';position:absolute;top:10px;left:calc(-50% + 9px);width:calc(100% - 18px);height:2px;background:var(--border2)}
+.hm-steps li:first-child::after{display:none}
+.hm-steps li.done{color:var(--ink)}.hm-steps li.done::before{background:var(--green);border-color:var(--green)}.hm-steps li.done::after,.hm-steps li.now::after{background:var(--green)}
+.hm-steps li.now{color:var(--ink);font-weight:700}.hm-steps li.now::before{background:#fff;border:4px solid var(--green);animation:hsPulse 1.6s ease-in-out infinite}
+.hm-steps li small{display:block;font-weight:400;color:var(--soft);font-size:10.5px}
+@keyframes hsPulse{0%,100%{box-shadow:0 0 0 0 rgba(31,140,90,.35)}50%{box-shadow:0 0 0 6px rgba(31,140,90,0)}}
+@media(prefers-reduced-motion:reduce){.hm-steps li.now::before{animation:none}}
+.hm-prog{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.hm-prog[hidden]{display:none}
+.hm-prog span{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--ink);white-space:nowrap}
 .hm-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
 .auto-pill{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:middle;line-height:1.5}
 .auto-pill.auto{background:var(--amberBg);color:var(--amber)}.auto-pill.conf{background:var(--greenBg);color:var(--green)}
@@ -2084,7 +2098,7 @@ function pruneLocal(){
   try{
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
-      if(/^pc_/.test(k)&&!k.endsWith('_'+t)) drop.push(k);
+      if(/^(pc|fmarr)_/.test(k)&&!k.endsWith('_'+t)) drop.push(k);
       else if(/^sw_/.test(k)){ const v=lsGet(k); if(!v||v.date!==t) drop.push(k); }
     }
   }catch(e){}
@@ -3527,7 +3541,7 @@ async function loadHome(){
     if(!document.getElementById('homeScreen').classList.contains('active')){ clearInterval(homeTimerInt); return; }
     if(homeDay!==todayStr()){ loadHome(); return; }   // midnight passed while this screen was open: start the new day fresh
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
-    otTick(); try{ wmTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){}
+    otTick(); try{ wmTick(); }catch(e){} try{ hmHeadTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){}
     if(Date.now()-LOCG.checkAt>300000) locGuardCheck('tick');
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
@@ -3560,7 +3574,8 @@ function renderHomeToday(rec,dayOff,noLoad){
   const W=wmOn(); if(W) wmRestore();
   const set=settingsFor(curRec()), limit=parseTimeMins(set.start)+set.grace;
   const btn=(l,c,auto)=>`<button class="btn ${c}" style="margin-top:14px" onclick="openPunch(${auto?"'auto'":''})">${l}</button>`;
-  let ico='⏰', title='', sub='', extra='', b='', offBtn='';
+  let ico='⏰', title='', sub='', extra='', b='', offBtn='', head='';
+  _hmChip='';
   if(dayOff){ ico=dayOff.icon; title=dayOff.type==='Sunday'?'Today is Sunday':'Public holiday'; sub=dayOff.name+' · no attendance needed'; }
   else if(!(rec&&rec.punchIn)&&leaveOn(curRec().id,todayStr())){ const lv=leaveOn(curRec().id,todayStr()); ico='🌴'; title='On approved leave'; sub=lv.type+' · '+leaveSpan(lv); b=btn('Open attendance','btn-outline'); }
   else if(rec&&rec.punchIn&&rec.punchOut){
@@ -3571,8 +3586,9 @@ function renderHomeToday(rec,dayOff,noLoad){
   } else if(rec&&rec.punchIn){
     const am=getActiveMeeting(rec), half=isHalfDay(rec), late=!half&&parseTimeMins(rec.punchIn.time)>limit;
     const pers=!!(am&&am.kind==='personal'), fin=!!(am&&!pers&&am.state==='done');   // fin: the visit is finished and only "I am back" is left (old home card)
-    ico=am?(pers?'🏃':fin?'✅':'🚗'):'🟢'; title=(am?(pers?'Away · personal work':fin?'Meeting finished':'In a meeting'):(W?'Work ON':'You are punched in'))+`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
-    sub='Since '+fmt12(rec.punchIn.time);
+    const hs=hmStatus(rec);
+    _hmChip=`<span class="hm-chip" style="background:${late||half?'var(--amberBg)':'var(--greenBg)'};color:${late||half?'var(--amber)':'var(--green)'}">${half?'Half day':late?'Late':'On time'}</span>`;
+    ico=hs.ico; title=hs.title+_hmChip; sub=hs.sub; head=hs.steps+hmProgHtml(rec);
     const since=parseTimeMins(rec.punchIn.time);
     extra=W?wmHoursHtml():`<div class="hm-big" id="hmTimer" data-since="${since}">${fmtMins(Math.max(0,nowMins()-since))}</div><div class="hm-cap">in office so far</div>`;
     fmWatchSync(am&&!pers?am:null);
@@ -3582,13 +3598,81 @@ function renderHomeToday(rec,dayOff,noLoad){
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
-  if(rec&&rec.markedBy) sub+=' · Marked by '+hx(rec.markedBy);
-  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div class="hm-tx"><div class="hm-tt">${title}</div><div class="hm-ts">${sub}</div></div>${offBtn}</div>${extra}${b}<div id="hmPlan"></div>`);
+  _hmMark=rec&&rec.markedBy?' · Marked by '+hx(rec.markedBy):'';
+  sub+=_hmMark;
+  setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div class="hm-tx"><div class="hm-tt" id="hmTt">${title}</div><div class="hm-ts" id="hmTs">${sub}</div></div>${offBtn}</div>${head}${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
   if(W&&!noLoad&&rec&&rec.punchIn) wmLoad();
   try{ hmSmartDraw(); }catch(e){}
 }
-let _hmRec=null,_hmOff=null;
+let _hmRec=null,_hmOff=null,_hmChip='',_hmMark='';
+/* ── The Today heading says what the person is doing right now, live (it is redrawn by the home timer) ── */
+const hmClk=t=>{ const m=Math.round(parseTimeMins(t)), h=Math.floor(m/60)%24; return ((h%12)||12)+':'+String(m%60).padStart(2,'0')+(h<12?' AM':' PM'); };
+const hmDur=m=>{ m=Math.max(0,Math.round(m||0)); return m<60?m+' min':Math.floor(m/60)+'h '+(m%60)+'m'; };
+const hmSince=t=>Math.max(0,nowMins()-Math.round(parseTimeMins(t)));
+const hmStampM=s=>{ s=String(s||''); return s.length>=16?(+s.slice(11,13))*60+(+s.slice(14,16)):null; };
+function hmMeetRun(m){   // active minutes of a started meeting, without the pauses
+  const st=hmStampM(m.startAt); if(st===null) return m.startTime?hmSince(m.startTime):0;
+  let t=nowMins()-st;
+  (m.pauses||[]).forEach(p=>{ const a=hmStampM(p.from), z=hmStampM(p.to); if(a!==null&&z!==null) t-=Math.max(0,z-a); });
+  if(m.pausedAt){ const a=hmStampM(m.pausedAt); if(a!==null) t-=Math.max(0,nowMins()-a); }
+  return Math.max(0,t);
+}
+/* GPS "you reached the customer" is remembered for the day, so reopening the app still shows Reached */
+const fmArrK=()=>currentEmp?'fmarr_'+String(currentEmp.id).toUpperCase()+'_'+todayStr():'';
+function fmArrAt(m){ if(!m) return ''; if(m.arrivedAt) return m.arrivedAt; if(_fm.arrived[m.seq]) return _fm.arrived[m.seq]; const o=lsGet(fmArrK())||{}; return o[m.seq]||''; }
+function hmStepsHtml(m,step){
+  const L=[['On the way',m.outTime],['Reached',fmArrAt(m)||(step>=2?m.startTime:'')],['In meeting',m.startTime],['Done',m.endTime]];
+  return '<ol class="hm-steps" id="hmSteps" aria-label="Trip progress">'+L.map((x,i)=>{ const c=i<step||(step===3&&i===3)?'done':i===step?'now':'todo'; return `<li class="${c}"${i===step?' aria-current="step"':''}>${x[0]}${(c==='done'||c==='now')&&x[1]?'<small>'+hmClk(x[1])+'</small>':''}</li>`; }).join('')+'</ol>';
+}
+function hmStatus(rec){   // {ico,title,sub,steps} for someone who is punched in and not out
+  const W=wmOn(), am=getActiveMeeting(rec);
+  if(am&&am.kind==='personal') return {ico:'🏃',title:'Away · personal work',sub:'Since '+hmClk(am.outTime)+' · '+hmDur(hmSince(am.outTime)),steps:''};
+  if(am){
+    const who=am.customerName?hx(am.customerName):'', what=am.purpose?hx(kindLbl(am.purpose,am.purposeOther)):'';
+    if(am.state==='done') return {ico:'✅',title:'Meeting finished'+(am.result?' · '+hx(am.result):''),sub:(am.endTime?'Ended '+hmClk(am.endTime)+' · ':'')+'tap “I am back” when you return',steps:hmStepsHtml(am,3)};
+    if(am.state==='in_meeting'){
+      const run=hmMeetRun(am);
+      if(am.pausedAt) return {ico:'⏸',title:'Meeting paused'+(who||what?' · '+(who||what):''),sub:'Paused '+hmDur(Math.max(0,nowMins()-(hmStampM(am.pausedAt)||nowMins())))+' · active '+hmDur(run),steps:hmStepsHtml(am,2)};
+      return {ico:'🤝',title:'In a meeting'+(who?' with '+who:what?' · '+what:''),sub:'Started '+hmClk(am.startTime)+' · '+hmDur(run),steps:hmStepsHtml(am,2)};
+    }
+    const arr=fmArrAt(am);
+    if(arr) return {ico:'📍',title:'Reached '+(who||what||'the place'),sub:'Reached '+hmClk(arr)+' · tap Start meeting',steps:hmStepsHtml(am,1)};
+    return {ico:'🚗',title:'On the way'+(who?' to '+who:what?' · '+what:' · choose the customer'),sub:'Left '+hmClk(am.outTime)+' · '+hmDur(hmSince(am.outTime))+' on the road',steps:hmStepsHtml(am,0)};
+  }
+  if(W&&_wm.open){
+    const o=_wm.open, run=wmRunMin();
+    if(o.status==='Paused') return {ico:'⏸',title:'Paused · '+hx(wmLbl(o)),sub:'Active '+hmDur(run)+' so far · tap Resume to carry on',steps:''};
+    return {ico:'🟢',title:'Working · '+hx(wmLbl(o)),sub:'Since '+wmClk(o.startAt)+' · '+hmDur(run),steps:''};
+  }
+  if(W){
+    const ends=(_wm.items||[]).map(i=>i.endAt).filter(Boolean).sort(), from=ends.length?hmStampM(ends[ends.length-1]):Math.round(parseTimeMins(rec.punchIn.time)), idle=from===null?0:nowMins()-from;
+    return {ico:'🟢',title:'Work ON'+(_wm.mode?' · '+hx(wmTitle(_wm.mode)):''),sub:(_wm.mode?'Tap what you are doing below':'Choose where you are working below')+(idle>=5?' · idle '+hmDur(idle):''),steps:''};
+  }
+  return {ico:'🟢',title:'You are punched in',sub:'Since '+fmt12(rec.punchIn.time),steps:''};
+}
+/* one line of the day's real work: meetings done, quotations / orders, tasks done, time worked */
+function hmProgHtml(rec){
+  if(!rec||!rec.punchIn) return '';
+  const ms=(rec.meetings||[]).filter(m=>m.kind!=='personal'&&(m.state==='done'||m.endTime)), q=ms.filter(m=>m.result==='Quotation asked').length, o=ms.filter(m=>m.result==='Order').length;
+  const tasks=wmOn()?(_wm.items||[]).filter(i=>i.status==='Done').length:0;
+  const P=[];   // the time worked is already in the hours boxes under it
+  if(ms.length) P.push('🤝 '+ms.length+' meeting'+(ms.length>1?'s':''));
+  if(q) P.push('🧾 '+q+' quotation'+(q>1?'s':''));
+  if(o) P.push('📦 '+o+' order'+(o>1?'s':''));
+  if(tasks) P.push('✅ '+tasks+' task'+(tasks>1?'s':''));
+  return '<div class="hm-prog" id="hmProg" aria-label="Today so far"'+(P.length?'':' hidden')+'>'+P.map(x=>'<span>'+x+'</span>').join('')+'</div>';
+}
+function hmHeadTick(){   // the home timer calls this: the heading, the tracker and the day line keep moving
+  const rec=_hmRec, tt=document.getElementById('hmTt'), ts=document.getElementById('hmTs');
+  if(!tt||!ts||!rec||!rec.punchIn||rec.punchOut||_hmOff) return;
+  const hs=hmStatus(rec);
+  const T=hs.title+_hmChip, S=hs.sub+_hmMark;
+  if(tt.innerHTML!==T) tt.innerHTML=T; if(ts.innerHTML!==S) ts.innerHTML=S;
+  const st=document.getElementById('hmSteps'), pg=document.getElementById('hmProg');
+  if(st&&hs.steps) st.outerHTML=hs.steps; else if(!st&&hs.steps){ const row=tt.closest('.hm-trow'); if(row) row.insertAdjacentHTML('afterend',hs.steps); } else if(st&&!hs.steps) st.remove();
+  if(pg) pg.outerHTML=hmProgHtml(rec);
+}
 const WORK_LABEL={'':'Everything (office + visits + site)',office:'Office staff',sales:'Sales / consultant (customer visits)',site:'Technician (site work)'};
 function renderHomeActs(){
   const el=document.getElementById('hmActs'), lk=document.getElementById('hmLinks'); if(!el||!lk) return;
@@ -6826,10 +6910,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-28.10';</script>
-<script src="notify.js?v=2026-10-28.10"></script>
-<script src="appstore.js?v=2026-10-28.10"></script>
-<script src="policy-lib.js?v=2026-10-28.10"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-29.1';</script>
+<script src="notify.js?v=2026-10-29.1"></script>
+<script src="appstore.js?v=2026-10-29.1"></script>
+<script src="policy-lib.js?v=2026-10-29.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -7274,7 +7358,7 @@ function fmCardHtml(m){
   if(st==='in'){
     if(!W) return `<div class="fm-card"><div class="fm-step">Meeting ${n} · started ${hx(fmt12(m.startTime))}</div>${fmCust(m)}<button class="btn btn-blue" onclick="fmEnd(${n})">⏹ End meeting</button>${fmQ(m)}</div>`;
     const ps=!!m.pausedAt;
-    return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(fmt12(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
+    return `<div class="fm-card"><div class="fm-step">${pu}${ps?'paused':'running since '+hx(hmClk(m.startTime))}</div>${fmCust(m)}<div class="wm-run"><button class="btn ${ps?'btn-green':'btn-outline'}" onclick="${ps?'fmResume':'fmPause'}(${n})">${ps?'▶ Resume':'⏸ Pause'}</button><button class="btn btn-blue" onclick="fmEnd(${n})">⏹ Stop</button></div>${fmQ(m)}</div>`;
   }
   return `<div class="fm-card"><div class="fm-step">${pu}done${m.result?' · '+hx(m.result):''}</div>${fmCust(m)}${W?'<div class="wm-q">Next field work</div>'+fmChips(wtNames('field'),'','wmFieldGo'):'<button class="btn btn-green" onclick="fmNext()">➕ Next meeting</button>'}${fmQ(m)}</div>`;
 }
@@ -7293,7 +7377,7 @@ async function fmPlace(){
   return {lat:f.lat.toFixed(6),lng:f.lng.toFixed(6),area:area||''};
 }
 async function fmStart(seq){
-  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:_fm.arrived[seq]||''}); if(r){ await fmRefresh(); if(wmOn()&&fmMeet(seq).purpose==='Site Supervision') wmSiteStart(p); } }
+  try{ const p=await fmPlace(); const r=await fmCall('startMeetingVisit',{seq:seq,lat:p.lat,lng:p.lng,area:p.area,arrivedAt:fmArrAt(fmMeet(seq))||''}); if(r){ await fmRefresh(); if(wmOn()&&fmMeet(seq).purpose==='Site Supervision') wmSiteStart(p); } }
   catch(e){ alert(e&&e.code?'Turn on GPS and allow location, then try again.':(e&&e.message)||'Could not start the meeting.'); }
 }
 async function fmNext(){
@@ -7388,6 +7472,8 @@ function fmWatchSync(m){
 }
 function fmArrived(m,d){
   if(_fm.arrived[m.seq]) return; _fm.arrived[m.seq]=nowTime();
+  try{ const k=fmArrK(), o=lsGet(k)||{}; o[m.seq]=_fm.arrived[m.seq]; if(k) lsSet(k,o); }catch(e){}
+  try{ hmHeadTick(); }catch(e){}
   try{ if(window.AmkNotify&&AmkNotify.chime) AmkNotify.chime(); }catch(e){}
   try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('You reached '+m.customerName,{body:'Open the app and tap Start meeting.'}); }catch(e){}
   fmSheet(`<h3>📍 You reached ${hx(m.customerName)}</h3><p style="margin:0 0 12px;color:var(--soft)">About ${d} m from the saved place. Start the meeting now?</p><button class="btn btn-green" style="width:100%" onclick="fmClose();fmStart(${m.seq})">▶ Start meeting</button><button class="fm-link" style="display:block;margin:10px auto 0" onclick="fmClose()">Not yet</button>`);
