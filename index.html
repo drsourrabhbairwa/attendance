@@ -4823,6 +4823,7 @@ window.amkServerEnded=async function(kinds){
     kinds=kinds||[];
     if(kinds.indexOf('siteStopped')>=0){ for(const k of Object.keys(_siteOpenAt)) delete _siteOpenAt[k]; reconcileSites(); }
     if(kinds.indexOf('meetingEnded')>=0){ await fmRefresh(); if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }
+    else if(kinds.indexOf('workStopped')>=0){ if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }   // a running Office / Factory task was stopped: the heading and the running card follow
   }catch(e){}
 };
 function siteTick(){
@@ -6910,10 +6911,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-10-29.3';</script>
-<script src="notify.js?v=2026-10-29.3"></script>
-<script src="appstore.js?v=2026-10-29.3"></script>
-<script src="policy-lib.js?v=2026-10-29.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-10-29.4';</script>
+<script src="notify.js?v=2026-10-29.4"></script>
+<script src="appstore.js?v=2026-10-29.4"></script>
+<script src="policy-lib.js?v=2026-10-29.4"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.

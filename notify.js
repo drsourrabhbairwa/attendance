@@ -100,6 +100,7 @@
     leftOffice: { i: '🚪', c: 'warn', l: 'Attendance', imp: 1 }, gpsOff: { i: '📵', c: 'warn', l: 'Location', go: 'today', imp: 1 },
     siteAway: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 }, siteStopped: { i: '📍', c: 'warn', l: 'Location', go: 'today', imp: 1 },
     meetingAway: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 }, meetingEnded: { i: '🤝', c: 'warn', l: 'Meeting', go: 'today', imp: 1 },
+    workAway: { i: '🛠', c: 'warn', l: 'Task', go: 'today', imp: 1 }, workStopped: { i: '🛠', c: 'warn', l: 'Task', go: 'today', imp: 1 },
     locationCheck: { i: '📍', c: 'warn', l: 'Location', imp: 1 }, alert: { i: '🚨', c: 'red', l: 'Alert', imp: 1 }, report: { i: '📋', c: 'red', l: 'Report' },
     task: { i: '✅', c: 'task', l: 'Task', go: 'tasks' }, leave: { i: '🌴', c: 'leave', l: 'Leave', go: 'leave' },
     plan: { i: '🗓️', c: 'plan', l: 'Plan', go: 'today' }, weekly: { i: '📊', c: 'plan', l: 'Weekly' }, announce: { i: '📣', c: 'ann', l: 'Announcement', imp: 1 },
@@ -220,11 +221,11 @@
     document.body.appendChild(el);
     if (!ask && !isImp(n)) setTimeout(function () { if (el.parentNode && !el.matches(':hover')) el.remove(); }, 12000);   // an ordinary message fades by itself; questions and important messages wait for a tap
   }
-  /* "Your meeting / site job was ended because you moved away": the page redraws the screen once for each such message, so it stops showing the job as running */
+  /* "Your meeting / site job / task was ended because you moved away": the page redraws the screen once for each such message, so it stops showing the job as running */
   function endedHook(list) {
     try {
       var k = 'amk_ended_' + S.empId, seen = []; try { seen = JSON.parse(ls(k) || '[]'); } catch (x) { }
-      var fresh = (list || []).filter(function (n) { return (n.kind === 'meetingEnded' || n.kind === 'siteStopped') && seen.indexOf(n.id) < 0; });
+      var fresh = (list || []).filter(function (n) { return (n.kind === 'meetingEnded' || n.kind === 'siteStopped' || n.kind === 'workStopped') && seen.indexOf(n.id) < 0; });
       if (!fresh.length) return;
       ls(k, JSON.stringify(seen.concat(fresh.map(function (n) { return n.id; })).slice(-50)));
       if (typeof window.amkServerEnded === 'function') window.amkServerEnded(fresh.map(function (n) { return n.kind; }));
