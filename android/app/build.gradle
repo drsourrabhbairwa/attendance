@@ -31,7 +31,7 @@ android {
 }
 
 dependencies {
-    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation platform('com.google.firebase:firebase-bom:35.1.0')
     implementation 'com.google.firebase:firebase-messaging'   // push messages; the project settings are given in AmkApp (no google-services.json)
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20240303'   // the phone has org.json built in; plain unit tests on a computer need it added
