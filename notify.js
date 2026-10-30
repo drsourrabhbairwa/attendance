@@ -104,6 +104,7 @@
     workAway: { i: '🛠', c: 'warn', l: 'Task', go: 'today', imp: 1 }, workStopped: { i: '🛠', c: 'warn', l: 'Task', go: 'today', imp: 1 },
     workPaused: { i: '⏸', c: 'warn', l: 'Task', go: 'today', imp: 1 }, workResumed: { i: '▶', c: 'task', l: 'Task', go: 'today' },
     dayModeAuto: { i: '🏢', c: 'att', l: 'Attendance', go: 'today' },
+    daySummary: { i: '🗒️', c: 'att', l: 'Attendance', go: 'today' },
     locationCheck: { i: '📍', c: 'warn', l: 'Location', imp: 1 }, alert: { i: '🚨', c: 'red', l: 'Alert', imp: 1 }, report: { i: '📋', c: 'red', l: 'Report' },
     task: { i: '✅', c: 'task', l: 'Task', go: 'tasks' }, leave: { i: '🌴', c: 'leave', l: 'Leave', go: 'leave' },
     plan: { i: '🗓️', c: 'plan', l: 'Plan', go: 'today' }, weekly: { i: '📊', c: 'plan', l: 'Weekly' }, announce: { i: '📣', c: 'ann', l: 'Announcement', imp: 1 },
@@ -242,7 +243,7 @@
       S.notices = d.notices || []; S.unread = d.unread || 0; paintBell(); paintSheet();
       clearNative(S.notices.filter(function (n) { return n.readAt && !S.cleared[n.id] && (S.cleared[n.id] = 1); }).map(function (n) { return n.id; }));   // answered or read on another device: its notification here goes too
       var seen = alertedSet(), fresh = S.notices.filter(function (n) {
-        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && n.kind !== 'weekly' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
+        return !n.readAt && seen.indexOf(n.id) < 0 && n.kind !== 'locationCheck' && n.kind !== 'punchInDone' && n.kind !== 'punchOutDone' && n.kind !== 'daySummary' && n.kind !== 'weekly' && (Date.now() - Date.parse(String(n.createdAt).replace(' ', 'T') + '+05:30') < 6 * 3600 * 1000);
       });
       var all = seen.concat(S.notices.map(function (n) { return n.id; })).slice(-200);
       ls(alertedKey(), JSON.stringify(all));
