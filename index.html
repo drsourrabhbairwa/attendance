@@ -83,6 +83,8 @@ textarea{min-height:72px;resize:vertical}
 .role-btn.active{background:var(--accent);color:#fff}
 /* Camera */
 #cameraBox{position:relative;width:100%;aspect-ratio:1;background:#111;border-radius:14px;overflow:hidden;margin:12px 0}
+.cam-note{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;display:none;background:rgba(180,83,9,.94);color:#fff;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:700;line-height:1.35;text-align:center;pointer-events:none}
+.cam-note.show{display:block}
 #cameraBox video,#cameraBox canvas{width:100%;height:100%;object-fit:cover}
 #cameraBox canvas{display:none;position:absolute;top:0;left:0}
 /* selfie preview acts like a mirror (what people expect); the photo that is SAVED stays the true, un-flipped picture */
@@ -1481,7 +1483,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       <input type="text" id="otOther" placeholder="Tell your admin what the work is" style="display:none;margin-top:8px" autocomplete="off">
       <div style="font-size:11px;color:var(--soft);margin-top:8px;line-height:1.5">Your admin approves the hours afterwards, and only approved hours count. Stop it with a photo when you finish.</div>
     </div>
-    <div id="cameraBox"><video id="videoFeed" autoplay playsinline muted></video><canvas id="snapCanvas"></canvas><div class="cam-ring"></div></div>
+    <div id="cameraBox"><video id="videoFeed" autoplay playsinline muted></video><canvas id="snapCanvas"></canvas><div class="cam-ring"></div><div class="cam-note" id="camNote" role="alert" aria-live="assertive"></div></div>
     <div class="loc-bar" id="locBar"><div class="spin-sm" id="locSpin"></div><span id="locTxt">Getting location…</span></div>
     <div id="geoHint" style="display:none"></div>
     <!-- Site work bar (visible when on active site work) -->
@@ -4291,7 +4293,7 @@ async function startCamera(){
     videoStream=s;
     const vf=document.getElementById('videoFeed');
     vf.onplaying=()=>{ if(my!==camTok) return; camPlayAt=Date.now(); const ce=document.getElementById('camErr'); if(ce&&/camera is still starting/i.test(ce.textContent)) setTimeout(()=>{ if(my===camTok&&/camera is still starting/i.test(ce.textContent)) ce.classList.remove('show'); },CAM_SETTLE+50); };
-    vf.srcObject=videoStream;
+    vf.srcObject=videoStream; lightWatch(true);
   }catch(e){
     if(my!==camTok) return;
     const er=document.getElementById('camErr');
@@ -4299,24 +4301,50 @@ async function startCamera(){
     er.classList.add('show'); document.getElementById('captureBtn').disabled=true;
   }
 }
-function stopCamera(){ camTok++; camPlayAt=0; if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} const vf=document.getElementById('videoFeed'); if(vf){ vf.onplaying=null; vf.srcObject=null; } }   // the picture element is emptied too: a stopped stream left in it still looks "ready" but only gives black frames
+function stopCamera(){ camTok++; camPlayAt=0; lightWatch(false); camNote(''); if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;} const vf=document.getElementById('videoFeed'); if(vf){ vf.onplaying=null; vf.srcObject=null; } }   // the picture element is emptied too: a stopped stream left in it still looks "ready" but only gives black frames
 /* True only when the camera is really delivering pictures: this session's stream is live, a frame has arrived and it has been flowing for a moment */
 function camLive(){
   const v=document.getElementById('videoFeed'); if(!v||!videoStream||v.srcObject!==videoStream) return false;
   const t=videoStream.getVideoTracks()[0]; if(!t||t.readyState!=='live') return false;
   return v.videoWidth>0&&v.readyState>=2&&!v.paused&&camPlayAt>0&&Date.now()-camPlayAt>=CAM_SETTLE;
 }
-/* Is the picture usable? A covered lens or a camera that has not started gives an (almost) black or flat frame. Works without any face detector. */
-function photoQuality(c){
+/* How bright is the picture, and how much does it vary? (a photo or the live video; null when it cannot be read) */
+function photoStats(c){
   try{
     const t=document.createElement('canvas'); t.width=t.height=24; const x=t.getContext('2d'); x.drawImage(c,0,0,24,24);
     const d=x.getImageData(0,0,24,24).data; let s=0,s2=0,n=0;
     for(let k=0;k<d.length;k+=4){ const l=.299*d[k]+.587*d[k+1]+.114*d[k+2]; s+=l; s2+=l*l; n++; }
-    const m=s/n, sd=Math.sqrt(Math.max(0,s2/n-m*m));
-    if(m<16&&sd<12) return {ok:false,msg:'📷 The photo came out too dark. Uncover the camera lens or move to better light, then take it again.'};
-    if(m>240&&sd<8) return {ok:false,msg:'📷 The photo came out blank white. Move away from the bright light and take it again.'};
-  }catch(e){}
+    const m=s/n; return {m:m,sd:Math.sqrt(Math.max(0,s2/n-m*m))};
+  }catch(e){ return null; }
+}
+const LIGHT_DIM=45, LIGHT_OK=60, LIGHT_FACE=70;   // under 45 the live note appears (it goes away at 60); a face the phone cannot find in a picture under 70 is blamed on the light
+const MSG_DARK='💡 You are not in enough light: the photo came out too dark. Move to a brighter place or switch on a light (and make sure the camera lens is not covered), then take it again.';
+const MSG_DARK_FACE='💡 You are not in enough light, so we could not see your face. Move to a brighter place or switch on a light, then try again.';
+/* Is the picture usable? A covered lens or a camera that has not started gives an (almost) black or flat frame. Works without any face detector. */
+function photoQuality(c){
+  const st=photoStats(c);
+  if(st){
+    if(st.m<16&&st.sd<12) return {ok:false,msg:MSG_DARK};
+    if(st.m>240&&st.sd<8) return {ok:false,msg:'📷 The photo came out blank white. Move away from the bright light and take it again.'};
+  }
   return {ok:true};
+}
+/* A short message on top of the camera picture, where the person is looking (the red line under the buttons can be off screen) */
+let _noteT=0, _lightT=0;
+function camNote(msg,ms){
+  const n=document.getElementById('camNote'); if(!n) return; clearTimeout(_noteT);
+  if(!msg){ n.classList.remove('show'); return; }
+  n.textContent=msg; n.classList.add('show'); if(ms) _noteT=setTimeout(()=>n.classList.remove('show'),ms);
+}
+/* While the camera is open: say so as soon as the room is too dark, before the person takes the photo */
+function lightWatch(on){
+  clearInterval(_lightT); _lightT=0; if(!on) return; let dim=false;
+  _lightT=setInterval(()=>{
+    const v=document.getElementById('videoFeed'); if(!v||capBusy||!camLive()||v.style.display==='none') return;
+    const st=photoStats(v); if(!st) return;
+    if(!dim&&st.m<LIGHT_DIM){ dim=true; camNote('💡 You are not in enough light here. Move to a brighter place so your face shows.'); }
+    else if(dim&&st.m>=LIGHT_OK){ dim=false; camNote(''); }
+  },1500);
 }
 
 /* The selfie: a square from the middle of the picture, 320 px, JPEG kept sharp but small (about 20-40 KB) */
@@ -4528,11 +4556,11 @@ async function captureAndMark(byTimer){
   if(punchMode==='personal_out'&&!(document.getElementById('meetNote')?.value||'').trim()){camErr.textContent='Please give a reason: tap one below or type it.';camErr.classList.add('show');document.getElementById('meetNote').focus();return;}
   const btnLabel=btn.textContent;
   const shot=snapSquare(video,PHOTO_PX);
-  { const q=photoQuality(shot); if(!q.ok){ camErr.textContent=q.msg; camErr.classList.add('show'); if(byTimer===true) pcRetry(); return; } }   // never save a black or blank picture, whatever the face detector says
+  { const q=photoQuality(shot); if(!q.ok){ camErr.textContent=q.msg; camErr.classList.add('show'); camNote(q.msg,9000); if(byTimer===true) pcRetry(); return; } }   // never save a black or blank picture, whatever the face detector says
   let face='';
   if((punchMode==='in'||punchMode==='out')&&feat('face')){
     face=await faceCheck(shot);
-    if(face==='no'){ FACE.fails++; camErr.textContent='👤 We could not see your face. Look at the camera in good light and try again.'+(FACE.fails>=3?' Clean the camera lens and take off any cap, mask or sunglasses. Still stuck? Ask your manager to mark your attendance.':''); camErr.classList.add('show'); return; }   // face detection is compulsory: no face, no punch (a phone that cannot tell is let through)
+    if(face==='no'){ FACE.fails++; const st=photoStats(shot), dark=st&&st.m<LIGHT_FACE; camErr.textContent=(dark?MSG_DARK_FACE:'👤 We could not see your face. Look at the camera in good light and try again.')+(FACE.fails>=3?' Clean the camera lens and take off any cap, mask or sunglasses. Still stuck? Ask your manager to mark your attendance.':''); camErr.classList.add('show'); camNote(dark?MSG_DARK_FACE:'👤 We could not see your face. Look straight at the camera.',9000); return; }   // face detection is compulsory: no face, no punch (a phone that cannot tell is let through)
   }
   capBusy=true;
   btn.disabled=true; btn.textContent='⏳ Saving…'; camErr.classList.remove('show');
@@ -7724,7 +7752,7 @@ const TKI={back:'<path d="M15 18l-6-6 6-6"/>',plus:'<path d="M12 5v14M5 12h14"/>
  stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
  edit:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',chat:'<path d="M5 5h14a2 2 0 012 2v8a2 2 0 01-2 2h-6l-5 4v-4H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',users:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0112 0M16 5.5a3 3 0 010 5.5M18 14.5a5.5 5.5 0 013 5.5"/>'};
 const ti=(n,s)=>`<svg class="i" viewBox="0 0 24 24"${s?` style="width:${s}px;height:${s}px"`:''}>${TKI[n]||''}</svg>`;
-let _tk={root:null,admin:false,tab:'all',q:'',list:[],ann:[],cur:null,thread:null,view:'list',reply:null,att:null,names:{},dir:null,ppl:[],pri:'Normal',timer:0,rec:null,close:null,sum:{todo:0,unread:0,ann:0},sub:''};
+let _tk={root:null,admin:false,tab:'all',q:'',list:[],ann:[],loading:false,got:false,err:'',cur:null,thread:null,view:'list',reply:null,att:null,names:{},dir:null,ppl:[],pri:'Normal',timer:0,rec:null,close:null,sum:{todo:0,unread:0,ann:0},sub:''};
 const tkSame=(a,b)=>String(a).toUpperCase()===String(b).toUpperCase();
 const tkMe=()=>_tk.admin?'ADMIN':String(currentEmp.id);
 const tkApi=(a,b)=>api(a,_tk.admin?(b||{}):Object.assign({empId:currentEmp.id},b||{}));
@@ -7747,7 +7775,9 @@ function tkMount(root,admin,close){
   _tk.root=root; _tk.admin=!!admin; _tk.close=close||null; _tk.view='list'; _tk.cur=null; _tk.thread=null; _tk.tab='all'; _tk.q='';
   root.classList.add('tkx'); root.dataset.view='list';
   root.innerHTML='<section class="tkx-list" id="tkList"></section><section class="tkx-main" id="tkMain"></section>';
-  tkMainEmpty(); tkCacheList().then(()=>tkListLoad());
+  _tk.list=[]; _tk.ann=[]; _tk.loading=true; _tk.got=false; _tk.err='';
+  tkMainEmpty(); try{ tkListPaint(); }catch(e){ const el=document.getElementById('tkList'); if(el) el.innerHTML='<div class="tk-err">'+hx((e&&e.message)||'Could not open the tasks.')+'</div>'; }   // the title and buttons show at once; the rows say Loading until the list arrives
+  tkCacheList(); tkListLoad();
   try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
   clearInterval(_tk.timer); _tk.tick=0;
   _tk.timer=setInterval(()=>{ if(!document.body.contains(root)){ clearInterval(_tk.timer); return; } if(document.hidden) return;   // nothing is fetched while the app is in the background
@@ -7771,13 +7801,25 @@ async function tkBadge(force){
 }
 
 /* ---- the list ---- */
+function tkClean(l){   // a task saved on the phone in an older shape (or an odd one from the server) must never stop the list from drawing
+  return (Array.isArray(l)?l:[]).filter(t=>t&&typeof t==='object').map(t=>{
+    if(!Array.isArray(t.assignees)) t.assignees=typeof t.assignees==='string'?t.assignees.split(',').map(x=>x.trim()).filter(Boolean):[];
+    if(!t.states||typeof t.states!=='object'||Array.isArray(t.states)) t.states={};
+    if(!Array.isArray(t.checklist)) t.checklist=[];
+    t.title=String(t.title==null?'':t.title); t.status=String(t.status||'Open'); t.id=String(t.id==null?'':t.id);
+    return t; });
+}
 async function tkCacheList(){   // show the last list at once; the fresh one replaces it a moment later
-  const c=await tkGet('cache','list:'+tkMe()); if(c&&c.list&&!_tk.list.length){ _tk.list=c.list; _tk.ann=c.ann||[]; tkListPaint(); }
+  try{ const c=await tkGet('cache','list:'+tkMe()); if(c&&Array.isArray(c.list)&&!_tk.got&&!_tk.list.length){ _tk.list=tkClean(c.list); _tk.ann=(Array.isArray(c.ann)?c.ann:[]).filter(x=>x&&typeof x==='object'); tkListPaint(); } }
+  catch(e){ _tk.list=[]; _tk.ann=[]; }   // an unreadable saved list is ignored: the real one is asked from the server anyway
 }
 async function tkListLoad(quiet){
-  try{ const [l,a]=await Promise.all([_tk.admin?api('listTasks',{}):tkApi('myTasks'),tkApi('annList',{})]); _tk.list=l||[]; _tk.ann=a||[]; tkPut('cache','list:'+tkMe(),{list:_tk.list,ann:_tk.ann,at:Date.now()}); if(_tk.view==='list'||innerWidth>=900||!quiet) tkListPaint(); }
-  catch(e){ const el=document.getElementById('tkList'); if(el&&!quiet) el.innerHTML='<div class="tk-err">'+hx(e.message)+'</div>'; }
+  try{ const [l,a]=await Promise.all([_tk.admin?api('listTasks',{}):tkApi('myTasks'),tkApi('annList',{})]);
+    _tk.list=tkClean(l); _tk.ann=(Array.isArray(a)?a:[]).filter(x=>x&&typeof x==='object'); _tk.got=true; _tk.loading=false; _tk.err='';
+    tkPut('cache','list:'+tkMe(),{list:_tk.list,ann:_tk.ann,at:Date.now()}); if(_tk.view==='list'||innerWidth>=900||!quiet) tkListPaint(); }
+  catch(e){ _tk.loading=false; _tk.err=(e&&e.message)||'Could not load your tasks.'; if(!quiet||!_tk.list.length){ try{ tkListPaint(); }catch(x){} } }
 }
+function tkRetry(){ _tk.loading=true; _tk.err=''; try{ tkListPaint(); }catch(e){} tkListLoad(); }
 function tkTabs(){ return _tk.admin?[['all','All'],['wait','To verify'],['late','Late'],['done','Finished']]:[['all','All'],['done','Finished']]; }   // staff: For me / Given by me / Due today / Late are the summary cards
 function tkFiltered(tab,q){
   tab=tab||_tk.tab; q=(q===undefined?_tk.q:q).toLowerCase();
@@ -7794,6 +7836,7 @@ function tkFiltered(tab,q){
   });
 }
 function tkPending(){
+  if(_tk.loading&&!_tk.list.length) return 'Loading…';
   const me=tkMe(), live=_tk.list.filter(t=>t.status==='Open');
   const todo=tkFiltered('me','').length, ver=live.filter(t=>(_tk.admin||tkSame(t.empId,me))&&t.assignees.some(i=>(t.states[i]||{}).s==='Done')).length;
   const p=[]; if(todo&&!_tk.admin) p.push(todo+' to do'); if(ver) p.push(ver+' to verify'); const late=live.filter(t=>t.due&&t.due<todayStr()).length; if(late) p.push(late+' late');
@@ -7819,12 +7862,15 @@ function tkRows(){
   const ann=_tk.ann, unseen=ann.filter(a=>!a.seen).length, last=ann[0], list=tkFiltered();
   const hero=`<button class="tk-hero${_tk.cur==='ann'?' on':''}" onclick="tkOpenAnn()"><span class="ic">${ti('mega',24)}</span><span class="mid"><div class="t1">Announcements</div><div class="t2 ell">${last?hx((last.title||last.text||'Attachment').slice(0,80)):(_tk.admin?'Post news for everyone':'Nothing posted yet')}</div></span>${unseen?`<span class="tk-bd">${unseen}</span>`:''}</button>`;
   let body='';
-  if(!list.length) body=`<div class="tk-empty"><div class="eic">${ti('check')}</div><b>${_tk.q?'No match':'Nothing here'}</b>${_tk.q?'Try another name or word.':'New tasks will show up in this list.'}${_tk.q||_tk.admin?'':`<button type="button" class="tk-cta" onclick="tkForm('')">${ti('plus')} Give a task</button>`}</div>`;
-  else if(_tk.tab==='done'||_tk.q) body=list.map(tkRow).join('');
+  const rowOf=t=>{ try{ return tkRow(t); }catch(e){ return ''; } };
+  if(!list.length&&_tk.loading&&!_tk.q) body=`<div class="tk-empty"><div class="eic">${ti('chat')}</div><b>Loading your tasks…</b></div>`;
+  else if(!list.length&&_tk.err&&!_tk.q) body=`<div class="tk-empty"><div class="eic">${ti('x')}</div><b>Could not load your tasks</b>${hx(_tk.err)}<button type="button" class="tk-cta" onclick="tkRetry()">Try again</button></div>`;
+  else if(!list.length) body=`<div class="tk-empty"><div class="eic">${ti('check')}</div><b>${_tk.q?'No match':'Nothing here'}</b>${_tk.q?'Try another name or word.':'New tasks will show up in this list.'}${_tk.q||_tk.admin?'':`<button type="button" class="tk-cta" onclick="tkForm('')">${ti('plus')} Give a task</button>`}</div>`;
+  else if(_tk.tab==='done'||_tk.q) body=list.map(rowOf).join('');
   else TK_G.forEach(g=>{ const rows=list.filter(t=>tkGroup(t)===g); if(!rows.length) return;
     rows.sort((a,b)=>g==='No deadline'||g==='Finished'?String(b.lastMsgAt||b.createdAt).localeCompare(String(a.lastMsgAt||a.createdAt)):String(a.due).localeCompare(String(b.due)));
-    body+=`<div class="tk-sec${g==='Overdue'?' late':''}">${g}<span>${rows.length}</span></div>`+rows.map(tkRow).join(''); });
-  el.innerHTML=hero+body;
+    body+=`<div class="tk-sec${g==='Overdue'?' late':''}">${g}<span>${rows.length}</span></div>`+rows.map(rowOf).join(''); });
+  el.innerHTML=hero+(_tk.err&&list.length?'<div class="tk-err" style="font-weight:500">Could not refresh. Showing your last list.</div>':'')+body;
 }
 function tkRow(t){
   const me=tkMe(), key=Object.keys(t.states).filter(k=>tkSame(k,me))[0], mine=key?t.states[key].s:'', g=tkGroup(t);
@@ -7944,7 +7990,7 @@ const TK_MAX=5*1024*1024, TK_IMG=1500000, TK_AUTO=1500000;
 const TK_MT={pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',txt:'text/plain',csv:'text/csv'};
 let _tkDb=null;
 function tkDb(){ return _tkDb||(_tkDb=new Promise(ok=>{ try{ const r=indexedDB.open('amitek-tasks',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('media'); r.result.createObjectStore('cache'); }; r.onsuccess=()=>ok(r.result); r.onerror=()=>ok(null); r.onblocked=()=>ok(null); }catch(e){ ok(null); } })); }
-async function tkGet(store,key){ const d=await tkDb(); if(!d) return undefined; return new Promise(ok=>{ try{ const q=d.transaction(store).objectStore(store).get(key); q.onsuccess=()=>ok(q.result); q.onerror=()=>ok(undefined); }catch(e){ ok(undefined); } }); }
+async function tkGet(store,key){ const d=await Promise.race([tkDb(),new Promise(ok=>setTimeout(()=>ok(null),2500))]); if(!d) return undefined; return new Promise(ok=>{ const w=setTimeout(()=>ok(undefined),2500); try{ const q=d.transaction(store).objectStore(store).get(key); q.onsuccess=()=>{ clearTimeout(w); ok(q.result); }; q.onerror=()=>{ clearTimeout(w); ok(undefined); }; }catch(e){ clearTimeout(w); ok(undefined); } }); }   // a stuck phone database is skipped after 2.5 s: the list then comes from the server
 async function tkPut(store,key,val){ const d=await tkDb(); if(!d) return false; return new Promise(ok=>{ try{ const t=d.transaction(store,'readwrite'); t.objectStore(store).put(val,key); t.oncomplete=()=>ok(true); t.onerror=()=>ok(false); t.onabort=()=>ok(false); }catch(e){ ok(false); } }); }
 function tkB64(blob){ return new Promise((ok,no)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(',')[1]||''); r.onerror=()=>no(new Error('Could not read the file.')); r.readAsDataURL(blob); }); }
 function tkShrink(f){ return new Promise((ok,no)=>{   // a photo becomes a small JPEG (Blob)
