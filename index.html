@@ -3868,15 +3868,18 @@ function mmDayInfo(ds){
   const status={ok:'Present · on time',late:'Present · late',half:'Half day',leave:'On leave'+(d&&d.w?' ('+d.w+')':''),absent:'Absent'+(d&&d.w?' · '+d.w:''),off:(off&&off.name)||'Off day'}[d&&d.cls]||(ds===todayStr()?'Today':r?'Present':'No record');
   const tasks=(_mm.tasks||[]).filter(x=>x.date===ds), meets=(_mm.meets||[]).filter(x=>x.date===ds);
   const pers=r?(r.meetings||[]).filter(m=>m.kind==='personal'&&m.outTime):[];
-  return {r,status,tasks,meets,pers,mins:r&&r.punchOut?officeMins(r):0};
+  // the day in parts: punch-in → each step-out (personal work, or a punch-out followed by Resume work) → back → … → punch-out
+  const parts=[]; if(r&&r.punchIn){ let from=r.punchIn.time; [...pers].sort((a,b)=>parseTimeMins(a.outTime)-parseTimeMins(b.outTime)).forEach(m=>{ parts.push([from,m.outTime]); from=m.backTime||''; }); if(from) parts.push([from,r.punchOut?r.punchOut.time:'']); }
+  return {r,status,tasks,meets,pers,parts,mins:r&&r.punchOut?officeMins(r):0};
 }
 function mmDay(ds){
   const I=mmDayInfo(ds), r=I.r, clk=s=>s?fmt12(String(s).slice(11,19)):'';
   let h=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">${hx(I.status)}</div>`;
+  if(I.parts.length>1) h+=`<div style="font-size:13px;margin-bottom:6px"><b>Worked in ${I.parts.length} parts</b><ul class="mm-list">${I.parts.map((p,k)=>`<li>Part ${k+1}: ${hx(fmt12(p[0]))} – ${p[1]?hx(fmt12(p[1])):'still on'}${p[1]?' · '+fmtMins(Math.max(0,parseTimeMins(p[1])-parseTimeMins(p[0]))):''}</li>`).join('')}</ul></div>`;
   if(r&&r.punchIn) h+=`<div style="font-size:13px">In <b>${hx(fmt12(r.punchIn.time))}</b>${r.punchIn.area?' · '+hx(r.punchIn.area):''}<br>Out <b>${r.punchOut?hx(fmt12(r.punchOut.time))+autoPill(r):'—'}</b>${r.punchOut&&r.punchOut.area?' · '+hx(r.punchOut.area):''}${I.mins?'<br>Hours <b>'+fmtMins(I.mins)+'</b>':''}${+r.awayMin?'<br>Away from the place (not counted) <b>'+fmtMins(+r.awayMin)+'</b>':''}</div>`;
   if(I.tasks.length) h+='<div class="hm-h2" style="margin-top:10px">Tasks</div><ul class="mm-list">'+I.tasks.map(x=>`<li><b>${hx(x.label)}</b>${x.client?' · '+hx(x.client):''}<br><small>${clk(x.startAt)}${x.endAt?' – '+clk(x.endAt):' · '+hx(x.status)} · ${fmtMins(x.activeMin)}</small>${x.outcome?'<br><small>'+hx(x.outcome)+'</small>':''}</li>`).join('')+'</ul>';
   if(I.meets.length) h+='<div class="hm-h2" style="margin-top:10px">Meetings</div><ul class="mm-list">'+I.meets.map(x=>`<li><b>${hx(x.customer||'Meeting')}</b>${x.purpose?' · '+hx(x.purpose):''}<br><small>${clk(x.startAt)}${x.endAt?' – '+clk(x.endAt):''}${x.activeMin?' · '+fmtMins(x.activeMin):''}</small>${x.outcome?'<br><small>'+hx(x.outcome)+'</small>':''}</li>`).join('')+'</ul>';
-  if(I.pers.length) h+='<div class="hm-h2" style="margin-top:10px">Personal work (not counted)</div><ul class="mm-list">'+I.pers.map(m=>`<li>${hx(fmt12(m.outTime))}${m.backTime?' – '+hx(fmt12(m.backTime)):''}${m.note?' · '+hx(m.note):''}</li>`).join('')+'</ul>';
+  if(I.pers.length) h+='<div class="hm-h2" style="margin-top:10px">Breaks / personal work (not counted)</div><ul class="mm-list">'+I.pers.map(m=>`<li>${hx(fmt12(m.outTime))}${m.backTime?' – '+hx(fmt12(m.backTime)):''}${m.note?' · '+hx(m.note):''}</li>`).join('')+'</ul>';
   if(_mm.tasks===null&&r) h+='<div style="font-size:11.5px;color:var(--soft);margin-top:8px">Task details are loading or not available yet.</div>';
   document.getElementById('modalTitle').textContent=new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('modalBody').innerHTML=h;
@@ -3891,7 +3894,7 @@ function mmPdf(){
     const ds=_mm.start.slice(0,8)+String(n).padStart(2,'0'); if(ds>todayStr()) break;
     const I=mmDayInfo(ds), r=I.r, d=S&&S.days[ds];
     const work=I.tasks.map(x=>hx(x.label)+' ('+fmtMins(x.activeMin)+')').concat(I.meets.map(x=>'Meeting: '+hx(x.customer||'')+(x.activeMin?' ('+fmtMins(x.activeMin)+')':''))).join('<br>');
-    const note=[d&&d.w&&d.cls!=='off'?hx(d.w):'', r&&r.poutAuto?'Auto punch-out':'', r&&+r.awayMin?'Away '+fmtMins(+r.awayMin):'', I.pers.length?'Personal '+I.pers.length+'×':''].filter(Boolean).join(' · ');
+    const note=[d&&d.w&&d.cls!=='off'?hx(d.w):'', r&&r.poutAuto?'Auto punch-out':'', r&&+r.awayMin?'Away '+fmtMins(+r.awayMin):'', I.parts.length>1?I.parts.length+' parts: '+I.parts.map(p=>fmt12(p[0]).replace(/:\d\d (AM|PM)/,' $1')+'–'+(p[1]?fmt12(p[1]).replace(/:\d\d (AM|PM)/,' $1'):'…')).join(', '):''].filter(Boolean).join(' · ');
     rows+=`<tr><td>${new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric'})}</td><td>${d?lab[d.cls]:(checkDayOff(ds)?'Off':ds===todayStr()?'Today':'—')}${d&&d.cls==='off'&&d.w?'<div style="font-size:9.5px;color:var(--soft)">'+hx(d.w)+'</div>':''}</td><td>${r?hx(fmt12(r.punchIn.time)):''}</td><td>${r&&r.punchOut?hx(fmt12(r.punchOut.time)):''}</td><td>${I.mins?fmtMins(I.mins):''}</td><td style="font-size:10px">${work}</td><td style="font-size:10px;color:var(--soft)">${note}</td></tr>`;
   }
   const sum=S?`<table class="mm-s"><thead><tr><th>Days counted</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th></tr></thead><tbody><tr><td>${S.cal}</td><td>${S.work}</td><td>${S.full+S.half}</td><td>${S.half||''}</td><td>${S.late||''}</td><td>${S.ded?'−'+fmtD(S.ded):''}</td><td>${S.leave||''}</td><td>${S.absent||''}</td><td><b>${fmtD(S.payable)}</b></td></tr></tbody></table>`:'';
