@@ -1346,6 +1346,10 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div id="hmSafety"></div>
   </section>
   <section class="hm-pane" id="hmPaneMonth" data-pane="month">
+  <div class="card hm-card" id="mmCard"><div class="mm-head"><button type="button" class="mm-nav" onclick="mmShift(-1)" aria-label="Previous month">◀</button><b id="mmTitle">This month</b><button type="button" class="mm-nav" id="mmNext" onclick="mmShift(1)" aria-label="Next month">▶</button><button type="button" class="mm-pdf" onclick="mmPdf()">⬇ PDF</button></div>
+    <div id="mmCal"><div class="empty">⏳ Loading…</div></div>
+    <div class="hm-leg">✓ on time · ! late · ½ half day · L leave · ✕ absent · – off day · tap a day to see it</div>
+    <div class="hm-h2">My salary days</div><div class="mm-sum" id="mmSum"></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Tap a number to see the days behind it. Counted up to yesterday; your admin's sheet is final.</div></div>
   <div class="card hm-card hm-score" id="hmScore"><div class="empty">⏳ Loading…</div></div>
   <div class="card hm-card"><div class="hm-h">Hours · last 14 days</div><div id="hmChart"><div class="empty">⏳ Loading…</div></div></div>
   <div class="card hm-card">
@@ -3355,6 +3359,21 @@ async function saveRules(){
   catch(e){ loading(false); err.textContent=e.message; err.classList.add('show'); }
 }
 /* ── Salary-ready sheet ── */
+/* One person's month, day by day: what the salary sheet counts and the story behind every number (also the employee's own My month) */
+function monthStory(e,by,start,end,R){
+  const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
+  let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0,pend=0; const notes=[], st={off:[],present:[],half:[],late:[],leave:[],absent:[]}, days={};
+  for(let ds=from;ds<=end;ds=isoAdd(ds,1)){
+    cal++; const r=by[ds]||null;
+    { const off=checkDayOff(ds); if(off){ st.off.push({d:ds,w:off.name||off.type||'Off'}); days[ds]={cls:'off',w:off.name||off.type,r}; continue; } } work++;
+    if(r){ const m=parseTimeMins(r.punchIn.time), t=r.punchIn.time; if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); st.half.push({d:ds,t}); days[ds]={cls:'half',r}; } else{ full++; st.present.push({d:ds,t,late:m>lateLim}); if(m>lateLim){ late++; st.late.push({d:ds,t}); } days[ds]={cls:m>lateLim?'late':'ok',r}; } }
+    else if(leaveOn(e.id,ds)){ leave++; const w=(leaveOn(e.id,ds)||{}).type||''; st.leave.push({d:ds,w}); days[ds]={cls:'leave',w}; }
+    else if(leaveOn(e.id,ds,['pending'])){ absent++; pend++; notes.push(ds.slice(8)+' absent (leave pending)'); st.absent.push({d:ds,w:'leave asked, not approved yet'}); days[ds]={cls:'absent',w:'leave asked, not approved yet'}; }
+    else{ absent++; notes.push(ds.slice(8)+' absent'); st.absent.push({d:ds,w:''}); days[ds]={cls:'absent'}; }
+  }
+  const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
+  return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,ot:0,ots:[],notes:notes.join(' · '),st,from,lateAt:set.start+' + '+set.grace+' min',days,pend};
+}
 async function payrollBuild(){
   const mv=(document.getElementById('rptMonth').value||todayStr().slice(0,7)).trim(), mm=mv.match(/^(\d{4})-(\d{1,2})$/);
   if(!mm) throw new Error('Pick a month at the top of this tab first.');
@@ -3367,25 +3386,15 @@ async function payrollBuild(){
   const emps=await getEmployees(); let pendDays=0;
   const otBy={}, otList={}; (d.overtime||[]).forEach(o=>{ if(o.status==='approved'){ otBy[key(o.empId)]=(otBy[key(o.empId)]||0)+(o.approvedMins||0); (otList[key(o.empId)]=otList[key(o.empId)]||[]).push({d:o.date||String(o.startedAt||'').slice(0,10),m:o.approvedMins||0,why:o.reason||''}); } });
   const list=emps.map(e=>{
-    const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
-    let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[], st={off:[],present:[],half:[],late:[],leave:[],absent:[]};   // st: the story behind each number, shown when it is tapped
-    for(let ds=from;ds<=end;ds=isoAdd(ds,1)){
-      cal++; { const off=checkDayOff(ds); if(off){ st.off.push({d:ds,w:off.name||off.type||'Off'}); continue; } } work++;
-      const r=(byEmp[key(e.id)]||{})[ds];
-      if(r){ const m=parseTimeMins(r.punchIn.time), t=r.punchIn.time; if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); st.half.push({d:ds,t}); } else{ full++; st.present.push({d:ds,t,late:m>lateLim}); if(m>lateLim){ late++; st.late.push({d:ds,t}); } } }
-      else if(leaveOn(e.id,ds)){ leave++; st.leave.push({d:ds,w:(leaveOn(e.id,ds)||{}).type||''}); }
-      else if(leaveOn(e.id,ds,['pending'])){ absent++; pendDays++; notes.push(ds.slice(8)+' absent (leave pending)'); st.absent.push({d:ds,w:'leave asked, not approved yet'}); }
-      else{ absent++; notes.push(ds.slice(8)+' absent'); st.absent.push({d:ds,w:''}); }
-    }
-    const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
-    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,ot:otBy[key(e.id)]||0,notes:notes.join(' · '),st,from,lateAt:set.start+' + '+set.grace+' min',ots:otList[key(e.id)]||[]};
+    const m=monthStory(e,byEmp[key(e.id)]||{},start,end,R); pendDays+=m.pend;
+    return Object.assign(m,{ot:otBy[key(e.id)]||0,ots:otList[key(e.id)]||[]});
   }).sort((a,b)=>a.name<b.name?-1:1);
   return {month:mv,end,list,R,pendDays};
 }
 const fmtD=n=>Number.isInteger(n)?String(n):n.toFixed(1);
 /* Tap a number on the salary sheet: the days and the sum behind it */
-function salWhy(i,k){
-  const r=window._payroll, e=r&&r.list[i]; if(!e) return;
+function salWhy(i,k,src){
+  const r=src?window[src]:window._payroll, e=r&&r.list[i]; if(!e) return;
   const S=e.st, day=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
   const li=(arr,f)=>arr.length?'<ul class="sal-why">'+arr.map(x=>'<li>'+f(x)+'</li>').join('')+'</ul>':'<div class="empty" style="padding:8px">None.</div>';
   const R=r.R, late=x=>'<b>'+day(x.d)+'</b> · in at '+hx(fmt12(x.t));
@@ -3817,6 +3826,79 @@ async function homeStats(emp,tok){
     return `<div class="hm-rec"><div><b>${dd.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><small>In ${fmt12(r.punchIn.time)}${r.punchOut?' · Out '+fmt12(r.punchOut.time)+autoPill(r):' · no punch-out'}</small></div><div style="text-align:right">${th?`<b>${th}</b>`:''}${isHalfDay(r)?'<small style="color:var(--amber)">Half day</small>':isLate(r)?'<small style="color:var(--amber)">Late</small>':'<small style="color:var(--green)">On time</small>'}</div></div>`;
   }).join(''):'<div class="empty" style="padding:10px 0">No attendance yet.</div>');
 }
+/* ── My month: the whole month day by day, my salary days, and a PDF of it ── */
+let _mm={month:'',story:null,tasks:null,meets:null,by:{},end:''};
+function mmShift(n){ const [y,m]=(_mm.month||todayStr().slice(0,7)).split('-').map(Number), d=new Date(y,m-1+n,1); const v=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(v>todayStr().slice(0,7)) return; _mm.month=v; mmLoad(); }
+async function mmLoad(){
+  const emp=currentEmp; if(!emp) return; const cal=document.getElementById('mmCal'); if(!cal) return;
+  const mon=_mm.month||todayStr().slice(0,7); _mm.month=mon;
+  const [y,mo]=mon.split('-').map(Number), last=new Date(y,mo,0).getDate(), start=mon+'-01', endFull=mon+'-'+String(last).padStart(2,'0'), yest=isoAdd(todayStr(),-1), end=endFull<yest?endFull:yest;
+  setHtml('mmTitle',hx(new Date(start+'T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'})));
+  { const nx=document.getElementById('mmNext'); if(nx) nx.disabled=mon>=todayStr().slice(0,7); }
+  cal.innerHTML='<div class="empty">⏳ Loading…</div>';
+  const eid=String(emp.id).toUpperCase(); let recs=[];
+  try{ recs=(await getAttRange(start,endFull))||[]; }catch(e){ cal.innerHTML='<div class="msg msg-error show">'+hx(e.message)+'</div>'; return; }
+  if(_mm.month!==mon||currentEmp!==emp) return;
+  try{ await refreshMyLeaves(emp.id); }catch(e){}
+  const by={}; recs.filter(r=>String(r.empId).toUpperCase()===eid&&r.punchIn).forEach(r=>by[r.date]=r);
+  const me=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===eid)||curRec()||emp;
+  const story=end>=start?monthStory(me,by,start,end,payRules()):null;
+  _mm=Object.assign(_mm,{story,by,end,start,endFull,tasks:_mm.tMonth===mon?_mm.tasks:null,meets:_mm.tMonth===mon?_mm.meets:null});
+  window._mmPay={month:mon,end,R:payRules(),list:story?[story]:[]};
+  mmDraw();
+  try{ const w=await api('myWorkMonth',{empId:emp.id,start,end:endFull}); if(_mm.month===mon){ _mm.tasks=w.tasks||[]; _mm.meets=w.meetings||[]; _mm.tMonth=mon; } }catch(e){ if(_mm.month===mon){ _mm.tasks=null; _mm.meets=null; } }
+}
+function mmDraw(){
+  const cal=document.getElementById('mmCal'); if(!cal) return;
+  const S=_mm.story, t=todayStr(), first=new Date(_mm.start+'T12:00:00'), pad=(first.getDay()+6)%7, last=+_mm.endFull.slice(8);
+  let h='<div class="mm-cal">'+['M','T','W','T','F','S','S'].map(x=>'<div class="mm-wd">'+x+'</div>').join('')+'<div></div>'.repeat(pad);
+  for(let n=1;n<=last;n++){
+    const ds=_mm.start.slice(0,8)+String(n).padStart(2,'0'), d=S&&S.days[ds], fut=ds>_mm.end&&ds!==t;
+    let cls=d?d.cls:(ds===t?'now':fut?'future':checkDayOff(ds)?'off':'');
+    if(ds===t&&_mm.by[ds]) cls='ok';
+    const sym={ok:'✓',late:'!',half:'½',leave:'L',absent:'✕',off:'–',now:'•'}[cls]||'';
+    h+=`<button type="button" class="mm-d ${cls}${ds===t?' today':''}" ${fut?'disabled':`onclick="mmDay('${ds}')"`}>${n}<i>${sym}</i></button>`;
+  }
+  cal.innerHTML=h+'</div>';
+  const tile=(k,v,l)=>`<button type="button" onclick="salWhy(0,'${k}','_mmPay')"><b>${v}</b><span>${l}</span></button>`;
+  setHtml('mmSum',S?tile('work',S.work,'Work days')+tile('present',S.full,'Present')+tile('late',S.late,'Late')+tile('half',S.half,'Half days')+tile('leave',S.leave,'Leave')+tile('absent',S.absent,'Absent')+tile('ded',S.ded?'−'+fmtD(S.ded):'0','Late cut')+tile('cal',S.cal,'Days counted')+tile('pay','<span style="color:#1F7A5A;font-size:17px">'+fmtD(S.payable)+'</span>','Payable days'):'<div class="empty" style="grid-column:1/-1">Nothing counted yet this month.</div>');
+}
+function mmDayInfo(ds){
+  const r=_mm.by[ds], d=_mm.story&&_mm.story.days[ds], off=checkDayOff(ds);
+  const status={ok:'Present · on time',late:'Present · late',half:'Half day',leave:'On leave'+(d&&d.w?' ('+d.w+')':''),absent:'Absent'+(d&&d.w?' · '+d.w:''),off:(off&&off.name)||'Off day'}[d&&d.cls]||(ds===todayStr()?'Today':r?'Present':'No record');
+  const tasks=(_mm.tasks||[]).filter(x=>x.date===ds), meets=(_mm.meets||[]).filter(x=>x.date===ds);
+  const pers=r?(r.meetings||[]).filter(m=>m.kind==='personal'&&m.outTime):[];
+  return {r,status,tasks,meets,pers,mins:r&&r.punchOut?officeMins(r):0};
+}
+function mmDay(ds){
+  const I=mmDayInfo(ds), r=I.r, clk=s=>s?fmt12(String(s).slice(11,19)):'';
+  let h=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">${hx(I.status)}</div>`;
+  if(r&&r.punchIn) h+=`<div style="font-size:13px">In <b>${hx(fmt12(r.punchIn.time))}</b>${r.punchIn.area?' · '+hx(r.punchIn.area):''}<br>Out <b>${r.punchOut?hx(fmt12(r.punchOut.time))+autoPill(r):'—'}</b>${r.punchOut&&r.punchOut.area?' · '+hx(r.punchOut.area):''}${I.mins?'<br>Hours <b>'+fmtMins(I.mins)+'</b>':''}${+r.awayMin?'<br>Away from the place (not counted) <b>'+fmtMins(+r.awayMin)+'</b>':''}</div>`;
+  if(I.tasks.length) h+='<div class="hm-h2" style="margin-top:10px">Tasks</div><ul class="mm-list">'+I.tasks.map(x=>`<li><b>${hx(x.label)}</b>${x.client?' · '+hx(x.client):''}<br><small>${clk(x.startAt)}${x.endAt?' – '+clk(x.endAt):' · '+hx(x.status)} · ${fmtMins(x.activeMin)}</small>${x.outcome?'<br><small>'+hx(x.outcome)+'</small>':''}</li>`).join('')+'</ul>';
+  if(I.meets.length) h+='<div class="hm-h2" style="margin-top:10px">Meetings</div><ul class="mm-list">'+I.meets.map(x=>`<li><b>${hx(x.customer||'Meeting')}</b>${x.purpose?' · '+hx(x.purpose):''}<br><small>${clk(x.startAt)}${x.endAt?' – '+clk(x.endAt):''}${x.activeMin?' · '+fmtMins(x.activeMin):''}</small>${x.outcome?'<br><small>'+hx(x.outcome)+'</small>':''}</li>`).join('')+'</ul>';
+  if(I.pers.length) h+='<div class="hm-h2" style="margin-top:10px">Personal work (not counted)</div><ul class="mm-list">'+I.pers.map(m=>`<li>${hx(fmt12(m.outTime))}${m.backTime?' – '+hx(fmt12(m.backTime)):''}${m.note?' · '+hx(m.note):''}</li>`).join('')+'</ul>';
+  if(_mm.tasks===null&&r) h+='<div style="font-size:11.5px;color:var(--soft);margin-top:8px">Task details are loading or not available yet.</div>';
+  document.getElementById('modalTitle').textContent=new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('modalBody').innerHTML=h;
+  document.getElementById('detailModal').classList.add('open');
+}
+function mmPdf(){
+  const S=_mm.story, me=curRec()||currentEmp||{}; if(!_mm.start) return;
+  const mn=new Date(_mm.start+'T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}), clk=s=>s?fmt12(String(s).slice(11,19)).replace(/:00 /,' '):'';
+  const lab={ok:'Present',late:'Late',half:'Half day',leave:'Leave',absent:'Absent',off:'Off'};
+  let rows=''; const last=+_mm.endFull.slice(8);
+  for(let n=1;n<=last;n++){
+    const ds=_mm.start.slice(0,8)+String(n).padStart(2,'0'); if(ds>todayStr()) break;
+    const I=mmDayInfo(ds), r=I.r, d=S&&S.days[ds];
+    const work=I.tasks.map(x=>hx(x.label)+' ('+fmtMins(x.activeMin)+')').concat(I.meets.map(x=>'Meeting: '+hx(x.customer||'')+(x.activeMin?' ('+fmtMins(x.activeMin)+')':''))).join('<br>');
+    const note=[d&&d.w&&d.cls!=='off'?hx(d.w):'', r&&r.poutAuto?'Auto punch-out':'', r&&+r.awayMin?'Away '+fmtMins(+r.awayMin):'', I.pers.length?'Personal '+I.pers.length+'×':''].filter(Boolean).join(' · ');
+    rows+=`<tr><td>${new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric'})}</td><td>${d?lab[d.cls]:(checkDayOff(ds)?'Off':ds===todayStr()?'Today':'—')}${d&&d.cls==='off'&&d.w?'<div style="font-size:9.5px;color:var(--soft)">'+hx(d.w)+'</div>':''}</td><td>${r?hx(fmt12(r.punchIn.time)):''}</td><td>${r&&r.punchOut?hx(fmt12(r.punchOut.time)):''}</td><td>${I.mins?fmtMins(I.mins):''}</td><td style="font-size:10px">${work}</td><td style="font-size:10px;color:var(--soft)">${note}</td></tr>`;
+  }
+  const sum=S?`<table class="mm-s"><thead><tr><th>Days counted</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable days</th></tr></thead><tbody><tr><td>${S.cal}</td><td>${S.work}</td><td>${S.full+S.half}</td><td>${S.half||''}</td><td>${S.late||''}</td><td>${S.ded?'−'+fmtD(S.ded):''}</td><td>${S.leave||''}</td><td>${S.absent||''}</td><td><b>${fmtD(S.payable)}</b></td></tr></tbody></table>`:'';
+  const body=`<style>.mm-s{margin-bottom:12px}.mm-s th,.mm-s td{text-align:center}.mm-days td{padding:4px 6px}</style>${sum}<table class="mm-days"><thead><tr><th style="width:11%">Date</th><th style="width:10%">Status</th><th style="width:10%">In</th><th style="width:10%">Out</th><th style="width:8%">Hours</th><th>Work done</th><th style="width:20%">Notes</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="note">Counted up to ${hx(_mm.end)}. Sundays and holidays are paid; approved leave is paid; absences are unpaid; a half day counts as 0.5${S&&_mm.story&&window._mmPay.R.lateN>0?'; every '+window._mmPay.R.lateN+' late marks cost half a day':''}. This is your own copy; the salary sheet from your admin is final.</div>`;
+  printHtmlNow(printShell({title:'My month '+mn+' · '+(me.name||''),heading:'My month · '+mn,sub:hx(me.name||'')+' · '+hx(me.id||'')+(me.department?'<br>'+hx(me.department):''),body,who:me.name||'',orient:'landscape'}));
+}
 /* ── Employee home: tabs, smart line, my month ── */
 let _hmTab='today';
 /* The bottom bar steps out of the way while reading downwards and comes back on any upward scroll, at the ends of the page, or from its handle */
@@ -3837,6 +3919,7 @@ function hmTab(t,silent){
   if(!silent&&document.body.classList.contains('tk-tab')&&_tk.close) _tk.close();   // leaving Tasks for another tab
   { const nav=document.getElementById('hmNav'); if(nav&&nav.parentNode!==document.body) document.body.appendChild(nav); }   // fixed to the screen, not to a moving parent
   document.querySelectorAll('#homeScreen .hm-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===t));
+  if(t==='month') try{ mmLoad(); }catch(e){}
   document.querySelectorAll('#hmNav button[data-go]').forEach(b=>{ const on=b.dataset.go===t; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   if(!silent) try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
 }
@@ -7311,6 +7394,14 @@ try{ if(currentEmp&&polEl('homeScreen').classList.contains('active')) polHome();
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
 .pl-card h4{font-size:13px;margin-bottom:6px}
 .pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.mm-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}.mm-head b{flex:1;text-align:center;font-size:15px}.mm-nav{border:1px solid var(--border);background:var(--surface);border-radius:999px;width:34px;height:34px;cursor:pointer}.mm-nav:disabled{opacity:.35}
+.mm-pdf{border:1px solid #1F7A5A;background:#E6F4EE;color:#1F7A5A;border-radius:999px;padding:6px 12px;font-weight:700;font-size:12.5px;cursor:pointer}
+.mm-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.mm-wd{font-size:10.5px;color:var(--soft);text-align:center}
+.mm-d{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:5px 0 4px;text-align:center;cursor:pointer;font-size:12px;line-height:1.2;min-height:46px}
+.mm-d i{display:block;font-style:normal;font-weight:800;font-size:13px;margin-top:2px}.mm-d.ok i{color:#1F7A5A}.mm-d.late i{color:#B45309}.mm-d.half i{color:#9A6700}.mm-d.leave i{color:#6A3FA0}.mm-d.absent i{color:#B42318}.mm-d.off{background:var(--surface2);color:var(--soft)}
+.mm-d.absent{background:#FDECEA}.mm-d.late{background:#FFF4E0}.mm-d.ok{background:#E9F6EF}.mm-d.leave{background:#F1EAFB}.mm-d.half{background:#FFF8D9}.mm-d.future{opacity:.4;cursor:default}.mm-d.today{outline:2px solid #1F7A5A}
+.mm-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mm-sum button{border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:8px 4px;cursor:pointer;font:inherit}.mm-sum b{display:block;font-size:17px}.mm-sum span{font-size:11px;color:var(--soft)}
+.mm-list{list-style:none;padding:0;margin:6px 0 0}.mm-list li{padding:6px 0;border-top:1px solid var(--border);font-size:13px}
 .sal-tap{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
 .sal-why{list-style:none;margin:8px 0 0;padding:0;max-height:52vh;overflow:auto}.sal-why li{padding:5px 0;border-top:1px solid var(--border)}
 .sal-late{color:#B45309;font-weight:700;font-size:11px}.sal-sum{font-variant-numeric:tabular-nums;background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px}
