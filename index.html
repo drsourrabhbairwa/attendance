@@ -8283,7 +8283,8 @@ function wmRestore(){   // paint instantly from the last answer of today, then r
 function wmLive(){   // minutes since the last server answer, so both figures keep moving between refreshes
   const rec=_hmRec, gone=(Date.now()-_wm.at)/60000, out=!!(rec&&rec.punchOut);
   const am=rec&&getActiveMeeting(rec), running=(_wm.open&&_wm.open.status==='Active')||(am&&am.state==='in_meeting'&&!am.pausedAt&&am.kind!=='personal');
-  const total=_wm.total+(out?0:gone), prod=Math.min(total,_wm.prod+(running&&!out?gone:0));
+  const ownOut=!!(am&&am.kind==='personal'&&!am.backTime);   // out on personal work: the clock of working time stops
+  const total=_wm.total+(out||ownOut?0:gone), prod=Math.min(total,_wm.prod+(running&&!out?gone:0));
   return {total:total,prod:prod};
 }
 function wmAwayHtml(){
