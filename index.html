@@ -1453,6 +1453,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div id="stDone" style="display:none">
     <div class="state-box box-done"><div class="icon">✅</div><h3>Attendance complete for today!</h3></div>
     <div id="doneTimeline"></div>
+    <div id="doneTasks"></div>
     <div class="total-hrs" id="doneTotalHrs" style="display:none"></div>
     <button class="btn btn-purple" onclick="openPunch('resume')" style="margin-top:10px">↩ Came back? Resume work</button>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px">Sign out</button>
@@ -4445,6 +4446,7 @@ async function loadCameraScreen(opts){
     if(th){tDiv.textContent='⏱ Total in office: '+th;tDiv.style.display='block';}
     else tDiv.style.display='none';
     document.getElementById('stDone').style.display='block';
+    { const dt=document.getElementById('doneTasks'); if(dt){ dt.innerHTML=''; if(typeof wmLoad==='function') wmLoad().then(()=>{ try{ dt.innerHTML=wmTimeline(); }catch(e){} }).catch(()=>{}); } }   // the day's tasks (office / factory / WFH work) under the punches
     checkSiteWork(true); return;
   }
 
