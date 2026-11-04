@@ -3365,29 +3365,51 @@ async function payrollBuild(){
   const byEmp={}; (d.attendance||[]).forEach(r=>{ if(r.punchIn) (byEmp[key(r.empId)]=byEmp[key(r.empId)]||{})[r.date]=r; });
   await syncLeaves(true);
   const emps=await getEmployees(); let pendDays=0;
-  const otBy={}; (d.overtime||[]).forEach(o=>{ if(o.status==='approved') otBy[key(o.empId)]=(otBy[key(o.empId)]||0)+(o.approvedMins||0); });
+  const otBy={}, otList={}; (d.overtime||[]).forEach(o=>{ if(o.status==='approved'){ otBy[key(o.empId)]=(otBy[key(o.empId)]||0)+(o.approvedMins||0); (otList[key(o.empId)]=otList[key(o.empId)]||[]).push({d:o.date||String(o.startedAt||'').slice(0,10),m:o.approvedMins||0,why:o.reason||''}); } });
   const list=emps.map(e=>{
     const set=settingsFor(e), lateLim=parseTimeMins(set.start)+set.grace, from=e.joined&&e.joined>start?e.joined:start;
-    let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[];
+    let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0; const notes=[], st={off:[],present:[],half:[],late:[],leave:[],absent:[]};   // st: the story behind each number, shown when it is tapped
     for(let ds=from;ds<=end;ds=isoAdd(ds,1)){
-      cal++; if(checkDayOff(ds)) continue; work++;
+      cal++; { const off=checkDayOff(ds); if(off){ st.off.push({d:ds,w:off.name||off.type||'Off'}); continue; } } work++;
       const r=(byEmp[key(e.id)]||{})[ds];
-      if(r){ const m=parseTimeMins(r.punchIn.time); if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); } else{ full++; if(m>lateLim) late++; } }
-      else if(leaveOn(e.id,ds)) leave++;
-      else if(leaveOn(e.id,ds,['pending'])){ absent++; pendDays++; notes.push(ds.slice(8)+' absent (leave pending)'); }
-      else{ absent++; notes.push(ds.slice(8)+' absent'); }
+      if(r){ const m=parseTimeMins(r.punchIn.time), t=r.punchIn.time; if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); st.half.push({d:ds,t}); } else{ full++; st.present.push({d:ds,t,late:m>lateLim}); if(m>lateLim){ late++; st.late.push({d:ds,t}); } } }
+      else if(leaveOn(e.id,ds)){ leave++; st.leave.push({d:ds,w:(leaveOn(e.id,ds)||{}).type||''}); }
+      else if(leaveOn(e.id,ds,['pending'])){ absent++; pendDays++; notes.push(ds.slice(8)+' absent (leave pending)'); st.absent.push({d:ds,w:'leave asked, not approved yet'}); }
+      else{ absent++; notes.push(ds.slice(8)+' absent'); st.absent.push({d:ds,w:''}); }
     }
     const ded=R.lateN>0?Math.floor(late/R.lateN)*0.5:0, unpaid=absent+half*0.5+ded;
-    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,ot:otBy[key(e.id)]||0,notes:notes.join(' · ')};
+    return {id:e.id,name:e.name,dept:e.department||'',cal,work,full,half,late,ded,leave,absent,unpaid,payable:cal-unpaid,ot:otBy[key(e.id)]||0,notes:notes.join(' · '),st,from,lateAt:set.start+' + '+set.grace+' min',ots:otList[key(e.id)]||[]};
   }).sort((a,b)=>a.name<b.name?-1:1);
   return {month:mv,end,list,R,pendDays};
 }
 const fmtD=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+/* Tap a number on the salary sheet: the days and the sum behind it */
+function salWhy(i,k){
+  const r=window._payroll, e=r&&r.list[i]; if(!e) return;
+  const S=e.st, day=d=>new Date(d+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  const li=(arr,f)=>arr.length?'<ul class="sal-why">'+arr.map(x=>'<li>'+f(x)+'</li>').join('')+'</ul>':'<div class="empty" style="padding:8px">None.</div>';
+  const R=r.R, late=x=>'<b>'+day(x.d)+'</b> · in at '+hx(fmt12(x.t));
+  const T={
+    cal:['Days',`${e.cal} calendar day${e.cal===1?'':'s'} counted, ${day(e.from)} to ${day(r.end)}${e.from>r.month+'-01'?' (from the joining date)':''}. Every calendar day is paid unless it is unpaid below.`],
+    work:['Work days',`${e.cal} days − ${S.off.length} Sunday / holiday = <b>${e.work}</b> working days.`+li(S.off,x=>'<b>'+day(x.d)+'</b> · '+hx(x.w))],
+    present:['Present (full days)',`${e.full} full day${e.full===1?'':'s'}. Late ones are marked.`+li(S.present,x=>'<b>'+day(x.d)+'</b> · in at '+hx(fmt12(x.t))+(x.late?' <span class="sal-late">late</span>':''))],
+    half:['Half days',`Punch-in after ${hx((_D.settings||{}).halfDayAfter||'the half-day time')} counts as ½ day.`+li(S.half,late)],
+    late:['Late marks',`Late = punch-in after ${hx(e.lateAt)}.`+li(S.late,late)],
+    ded:['Late cut',`${e.late} late mark${e.late===1?'':'s'} ÷ every ${R.lateN} = ${Math.floor(e.late/(R.lateN||1))} × ½ day = <b>${fmtD(e.ded)}</b> day${e.ded===1?'':'s'} cut.`+li(S.late,late)],
+    leave:['Leave (paid)',`${e.leave} day${e.leave===1?'':'s'} of approved leave.`+li(S.leave,x=>'<b>'+day(x.d)+'</b> · '+hx(x.w))],
+    absent:['Absent (unpaid)',`${e.absent} working day${e.absent===1?'':'s'} with no punch-in and no approved leave.`+li(S.absent,x=>'<b>'+day(x.d)+'</b>'+(x.w?' · '+hx(x.w):''))],
+    pay:['Payable days',`<div class="sal-sum">${e.cal} calendar days<br>− ${e.absent} absent<br>− ${fmtD(e.half*0.5)} (½ × ${e.half} half day${e.half===1?'':'s'})<br>− ${fmtD(e.ded)} late cut<br>= <b>${fmtD(e.payable)}</b> payable days</div>Sundays, holidays and approved leave are paid.`],
+    ot:['Overtime (approved)',`${fmtMins(e.ot)} in total. Shown for information; not added to payable days.`+li(e.ots,x=>'<b>'+(x.d?day(x.d):'—')+'</b> · '+fmtMins(x.m)+(x.why?' · '+hx(x.why):''))]
+  }, t=T[k]; if(!t) return;
+  document.getElementById('modalTitle').textContent=e.name+' · '+t[0];
+  document.getElementById('modalBody').innerHTML='<div style="font-size:13px;line-height:1.5">'+t[1]+'</div>';
+  document.getElementById('detailModal').classList.add('open');
+}
 async function payrollShow(){
   const el=document.getElementById('salContent'); el.innerHTML='<div class="empty">⏳ Working it out…</div>';
   try{
     const r=await payrollBuild(); window._payroll=r;
-    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th><th>OT hrs</th></tr></thead><tbody>${r.list.map(e=>`<tr><td><b>${hx(e.name)}</b><div style="color:var(--soft);font-size:11px">${hx(e.id)}${e.dept?' · '+hx(e.dept):''}</div></td><td>${e.cal}</td><td>${e.work}</td><td>${e.full}</td><td>${e.half||''}</td><td>${e.late||''}</td><td>${e.ded?'−'+fmtD(e.ded):''}</td><td>${e.leave||''}</td><td>${e.absent||''}</td><td><b>${fmtD(e.payable)}</b></td><td>${e.ot?fmtMins(e.ot):''}</td></tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>${r.pendDays?`<div class="msg msg-error show" style="margin-top:8px">⚠️ ${r.pendDays} day${r.pendDays>1?'s':''} of leave still waiting for approval are counted as absent. Approve or reject them in the Leaves tab, then press Show again.</div>`:''}`;
+    el.innerHTML=`<div class="sal-wrap"><table class="tbl"><thead><tr><th>Employee</th><th>Days</th><th>Work days</th><th>Present</th><th>Half</th><th>Late</th><th>Late cut</th><th>Leave</th><th>Absent</th><th>Payable</th><th>OT hrs</th></tr></thead><tbody>${r.list.map((e,i)=>`<tr><td><b>${hx(e.name)}</b><div style="color:var(--soft);font-size:11px">${hx(e.id)}${e.dept?' · '+hx(e.dept):''}</div></td>${[['cal',e.cal],['work',e.work],['present',e.full],['half',e.half||''],['late',e.late||''],['ded',e.ded?'−'+fmtD(e.ded):''],['leave',e.leave||''],['absent',e.absent||''],['pay','<b>'+fmtD(e.payable)+'</b>'],['ot',e.ot?fmtMins(e.ot):'']].map(c=>c[1]===''?'<td></td>':`<td><button type="button" class="sal-tap" onclick="salWhy(${i},'${c[0]}')" title="Tap to see the days behind this number">${c[1]}</button></td>`).join('')}</tr>`).join('')}</tbody></table></div><div style="font-size:11px;color:var(--soft);margin-top:6px">👆 Tap any number to see the days behind it.</div><div style="font-size:11px;color:var(--soft);margin-top:6px">Counted up to ${r.end}. Half day: ${r.R.halfAfter===null?'rule off':'punch-in after '+_D.settings.halfDayAfter}. Late cut: ${r.R.lateN?'every '+r.R.lateN+' late marks = ½ day':'rule off'}. Payable = calendar days − absences − ½ per half day − late cut. Approved leave is paid. Days before someone's joining date are not counted.</div>${r.pendDays?`<div class="msg msg-error show" style="margin-top:8px">⚠️ ${r.pendDays} day${r.pendDays>1?'s':''} of leave still waiting for approval are counted as absent. Approve or reject them in the Leaves tab, then press Show again.</div>`:''}`;
   }catch(e){ el.innerHTML='<div class="msg msg-error show">'+e.message+'</div>'; }
 }
 async function payrollCSV(){
@@ -7289,6 +7311,9 @@ try{ if(currentEmp&&polEl('homeScreen').classList.contains('active')) polHome();
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
 .pl-card h4{font-size:13px;margin-bottom:6px}
 .pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.sal-tap{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
+.sal-why{list-style:none;margin:8px 0 0;padding:0;max-height:52vh;overflow:auto}.sal-why li{padding:5px 0;border-top:1px solid var(--border)}
+.sal-late{color:#B45309;font-weight:700;font-size:11px}.sal-sum{font-variant-numeric:tabular-nums;background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px}
 .pl-done{display:inline-block;margin-left:6px;padding:5px 10px;border-radius:999px;border:1px solid #1F7A5A;background:#E6F4EE;color:#1F7A5A;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
 .pl-row:first-of-type{border-top:0}.pl-row small{display:block;color:var(--soft);font-size:11.5px}
 .pl-row a{font-size:19px;text-decoration:none;margin-left:6px}
