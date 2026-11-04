@@ -1528,7 +1528,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div class="add-form">
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
-    <select id="lvType" onchange="lvTypeChanged()"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option></select>
+    <select id="lvType" onchange="lvTypeChanged()"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option><option value="CO" hidden>CO — Comp-off (Field)</option></select>
     <div class="lv-rule" id="lvRule"></div>
     <div class="g2">
       <div><label>From</label><input type="date" id="lvFrom" oninput="lvDatesChanged()"></div>
@@ -2645,7 +2645,8 @@ const _lp2=n=>String(n).padStart(2,'0');
 function leaveYear(ds,sm){ const y=+ds.slice(0,4), m=+ds.slice(5,7); return m>=sm?y:y-1; }
 function leaveYearStart(label,sm){ return label+'-'+_lp2(sm)+'-01'; }
 function leaveYearEnd(label,sm){ return isoAdd(leaveYearStart(label+1,sm),-1); }
-function leaveAdj(empId){ const q=(_D.quotas||{})[String(empId).toUpperCase()]||{}; return {CL:+q.CL||0,VL:+q.VL||0,ML:+q.ML||0}; }
+function leaveAdj(empId){ const q=(_D.quotas||{})[String(empId).toUpperCase()]||{}, e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||(currentEmp&&String(currentEmp.id).toUpperCase()===String(empId).toUpperCase()?currentEmp:{});
+  return {CL:+q.CL||0,VL:+q.VL||0,ML:+q.ML||0,CO:Array.isArray(e.coDays)?e.coDays.length:0}; }   // CO: the Sundays / holidays a Field person worked this leave year (the server counts them)
 function leaveEntitled(type,label,asOf,P,adj,joined){
   if(type==='CL'){
     const ys=leaveYearStart(label,P.sm); let from=ys;
@@ -2653,6 +2654,7 @@ function leaveEntitled(type,label,asOf,P,adj,joined){
     const a=+from.slice(0,4)*12+ +from.slice(5,7), b=+asOf.slice(0,4)*12+ +asOf.slice(5,7);
     return Math.max(0,Math.min(12,b-a+1))*P.cl+adj.CL;
   }
+  if(type==='CO') return adj.CO||0;
   return (type==='VL'?P.vl:P.ml)+adj[type];
 }
 function leaveWorkdaysIn(from,to,ws,we){ let n=0; const a=from>ws?from:ws, z=to<we?to:we; for(let d=a,i=0;d<=z&&i<800;d=isoAdd(d,1),i++) if(!checkDayOff(d)) n++; return n; }
@@ -2692,6 +2694,7 @@ function noticeProblem(type,from){
 }
 function lvRuleText(type){
   const R=leaveRules(), t=todayStr();
+  if(type==='CO') return 'Comp-off: one day off for each Sunday or holiday you worked this year. Ask for it on any working day.';
   if(type==='ML') return 'Medical leave cannot be asked for in advance — pick today or a day that has passed.'+(R.mlDays?' After you ask, upload your medical documents in the app within '+R.mlDays+' days (by '+niceDay(isoAdd(t,R.mlDays))+'); the office can approve it only after that. The files are deleted from the cloud '+R.keepDays+' days after your last upload.':'');
   const need=type==='CL'?R.cl:R.vl;
   return need?(type==='CL'?'Casual leave':'Vacation leave')+' has to be asked for at least '+need+' day'+_s(need)+' before it starts — the earliest first day is '+niceDay(isoAdd(t,need))+'.':'';
@@ -2700,11 +2703,12 @@ function policyText(){
   const P=leavePolicy();
   return 'CL: '+P.cl+' a month — unused days carry forward within the year · VL: '+P.vl+' a year · ML: '+P.ml+' a year · Everything starts fresh on 1 '+MONTH_NAMES[P.sm-1]+'.';
 }
+function empCat(empId){ const e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||(currentEmp&&String(currentEmp.id).toUpperCase()===String(empId).toUpperCase()?currentEmp:{}); return String(e.category||''); }
 function balHtml(empId){
   const t=todayStr();
-  return Object.keys(LEAVE_TYPES).map(type=>{
+  return Object.keys(LEAVE_TYPES).filter(type=>type!=='CO'||empCat(empId)==='field').map(type=>{
     const b=leaveBal(empId,type,t), pct=b.ent>0?Math.min((b.used+b.pending)/b.ent*100,100):0;
-    const sub=(type==='CL'?b.ent+' earned so far · ':'')+b.used+' used'+(b.pending?' · '+b.pending+' pending':'');
+    const sub=(type==='CL'?b.ent+' earned so far · ':type==='CO'?b.ent+' Sunday/holiday worked · ':'')+b.used+' used'+(b.pending?' · '+b.pending+' pending':'');
     return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${b.left}<span style="font-size:12px;color:var(--soft)"> left</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${sub}</div></div>`;
   }).join('');
 }
@@ -2716,6 +2720,7 @@ function leaveProblem(empId,type,from,to){
     const ws=leaveYearStart(label,P.sm), we=leaveYearEnd(label,P.sm), days=leaveWorkdaysIn(from,to,ws,we);
     if(!days) continue;
     const asOf=to<we?to:we, ent=leaveEntitled(type,label,asOf,P,adj,emp.joined), used=leaveUsedIn(type,empId,ws,we,['approved','pending']), left=Math.max(0,ent-used);
+    if(type==='CO'&&days>left) return 'You have only '+left+' comp-off day'+(left===1?'':'s')+' (one for each Sunday or holiday you worked this year, '+used+' used or requested).';
     if(days>left) return 'You have only '+left+' '+type+' day'+(left===1?'':'s')+' available'+(type==='CL'?' ('+P.cl+' a month carried forward: '+ent+' earned so far, '+used+' used or requested)':' this year ('+ent+' a year, '+used+' used or requested)')+'. Pick another type or fewer days.';
   }
   return '';
@@ -2734,7 +2739,7 @@ async function refreshMyLeaves(empId){
 /* the calendar only offers the days the rule allows, and the rule is written under the type */
 function lvTypeChanged(){
   const type=document.getElementById('lvType').value, R=leaveRules(), t=todayStr(), f=document.getElementById('lvFrom'), to=document.getElementById('lvTo');
-  const min=type==='ML'?'':(type==='CL'?R.cl:R.vl)?isoAdd(t,type==='CL'?R.cl:R.vl):'', max=type==='ML'?t:'';
+  const min=type==='ML'||type==='CO'?'':(type==='CL'?R.cl:R.vl)?isoAdd(t,type==='CL'?R.cl:R.vl):'', max=type==='ML'?t:'';
   f.min=min; to.min=min; f.max=max; to.removeAttribute('max');
   const was=f.value;
   if(min&&f.value<min) f.value=min;
@@ -3269,6 +3274,10 @@ function wtDel(i){ const L=wtCur(); if(L.length<=1){ const e=document.getElement
   if(!confirm('Remove "'+L[i].n+'"? Old entries stay in the reports.')) return; const n=L[i].n; L.splice(i,1); wtSave(L,'"'+n+'" removed'); }
 async function setEmpWT(id,val){
   try{ if(USE_SHEETS) await api('setWorkType',{id,workType:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.workType=val; saveCache(); }
+  catch(err){ alert('Error: '+err.message); renderEmpList(); }
+}
+async function setEmpCat(id,val){
+  try{ if(USE_SHEETS) await api('setCategory',{id,category:val}); const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(e) e.category=val; saveCache(); }
   catch(err){ alert('Error: '+err.message); renderEmpList(); }
 }
 async function setEmpDept(id,val){
@@ -5516,10 +5525,10 @@ function exportMonthlyCSV(){
 /* ══════════════════════════════════════════════════════════════
    LEAVES TAB (Admin)
 ══════════════════════════════════════════════════════════════ */
-const LEAVE_TYPES={CL:'Casual Leave',VL:'Vacation Leave',ML:'Medical Leave'};
+const LEAVE_TYPES={CL:'Casual Leave',VL:'Vacation Leave',ML:'Medical Leave',CO:'Comp-off'};
 const DEFAULT_QUOTA={CL:0,VL:0,ML:0};   // extra days per person on top of the policy
-const LT_COLOR={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)'};
-const LT_BG={CL:'var(--purpleBg)',VL:'var(--greenBg)',ML:'var(--redBg)'};
+const LT_COLOR={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)',CO:'#0F766E'};
+const LT_BG={CL:'var(--purpleBg)',VL:'var(--greenBg)',ML:'var(--redBg)',CO:'#E0F2EF'};
 
 async function loadLeavesTab(){
   const filterStatus=document.getElementById('lvFilterStatus')?.value||'pending';
@@ -5620,6 +5629,7 @@ function showLeavePanel(){
   fillAv('lvAvatar',curRec()||currentEmp);
   document.getElementById('lvName').textContent=currentEmp.name;
   showScreen('leavePanel');
+  { const co=document.querySelector('#lvType option[value="CO"]'), field=empCat(currentEmp.id)==='field'; if(co){ co.hidden=!field; co.disabled=!field; } if(!field&&document.getElementById('lvType').value==='CO') document.getElementById('lvType').value='CL'; }
   { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvTypeChanged(); }
   refreshMyLeaves(currentEmp.id).then(()=>{ loadLeaveBalance(); loadLeaveHistory(); });
   loadLeaveBalance();
@@ -5800,7 +5810,7 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${esc(e.id)}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${esc(e.id)}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
+      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select><select class="dept-sel" title="Category for leave rules: Field staff work Sundays and earn a comp-off for each" onchange="setEmpCat('${esc(e.id)}',this.value)">${[['','Office / Factory'],['field','Field'],['wfh','Work From Home']].map(o=>`<option value="${o[0]}"${String(e.category||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
