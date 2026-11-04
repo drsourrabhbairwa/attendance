@@ -7286,6 +7286,7 @@ try{ if(currentEmp&&polEl('homeScreen').classList.contains('active')) polHome();
 .pl-card{margin-top:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,40,.08);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);text-align:left}
 .pl-card h4{font-size:13px;margin-bottom:6px}
 .pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.pl-done{display:inline-block;margin-left:6px;padding:5px 10px;border-radius:999px;border:1px solid #1F7A5A;background:#E6F4EE;color:#1F7A5A;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
 .pl-row:first-of-type{border-top:0}.pl-row small{display:block;color:var(--soft);font-size:11.5px}
 .pl-row a{font-size:19px;text-decoration:none;margin-left:6px}
 .pl-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--greenBg);color:var(--green)}
@@ -7658,6 +7659,16 @@ async function ldOpen(id){
       <div class="sd-sum" style="margin-top:10px"><div><b>${r.meetings.length}</b>Meetings</div><div><b>${c.expectedValue?ldRs(c.expectedValue):'—'}</b>Expected value</div><div><b>${hx(r.lastResult||'—')}</b>Last result</div><div><b>${hx(r.nextFollowUp||'—')}</b>Next follow-up</div></div>
       ${c.stage==='Lost'&&c.lostReason?'<div style="font-size:12px;color:var(--red)">Lost: '+hx(c.lostReason)+'</div>':''}</div>
       <div class="ld-glass" style="margin-top:10px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Stage</div><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="ldStageSel" onchange="ldStagePick()" style="flex:1;margin:0">${LD_STAGES.map(x=>`<option${x===(c.stage||'New')?' selected':''}>${x}</option>`).join('')}</select><button class="btn btn-primary" style="width:auto;margin:0;padding:8px 14px" onclick="ldStage('${esc(c.id)}')">Update</button></div><input id="ldLostWhy" placeholder="Why was it lost?" style="display:none;margin:6px 0 0"><div id="ldStageMsg" style="font-size:12px;margin-top:6px;color:var(--soft)"></div></div>
+      <details class="ld-glass" style="margin-top:10px"><summary style="font-weight:700;font-size:13px;cursor:pointer">✏️ Edit details</summary>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+          <input id="ldEName" placeholder="Name" value="${hx(c.name||'')}" style="margin:0"><input id="ldEPhone" placeholder="Phone" inputmode="tel" value="${hx(c.phone||'')}" style="margin:0">
+          <input id="ldEAddr" placeholder="Address" value="${hx(c.address||'')}" style="margin:0;grid-column:1/-1">
+          <input id="ldEVert" placeholder="Vertical" value="${hx(c.vertical||'')}" style="margin:0"><input id="ldEVal" placeholder="₹ expected value" inputmode="numeric" value="${hx(c.expectedValue||'')}" style="margin:0">
+          <label style="margin:0;font-size:12px;color:var(--soft)">Next follow-up<input type="date" id="ldEFol" value="${hx(c.followUpDate||'')}" style="margin:2px 0 0"></label>
+          <label style="margin:0;font-size:12px;color:var(--soft)">Follow-up by<select id="ldEWho" style="margin:2px 0 0"><option value="">—</option>${emps.map(e=>`<option value="${hx(e.id)}"${String(e.id).toUpperCase()===String(c.followEmp||c.empId||'').toUpperCase()?' selected':''}>${hx(e.name)}</option>`).join('')}</select></label>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:8px 0 0;padding:8px 14px" onclick="ldEdit('${esc(c.id)}')">Save details</button><div id="ldEMsg" style="font-size:12px;margin-top:6px;color:var(--soft)"></div>
+      </details>
       <div class="ld-glass" style="margin-top:10px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Quotations (${(r.quotes||[]).length})</div>${(r.quotes||[]).map(q=>`<div class="ld-row"><div><b>${hx(q.number)}</b> · ${ldRs(q.amount)}<small>${hx(q.date||'')}${q.link?' · <a href="'+hx(q.link)+'" target="_blank" rel="noopener">open file</a>':''}</small></div><select onchange="ldQuoteStatus('${esc(c.id)}','${esc(q.id)}',this.value)" style="width:auto;margin:0">${QT_STATUS.map(x=>`<option${x===q.status?' selected':''}>${x}</option>`).join('')}</select></div>`).join('')||'<div style="font-size:12px;color:var(--soft)">None recorded yet.</div>'}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><select id="ldQEmp" style="flex:1;min-width:110px;margin:0">${emps.map(e=>`<option value="${hx(e.id)}">${hx(e.name)}</option>`).join('')}</select><input id="ldQNo" placeholder="Number" style="flex:1;min-width:90px;margin:0"><input id="ldQAmt" placeholder="₹ amount" inputmode="numeric" style="flex:1;min-width:90px;margin:0"><input id="ldQLink" placeholder="Link (optional)" style="flex:2;min-width:120px;margin:0"><button class="btn btn-primary" style="width:auto;margin:0;padding:8px 14px" onclick="ldQuoteAdd('${esc(c.id)}')">Add</button></div><div id="ldQMsg" style="font-size:12px;margin-top:6px;color:var(--soft)"></div></div>
       ${c.stage==='Won'||c.stage==='Lost'?'':`<div class="ld-glass" style="margin-top:10px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Plan a visit</div><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="ldPlanEmp" style="flex:1;min-width:130px;margin:0"><option value="">Employee…</option>${emps.map(e=>`<option value="${hx(e.id)}">${hx(e.name)}</option>`).join('')}</select><input type="date" id="ldPlanDate" value="${todayStr()}" style="margin:0;width:auto"><button class="btn btn-primary" style="width:auto;margin:0;padding:8px 14px" onclick="ldPlan('${esc(c.id)}')">Plan</button></div><div id="ldPlanMsg" style="font-size:12px;margin-top:6px;color:var(--soft)"></div></div>`}
@@ -7677,7 +7688,24 @@ async function planLoad(force){
   }
   const el2=document.getElementById('hmPlan'); if(!el2) return;
   const it=_plan.items;
-  el2.innerHTML=it.length?`<div class="pl-card"><h4>📋 Today's plan · ${it.length} customer${it.length===1?'':'s'}</h4>`+it.map(c=>`<div class="pl-row"><div><b>${hx(c.name)}</b> <span class="pl-chip ${c.due==='overdue'?'od':''}">${c.due==='overdue'?'Overdue':c.due==='planned'?'Planned':'Follow-up today'}</span><small>${hx(c.address||'')}${c.followUpDate&&c.due!=='planned'?(c.address?' · ':'')+'due '+hx(c.followUpDate):''}</small></div><div>${c.phone?'<a href="tel:'+hx(c.phone)+'">📞</a>':''}${c.lat?'<a href="'+mapsUrl(c.lat,c.lng)+'" target="_blank">📍</a>':''}</div></div>`).join('')+'</div>':'';
+  el2.innerHTML=it.length?`<div class="pl-card"><h4>📋 Today's plan · ${it.length} customer${it.length===1?'':'s'}</h4>`+it.map(c=>`<div class="pl-row"><div><b>${hx(c.name)}</b> <span class="pl-chip ${c.due==='overdue'?'od':''}">${c.due==='overdue'?'Overdue':c.due==='planned'?'Planned':'Follow-up today'}</span><small>${hx(c.address||'')}${c.followUpDate&&c.due!=='planned'?(c.address?' · ':'')+'due '+hx(c.followUpDate):''}</small></div><div>${c.phone?'<a href="tel:'+hx(c.phone)+'">📞</a>':''}${c.lat?'<a href="'+mapsUrl(c.lat,c.lng)+'" target="_blank">📍</a>':''}<button type="button" class="pl-done" onclick="planDone('${esc(c.id)}')">✓ Contacted</button></div></div>`).join('')+'</div>':'';
+}
+/* staff: "I contacted this customer" from Today's plan — pick the next follow-up date, or none */
+function planDone(id){
+  const c=(_plan.items||[]).find(x=>String(x.id)===String(id)); if(!c) return;
+  fmSheet(`<h3>✓ Contacted ${hx(c.name)}</h3><p style="margin:0 0 10px;color:var(--soft);font-size:13px">When should you follow up next? It leaves today's plan and comes back on that day.</p>
+    <input type="date" id="plNext" min="${isoAdd(todayStr(),1)}" value="${isoAdd(todayStr(),7)}" style="margin:0 0 8px">
+    <input type="text" id="plNote" placeholder="What did they say? (optional)" maxlength="120" style="margin:0 0 10px">
+    <div id="fmErr" style="color:var(--red);font-size:12.5px;min-height:16px"></div>
+    <button class="btn btn-green" style="width:100%" onclick="planDoneSave('${esc(id)}',true)">Save next follow-up</button>
+    <button class="fm-link" style="display:block;margin:10px auto 0" onclick="planDoneSave('${esc(id)}',false)">No more follow-up</button>`);
+}
+async function planDoneSave(id,withDate){
+  const next=withDate?(document.getElementById('plNext')||{}).value||'':'', note=(document.getElementById('plNote')||{}).value||'';
+  if(withDate&&!next) return fmErr('Pick a date.');
+  fmErr('Saving…');
+  try{ await api('followUpDone',{empId:(curRec()||{}).id,id:id,next:next,note:note}); fmClose(); _plan.items=(_plan.items||[]).filter(x=>String(x.id)!==String(id)); planLoad(true); }
+  catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 /* admin: plan a visit for an employee, from the customer page */
 async function ldPlan(id){
@@ -7707,6 +7735,11 @@ async function fmQuoteSave(){
   catch(e){ fmErr(e.message||'Could not save. Try again.'); }
 }
 /* admin: change a lead's stage, record or update quotations from the customer page */
+async function ldEdit(id){
+  const v=k=>(document.getElementById(k)||{}).value||'', msg=document.getElementById('ldEMsg'); msg.textContent='Saving…';
+  try{ await api('updateCustomer',{id:id,name:v('ldEName').trim(),phone:v('ldEPhone'),address:v('ldEAddr'),vertical:v('ldEVert'),expectedValue:v('ldEVal'),followUpDate:v('ldEFol'),followEmp:v('ldEWho')}); await ldLoad(); await ldOpen(id); }
+  catch(e){ msg.textContent='⚠️ '+e.message; }
+}
 async function ldStage(id){
   const st=document.getElementById('ldStageSel').value, msg=document.getElementById('ldStageMsg');
   let reason=''; if(st==='Lost'){ reason=(document.getElementById('ldLostWhy').value||'').trim(); if(!reason){ msg.textContent='Say why the lead was lost.'; return; } }
