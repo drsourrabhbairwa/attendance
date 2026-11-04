@@ -229,7 +229,7 @@
   function endedHook(list) {
     try {
       var k = 'amk_ended_' + S.empId, seen = []; try { seen = JSON.parse(ls(k) || '[]'); } catch (x) { }
-      var fresh = (list || []).filter(function (n) { return (n.kind === 'meetingEnded' || n.kind === 'meetingPaused' || n.kind === 'meetingResumed' || n.kind === 'siteStopped' || n.kind === 'workStopped' || n.kind === 'workPaused' || n.kind === 'workResumed' || n.kind === 'dayModeAuto') && seen.indexOf(n.id) < 0; });
+      var fresh = (list || []).filter(function (n) { return (n.kind === 'meetingEnded' || n.kind === 'meetingPaused' || n.kind === 'meetingResumed' || n.kind === 'siteStopped' || n.kind === 'workStopped' || n.kind === 'workPaused' || n.kind === 'workResumed' || n.kind === 'dayModeAuto' || n.kind === 'autoPunchOut' || n.kind === 'punchOutDone' || n.kind === 'leftOffice') && seen.indexOf(n.id) < 0; });
       if (!fresh.length) return;
       ls(k, JSON.stringify(seen.concat(fresh.map(function (n) { return n.id; })).slice(-50)));
       if (typeof window.amkServerEnded === 'function') window.amkServerEnded(fresh.map(function (n) { return n.kind; }));

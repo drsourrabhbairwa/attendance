@@ -3466,7 +3466,7 @@ function syncLogin(){   // after fresh data arrives from the sheet
    EMPLOYEE HOME DASHBOARD
 ══════════════════════════════════════════════════════════════ */
 let homeTok=0, homeTimerInt=null, homeDay='';
-document.addEventListener('visibilitychange',()=>{ try{ if(!document.hidden&&currentEmp&&homeDay&&homeDay!==todayStr()&&document.getElementById('homeScreen').classList.contains('active')) loadHome(); }catch(e){} });
+document.addEventListener('visibilitychange',()=>{ try{ if(document.hidden||!currentEmp||!homeDay||!document.getElementById('homeScreen').classList.contains('active')) return; if(homeDay!==todayStr()) loadHome(); else homeRecheck(); }catch(e){} });
 const _p2=n=>String(n).padStart(2,'0');
 function dstr(d){ return d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'+_p2(d.getDate()); }
 function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
@@ -3553,20 +3553,30 @@ async function loadHome(){
     const el=document.getElementById('hmTimer'); if(el&&el.dataset.since) el.textContent=fmtMins(Math.max(0,nowMins()-(+el.dataset.since)));
     otTick(); try{ wmTick(); }catch(e){} try{ hmHeadTick(); }catch(e){} try{ hmSmartDraw(); }catch(e){} try{ wmPlanPoll(); wmTravTick(); }catch(e){}
     if(Date.now()-LOCG.checkAt>300000) locGuardCheck('tick');
+    if(++_homeTick%4===0) homeRecheck();   // every 2 minutes: a punch-out (or a fix) made by the office side shows without reopening the app
   },30000);
   otRefresh().then(()=>{ if(tok===homeTok) renderHomeActs(); });
   homeStats(emp,tok); homeLeave(emp,tok); homeTeamLeave(emp,tok); homeNudge(emp,tok,rec,dayOff); fixNudge(emp,tok); homeBday(emp,tok);
   trkConsentCheck(emp); try{ if(typeof polHome==='function') polHome(); }catch(e){} ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff); startEmpSafety();
   locWhereDraw(); setTimeout(()=>{ if(tok===homeTok) locGuardCheck('home'); },700);
   // The phone keeps today's record for speed; ask the server for the real one so a corrected time shows up
-  if(!dayOff&&USE_SHEETS){
+  _homeRec=rec; _homeTick=0; await homeRecheck(true);
+}
+let _homeRec=null, _homeTick=0, _homeRecBusy=false;
+function homeSig(r){ return r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.poutAuto||'')+'|'+(r.edited||'')+'|'+(r.meetings||[]).map(m=>(m.outTime||'')+'-'+(m.backTime||'')+'-'+(m.state||'')+'-'+(m.endTime||'')+'-'+(m.pausedAt?1:0)).join(',')):''; }
+/* Ask the server for today's real record and redraw the Today section if it changed (auto punch-out, an admin fix, a closed meeting) */
+async function homeRecheck(first){
+  const emp=currentEmp, tok=homeTok; if(!emp||!USE_SHEETS||_homeRecBusy) return;
+  if(!document.getElementById('homeScreen').classList.contains('active')) return;
+  const dayOff=checkDayOff(todayStr()); if(dayOff) return;
+  _homeRecBusy=true;
+  try{
     const fresh=await freshRecordToday(emp.id);
-    if(fresh!==undefined&&tok===homeTok){
-      const sig=r=>r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&r.punchOut.time||'')+'|'+(r.poutAuto||'')+'|'+(r.edited||'')+'|'+(r.meetings||[]).map(m=>(m.outTime||'')+'-'+(m.backTime||'')+'-'+(m.state||'')+'-'+(m.endTime||'')+'-'+(m.pausedAt?1:0)).join(',')):'';
-      if(sig(fresh)!==sig(rec)){ rec=fresh; checkSiteWork(!!(rec&&rec.punchOut)); renderHomeToday(rec,dayOff); homeNudge(emp,tok,rec,dayOff); }
-      ensureAutoTrack(emp,rec); homeTrack(emp,tok,rec,dayOff);
-    }
-  }
+    if(fresh===undefined||tok!==homeTok||currentEmp!==emp) return;
+    const changed=homeSig(fresh)!==homeSig(_homeRec); _homeRec=fresh;
+    if(changed){ checkSiteWork(!!(fresh&&fresh.punchOut)); renderHomeToday(fresh,dayOff); homeNudge(emp,tok,fresh,dayOff); if(!first){ try{ if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }catch(e){} } }
+    if(changed||first){ ensureAutoTrack(emp,fresh); homeTrack(emp,tok,fresh,dayOff); }
+  }finally{ _homeRecBusy=false; }
 }
 async function freshRecordToday(empId){
   const eid=String(empId).toUpperCase(), t=todayStr(), ck='pc_'+eid+'_'+t;
@@ -4900,10 +4910,13 @@ async function reconcileSites(){
 }
 /* A message says the office side ended a site job or a meeting for this person (they moved away from the place): the screen must stop showing it as running now,
    not only the next time the app is opened. notify.js calls this when such a message arrives. */
+document.addEventListener('error',e=>{ const t=e.target; if(!t||t.tagName!=='IMG'||t.dataset.gone) return; t.dataset.gone='1'; t.onclick=null; t.style.cursor='default'; t.alt='Photo removed';
+  t.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="#E6EFEC"/><circle cx="24" cy="19" r="8" fill="#9DB8AF"/><path d="M9 42c2-9 8-13 15-13s13 4 15 13" fill="#9DB8AF"/></svg>'); },true);   // a photo deleted from storage shows a plain person, never a broken-image icon
 window.amkServerEnded=async function(kinds){
   try{
     if(!currentEmp||!USE_SHEETS) return;
     kinds=kinds||[];
+    if(kinds.some(k=>k==='autoPunchOut'||k==='punchOutDone'||k==='daySummary'||k==='leftOffice')) await homeRecheck();
     if(kinds.indexOf('siteStopped')>=0){ for(const k of Object.keys(_siteOpenAt)) delete _siteOpenAt[k]; reconcileSites(); }
     if(kinds.indexOf('meetingEnded')>=0||kinds.indexOf('meetingPaused')>=0||kinds.indexOf('meetingResumed')>=0||kinds.indexOf('dayModeAuto')>=0){ await fmRefresh(); if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }
     else if(kinds.indexOf('workStopped')>=0||kinds.indexOf('workPaused')>=0||kinds.indexOf('workResumed')>=0){ if(typeof wmOn==='function'&&wmOn()) await wmLoad(); }   // a running Office / Factory task was stopped: the heading and the running card follow
