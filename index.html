@@ -1369,6 +1369,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div class="hm-links" id="hmLinks"></div>
   </section>
   <nav class="hm-nav" id="hmNav" aria-label="Sections">
+    <span class="hm-orb" aria-hidden="true"></span>
     <button type="button" class="on" data-go="today" onclick="hmTab('today')" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Today</span></button>
     <button type="button" data-go="tasks" onclick="tkOpen()"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/></svg><span>Tasks</span><i class="hm-badge" id="hmNavTk" hidden></i></button>
     <button type="button" data-go="month" onclick="hmTab('month')"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-5M20 19V9"/></svg><span>My month</span></button>
@@ -3904,6 +3905,16 @@ function mmPdf(){
   <div class="note">Counted up to ${hx(_mm.end)}. Sundays and holidays are paid; approved leave is paid; absences are unpaid; a half day counts as 0.5${S&&_mm.story&&window._mmPay.R.lateN>0?'; every '+window._mmPay.R.lateN+' late marks cost half a day':''}. This is your own copy; the salary sheet from your admin is final.</div>`;
   printHtmlNow(printShell({title:'My month '+mn+' · '+(me.name||''),heading:'My month · '+mn,sub:hx(me.name||'')+' · '+hx(me.id||'')+(me.department?'<br>'+hx(me.department):''),body,who:me.name||'',orient:'landscape'}));
 }
+/* Bottom bar: move the round button over the tab in use (Tasks while its screen is open) */
+function hmOrb(){
+  const nav=document.getElementById('hmNav'); if(!nav) return;
+  const bs=[...nav.querySelectorAll('button[data-go]')], cur=document.body.classList.contains('tk-tab')?bs.find(b=>b.dataset.go==='tasks'):bs.find(b=>b.classList.contains('on'));
+  bs.forEach(b=>b.classList.toggle('hm-up',b===cur));
+  if(!cur) return; const nr=nav.getBoundingClientRect(), br=cur.getBoundingClientRect(); if(!nr.width) return;
+  nav.style.setProperty('--nx',Math.round(br.left-nr.left+br.width/2)+'px');
+}
+(function(){ const go=()=>{ hmOrb(); try{ new MutationObserver(()=>hmOrb()).observe(document.body,{attributes:true,attributeFilter:['class','data-screen']}); }catch(e){} window.addEventListener('resize',hmOrb); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else go(); })();
 /* ── Employee home: tabs, smart line, my month ── */
 let _hmTab='today';
 /* The bottom bar steps out of the way while reading downwards and comes back on any upward scroll, at the ends of the page, or from its handle */
@@ -3926,6 +3937,7 @@ function hmTab(t,silent){
   document.querySelectorAll('#homeScreen .hm-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===t));
   if(t==='month') try{ mmLoad(); }catch(e){}
   document.querySelectorAll('#hmNav button[data-go]').forEach(b=>{ const on=b.dataset.go===t; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  hmOrb();
   if(!silent) try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
 }
 function hmTarget(){ const s=_D.settings||{}, st=(settingsFor(curRec())||{}).start||s.officeStart||'09:30 AM', d=parseTimeMins(s.officeEnd||'07:00 PM')-parseTimeMins(st); return d>=240&&d<=720?d:480; }   // the person's office hours: their start to the office end
@@ -7608,6 +7620,19 @@ body.nav-hide:not(.tk-tab) .hm-nav{transform:translate(-50%,calc(100% + 30px));o
 .hm-peek svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 body[data-screen="homeScreen"].nav-hide:not(.tk-tab) .hm-peek{display:flex}
 @media(prefers-reduced-motion:reduce){.hm-nav{transition:none}}
+/* Bottom bar, "rising button" style: the chosen tab lifts into a round button and the bar opens a notch under it */
+@property --nx{syntax:'<length>';inherits:true;initial-value:60px}
+.hm-nav{transition:transform .25s ease,opacity .25s ease,--nx .38s cubic-bezier(.3,1.35,.5,1)}
+.hm-nav{background:transparent!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible;padding-top:10px}
+.hm-nav::before{content:'';position:absolute;inset:0;border-radius:26px;background:rgba(255,255,255,.92);border:1px solid rgba(14,60,62,.08);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);box-shadow:0 12px 34px rgba(4,26,30,.22);
+  -webkit-mask:radial-gradient(circle 34px at var(--nx,12.5%) 2px,transparent 33px,#000 34.5px);mask:radial-gradient(circle 34px at var(--nx,12.5%) 2px,transparent 33px,#000 34.5px);z-index:0}
+.hm-orb{position:absolute;top:-24px;left:var(--nx,12.5%);width:52px;height:52px;margin-left:-26px;border-radius:50%;background:linear-gradient(135deg,#0E3C3E,#1B7F6B);box-shadow:0 10px 20px rgba(14,60,62,.35);z-index:1;pointer-events:none}
+.hm-nav button{z-index:2;background:transparent!important;box-shadow:none!important}
+.hm-nav button svg{transition:transform .38s cubic-bezier(.3,1.35,.5,1),color .2s}
+.hm-nav button.hm-up{color:#1B7F6B!important}.hm-nav button.hm-up svg{transform:translateY(-24px);color:#fff;stroke:#fff}
+.hm-nav button.hm-up span{color:#0E3C3E}
+.hm-nav button .hm-badge{z-index:3}
+@media(prefers-reduced-motion:reduce){.hm-orb,.hm-nav button svg{transition:none}}
 .fm-res button{display:block;width:100%;text-align:left;padding:9px 11px;margin:4px 0;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;cursor:pointer;color:var(--ink)}
 .fm-res button small{display:block;color:var(--soft)}
 .fm-err{color:var(--red);font-size:13px;margin:6px 0;min-height:1em}
