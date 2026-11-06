@@ -7620,19 +7620,17 @@ body.nav-hide:not(.tk-tab) .hm-nav{transform:translate(-50%,calc(100% + 30px));o
 .hm-peek svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 body[data-screen="homeScreen"].nav-hide:not(.tk-tab) .hm-peek{display:flex}
 @media(prefers-reduced-motion:reduce){.hm-nav{transition:none}}
-/* Bottom bar, "rising button" style: the chosen tab lifts into a round button and the bar opens a notch under it */
+/* Bottom bar, "spotlight" style: a light at the top edge shines down on the tab in use and slides between tabs */
 @property --nx{syntax:'<length>';inherits:true;initial-value:60px}
-.hm-nav{transition:transform .25s ease,opacity .25s ease,--nx .38s cubic-bezier(.3,1.35,.5,1)}
-.hm-nav{background:transparent!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible;padding-top:10px}
-.hm-nav::before{content:'';position:absolute;inset:0;border-radius:26px;background:rgba(255,255,255,.92);border:1px solid rgba(14,60,62,.08);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);box-shadow:0 12px 34px rgba(4,26,30,.22);
-  -webkit-mask:radial-gradient(circle 34px at var(--nx,12.5%) 2px,transparent 33px,#000 34.5px);mask:radial-gradient(circle 34px at var(--nx,12.5%) 2px,transparent 33px,#000 34.5px);z-index:0}
-.hm-orb{position:absolute;top:-24px;left:var(--nx,12.5%);width:52px;height:52px;margin-left:-26px;border-radius:50%;background:linear-gradient(135deg,rgba(46,160,132,.62),rgba(20,90,80,.55));backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,.55);box-shadow:0 8px 18px rgba(14,60,62,.18);z-index:1;pointer-events:none}
-.hm-nav button{z-index:2;background:transparent!important;box-shadow:none!important}
-.hm-nav button svg{transition:transform .38s cubic-bezier(.3,1.35,.5,1),color .2s}
-.hm-nav button.hm-up{color:#1B7F6B!important}.hm-nav button.hm-up svg{transform:translateY(-24px);color:#fff;stroke:#fff}
-.hm-nav button.hm-up span{color:#2B7A68}
+.hm-nav{transition:transform .25s ease,opacity .25s ease,--nx .38s cubic-bezier(.3,1.2,.5,1);overflow:hidden}
+.hm-orb{position:absolute;top:0;left:var(--nx,12.5%);width:76px;height:100%;margin-left:-38px;pointer-events:none;z-index:0}
+.hm-orb::before{content:'';position:absolute;top:0;left:50%;width:30px;height:4px;margin-left:-15px;border-radius:0 0 6px 6px;background:#2EA084;box-shadow:0 0 12px 2px rgba(46,160,132,.55)}
+.hm-orb::after{content:'';position:absolute;top:4px;left:0;right:0;bottom:0;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%);background:linear-gradient(180deg,rgba(46,160,132,.30),rgba(46,160,132,.06) 75%,rgba(46,160,132,0))}
+.hm-nav button{z-index:1;background:transparent!important;box-shadow:none!important}
+.hm-nav button svg{transition:color .2s,transform .2s}
+.hm-nav button.hm-up{color:#1B7F6B!important}.hm-nav button.hm-up svg{transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(46,160,132,.45))}
 .hm-nav button .hm-badge{z-index:3}
-@media(prefers-reduced-motion:reduce){.hm-orb,.hm-nav button svg{transition:none}}
+@media(prefers-reduced-motion:reduce){.hm-nav{transition:none}}
 .fm-res button{display:block;width:100%;text-align:left;padding:9px 11px;margin:4px 0;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;cursor:pointer;color:var(--ink)}
 .fm-res button small{display:block;color:var(--soft)}
 .fm-err{color:var(--red);font-size:13px;margin:6px 0;min-height:1em}
