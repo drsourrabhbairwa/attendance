@@ -1294,7 +1294,9 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
     <a href="#" class="help-link" id="forgotLink" onclick="requestCode('reset');return false">Forgot password?</a>
     <div id="codeBox" style="display:none;margin-top:12px">
       <div class="msg msg-success show" id="codeInfo"></div>
-      <label>6-digit code from your email</label><input type="text" id="codeInput" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="123456">
+      <label>6-digit code from your email</label>
+      <div class="otp" id="otpBox" role="group" aria-label="6-digit code"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 1" autocomplete="one-time-code"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 2" autocomplete="off"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 3" autocomplete="off"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 4" autocomplete="off"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 5" autocomplete="off"><input class="otp-d" inputmode="numeric" pattern="[0-9]*" maxlength="6" aria-label="Digit 6" autocomplete="off"></div>
+      <input type="hidden" id="codeInput">
       <div id="resetBox" style="display:none">
         <label>New password <span style="text-transform:none;font-weight:400">(min 6 characters)</span></label><input type="password" id="resetNew" autocomplete="new-password">
         <label>Repeat new password</label><input type="password" id="resetConf" autocomplete="new-password">
@@ -4216,14 +4218,27 @@ async function handleLogin(){
 }
 /* ── E-mailed code: sign in on a new phone, or set a new password when it is forgotten ── */
 let _codeFor='signin', _codeTimer=null;
-function codeSay(msg){ const e=document.getElementById('loginErr'); e.textContent=msg; e.classList.add('show'); }
+function codeSay(msg){ const e=document.getElementById('loginErr'); e.textContent=msg; e.classList.add('show'); otpState(/code/i.test(msg)?'bad':''); }
+/* The code in six boxes: type, paste the whole code, or let the phone fill it from the e-mail / SMS suggestion. Six digits on sign-in check themselves. */
+function otpBoxes(){ return [...document.querySelectorAll('#otpBox .otp-d')]; }
+function otpSync(){ const v=otpBoxes().map(b=>b.value).join(''); document.getElementById('codeInput').value=v; otpBoxes().forEach(b=>b.classList.toggle('on',!!b.value)); return v; }
+function otpClear(){ otpBoxes().forEach(b=>{ b.value=''; b.classList.remove('on'); }); otpSync(); otpState(''); }
+function otpState(st){ const w=document.getElementById('otpBox'); if(!w) return; w.classList.remove('otp-bad','otp-ok','otp-busy'); if(st){ void w.offsetWidth; w.classList.add('otp-'+st); } if(st==='bad') setTimeout(()=>{ otpClear(); const b=otpBoxes()[0]; if(b) b.focus(); },650); }
+function otpFill(from,digits){ const bs=otpBoxes(); let i=from; for(const d of digits){ if(i>=bs.length) break; bs[i++].value=d; } otpSync(); const next=bs[Math.min(i,bs.length-1)]; if(next) next.focus(); otpMaybeGo(); }
+function otpMaybeGo(){ const v=otpSync(); if(!/^\d{6}$/.test(v)) return; if(_codeFor==='reset'){ const n=document.getElementById('resetNew'); if(n&&!n.value) n.focus(); return; } submitCode(); }
+(function(){ const go=()=>{ const bs=otpBoxes(); bs.forEach((b,i)=>{
+  b.addEventListener('input',()=>{ const d=b.value.replace(/\D/g,''); b.value=''; document.getElementById('loginErr').classList.remove('show'); if(d) otpFill(i,d); else otpSync(); });
+  b.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!b.value&&i>0){ e.preventDefault(); bs[i-1].value=''; bs[i-1].focus(); otpSync(); } else if(e.key==='ArrowLeft'&&i>0) bs[i-1].focus(); else if(e.key==='ArrowRight'&&i<bs.length-1) bs[i+1].focus(); else if(e.key==='Enter') otpMaybeGo(); });
+  b.addEventListener('paste',e=>{ const t=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\D/g,''); if(t){ e.preventDefault(); otpFill(i,t); } });
+  b.addEventListener('focus',()=>{ try{ b.select(); }catch(x){} });
+}); }; if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else go(); })();
 function closeCodeBox(){
   clearInterval(_codeTimer); ['codeBox','resetBox'].forEach(i=>{ const e=document.getElementById(i); if(e) e.style.display='none'; });
-  ['codeInput','resetNew','resetConf'].forEach(i=>{ const e=document.getElementById(i); if(e) e.value=''; });
+  ['codeInput','resetNew','resetConf'].forEach(i=>{ const e=document.getElementById(i); if(e) e.value=''; }); otpClear();
 }
 function codeWait(sec){   // "Send again" opens after a minute
   const b=document.getElementById('codeAgain'), until=Date.now()+sec*1000; clearInterval(_codeTimer);
-  const tick=()=>{ const left=Math.ceil((until-Date.now())/1000); if(left<=0){ clearInterval(_codeTimer); b.disabled=false; b.textContent='Send again'; } else{ b.disabled=true; b.textContent='Send again ('+left+')'; } };
+  const tick=()=>{ const left=Math.ceil((until-Date.now())/1000); if(left<=0){ clearInterval(_codeTimer); b.disabled=false; b.textContent='Send again'; } else{ b.disabled=true; b.textContent='Send again in '+left+'s'; } };
   tick(); _codeTimer=setInterval(tick,1000);
 }
 async function requestCode(purpose){
@@ -4240,8 +4255,8 @@ async function requestCode(purpose){
     document.getElementById('codeBox').style.display='block';
     document.getElementById('resetBox').style.display=_codeFor==='reset'?'block':'none';
     document.getElementById('codeGo').style.display=_codeFor==='reset'?'none':'block';
-    document.getElementById('codeInput').value=''; codeWait(60);
-    try{ document.getElementById('codeInput').focus(); }catch(e){}
+    otpClear(); codeWait(60);
+    try{ otpBoxes()[0].focus(); }catch(e){}
   }catch(e){ loading(false); codeSay(/^Unknown action/i.test(e.message)?'E-mail codes are not available yet. Ask your admin to update the backend.':e.message); }
 }
 async function signInWithCode(id,purpose,code,newHash){
@@ -4252,9 +4267,10 @@ async function signInWithCode(id,purpose,code,newHash){
 async function submitCode(){
   const id=document.getElementById('loginId').value.trim(), code=document.getElementById('codeInput').value.replace(/\s/g,'');
   if(!/^\d{6}$/.test(code)) return codeSay('Type the 6-digit code from your email.');
-  document.getElementById('loginErr').classList.remove('show'); loading(true,'Verifying…');
-  try{ await finishStaffLogin(await signInWithCode(id,'signin',code)); }
-  catch(e){ loading(false); codeSay(e.message); }
+  document.getElementById('loginErr').classList.remove('show'); otpState('busy');
+  let r; try{ r=await signInWithCode(id,'signin',code); }catch(e){ codeSay(e.message||'That code did not work.'); otpState('bad'); return; }
+  otpState('ok'); loading(true,'Signing in…');
+  try{ await finishStaffLogin(r); }catch(e){ loading(false); codeSay(e.message); }
 }
 async function submitReset(){
   const id=document.getElementById('loginId').value.trim(), code=document.getElementById('codeInput').value.replace(/\s/g,'');
@@ -7408,6 +7424,15 @@ try{ if(currentEmp&&polEl('homeScreen').classList.contains('active')) polHome();
 .sal-tap{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
 .sal-why{list-style:none;margin:8px 0 0;padding:0;max-height:52vh;overflow:auto}.sal-why li{padding:5px 0;border-top:1px solid var(--border)}
 .sal-late{color:#B45309;font-weight:700;font-size:11px}.sal-sum{font-variant-numeric:tabular-nums;background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.otp{display:flex;gap:8px;justify-content:center;margin:6px 0 12px}
+.otp-d{width:44px;height:54px;padding:0;margin:0;text-align:center;font-size:22px;font-weight:700;border-radius:14px;border:1.5px solid var(--border);background:rgba(255,255,255,.72);caret-color:#1F7A5A;transition:border-color .15s,transform .15s,box-shadow .15s}
+.otp-d:focus{border-color:#1F7A5A;box-shadow:0 0 0 3px rgba(31,122,90,.18);outline:none;transform:translateY(-2px)}.otp-d.on{border-color:#7FB8A2}
+.otp-busy .otp-d{animation:otpWave 1s ease-in-out infinite;border-color:#7FB8A2}.otp-busy .otp-d:nth-child(2){animation-delay:.08s}.otp-busy .otp-d:nth-child(3){animation-delay:.16s}.otp-busy .otp-d:nth-child(4){animation-delay:.24s}.otp-busy .otp-d:nth-child(5){animation-delay:.32s}.otp-busy .otp-d:nth-child(6){animation-delay:.4s}
+@keyframes otpWave{0%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+.otp-ok .otp-d{border-color:#1F7A5A;background:#E6F4EE;color:#1F7A5A}.otp-bad{animation:otpShake .4s}.otp-bad .otp-d{border-color:#C0392B;background:#FDECEA;color:#B42318}
+@keyframes otpShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media (max-width:360px){.otp{gap:5px}.otp-d{width:38px;height:48px;font-size:20px}}
+@media (prefers-reduced-motion:reduce){.otp-busy .otp-d,.otp-bad{animation:none}}
 .pl-done{display:inline-block;margin-left:6px;padding:5px 10px;border-radius:999px;border:1px solid #1F7A5A;background:#E6F4EE;color:#1F7A5A;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
 .pl-row:first-of-type{border-top:0}.pl-row small{display:block;color:var(--soft);font-size:11.5px}
 .pl-row a{font-size:19px;text-decoration:none;margin-left:6px}
