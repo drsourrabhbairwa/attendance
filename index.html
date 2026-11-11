@@ -2442,6 +2442,8 @@ const NAT_HOLS={
 };
 function natHols(){ const n=_D.nationalHolidays; return n&&Object.keys(n).length?n:NAT_HOLS; }   // the list the backend sends, else the built-in copy
 function allHols(){ const cx=_D.cancelledHolidays||{}, N=natHols(), o={}; Object.keys(N).forEach(d=>{ if(!cx[d]) o[d]=N[d]; }); return Object.assign(o,_D.customHolidays||{}); }   // cancelled national holidays are working days
+/* The signed-in person's own day off: Field staff have no fixed off day (a Sunday or holiday they work earns a comp-off), so for them nothing blocks punching in */
+function myDayOff(ds){ const me=(typeof curRec==='function'&&curRec())||currentEmp||{}; if(String(me.category||(currentEmp&&currentEmp.category)||'')==='field') return null; return checkDayOff(ds); }
 function checkDayOff(ds){
   const d=new Date(ds+'T12:00:00');
   if(d.getDay()===0) return{type:'Sunday',name:'Sunday – Office Closed',icon:'😴'};
@@ -3584,7 +3586,7 @@ async function loadHome(){
   fillAv('hmAv',curRec()||emp);
   try{ hmMeDraw(emp); hmTab(_hmTab,true); }catch(e){}
   document.getElementById('hmDate').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · ID '+emp.id;
-  const dayOff=checkDayOff(todayStr());
+  const dayOff=myDayOff(todayStr());
   let rec=null; if(!dayOff){ try{ rec=await getRecordToday(emp.id); }catch(e){} }
   if(tok!==homeTok) return;
   checkSiteWork(!!(rec&&rec.punchOut));
@@ -3612,7 +3614,7 @@ function homeSig(r){ return r?((r.punchIn&&r.punchIn.time||'')+'|'+(r.punchOut&&
 async function homeRecheck(first){
   const emp=currentEmp, tok=homeTok; if(!emp||!USE_SHEETS||_homeRecBusy) return;
   if(!document.getElementById('homeScreen').classList.contains('active')) return;
-  const dayOff=checkDayOff(todayStr()); if(dayOff) return;
+  const dayOff=myDayOff(todayStr()); if(dayOff) return;
   _homeRecBusy=true;
   try{
     const fresh=await freshRecordToday(emp.id);
@@ -4563,7 +4565,7 @@ async function loadCameraScreen(opts){
   document.getElementById('loginBar').classList.remove('show');
   clearInterval(officeTimerInt);
 
-  const dayOff=checkDayOff(todayStr());
+  const dayOff=myDayOff(todayStr());
   if(dayOff){
     document.getElementById('holIcon').textContent=dayOff.icon;
     document.getElementById('holTitle').textContent=dayOff.type==='Sunday'?'Today is Sunday':'Public Holiday';
