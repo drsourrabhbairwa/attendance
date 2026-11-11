@@ -1684,6 +1684,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
       </select>
       <button onclick="loadLeavesTab()" style="background:var(--accent)">🔄 Refresh</button>
     </div>
+    <div id="woBox_adm" style="display:none;margin-bottom:14px"></div>
     <div id="lvAdminList"><div class="empty"><div class="eicon">⏳</div>Click Refresh to load.</div></div>
     <div style="margin-top:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -2059,6 +2060,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 <div id="supervisorScreen" class="screen admin-wrap">
 <div class="card" id="supSafetyCard"><div id="supSafety"></div></div>
 <div class="card" id="supOtCard" style="display:none"><div id="supOt"></div></div>
+<div class="card" id="supWoCard" style="display:none"><div id="woBox_sup"></div></div>
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
     <div><h2>🗺️ Site Monitor</h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="supDateLbl"></div>
@@ -5739,6 +5741,7 @@ async function loadLeavesTab(){
     }
     renderLeaveCal();
     initLeavePolicy();
+    woLoad('adm');
     if(qSec){
       if(!emps.length){qSec.innerHTML='<div style="color:var(--soft);font-size:13px">No employees yet.</div>';return;}
       qSec.innerHTML=`<div class="quota-grid" style="border-top:none">
@@ -6499,6 +6502,58 @@ async function loadOtTab(){
     el.innerHTML=rows.length?rows.map(r=>otCard(r,'tab')).join(''):'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">'+(st==='pending'?'Nothing is waiting for a decision.':'No overtime here yet.')+'</div>';
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(otApiErr(e))+'</div>'; }
 }
+/* Field staff weekly offs, for the admin (Leaves tab) and the supervisor (their team): approve what is waiting,
+   set a day yourself (also a day that has passed — the correction for a Sunday that was missed), or remove one. The server keeps the month's count. */
+const _wo={};
+async function woLoad(mode){
+  const box=document.getElementById('woBox_'+mode), card=mode==='sup'?document.getElementById('supWoCard'):box; if(!box) return;
+  try{
+    const [leaves,emps]=await Promise.all([api('getLeaves',{}),mode==='sup'?api('getEmployees',{}):getEmployees()]);
+    const team=mode==='sup'&&currentSupervisor?String(currentSupervisor.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean):null;   // a supervisor sees only their own team
+    const field=(emps||[]).filter(e=>String(e.category||'')==='field'&&(!team||team.includes(String(e.id).toUpperCase())));
+    if(!field.length){ card.style.display='none'; return; }
+    const ids=new Set(field.map(e=>String(e.id).toUpperCase())), wo=(leaves||[]).filter(l=>l.type==='WO'&&ids.has(String(l.empId).toUpperCase()));
+    _wo[mode]={field,wo};
+    const t=todayStr(), ym=t.slice(0,7), wait=wo.filter(l=>l.status==='pending').sort((a,b)=>String(a.fromDate).localeCompare(String(b.fromDate)));
+    const set=wo.filter(l=>l.status==='approved'&&String(l.fromDate).slice(0,7)>=isoMonthAdd(ym,-1)).sort((a,b)=>String(b.fromDate).localeCompare(String(a.fromDate))).slice(0,20);
+    const row=(l,btns)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px"><div style="flex:1;min-width:0"><b>${hx(l.name||l.empId)}</b> · ${leaveSpan(l)}${l.reason?`<div style="font-size:11px;color:var(--soft)">${hx(l.reason)}</div>`:''}</div>${btns}</div>`;
+    box.innerHTML=`<div style="border:1px solid var(--line);border-radius:var(--r);padding:12px;background:var(--surface)">
+      <h3 style="font-size:15px;margin:0 0 4px">📅 Field staff weekly off</h3>
+      <div style="font-size:11.5px;color:var(--soft);margin-bottom:8px">Each Field person gets one weekly off for each Sunday of the month, on days they pick. A Sunday they do not work and did not plan counts as absent. You can set a day for them here, also a day that has passed.</div>
+      ${wait.length?'<div style="font-size:12px;font-weight:800;color:var(--amber);margin-top:6px">Waiting for you ('+wait.length+')</div>'+wait.map(l=>row(l,`<button class="btn-approve" style="flex:0 0 auto" onclick="woDecide('${mode}','${esc(l.id)}','approved')">✅</button><button class="btn-reject" style="flex:0 0 auto" onclick="woDecide('${mode}','${esc(l.id)}','rejected')">✕</button>`)).join(''):''}
+      <div style="font-size:12px;font-weight:800;margin-top:10px">Set a weekly off</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        <select id="woWho_${mode}" style="flex:1 1 140px;margin:0">${field.map(e=>`<option value="${hx(e.id)}">${hx(e.name)} · ${hx(e.id)}</option>`).join('')}</select>
+        <input type="date" id="woDay_${mode}" value="${t}" style="flex:0 0 150px;margin:0">
+        <input id="woNote_${mode}" placeholder="Note (optional)" style="flex:1 1 140px;margin:0">
+        <button onclick="woMark('${mode}')" style="flex:0 0 auto;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:8px 14px;font-weight:700;font-family:inherit;cursor:pointer">Set</button>
+      </div>
+      <div id="woLeft_${mode}" style="font-size:11.5px;color:var(--soft);margin-top:4px"></div>
+      ${set.length?'<div style="font-size:12px;font-weight:800;margin-top:10px">Set lately</div>'+set.map(l=>row(l,`<button class="btn-reject" style="flex:0 0 auto" onclick="woDecide('${mode}','${esc(l.id)}','cancelled')">Remove</button>`)).join(''):''}
+    </div>`;
+    card.style.display='block';
+    const upd=()=>woLeftDraw(mode); document.getElementById('woWho_'+mode).onchange=upd; document.getElementById('woDay_'+mode).onchange=upd; upd();
+  }catch(e){ card.style.display='none'; }
+}
+function woLeftDraw(mode){
+  const st=_wo[mode], who=document.getElementById('woWho_'+mode), day=document.getElementById('woDay_'+mode), el=document.getElementById('woLeft_'+mode); if(!st||!who||!day||!el) return;
+  const ym=(day.value||todayStr()).slice(0,7), max=sundaysIn(ym), id=String(who.value).toUpperCase();
+  let used=0; st.wo.forEach(l=>{ if(String(l.empId).toUpperCase()!==id||!['approved','pending'].includes(l.status)||!l.fromDate) return; leaveDates(l.fromDate,l.toDate).forEach(d=>{ if(d.slice(0,7)===ym) used++; }); });
+  el.textContent=MONTH_NAMES[+ym.slice(5,7)-1]+': '+max+' weekly off days, '+used+' planned, '+Math.max(0,max-used)+' left.';
+}
+async function woMark(mode){
+  const staffId=document.getElementById('woWho_'+mode).value, date=document.getElementById('woDay_'+mode).value, note=document.getElementById('woNote_'+mode).value.trim();
+  if(!date){ alert('Pick the day.'); return; }
+  loading(true,'Saving…');
+  try{ await api('markWeeklyOff',{staffId,date,note}); loading(false); _D.leaves=[]; if(mode==='adm') loadLeavesTab(); else woLoad(mode); }
+  catch(e){ loading(false); alert(e.message); }
+}
+async function woDecide(mode,id,status){
+  if(status==='cancelled'&&!confirm('Remove this weekly off? That day becomes a working day again.')) return;
+  loading(true,'Saving…');
+  try{ await api('updateLeaveStatus',{id,status,decidedAt:new Date().toISOString()}); loading(false); _D.leaves=[]; if(mode==='adm'){ loadLeavesTab(); adminBadges(); } else woLoad(mode); }
+  catch(e){ loading(false); alert(e.message); }
+}
 async function loadOtSup(){
   const card=document.getElementById('supOtCard'), box=document.getElementById('supOt'); if(!card) return;
   try{
@@ -6907,7 +6962,7 @@ async function refreshSiteMonitor(role){
   const elId=role==='sup'?'supContent':'siteContent';
   const el=document.getElementById(elId);
   if(!el) return;
-  if(role==='sup') loadOtSup();
+  if(role==='sup'){ loadOtSup(); woLoad('sup'); }
   const date=role==='sup'?todayStr():(document.getElementById('siteDate')?.value||todayStr());
   el.innerHTML='<div class="empty"><div class="eicon">⏳</div>Loading…</div>';
   try{
