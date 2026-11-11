@@ -378,6 +378,7 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .lc .off{background:var(--surface2);color:var(--border2)}
 .lc .tdy{box-shadow:inset 0 0 0 2px var(--accent)}
 .lc .CL{background:var(--purpleBg);color:var(--purple);font-weight:800}
+.lc .WO{background:#E0F2EF;color:#0F766E;font-weight:800}
 .lc .VL{background:var(--greenBg);color:var(--green);font-weight:800}
 .lc .ML{background:var(--redBg);color:var(--red);font-weight:800}
 .lc .pend{background:repeating-linear-gradient(45deg,var(--amberBg),var(--amberBg) 4px,#fff 4px,#fff 8px);color:var(--amber);font-weight:800}
@@ -1536,7 +1537,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <div class="add-form">
     <h3>➕ New Leave Request</h3>
     <label style="margin-top:8px">Leave Type</label>
-    <select id="lvType" onchange="lvTypeChanged()"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option><option value="CO" hidden>CO — Comp-off (Field)</option></select>
+    <select id="lvType" onchange="lvTypeChanged()"><option value="CL">CL — Casual Leave</option><option value="VL">VL — Vacation Leave</option><option value="ML">ML — Medical Leave</option><option value="WO" hidden>Weekly off (Field)</option></select>
     <div class="lv-rule" id="lvRule"></div>
     <div class="g2">
       <div><label>From</label><input type="date" id="lvFrom" oninput="lvDatesChanged()"></div>
@@ -2444,6 +2445,8 @@ function natHols(){ const n=_D.nationalHolidays; return n&&Object.keys(n).length
 function allHols(){ const cx=_D.cancelledHolidays||{}, N=natHols(), o={}; Object.keys(N).forEach(d=>{ if(!cx[d]) o[d]=N[d]; }); return Object.assign(o,_D.customHolidays||{}); }   // cancelled national holidays are working days
 /* The signed-in person's own day off: Field staff have no fixed off day (a Sunday or holiday they work earns a comp-off), so for them nothing blocks punching in */
 function myDayOff(ds){ const me=(typeof curRec==='function'&&curRec())||currentEmp||{}; if(String(me.category||(currentEmp&&currentEmp.category)||'')==='field') return null; return checkDayOff(ds); }
+/* Field staff have no fixed Sunday: their Sundays are working days and they plan their own weekly off (WO) instead; holidays stay off */
+function dayOffFor(empId,ds){ if(empCat(empId)!=='field') return checkDayOff(ds); const h=allHols()[ds]; return h?{type:'Holiday',name:h,icon:'🎉'}:null; }
 function checkDayOff(ds){
   const d=new Date(ds+'T12:00:00');
   if(d.getDay()===0) return{type:'Sunday',name:'Sunday – Office Closed',icon:'😴'};
@@ -2643,8 +2646,8 @@ function setRole(role){
 ══════════════════════════════════════════════════════════════ */
 function isoAdd(ds,n){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+n); return dstr(d); }
 function leaveDates(from,to){ const out=[]; if(!from) return out; to=to||from; for(let d=from,i=0;d<=to&&i<400;d=isoAdd(d,1),i++) out.push(d); return out; }
-function workDaysBetween(from,to){ return leaveDates(from,to).filter(d=>!checkDayOff(d)).length; }
-function leaveDays(l){ return l.fromDate?(+l.days||workDaysBetween(l.fromDate,l.toDate)):1; }
+function workDaysBetween(from,to,empId){ return leaveDates(from,to).filter(d=>!(empId?dayOffFor(empId,d):checkDayOff(d))).length; }
+function leaveDays(l){ return l.fromDate?(+l.days||(l.type==='WO'?leaveDates(l.fromDate,l.toDate).length:workDaysBetween(l.fromDate,l.toDate,l.empId))):1; }
 /* ── Leave policy: CL 2 a month (unused days carry forward in the year) · VL 5 a year · ML 5 a year · fresh start each leave year ── */
 const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function leavePolicy(){
@@ -2667,15 +2670,27 @@ function leaveEntitled(type,label,asOf,P,adj,joined){
   if(type==='CO') return adj.CO||0;
   return (type==='VL'?P.vl:P.ml)+adj[type];
 }
-function leaveWorkdaysIn(from,to,ws,we){ let n=0; const a=from>ws?from:ws, z=to<we?to:we; for(let d=a,i=0;d<=z&&i<800;d=isoAdd(d,1),i++) if(!checkDayOff(d)) n++; return n; }
+function leaveWorkdaysIn(from,to,ws,we,empId){ let n=0; const a=from>ws?from:ws, z=to<we?to:we; for(let d=a,i=0;d<=z&&i<800;d=isoAdd(d,1),i++) if(!(empId?dayOffFor(empId,d):checkDayOff(d))) n++; return n; }
 function leaveUsedIn(type,empId,ws,we,statuses){
   const e=String(empId).toUpperCase(); let n=0;
   (_D.leaves||[]).forEach(l=>{
     if(l.type!==type||String(l.empId).toUpperCase()!==e||!statuses.includes(l.status)) return;
-    if(l.fromDate) n+=leaveWorkdaysIn(l.fromDate,l.toDate||l.fromDate,ws,we);
+    if(l.fromDate) n+=leaveWorkdaysIn(l.fromDate,l.toDate||l.fromDate,ws,we,empId);
     else{ const d=String(l.requestedAt||'').slice(0,10); if(d>=ws&&d<=we) n++; }
   });
   return n;
+}
+/* Weekly off (Field staff): one day for each Sunday of the calendar month, planned on any day, approved by the admin or supervisor */
+function sundaysIn(ym){ let n=0; for(let d=ym+'-01';d.slice(0,7)===ym;d=isoAdd(d,1)) if(new Date(d+'T12:00:00').getDay()===0) n++; return n; }
+function woUsed(empId,ym,statuses){ statuses=statuses||['approved','pending']; const e=String(empId).toUpperCase(); let n=0;
+  (_D.leaves||[]).forEach(l=>{ if(l.type!=='WO'||String(l.empId).toUpperCase()!==e||!statuses.includes(l.status)||!l.fromDate) return; leaveDates(l.fromDate,l.toDate).forEach(d=>{ if(d.slice(0,7)===ym) n++; }); });
+  return n; }
+function woProblem(empId,from,to){
+  if(empCat(empId)!=='field') return 'Weekly off is only for Field staff. Ask for CL, VL or ML instead.';
+  if(from<todayStr()) return 'That day has passed. Plan a weekly off for today or a day to come.';
+  const asked={}; leaveDates(from,to).forEach(d=>{ const m=d.slice(0,7); asked[m]=(asked[m]||0)+1; });
+  for(const ym in asked){ const max=sundaysIn(ym), used=woUsed(empId,ym); if(used+asked[ym]>max) return MONTH_NAMES[+ym.slice(5,7)-1]+' has '+max+' weekly off days (one for each Sunday). You have already planned '+used+', so '+Math.max(0,max-used)+' '+(max-used===1?'is':'are')+' left.'; }
+  return '';
 }
 /* What one person has of one leave type today */
 function leaveBal(empId,type,asOf){
@@ -2704,19 +2719,22 @@ function noticeProblem(type,from){
 }
 function lvRuleText(type){
   const R=leaveRules(), t=todayStr();
-  if(type==='CO') return 'Comp-off: one day off for each Sunday or holiday you worked this year. Ask for it on any working day.';
+  if(type==='WO'){ const ym=t.slice(0,7), max=sundaysIn(ym), left=Math.max(0,max-woUsed(currentEmp?currentEmp.id:'',ym)); return 'Weekly off: pick your own off days, any day of the week. '+MONTH_NAMES[+ym.slice(5,7)-1]+' has '+max+' (one for each Sunday), '+left+' left to plan. Your admin or supervisor approves them.'; }
   if(type==='ML') return 'Medical leave cannot be asked for in advance — pick today or a day that has passed.'+(R.mlDays?' After you ask, upload your medical documents in the app within '+R.mlDays+' days (by '+niceDay(isoAdd(t,R.mlDays))+'); the office can approve it only after that. The files are deleted from the cloud '+R.keepDays+' days after your last upload.':'');
   const need=type==='CL'?R.cl:R.vl;
   return need?(type==='CL'?'Casual leave':'Vacation leave')+' has to be asked for at least '+need+' day'+_s(need)+' before it starts — the earliest first day is '+niceDay(isoAdd(t,need))+'.':'';
 }
 function policyText(){
   const P=leavePolicy();
+  if(currentEmp&&empCat(currentEmp.id)==='field') return 'Field staff · CL: '+P.cl+' a month, take them any day — unused days carry forward within the year · Weekly off: one day for each Sunday of the month, on the days you choose. Your Sundays are working days unless you plan one as your weekly off.';
   return 'CL: '+P.cl+' a month — unused days carry forward within the year · VL: '+P.vl+' a year · ML: '+P.ml+' a year · Everything starts fresh on 1 '+MONTH_NAMES[P.sm-1]+'.';
 }
 function empCat(empId){ const e=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||(currentEmp&&String(currentEmp.id).toUpperCase()===String(empId).toUpperCase()?currentEmp:{}); return String(e.category||''); }
 function balHtml(empId){
-  const t=todayStr();
-  return Object.keys(LEAVE_TYPES).filter(type=>type!=='CO'||empCat(empId)==='field').map(type=>{
+  const t=todayStr(), field=empCat(empId)==='field';
+  return (field?['CL','WO']:['CL','VL','ML']).map(type=>{
+    if(type==='WO'){ const ym=t.slice(0,7), max=sundaysIn(ym), ap=woUsed(empId,ym,['approved']), pe=woUsed(empId,ym,['pending']), left=Math.max(0,max-ap-pe), pct=max?Math.min((ap+pe)/max*100,100):0;
+      return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR.WO}">Weekly off</div><div class="num" style="color:${LT_COLOR.WO}">${left}<span style="font-size:12px;color:var(--soft)"> left</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR.WO}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${max} in ${MON3[+ym.slice(5,7)-1]} · ${ap} approved${pe?' · '+pe+' waiting':''}</div></div>`; }
     const b=leaveBal(empId,type,t), pct=b.ent>0?Math.min((b.used+b.pending)/b.ent*100,100):0;
     const sub=(type==='CL'?b.ent+' earned so far · ':type==='CO'?b.ent+' Sunday/holiday worked · ':'')+b.used+' used'+(b.pending?' · '+b.pending+' pending':'');
     return `<div class="bal-item"><div class="cat" style="color:${LT_COLOR[type]}">${type}</div><div class="num" style="color:${LT_COLOR[type]}">${b.left}<span style="font-size:12px;color:var(--soft)"> left</span></div><div class="bal-bar"><div class="bal-fill" style="width:${pct}%;background:${LT_COLOR[type]}"></div></div><div style="font-size:10px;color:var(--soft);margin-top:3px">${sub}</div></div>`;
@@ -2724,10 +2742,13 @@ function balHtml(empId){
 }
 /* '' when a request fits, else why not — the same rule the server applies; a request over a year end is checked year by year */
 function leaveProblem(empId,type,from,to){
+  if(type==='WO') return woProblem(empId,from,to);
+  if(type==='CO') return 'Comp-off is no longer used. Field staff plan their weekly off days instead.';
+  if(empCat(empId)==='field'&&type!=='CL') return 'Field staff take CL or plan their weekly off. VL and ML are for office staff.';
   const P=leavePolicy(), adj=leaveAdj(empId), emp=(_D.employees||[]).find(x=>String(x.id).toUpperCase()===String(empId).toUpperCase())||{}, seen={};
   for(const label of [leaveYear(from,P.sm),leaveYear(to,P.sm)]){
     if(seen[label]) continue; seen[label]=1;
-    const ws=leaveYearStart(label,P.sm), we=leaveYearEnd(label,P.sm), days=leaveWorkdaysIn(from,to,ws,we);
+    const ws=leaveYearStart(label,P.sm), we=leaveYearEnd(label,P.sm), days=leaveWorkdaysIn(from,to,ws,we,empId);
     if(!days) continue;
     const asOf=to<we?to:we, ent=leaveEntitled(type,label,asOf,P,adj,emp.joined), used=leaveUsedIn(type,empId,ws,we,['approved','pending']), left=Math.max(0,ent-used);
     if(type==='CO'&&days>left) return 'You have only '+left+' comp-off day'+(left===1?'':'s')+' (one for each Sunday or holiday you worked this year, '+used+' used or requested).';
@@ -2749,7 +2770,7 @@ async function refreshMyLeaves(empId){
 /* the calendar only offers the days the rule allows, and the rule is written under the type */
 function lvTypeChanged(){
   const type=document.getElementById('lvType').value, R=leaveRules(), t=todayStr(), f=document.getElementById('lvFrom'), to=document.getElementById('lvTo');
-  const min=type==='ML'||type==='CO'?'':(type==='CL'?R.cl:R.vl)?isoAdd(t,type==='CL'?R.cl:R.vl):'', max=type==='ML'?t:'';
+  const min=type==='WO'?t:type==='ML'||type==='CO'?'':(type==='CL'?R.cl:R.vl)?isoAdd(t,type==='CL'?R.cl:R.vl):'', max=type==='ML'?t:'';
   f.min=min; to.min=min; f.max=max; to.removeAttribute('max');
   const was=f.value;
   if(min&&f.value<min) f.value=min;
@@ -2767,7 +2788,9 @@ function lvDatesChanged(){
   const f=document.getElementById('lvFrom').value, t=document.getElementById('lvTo').value||f, n=document.getElementById('lvDaysNote');
   if(!f){ n.textContent=''; return; }
   if(t<f){ n.textContent='The last day is before the first day.'; return; }
-  const d=workDaysBetween(f,t), all=leaveDates(f,t).length;
+  const type=document.getElementById('lvType').value, all=leaveDates(f,t).length;
+  if(type==='WO'){ n.textContent=all+' weekly off day'+(all>1?'s':''); return; }
+  const d=workDaysBetween(f,t,currentEmp&&currentEmp.id);
   n.textContent=d?d+' working day'+(d>1?'s':'')+(all>d?' (Sundays / holidays are not counted)':''):'Sunday / holiday only — no leave needed.';
 }
 async function renderLeaveCal(){
@@ -2779,9 +2802,11 @@ async function renderLeaveCal(){
   const count=days.map(()=>0);
   let html='<table class="lc"><thead><tr><th class="nm">Employee</th>'+days.map(x=>`<th class="${x.off?'off':''}${x.ds===today?' tdy':''}"${x.hol?` title="${hx(x.hol)}"`:''}>${x.d}<br><span style="font-weight:400">${'SMTWTFS'[x.dow]}</span></th>`).join('')+'</tr></thead><tbody>';
   emps.forEach(e=>{
+    const fld=empCat(e.id)==='field';
     html+=`<tr><td class="nm" title="${hx(e.name)}">${hx(e.name)}</td>`+days.map((x,i)=>{
+      if(fld) x=Object.assign({},x,{off:!!dayOffFor(e.id,x.ds)});   // Field staff: Sundays are working days
       const a=leaveOn(e.id,x.ds), p=!a&&leaveOn(e.id,x.ds,['pending']), tip=(a||p)?` title="${(e.name+' · '+(a||p).type+' · '+leaveSpan(a||p)+(p?' (waiting)':'')).replace(/"/g,'&quot;')}"`:'';
-      if(a&&!x.off){ count[i]++; return `<td class="${a.type}${x.ds===today?' tdy':''}"${tip}>${a.type[0]}</td>`; }
+      if(a&&!x.off){ if(a.type!=='WO') count[i]++; return `<td class="${a.type}${x.ds===today?' tdy':''}"${tip}>${a.type[0]}</td>`; }
       if(p&&!x.off) return `<td class="pend${x.ds===today?' tdy':''}"${tip}>?</td>`;
       return `<td class="${x.off?'off':''}${x.ds===today?' tdy':''}">${x.off?'·':''}</td>`;
     }).join('')+'</tr>';
@@ -3370,7 +3395,7 @@ function monthStory(e,by,start,end,R){
   let cal=0,work=0,full=0,half=0,late=0,leave=0,absent=0,pend=0; const notes=[], st={off:[],present:[],half:[],late:[],leave:[],absent:[]}, days={};
   for(let ds=from;ds<=end;ds=isoAdd(ds,1)){
     cal++; const r=by[ds]||null;
-    { const off=checkDayOff(ds); if(off){ st.off.push({d:ds,w:off.name||off.type||'Off'}); days[ds]={cls:'off',w:off.name||off.type,r}; continue; } } work++;
+    { let off=dayOffFor(e.id,ds); if(!off&&!r){ const lw=leaveOn(e.id,ds); if(lw&&lw.type==='WO') off={type:'Weekly off',name:'Weekly off'}; } if(off){ st.off.push({d:ds,w:off.name||off.type||'Off'}); days[ds]={cls:'off',w:off.name||off.type,r}; continue; } } work++;
     if(r){ const m=parseTimeMins(r.punchIn.time), t=r.punchIn.time; if(R.halfAfter!==null&&m>R.halfAfter){ half++; notes.push(ds.slice(8)+' half'); st.half.push({d:ds,t}); days[ds]={cls:'half',r}; } else{ full++; st.present.push({d:ds,t,late:m>lateLim}); if(m>lateLim){ late++; st.late.push({d:ds,t}); } days[ds]={cls:m>lateLim?'late':'ok',r}; } }
     else if(leaveOn(e.id,ds)){ leave++; const w=(leaveOn(e.id,ds)||{}).type||''; st.leave.push({d:ds,w}); days[ds]={cls:'leave',w}; }
     else if(leaveOn(e.id,ds,['pending'])){ absent++; pend++; notes.push(ds.slice(8)+' absent (leave pending)'); st.absent.push({d:ds,w:'leave asked, not approved yet'}); days[ds]={cls:'absent',w:'leave asked, not approved yet'}; }
@@ -3859,7 +3884,7 @@ function mmDraw(){
   let h='<div class="mm-cal">'+['M','T','W','T','F','S','S'].map(x=>'<div class="mm-wd">'+x+'</div>').join('')+'<div></div>'.repeat(pad);
   for(let n=1;n<=last;n++){
     const ds=_mm.start.slice(0,8)+String(n).padStart(2,'0'), d=S&&S.days[ds], fut=ds>_mm.end&&ds!==t;
-    let cls=d?d.cls:(ds===t?'now':fut?'future':checkDayOff(ds)?'off':'');
+    let cls=d?d.cls:(ds===t?'now':fut?'future':dayOffFor(currentEmp.id,ds)?'off':'');
     if(ds===t&&_mm.by[ds]) cls='ok';
     const sym={ok:'✓',late:'!',half:'½',leave:'L',absent:'✕',off:'–',now:'•'}[cls]||'';
     h+=`<button type="button" class="mm-d ${cls}${ds===t?' today':''}" ${fut?'disabled':`onclick="mmDay('${ds}')"`}>${n}<i>${sym}</i></button>`;
@@ -3869,8 +3894,8 @@ function mmDraw(){
   setHtml('mmSum',S?tile('work',S.work,'Work days')+tile('present',S.full,'Present')+tile('late',S.late,'Late')+tile('half',S.half,'Half days')+tile('leave',S.leave,'Leave')+tile('absent',S.absent,'Absent')+tile('ded',S.ded?'−'+fmtD(S.ded):'0','Late cut')+tile('cal',S.cal,'Days counted')+tile('pay','<span style="color:#1F7A5A;font-size:17px">'+fmtD(S.payable)+'</span>','Payable days'):'<div class="empty" style="grid-column:1/-1">Nothing counted yet this month.</div>');
 }
 function mmDayInfo(ds){
-  const r=_mm.by[ds], d=_mm.story&&_mm.story.days[ds], off=checkDayOff(ds);
-  const status={ok:'Present · on time',late:'Present · late',half:'Half day',leave:'On leave'+(d&&d.w?' ('+d.w+')':''),absent:'Absent'+(d&&d.w?' · '+d.w:''),off:(off&&off.name)||'Off day'}[d&&d.cls]||(ds===todayStr()?'Today':r?'Present':'No record');
+  const r=_mm.by[ds], d=_mm.story&&_mm.story.days[ds], off=dayOffFor(currentEmp.id,ds);
+  const status={ok:'Present · on time',late:'Present · late',half:'Half day',leave:'On leave'+(d&&d.w?' ('+d.w+')':''),absent:'Absent'+(d&&d.w?' · '+d.w:''),off:(d&&d.w)||(off&&off.name)||'Off day'}[d&&d.cls]||(ds===todayStr()?'Today':r?'Present':'No record');
   const tasks=(_mm.tasks||[]).filter(x=>x.date===ds), meets=(_mm.meets||[]).filter(x=>x.date===ds);
   const pers=r?(r.meetings||[]).filter(m=>m.kind==='personal'&&m.outTime):[];
   // the day in parts: punch-in → each step-out (personal work, or a punch-out followed by Resume work) → back → … → punch-out
@@ -5665,10 +5690,10 @@ function exportMonthlyCSV(){
 /* ══════════════════════════════════════════════════════════════
    LEAVES TAB (Admin)
 ══════════════════════════════════════════════════════════════ */
-const LEAVE_TYPES={CL:'Casual Leave',VL:'Vacation Leave',ML:'Medical Leave',CO:'Comp-off'};
+const LEAVE_TYPES={CL:'Casual Leave',VL:'Vacation Leave',ML:'Medical Leave',CO:'Comp-off',WO:'Weekly off'};
 const DEFAULT_QUOTA={CL:0,VL:0,ML:0};   // extra days per person on top of the policy
-const LT_COLOR={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)',CO:'#0F766E'};
-const LT_BG={CL:'var(--purpleBg)',VL:'var(--greenBg)',ML:'var(--redBg)',CO:'#E0F2EF'};
+const LT_COLOR={CL:'var(--purple)',VL:'var(--green)',ML:'var(--red)',CO:'#0F766E',WO:'#0F766E'};
+const LT_BG={CL:'var(--purpleBg)',VL:'var(--greenBg)',ML:'var(--redBg)',CO:'#E0F2EF',WO:'#E0F2EF'};
 
 async function loadLeavesTab(){
   const filterStatus=document.getElementById('lvFilterStatus')?.value||'pending';
@@ -5769,7 +5794,9 @@ function showLeavePanel(){
   fillAv('lvAvatar',curRec()||currentEmp);
   document.getElementById('lvName').textContent=currentEmp.name;
   showScreen('leavePanel');
-  { const co=document.querySelector('#lvType option[value="CO"]'), field=empCat(currentEmp.id)==='field'; if(co){ co.hidden=!field; co.disabled=!field; } if(!field&&document.getElementById('lvType').value==='CO') document.getElementById('lvType').value='CL'; }
+  { const field=empCat(currentEmp.id)==='field', sel=document.getElementById('lvType');   // Field: CL and weekly off · everyone else: CL, VL, ML
+    [...sel.options].forEach(o=>{ const show=field?(o.value==='CL'||o.value==='WO'):o.value!=='WO'; o.hidden=!show; o.disabled=!show; });
+    if(sel.selectedOptions[0]&&sel.selectedOptions[0].disabled) sel.value=field?'WO':'CL'; }
   { const t=todayStr(); document.getElementById('lvFrom').value=t; document.getElementById('lvTo').value=t; lvTypeChanged(); }
   refreshMyLeaves(currentEmp.id).then(()=>{ loadLeaveBalance(); loadLeaveHistory(); });
   loadLeaveBalance();
@@ -5801,6 +5828,7 @@ async function loadLeaveHistory(){
       <div style="font-size:12px;color:var(--soft);margin-top:3px">${l.fromDate?'<b>'+leaveSpan(l)+'</b> · ':''}asked ${safeDateStr(l.requestedAt)}</div>
       <div style="font-size:13px;margin-top:5px">${hx(l.reason)}</div>
       ${lvDocHtml(l,'emp')}
+      ${l.type==='WO'&&['pending','approved'].includes(l.status)&&l.fromDate>todayStr()?`<button class="lv-up" style="margin-top:6px" onclick="cancelWo('${esc(l.id)}')">↩ Take back this weekly off</button>`:''}
     </div>`).join('');
   }catch(e){}
 }
@@ -5870,6 +5898,12 @@ async function lvDocPicked(inp){
   }catch(e){ loading(false); bad(e.message); }
 }
 
+async function cancelWo(id){
+  if(!confirm('Take back this weekly off? That day becomes a working day again.')) return;
+  loading(true,'Saving…');
+  try{ await api('cancelWeeklyOff',{id,empId:currentEmp.id}); const l=(_D.leaves||[]).find(x=>x.id===id); if(l) l.status='cancelled'; saveCache(); loading(false); loadLeaveBalance(); loadLeaveHistory(); lvRuleDraw(); }
+  catch(e){ loading(false); alert(e.message); }
+}
 let lvBusy=false;
 async function submitLeave(){
   if(lvBusy) return; lvBusy=true;
@@ -5883,10 +5917,10 @@ async function submitLeaveNow(){
   const from=document.getElementById('lvFrom').value, to=document.getElementById('lvTo').value||from;
   if(!from){err.textContent='Pick the first day of your leave.';err.classList.add('show');return;}
   if(to<from){err.textContent='The last day is before the first day.';err.classList.add('show');return;}
-  const days=workDaysBetween(from,to);
+  const days=type==='WO'?leaveDates(from,to).length:workDaysBetween(from,to,currentEmp.id);
   if(!days){err.textContent='Those days are Sunday or a holiday — no leave needed.';err.classList.add('show');return;}
   if(!reason){err.textContent='Please add a reason.';err.classList.add('show');return;}
-  { const np=noticeProblem(type,from); if(np){err.textContent=np;err.classList.add('show');return;} }
+  { const np=type==='WO'?'':noticeProblem(type,from); if(np){err.textContent=np;err.classList.add('show');return;} }
   await refreshMyLeaves(currentEmp.id);
   if((_D.leaves||[]).some(l=>l.fromDate&&String(l.empId).toUpperCase()===String(currentEmp.id).toUpperCase()&&['pending','approved'].includes(l.status)&&from<=(l.toDate||l.fromDate)&&to>=l.fromDate)){err.textContent='You already have a leave request covering some of those days.';err.classList.add('show');return;}
   { const pr=leaveProblem(currentEmp.id,type,from,to); if(pr){err.textContent=pr;err.classList.add('show');return;} }
@@ -5897,8 +5931,8 @@ async function submitLeaveNow(){
     else{const all=JSON.parse(localStorage.getItem('att_leaves')||'[]');all.push(leave);localStorage.setItem('att_leaves',JSON.stringify(all));}
     (_D.leaves=_D.leaves||[]).push(leave); saveCache();
     document.getElementById('lvReason').value='';
-    loading(false);ok.textContent='✅ Leave request submitted for '+days+' working day'+(days>1?'s':'')+'.'+(type==='ML'&&leave.docsDue?' Upload your medical documents below by '+niceDay(leave.docsDue)+'.':'');ok.classList.add('show');
-    loadLeaveBalance();loadLeaveHistory();
+    loading(false);ok.textContent=type==='WO'?'✅ Weekly off planned for '+days+' day'+(days>1?'s':'')+'. It waits for your admin or supervisor to approve.':'✅ Leave request submitted for '+days+' working day'+(days>1?'s':'')+'.'+(type==='ML'&&leave.docsDue?' Upload your medical documents below by '+niceDay(leave.docsDue)+'.':'');ok.classList.add('show');
+    loadLeaveBalance();loadLeaveHistory();lvRuleDraw();
   }catch(e){loading(false);err.textContent='Error: '+e.message;err.classList.add('show');}
 }
 
@@ -6548,7 +6582,7 @@ function renderTeamLeave(ym,leaves){
    DAILY / WEEKLY ATTENDANCE SHEET — admin, department admin and supervisor (only their own staff, checked on the server)
 ══════════════════════════════════════════════════════════════ */
 const _per={};
-const PER_ST={P:['Present','#1F6B45','#DFF1E6'],N:['Punched in, no punch-out','#8A5A00','#FCEFD0'],I:['In progress','#0E5A52','#D9F0EC'],W:['Not in yet today','#4A5568','#E9EDF5'],A:['Absent','#A3271C','#F9DCD8'],L:['On leave','#6A3FA0','#EEE3F8'],H:['Holiday','#5B6664','#E6EAE8'],S:['Sunday','#5B6664','#E6EAE8']};
+const PER_ST={P:['Present','#1F6B45','#DFF1E6'],N:['Punched in, no punch-out','#8A5A00','#FCEFD0'],I:['In progress','#0E5A52','#D9F0EC'],W:['Not in yet today','#4A5568','#E9EDF5'],A:['Absent','#A3271C','#F9DCD8'],L:['On leave','#6A3FA0','#EEE3F8'],H:['Holiday','#5B6664','#E6EAE8'],S:['Sunday','#5B6664','#E6EAE8'],O:['Weekly off','#0F766E','#E0F2EF']};
 function perChip(st,txt,title){ const s=PER_ST[st]; return s?`<span title="${hx(title||s[0])}" style="display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:7px;font-weight:700;font-size:11px;background:${s[2]};color:${s[1]}">${hx(txt||st)}</span>`:''; }
 const perShort=t=>t?String(fmt12(t)).replace(/^0/,'').replace(/(\d+:\d\d):\d\d /,'$1 '):'';
 function periodInit(pfx){
@@ -6602,7 +6636,7 @@ function perHtml(mode,d){
   const stat=(n,l,c)=>`<div class="stat"><div class="n ${c}">${n}</div><div class="l">${l}</div></div>`;
   const head=`<div class="stats-grid">${mode==='day'?stat(present,'Present','c-green'):stat(pct===null?'—':pct+'%','Attendance ('+work+' working days)','c-green')}${stat(late,'Late arrivals','c-orange')}${stat(absent,mode==='day'?'Absent':'Absent days','c-blue')}${stat(leave,mode==='day'?'On leave':'Leave days','c-purple')}</div>`;
   const who=r=>`<b>${hx(r.name)}</b><div style="color:var(--soft);font-size:11px">${hx(r.id)}${r.dept?' · '+hx(r.dept):''}</div>`;
-  const legend='<div style="font-size:10.5px;color:var(--soft);margin-top:8px;line-height:1.7">'+['P','N','I','W','A','L','H','S'].map(k=>perChip(k)+' '+PER_ST[k][0]).join(' &nbsp; ')+' &nbsp; ⏰ late · 📍 punched outside the assigned place · ⏱ approved overtime. Late = after the office start + grace (the department\'s own hours if it has them).</div>';
+  const legend='<div style="font-size:10.5px;color:var(--soft);margin-top:8px;line-height:1.7">'+['P','N','I','W','A','L','O','H','S'].map(k=>perChip(k)+' '+PER_ST[k][0]).join(' &nbsp; ')+' &nbsp; ⏰ late · 📍 punched outside the assigned place · ⏱ approved overtime. Late = after the office start + grace (the department\'s own hours if it has them).</div>';
   if(mode==='day'){
     const off=days[0]&&days[0].off;
     return head+(off?`<div style="font-size:12px;color:var(--soft);margin-bottom:8px">${hx(off)} — no attendance is needed today.</div>`:'')+
