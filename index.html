@@ -4857,7 +4857,7 @@ async function captureAndMark(byTimer){
 }
 
 /* Sign out forgets this phone's login but does not stop site work: its checks go on while this page is open */
-function logout(){ try{ fmClose(); }catch(e){} try{ if(typeof polReset==='function') polReset(); }catch(e){} _mgr=null; _mgrAll=[]; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
+function logout(){ try{ if(currentEmp) localStorage.removeItem('lab_'+currentEmp.id); }catch(e){} _lb.data=null; _lb.site=''; try{ fmClose(); }catch(e){} try{ if(typeof polReset==='function') polReset(); }catch(e){} _mgr=null; _mgrAll=[]; mgrHint(false); try{ wmReset(); }catch(e){} stopEmpSafety(); stopCamera();stopLocWatch();clearInterval(officeTimerInt);clearInterval(homeTimerInt);meClear();homeTok++;currentEmp=null;_actor='';['loginId','loginPass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); showScreen('loginScreen'); updateSiteBar(); }
 
 /* Timeline builder */
 function buildTimeline(rec){
@@ -6779,12 +6779,14 @@ async function lbDupCheck(){
 async function lbSaveWorker(){
   const f=_lb.form, v=id=>document.getElementById(id).value, isNew=!f.w.id;
   const worker={id:f.w.id||'',name:v('lfN'),father:v('lfF'),village:v('lfV'),age:v('lfAge'),phone:v('lfPh'),trade:lbChipVal('lfTrade'),tradeOther:v('lfTO'),wtype:lbChipVal('lfWt'),role:lbChipVal('lfRole'),gangOf:lbChipVal('lfRole')==='thekedar'?'':v('lfGangOf'),contactName:v('lfCn'),contactPhone:v('lfCp'),idType:v('lfIt'),idLast4:v('lfL4'),consent:document.getElementById('lfCons').checked};
+  if(f.w.id) ['phone','contactPhone','contactName','idType','idLast4'].forEach(k=>{ if(f.w[k]===undefined&&!worker[k]) delete worker[k]; });   // a detail this phone was not shown stays as it is
   if(f.idPhoto&&!worker.idType){ lbErr('Pick the ID type for the ID photo.'); return; }
   if(f.idPhoto&&worker.idType==='Aadhaar'&&!document.getElementById('lfMask').checked){ lbErr('Cover the first 8 digits of the Aadhaar in the photo, then tick that they are covered.'); return; }
   const sign=lbPadData('lfPad');
   loading(true,'Saving…');
   try{
     const r=await api('labWorkerSave',{empId:currentEmp.id,worker,photo:f.photo||''});
+    f.w.id=r.id; f.w=Object.assign({},f.w,worker,{id:r.id});   // a retry after a failed signature or ID photo saves the same worker, not a new one
     if(sign) await api('labWorkerSign',{empId:currentEmp.id,workerId:r.id,sign});
     if(f.idPhoto) await api('labIdPut',{empId:currentEmp.id,workerId:r.id,masked:document.getElementById('lfMask').checked,mime:'image/jpeg',data:f.idPhoto.split(',')[1]});
     loading(false); await labRefresh(false);
@@ -6807,7 +6809,7 @@ async function labFilePicked(inp){
   const f=inp.files&&inp.files[0]; if(!f) return;
   try{ const d=await lvImageData(f);
     if(_lbPhotoFor==='team') { _lb.photo=d; labDraw(); }
-    else if(_lb.form){ if(_lbPhotoFor==='id') _lb.form.idPhoto=d; else _lb.form.photo=d; const keep=lbFormSnap(); labDraw(); lbFormRestore(keep); }
+    else if(_lb.form){ if(_lbPhotoFor==='id') _lb.form.idPhoto=d; else _lb.form.photo=d; const keep=lbFormSnap(), pad=lbPadData('lfPad'); labDraw(); lbFormRestore(keep); if(pad) lbPadPut('lfPad',pad); }
   }catch(e){ alert('That photo could not be read. Please take it again.'); }
 }
 function lbFormSnap(){ const o={}; document.querySelectorAll('#lbBody input,#lbBody select,#lbBody textarea').forEach(x=>{ if(x.id) o[x.id]=x.type==='checkbox'?x.checked:x.value; }); o._chips={}; document.querySelectorAll('#lbBody .lb-chips').forEach(c=>{ const b=c.querySelector('button.on'); if(c.id&&b) o._chips[c.id]=b.dataset.v; }); return o; }
@@ -6822,6 +6824,7 @@ function lbPadInit(id){
   c.onpointermove=e=>{ if(!down) return; const p=pt(e); x.lineTo(p[0],p[1]); x.stroke(); c._ink=true; };
   c.onpointerup=c.onpointercancel=()=>{ down=false; };
 }
+function lbPadPut(id,data){ const c=document.getElementById(id); if(!c) return; const im=new Image(); im.onload=()=>{ const x=c.getContext('2d'), k=window.devicePixelRatio||1; x.save(); x.setTransform(1,0,0,1,0,0); x.drawImage(im,0,0,c.width,c.height); x.restore(); c._ink=true; }; im.src=data; }
 function lbPadClear(id){ const c=document.getElementById(id); if(!c) return; c.getContext('2d').clearRect(0,0,c.width,c.height); c._ink=false; }
 function lbPadData(id){ const c=document.getElementById(id); if(!c||!c._ink) return ''; const o=document.createElement('canvas'); o.width=c.width; o.height=c.height; const x=o.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,o.width,o.height); x.drawImage(c,0,0); return o.toDataURL('image/jpeg',0.8); }
 /* ── Payments and hisaab ── */
