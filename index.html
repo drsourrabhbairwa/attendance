@@ -379,6 +379,57 @@ body.rV .tab-btn[onclick="switchTab('places')"]{display:none}
 .lc .tdy{box-shadow:inset 0 0 0 2px var(--accent)}
 .lc .CL{background:var(--purpleBg);color:var(--purple);font-weight:800}
 .lc .WO{background:#E0F2EF;color:#0F766E;font-weight:800}
+/* ── Site Labour Register ── */
+.lb-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-right:52px}
+.lb-head h2{font-size:18px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-back{border:1px solid var(--border2);background:var(--surface);border-radius:12px;padding:8px 12px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--ink)}
+.lb-site{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.lb-site button{flex:0 0 auto;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border2);background:var(--surface);border-radius:999px;padding:8px 14px;font:600 13px inherit;font-family:inherit;color:var(--ink2);cursor:pointer}
+.lb-site button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:4px;margin-bottom:14px}
+.lb-tabs button{border:0;background:none;border-radius:10px;padding:9px 2px;font:700 12.5px inherit;font-family:inherit;color:var(--soft);cursor:pointer}
+.lb-tabs button.on{background:var(--surface);color:var(--accent2);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--border)}
+.lb-row:first-child{border-top:0}
+.lb-av{flex:0 0 38px;height:38px;border-radius:50%;background:var(--accentBg);color:var(--accent2);display:grid;place-items:center;font-weight:800;font-size:14px;overflow:hidden}
+.lb-av img{width:100%;height:100%;object-fit:cover}
+.lb-who{flex:1;min-width:0}
+.lb-who b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-who small{display:block;font-size:11.5px;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-seg{display:flex;flex:0 0 auto;border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+.lb-seg button{width:36px;height:36px;border:0;background:var(--surface);font:800 13px inherit;font-family:inherit;color:var(--soft);cursor:pointer}
+.lb-seg button+button{border-left:1px solid var(--border)}
+.lb-seg button.P.on{background:var(--green);color:#fff}.lb-seg button.H.on{background:var(--amber);color:#fff}.lb-seg button.A.on{background:var(--red);color:#fff}
+.lb-ot{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--soft);margin-top:6px}
+.lb-ot button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);font-weight:800;cursor:pointer}
+.lb-ot b{min-width:34px;text-align:center;color:var(--ink)}
+.lb-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.lb-bar button{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.lb-sum div{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;min-width:0}
+.lb-sum b{display:block;font-size:17px;overflow:hidden;text-overflow:ellipsis}
+.lb-sum span{font-size:11px;color:var(--soft)}
+.lb-money{text-align:right;flex:0 0 auto;font-size:12px;color:var(--soft)}
+.lb-money b{display:block;font-size:15px;color:var(--ink)}
+.lb-pend{color:var(--amber)!important}
+.lb-big{text-align:center;padding:18px 10px;border-radius:16px;background:var(--accentBg);margin:10px 0}
+.lb-big b{display:block;font-size:30px;color:var(--accent2)}
+.lb-big span{font-size:14px;color:var(--ink2)}
+.lb-pad{width:100%;height:170px;border:2px dashed var(--border2);border-radius:14px;background:#fff;touch-action:none;display:block}
+.lb-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lb-chips button{border:1px solid var(--border2);background:var(--surface);border-radius:999px;padding:7px 12px;font:600 12.5px inherit;font-family:inherit;cursor:pointer;color:var(--ink2)}
+.lb-chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb-dup{border:1px solid var(--amber);background:var(--amberBg);border-radius:12px;padding:10px;margin-top:10px;font-size:13px}
+.lb-dup .lb-row{border-color:rgba(168,112,32,.25)}
+.lb-tick{display:flex;gap:10px;align-items:flex-start;font-size:13px;margin-top:12px;text-transform:none;letter-spacing:0;color:var(--ink2);font-weight:600}
+.lb-tick input{width:20px;height:20px;flex:0 0 20px;margin-top:1px}
+.lb-note{font-size:11.5px;color:var(--soft);margin-top:6px;line-height:1.45}
+.lb-err{color:var(--red);font-size:13px;font-weight:600;margin-top:8px;min-height:1px}
+.lb-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
+.lb-gang{margin:4px 0 0 48px;font-size:12px;color:var(--soft)}
+.lb-tag{display:inline-block;font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border);color:var(--soft);vertical-align:1px}
+.lb-tag.pend{background:var(--amberBg);border-color:transparent;color:var(--amber)}.lb-tag.ok{background:var(--greenBg);border-color:transparent;color:var(--green)}.lb-tag.no{background:var(--redBg);border-color:transparent;color:var(--red)}
+
 .lc .VL{background:var(--greenBg);color:var(--green);font-weight:800}
 .lc .ML{background:var(--redBg);color:var(--red);font-weight:800}
 .lc .pend{background:repeating-linear-gradient(45deg,var(--amberBg),var(--amberBg) 4px,#fff 4px,#fff 8px);color:var(--amber);font-weight:800}
@@ -1378,6 +1429,13 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   </nav>
 </div>
 
+<!-- ══ SITE LABOUR (Field In-charge) ══ -->
+<div id="labScreen" class="screen">
+  <div class="lb-head"><button class="lb-back" onclick="labBack()" aria-label="Back">←</button><h2 id="lbTitle">👷 Site Labour</h2></div>
+  <div id="lbBody"><div class="card"><div class="empty">⏳ Loading…</div></div></div>
+</div>
+<input type="file" id="lbFile" accept="image/*" capture="environment" style="display:none" onchange="labFilePicked(this)">
+
 <!-- ══ PROFILE ══ -->
 <div id="profileScreen" class="screen">
   <div class="card">
@@ -1505,6 +1563,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
         <div class="site-btns">
           <button class="site-btn" onclick="confirmStopSite()">⏹ Stop Site Work</button>
           <a class="site-btn" id="swMapLink" href="#" target="_blank">📍 Map</a>
+          <button class="site-btn" id="swLabBtn" style="display:none" onclick="labOpen()">👷 Labour</button>
         </div>
       </div>
     </div>
@@ -3807,6 +3866,7 @@ function renderHomeActs(){
     L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
   }
   L.push(`<button onclick="showTeamLeave()">👥 <span>Team leave</span><small id="hmTlSub"></small></button>`);
+  if(empCat(currentEmp&&currentEmp.id)==='field') L.push(`<button onclick="labOpen()">👷 <span>My sites · labour</span><small>${labActiveHere()?'Fill today\'s labour':'Workers, payments, hisaab'}</small></button>`);
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   try{ if(_pol.list.length) L.push(`<button type="button" data-pol-link onclick="polOpenList()">📜 <span>Policies</span></button>`); }catch(e){}
@@ -4970,6 +5030,7 @@ function updateSiteBar(){
       const al=document.getElementById('swAlert'), at=document.getElementById('swAlertTxt');
       if(al&&at){ at.textContent=sw.alert||''; al.style.display=sw.alert?'block':'none'; }
       const ml=document.getElementById('swMapLink'); if(ml) ml.href=mapsUrl(sw.siteLat,sw.siteLng);
+      { const lb=document.getElementById('swLabBtn'); if(lb) lb.style.display=currentEmp&&empCat(currentEmp.id)==='field'?'':'none'; }
       const kp=document.getElementById('swKeep'); if(kp) kp.textContent=nativeRunning(sw)?'📱 Tracking runs in the background — you can lock the phone.':'📱 Keep this page open while you are on site.';
     }
   }
@@ -6501,6 +6562,294 @@ async function loadOtTab(){
     if(st==='pending') setTabBadge('overtime',rows.length);
     el.innerHTML=rows.length?rows.map(r=>otCard(r,'tab')).join(''):'<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">'+(st==='pending'?'Nothing is waiting for a decision.':'No overtime here yet.')+'</div>';
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+hx(otApiErr(e))+'</div>'; }
+}
+
+/* ══ Site Labour Register: the In-charge's screen (sites, workers, daily hazri, payments with signature, hisaab) ══
+   Workers are records only (no sign-in). Hazri and payments are filled at the site, while Site Work / Site Supervision / Installation runs. */
+const LB_TRADES=['Mason','Electrician','Plumber','Painter','Carpenter','Welder','Helper','Other'], LB_KINDS=['Site Supervision','Installation'];
+let _lb={data:null,site:'',tab:'att',att:{},photo:'',ledger:null,form:null,from:'home'};
+function lbKey(){ return 'lab_'+(currentEmp?currentEmp.id:'x'); }
+function labActiveHere(){
+  try{ if(mySiteManual()) return true; }catch(e){}
+  const ms=(typeof _hmRec!=='undefined'&&_hmRec&&_hmRec.meetings)||[];
+  if(ms.some(m=>!m.backTime&&!m.endAt&&LB_KINDS.indexOf(m.purpose)>=0)) return true;
+  try{ if(typeof _wm!=='undefined'&&_wm.open&&LB_KINDS.indexOf(_wm.open.kind)>=0) return true; }catch(e){}
+  return false;
+}
+function lbMoney(n){ n=Number(n)||0; return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function lbW(id){ return ((_lb.data&&_lb.data.workers)||[]).find(w=>w.id===id)||{id,name:id}; }
+function lbSite(){ return ((_lb.data&&_lb.data.sites)||[]).find(x=>x.id===_lb.site)||null; }
+function lbCrew(all){ return ((_lb.data&&_lb.data.crew)||[]).filter(c=>c.siteId===_lb.site&&(all||c.active==='yes')); }
+function lbAv(w){ return `<div class="lb-av">${w.photo?`<img src="${hx(w.photo)}" alt="">`:hx(String(w.name||'?').trim().charAt(0).toUpperCase())}</div>`; }
+function lbRateTxt(c){ if(!c) return ''; if(c.rateType==='contract') return 'Contract '+lbMoney(c.contractAmt); const r=(c.rates||[]).filter(x=>x.from<=todayStr()).pop()||(c.rates||[])[0]; return r?lbMoney(r.rate)+'/day'+(r.otRate?' · OT '+lbMoney(r.otRate)+'/h':''):''; }
+function lbTradeTxt(w){ return w.trade==='Other'?(w.tradeOther||'Other'):(w.trade||''); }
+function labOpen(tab){
+  if(!currentEmp) return;
+  _lb.tab=tab||(labActiveHere()?'att':'ledger'); _lb.form=null;
+  try{ const c=JSON.parse(localStorage.getItem(lbKey())||'null'); if(c&&c.sites) _lb.data=c; }catch(e){}
+  showScreen('labScreen'); try{ window.scrollTo(0,0); }catch(e){}
+  if(_lb.data) labDraw();
+  labRefresh(false);
+}
+function labBack(){ if(_lb.form){ _lb.form=null; labDraw(); return; } goHome(); }
+async function labRefresh(show){
+  try{
+    if(show) loading(true,'Loading…');
+    const d=await api('labData',{empId:currentEmp.id});
+    _lb.data=d; try{ localStorage.setItem(lbKey(),JSON.stringify(d)); }catch(e){}
+    if(!_lb.site||!lbSite()) await lbPickNearest();
+    _lb.ledger=null; loading(false); labDraw();
+  }catch(e){ loading(false); if(!_lb.data) document.getElementById('lbBody').innerHTML=`<div class="card"><div class="empty">${hx(e.message)}</div></div>`; }
+}
+async function lbPickNearest(){
+  const open=(_lb.data.sites||[]).filter(x=>x.status==='open'); if(!open.length){ _lb.site=((_lb.data.sites||[])[0]||{}).id||''; return; }
+  _lb.site=open[0].id;
+  try{ const la=Number(capLat), ln=Number(capLng); if(la&&ln){ let best=1e12; open.forEach(x=>{ const d=Math.pow(x.lat-la,2)+Math.pow(x.lng-ln,2); if(d<best){ best=d; _lb.site=x.id; } }); } }catch(e){}
+}
+function labDraw(){
+  const el=document.getElementById('lbBody'); if(!el) return;
+  const sites=(_lb.data&&_lb.data.sites)||[], site=lbSite();
+  document.getElementById('lbTitle').textContent=site?'👷 '+site.name:'👷 My sites';
+  if(_lb.form){ el.innerHTML=lbFormHtml(); lbFormAfter(); return; }
+  const chips=sites.slice().sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1)).map(x=>`<button class="${x.id===_lb.site?'on':''}" onclick="_lb.site='${esc(x.id)}';_lb.ledger=null;_lb.att={};labDraw()">${x.status==='open'?'':'🔒 '}${hx(x.name)}</button>`).join('');
+  let h=`<div class="lb-site">${chips}<button onclick="lbForm('site')">＋ New site</button></div>`;
+  if(!site){ el.innerHTML=h+`<div class="card"><div class="empty">No site yet.<br>Open a site to keep its workers, hazri and payments here.</div><button class="btn btn-primary" onclick="lbForm('site')">＋ Open a new site</button></div>`; return; }
+  const T=[['att','Hazri'],['workers','Workers'],['pay','Payments'],['ledger','Hisaab']];
+  h+=`<div class="lb-tabs">${T.map(t=>`<button class="${_lb.tab===t[0]?'on':''}" onclick="_lb.tab='${t[0]}';labDraw()">${t[1]}</button>`).join('')}</div>`;
+  h+=`<div class="card" id="lbPane">${_lb.tab==='att'?lbAttHtml():_lb.tab==='workers'?lbWorkersHtml():_lb.tab==='pay'?lbPayHtml():lbLedgerHtml()}</div>`;
+  el.innerHTML=h;
+  if(_lb.tab==='ledger'||_lb.tab==='pay') lbLoadLedger();
+}
+function lbCanWork(){ const s=lbSite(); return !!s&&s.status==='open'&&labActiveHere(); }
+function lbNotActive(){ return `<div class="lb-note" style="margin:0 0 10px;padding:10px;border-radius:12px;background:var(--amberBg);color:var(--amber);font-weight:600">Start Site Work, Site Supervision or Installation at this site to fill hazri and payments.</div>`; }
+/* ── Hazri ── */
+function lbDayRows(date){ return ((_lb.data&&_lb.data.days)||[]).filter(d=>d.siteId===_lb.site&&d.date===date); }
+function lbAttHtml(){
+  const crew=lbCrew(), t=todayStr(), saved=lbDayRows(t), can=lbCanWork();
+  if(!crew.length) return `<div class="empty">No workers on this site yet.</div><button class="btn btn-primary" onclick="_lb.tab='workers';labDraw()">＋ Add workers</button>`;
+  crew.forEach(c=>{ if(!_lb.att[c.workerId]){ const d=saved.find(x=>x.workerId===c.workerId); _lb.att[c.workerId]=d?{st:d.st,ot:Number(d.ot)||0}:{st:'',ot:0}; } });
+  const marked=crew.filter(c=>_lb.att[c.workerId].st).length;
+  let h=(can?'':lbNotActive())+`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><div class="hm-h" style="margin:0">Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div><small style="color:var(--soft)">${saved.length?'Saved · ':''}${marked}/${crew.length} marked</small></div>`;
+  if(can) h+=`<div class="lb-bar"><button class="btn btn-outline btn-sm" onclick="lbCopyLast()">📋 Same as last day</button><button class="btn btn-outline btn-sm" onclick="lbAllP()">✓ All present</button></div>`;
+  h+=crew.map(c=>{ const w=lbW(c.workerId), a=_lb.att[c.workerId], dis=can?'':' disabled';
+    return `<div class="lb-row" style="flex-wrap:wrap">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}</b><small>${hx(lbTradeTxt(w))} · ${hx(lbRateTxt(c))}</small></div>
+      <div class="lb-seg" role="group" aria-label="Hazri for ${hx(w.name)}">${['P','H','A'].map(k=>`<button class="${k}${a.st===k?' on':''}"${dis} onclick="lbMark('${esc(c.workerId)}','${k}')" aria-pressed="${a.st===k}">${k}</button>`).join('')}</div>
+      ${a.st&&a.st!=='A'?`<div class="lb-ot" style="flex-basis:100%;padding-left:48px">Overtime <button${dis} onclick="lbOt('${esc(c.workerId)}',-1)">−</button><b>${a.ot} h</b><button${dis} onclick="lbOt('${esc(c.workerId)}',1)">+</button></div>`:''}</div>`; }).join('');
+  if(can) h+=`<div class="lb-bar" style="margin-top:12px"><button class="btn btn-outline" onclick="lbPhoto('team')">📷 ${_lb.photo?'Team photo added ✓':'Team photo (optional)'}</button></div><button class="btn btn-primary" onclick="lbSaveDay()">Save today's hazri</button><div class="lb-err" id="lbErr"></div><div class="lb-note">P = full day · H = half day · A = absent. Time and location are saved with it.</div>`;
+  return h;
+}
+function lbMark(id,k){ _lb.att[id]=_lb.att[id]||{st:'',ot:0}; _lb.att[id].st=k; if(k==='A') _lb.att[id].ot=0; labDraw(); }
+function lbOt(id,d){ const a=_lb.att[id]; a.ot=Math.max(0,Math.min(16,(a.ot||0)+d)); labDraw(); }
+function lbAllP(){ lbCrew().forEach(c=>{ const a=_lb.att[c.workerId]||(_lb.att[c.workerId]={st:'',ot:0}); if(!a.st) a.st='P'; }); labDraw(); }
+function lbCopyLast(){
+  const t=todayStr(), days=((_lb.data&&_lb.data.days)||[]).filter(d=>d.siteId===_lb.site&&d.date<t).map(d=>d.date).sort(), last=days.pop();
+  if(!last){ alert('No earlier day saved on this site yet.'); return; }
+  lbDayRows(last).forEach(d=>{ if(lbCrew().some(c=>c.workerId===d.workerId)) _lb.att[d.workerId]={st:d.st,ot:Number(d.ot)||0}; }); labDraw();
+}
+async function lbPos(){ try{ const f=await freshFix(); return {lat:f.lat,lng:f.lng}; }catch(e){ if(capLat&&capLng) return {lat:Number(capLat),lng:Number(capLng)}; throw new Error('Location is needed. Turn on location and try again.'); } }
+async function lbSaveDay(){
+  const entries=lbCrew().map(c=>({workerId:c.workerId,st:(_lb.att[c.workerId]||{}).st,ot:(_lb.att[c.workerId]||{}).ot||0})).filter(e=>e.st);
+  const er=document.getElementById('lbErr'); if(!entries.length){ er.textContent='Mark at least one worker.'; return; }
+  loading(true,'Getting location…');
+  try{ const p=await lbPos(); loading(true,'Saving…');
+    await api('labDaySave',{empId:currentEmp.id,siteId:_lb.site,date:todayStr(),entries,lat:p.lat,lng:p.lng,photo:_lb.photo||''});
+    _lb.photo=''; loading(false); await labRefresh(false); toastMsg('✅ Hazri saved');
+  }catch(e){ loading(false); er.textContent=e.message; }
+}
+function toastMsg(t){ let d=document.getElementById('lbToast'); if(!d){ d=document.createElement('div'); d.id='lbToast'; d.setAttribute('role','status'); d.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100% - 32px);background:#10211F;color:#fff;padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .3s'; document.body.appendChild(d); } d.textContent=t; d.style.opacity='1'; clearTimeout(d._t); d._t=setTimeout(()=>{ d.style.opacity='0'; },3200); }
+/* ── Workers ── */
+function lbWorkersHtml(){
+  const crew=lbCrew(), can=lbSite()&&lbSite().status==='open';
+  let h=`<div class="lb-bar">${can?`<button class="btn btn-primary btn-sm" onclick="lbForm('worker')">＋ New worker</button><button class="btn btn-outline btn-sm" onclick="lbForm('pick')">From worker list</button>`:''}</div>`;
+  if(!crew.length) return h+'<div class="empty">No workers on this site yet.</div>';
+  const gangOf=id=>crew.filter(c=>lbW(c.workerId).gangOf===id);
+  h+=crew.filter(c=>{ const w=lbW(c.workerId); return !(w.gangOf&&crew.some(x=>x.workerId===w.gangOf)); }).map(c=>{ const w=lbW(c.workerId), g=w.role==='thekedar'?gangOf(w.id):[];
+    return `<div class="lb-row">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)} ${w.role==='thekedar'?'<span class="lb-tag">Thekedar</span>':''}</b><small>${hx(w.id)} · ${hx(lbTradeTxt(w))} · ${hx(lbRateTxt(c))}${w.role==='thekedar'?' · '+(c.gangMode==='gang'?'gang paid to him':'each paid alone'):''}</small></div>${can?`<button class="btn btn-outline btn-sm" onclick="lbForm('crew','${esc(w.id)}')">Edit</button>`:''}</div>`
+      +(g.length?`<div class="lb-gang">${g.map(x=>{ const m=lbW(x.workerId); return `<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0"><span>↳ ${hx(m.name)} · ${hx(lbTradeTxt(m))} · ${hx(lbRateTxt(x))}</span>${can?`<a href="#" onclick="lbForm('crew','${esc(m.id)}');return false">Edit</a>`:''}</div>`; }).join('')}</div>`:''); }).join('');
+  return h;
+}
+function lbForm(kind,id){ _lb.form={kind,id:id||'',w:{},dup:[],sign:'',idPhoto:'',err:''}; if(kind==='worker'&&id) _lb.form.w=Object.assign({},lbW(id)); labDraw(); try{ window.scrollTo(0,0); }catch(e){} }
+function lbFormHtml(){
+  const f=_lb.form;
+  if(f.kind==='site') return `<div class="card"><div class="hm-h">Open a new site</div>
+    <label>Site name *</label><input type="text" id="lfName" maxlength="80" placeholder="e.g. Malviya Nagar roof">
+    <div class="lb-grid2"><div><label>Client name</label><input type="text" id="lfClient" maxlength="80"></div><div><label>Client phone</label><input type="text" id="lfPhone" inputmode="tel" maxlength="15"></div></div>
+    <label>Address</label><textarea id="lfAddr" rows="2" maxlength="200"></textarea>
+    <div class="lb-grid2"><div><label>Start date</label><input type="date" id="lfStart" value="${todayStr()}"></div><div><label>Vertical</label><select id="lfVert"><option>Waterproofing Solutions</option><option>Seamless Floorings</option><option>Road Marking Paint</option><option>Home Automation &amp; Security</option><option>Other</option></select></div></div>
+    <label>Location *</label><button class="btn btn-outline" id="lfLocBtn" onclick="lbSiteLoc()">📍 Use my location here (stand at the site)</button><div class="lb-note" id="lfLoc"></div>
+    <button class="btn btn-primary" onclick="lbSaveSite()">Open site</button><div class="lb-err" id="lbErr"></div>
+    <div class="lb-note">You become the In-charge of this site. Your admin or supervisor can hand it to someone else later.</div></div>`;
+  if(f.kind==='pick'){
+    const on={}; lbCrew(true).filter(c=>c.active==='yes').forEach(c=>{ on[c.workerId]=1; });
+    const list=((_lb.data&&_lb.data.workers)||[]).filter(w=>!on[w.id]);
+    return `<div class="card"><div class="hm-h">Add from the worker list</div><input type="text" id="lfSearch" placeholder="Search name, village or LAB id" oninput="lbPickFilter()">
+      <div id="lfPickList">${list.map(w=>`<div class="lb-row" data-q="${hx((w.name+' '+(w.village||'')+' '+w.id+' '+(w.father||'')).toLowerCase())}">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}</b><small>${hx(w.id)} · ${hx(lbTradeTxt(w))}${w.village?' · '+hx(w.village):''}</small></div><button class="btn btn-primary btn-sm" onclick="lbForm('crew','${esc(w.id)}')">Add</button></div>`).join('')||'<div class="empty">No other workers yet.</div>'}</div></div>`;
+  }
+  if(f.kind==='crew'){
+    const w=lbW(f.id), c=lbCrew(true).find(x=>x.workerId===f.id), r=c?((c.rates||[]).filter(x=>x.from<=todayStr()).pop()||(c.rates||[])[0]||{}):{}, type=c?c.rateType:(w.wtype==='contract'?'contract':'day');
+    return `<div class="card"><div class="lb-row" style="padding-top:0">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}</b><small>${hx(w.id)} · ${hx(lbTradeTxt(w))}</small></div><button class="btn btn-outline btn-sm" onclick="lbForm('worker','${esc(w.id)}')">Details</button></div>
+      <label>How is ${hx(w.name)} paid on this site?</label><div class="lb-chips" id="lfType">${[['day','Daily wage'],['contract','Contract (fixed)']].map(x=>`<button class="${type===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this);lbCrewType()">${x[1]}</button>`).join('')}</div>
+      <div id="lfDay"><div class="lb-grid2"><div><label>Rate ₹ per day *</label><input type="number" id="lfRate" inputmode="decimal" min="1" value="${r.rate||''}"></div><div><label>Overtime ₹ per hour</label><input type="number" id="lfOt" inputmode="decimal" min="0" value="${r.otRate||''}" placeholder="day rate ÷ 8"></div></div>
+        ${c?`<label>New rate starts from</label><input type="date" id="lfFrom" value="${todayStr()}"><div class="lb-note">Days before this keep the old rate.</div>`:''}</div>
+      <div id="lfCon"><label>Contract amount ₹ *</label><input type="number" id="lfAmt" inputmode="decimal" min="1" value="${c&&c.contractAmt||''}"></div>
+      ${w.role==='thekedar'?`<label>His gang is paid</label><div class="lb-chips" id="lfGang">${[['gang','All to the thekedar'],['each','Each worker alone']].map(x=>`<button class="${((c&&c.gangMode)||'each')===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this)">${x[1]}</button>`).join('')}</div>`:''}
+      <button class="btn btn-primary" onclick="lbSaveCrew()">${c&&c.active==='yes'?'Save rate':'Put on this site'}</button>
+      ${c&&c.active==='yes'?`<button class="btn btn-outline" style="color:var(--red)" onclick="lbRemoveCrew()">Remove from this site</button>`:''}<div class="lb-err" id="lbErr"></div></div>`;
+  }
+  if(f.kind==='pay'){
+    const L=lbPayees();
+    if(!L) return '<div class="card"><div class="empty">⏳ Working out the hisaab…</div></div>';
+    if(f.step===2){ const r=L.find(x=>x.payeeId===f.payee)||{balance:0,pending:0,name:f.payee}, after=Math.round(((r.balance||0)-(r.pending||0)-f.amount)*100)/100;
+      return `<div class="card"><div class="hm-h">Show this to ${hx(r.name)}</div>
+        <div class="lb-big"><span>${f.kind2==='advance'?'Advance':'Payment'} today · ${f.mode==='upi'?'UPI':'Cash'}</span><b>${lbMoney(f.amount)}</b><span>Still to pay after this: <b style="display:inline;font-size:16px">${lbMoney(after)}</b></span></div>
+        ${after<0?'<div class="lb-note" style="color:var(--amber)">This is more than what is due now (an advance).</div>':''}
+        <label>${hx(r.name)}'s thumb or signature *</label><canvas class="lb-pad" id="lfPad"></canvas>
+        <div class="lb-bar" style="margin-top:6px"><button class="btn btn-outline btn-sm" onclick="lbPadClear('lfPad')">Clear</button><button class="btn btn-outline btn-sm" onclick="_lb.form.step=1;labDraw()">← Change</button></div>
+        <button class="btn btn-primary" onclick="lbSavePay()">Save payment</button><div class="lb-err" id="lbErr"></div>
+        <div class="lb-note">It waits for your supervisor or admin to approve.</div></div>`; }
+    return `<div class="card"><div class="hm-h">New payment</div>
+      <label>To *</label><select id="lfPayee">${L.map(r=>`<option value="${hx(r.payeeId)}"${f.payee===r.payeeId?' selected':''}>${hx(r.name)} · to pay ${lbMoney(r.balance-r.pending)}</option>`).join('')}</select>
+      <label>What</label><div class="lb-chips" id="lfKind">${[['payment','Payment'],['advance','Advance']].map(x=>`<button class="${(f.kind2||'payment')===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this)">${x[1]}</button>`).join('')}</div>
+      <div class="lb-grid2"><div><label>Amount ₹ *</label><input type="number" id="lfAmt" inputmode="decimal" min="1" value="${f.amount||''}"></div><div><label>Paid by</label><div class="lb-chips" id="lfMode">${[['cash','Cash'],['upi','UPI']].map(x=>`<button class="${(f.mode||'cash')===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this)">${x[1]}</button>`).join('')}</div></div></div>
+      <label>Note</label><input type="text" id="lfNote" maxlength="200" value="${hx(f.note||'')}">
+      <button class="btn btn-primary" onclick="lbPayNext()">Next →</button><div class="lb-err" id="lbErr"></div></div>`;
+  }
+  // worker form
+  const w=f.w||{}, th=((_lb.data&&_lb.data.workers)||[]).filter(x=>x.role==='thekedar'&&x.id!==w.id);
+  return `<div class="card"><div class="hm-h">${w.id?'Worker '+hx(w.id):'New worker'}</div>
+    <div style="display:flex;gap:12px;align-items:center"><button class="lb-av" style="flex:0 0 64px;height:64px;border:0;cursor:pointer;font-size:24px" onclick="lbPhoto('worker')" aria-label="Worker photo">${f.photo||w.photo?`<img src="${hx(f.photo||w.photo)}" alt="">`:'📷'}</button><div class="lb-note" style="margin:0">Photo (optional) helps find the same person later.</div></div>
+    <label>Name *</label><input type="text" id="lfN" maxlength="60" value="${hx(w.name||'')}" onblur="lbDupCheck()">
+    <div class="lb-grid2"><div><label>Father's name</label><input type="text" id="lfF" maxlength="60" value="${hx(w.father||'')}" onblur="lbDupCheck()"></div><div><label>Village / town</label><input type="text" id="lfV" maxlength="60" value="${hx(w.village||'')}" onblur="lbDupCheck()"></div></div>
+    <div class="lb-grid2"><div><label>Age *</label><input type="number" id="lfAge" inputmode="numeric" min="18" max="80" value="${hx(w.age||'')}"></div><div><label>Phone (optional)</label><input type="text" id="lfPh" inputmode="tel" maxlength="15" value="${hx(w.phone||'')}" onblur="lbDupCheck()"></div></div>
+    <div id="lfDup"></div>
+    <label>Trade *</label><div class="lb-chips" id="lfTrade">${LB_TRADES.map(t=>`<button class="${w.trade===t?'on':''}" data-v="${t}" onclick="lbChip(this);document.getElementById('lfTO').style.display=this.dataset.v==='Other'?'':'none'">${t}</button>`).join('')}</div>
+    <input type="text" id="lfTO" maxlength="40" placeholder="Write the trade" value="${hx(w.tradeOther||'')}" style="margin-top:8px;${w.trade==='Other'?'':'display:none'}">
+    <div class="lb-grid2"><div><label>Type *</label><div class="lb-chips" id="lfWt">${[['day','Daily'],['contract','Contract']].map(x=>`<button class="${(w.wtype||'day')===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this)">${x[1]}</button>`).join('')}</div></div>
+      <div><label>Role</label><div class="lb-chips" id="lfRole">${[['worker','Worker'],['thekedar','Thekedar']].map(x=>`<button class="${(w.role||'worker')===x[0]?'on':''}" data-v="${x[0]}" onclick="lbChip(this);document.getElementById('lfGangWrap').style.display=this.dataset.v==='thekedar'?'none':''">${x[1]}</button>`).join('')}</div></div></div>
+    <div id="lfGangWrap" style="${w.role==='thekedar'?'display:none':''}"><label>In the gang of (optional)</label><select id="lfGangOf"><option value="">— none —</option>${th.map(x=>`<option value="${hx(x.id)}"${w.gangOf===x.id?' selected':''}>${hx(x.name)} · ${hx(x.id)}</option>`).join('')}</select></div>
+    <div class="lb-grid2"><div><label>Contact person</label><input type="text" id="lfCn" maxlength="60" placeholder="Thekedar / relative" value="${hx(w.contactName||'')}"></div><div><label>Their phone</label><input type="text" id="lfCp" inputmode="tel" maxlength="15" value="${hx(w.contactPhone||'')}"></div></div>
+    <div class="hm-h2" style="margin-top:16px">ID proof (optional)</div>
+    <div class="lb-grid2"><div><label>ID type</label><select id="lfIt" onchange="document.getElementById('lfMaskRow').style.display=this.value==='Aadhaar'?'':'none'"><option value="">—</option>${['Aadhaar','Voter ID','DL'].map(x=>`<option${w.idType===x?' selected':''}>${x}</option>`).join('')}</select></div><div><label>Last 4 digits</label><input type="text" id="lfL4" inputmode="numeric" maxlength="4" value="${hx(w.idLast4||'')}" onblur="lbDupCheck()"></div></div>
+    <button class="btn btn-outline" onclick="lbPhoto('id')">🪪 ${f.idPhoto?'ID photo ready ✓':w.hasIdPhoto?'Replace ID photo':'Add ID photo'}</button>
+    <div class="lb-note">The ID photo is kept locked. Only your supervisor and admin can open it. Only the last 4 digits are written anywhere.</div>
+    <label class="lb-tick" id="lfMaskRow" style="${w.idType==='Aadhaar'?'':'display:none'}"><input type="checkbox" id="lfMask"> The first 8 digits of the Aadhaar are covered in the photo</label>
+    <label class="lb-tick"><input type="checkbox" id="lfCons"${w.consent==='yes'?' checked':''}> The ID was taken with the worker's consent (sehmati)</label>
+    <label>Worker's thumb or signature (optional)</label><canvas class="lb-pad" id="lfPad"></canvas><div class="lb-bar" style="margin-top:6px"><button class="btn btn-outline btn-sm" onclick="lbPadClear('lfPad')">Clear</button></div>
+    <button class="btn btn-primary" onclick="lbSaveWorker()">${w.id?'Save worker':'Save and put on site'}</button><div class="lb-err" id="lbErr"></div></div>`;
+}
+function lbFormAfter(){ const f=_lb.form; if(f.kind==='crew') lbCrewType(); if(document.getElementById('lfPad')) lbPadInit('lfPad'); if(f.kind==='pay'&&!lbPayees()) lbLoadLedger().then(()=>{ if(_lb.form&&_lb.form.kind==='pay') labDraw(); }); }
+function lbPayNext(){
+  const f=_lb.form, a=Number(document.getElementById('lfAmt').value);
+  f.payee=document.getElementById('lfPayee').value; f.kind2=lbChipVal('lfKind'); f.mode=lbChipVal('lfMode'); f.note=document.getElementById('lfNote').value;
+  if(!f.payee){ lbErr('Pick who got the money.'); return; }
+  if(!(a>0)){ lbErr('Write the amount (more than ₹0).'); return; }
+  f.amount=a; f.step=2; labDraw();
+}
+async function lbSavePay(){
+  const f=_lb.form, sign=lbPadData('lfPad');
+  if(!sign){ lbErr('Take the thumb or signature of the person who got the money.'); return; }
+  loading(true,'Saving…');
+  try{ const r=await api('labPayAdd',{empId:currentEmp.id,siteId:_lb.site,payeeId:f.payee,kind:f.kind2||'payment',amount:f.amount,mode:f.mode||'cash',note:f.note||'',sign});
+    _lb.form=null; _lb.tab='pay'; _lb.ledger=null; loading(false); await labRefresh(false);
+    toastMsg('✅ Saved · still to pay '+lbMoney(r.ledger.afterPending)); }
+  catch(e){ loading(false); lbErr(e.message); }
+}
+function lbChip(b){ b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }
+function lbChipVal(id){ const b=document.querySelector('#'+id+' button.on'); return b?b.dataset.v:''; }
+function lbCrewType(){ const t=lbChipVal('lfType'); const d=document.getElementById('lfDay'), c=document.getElementById('lfCon'); if(d) d.style.display=t==='contract'?'none':''; if(c) c.style.display=t==='contract'?'':'none'; }
+function lbPickFilter(){ const q=document.getElementById('lfSearch').value.trim().toLowerCase(); document.querySelectorAll('#lfPickList .lb-row').forEach(r=>{ r.style.display=!q||r.dataset.q.indexOf(q)>=0?'':'none'; }); }
+function lbErr(m){ const e=document.getElementById('lbErr'); if(e) e.textContent=m||''; }
+async function lbSiteLoc(){ const o=document.getElementById('lfLoc'); o.textContent='Getting location…'; try{ const p=await lbPos(); _lb.form.lat=p.lat; _lb.form.lng=p.lng; o.textContent='📍 Location set ('+Number(p.lat).toFixed(5)+', '+Number(p.lng).toFixed(5)+')'; }catch(e){ o.textContent=e.message; } }
+async function lbSaveSite(){
+  const f=_lb.form, v=id=>document.getElementById(id).value;
+  loading(true,'Saving…');
+  try{ const r=await api('labSiteSave',{empId:currentEmp.id,site:{name:v('lfName'),client:v('lfClient'),clientPhone:v('lfPhone'),address:v('lfAddr'),startDate:v('lfStart'),vertical:v('lfVert'),lat:f.lat||'',lng:f.lng||''}});
+    _lb.site=r.id; _lb.form=null; _lb.tab='workers'; loading(false); await labRefresh(false); }
+  catch(e){ loading(false); lbErr(e.message); }
+}
+async function lbDupCheck(){
+  const f=_lb.form; if(!f||f.kind!=='worker'||f.w.id) return;
+  const v=id=>(document.getElementById(id)||{}).value||'', q={name:v('lfN'),father:v('lfF'),village:v('lfV'),idLast4:v('lfL4'),phone:v('lfPh')};
+  if(!q.name&&!q.phone) return;
+  try{ const r=await api('labWorkerFind',Object.assign({empId:currentEmp.id},q)); const el=document.getElementById('lfDup'); if(!el) return;
+    el.innerHTML=r&&r.length?`<div class="lb-dup"><b>Already in the worker list?</b>${r.map(w=>`<div class="lb-row">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}</b><small>${hx(w.id)} · ${hx(w.father||'')} ${w.village?'· '+hx(w.village):''} · ${hx(w.why)}</small></div><button class="btn btn-primary btn-sm" onclick="lbForm('crew','${esc(w.id)}')">Yes, this one</button></div>`).join('')}</div>`:''; }catch(e){}
+}
+async function lbSaveWorker(){
+  const f=_lb.form, v=id=>document.getElementById(id).value, isNew=!f.w.id;
+  const worker={id:f.w.id||'',name:v('lfN'),father:v('lfF'),village:v('lfV'),age:v('lfAge'),phone:v('lfPh'),trade:lbChipVal('lfTrade'),tradeOther:v('lfTO'),wtype:lbChipVal('lfWt'),role:lbChipVal('lfRole'),gangOf:lbChipVal('lfRole')==='thekedar'?'':v('lfGangOf'),contactName:v('lfCn'),contactPhone:v('lfCp'),idType:v('lfIt'),idLast4:v('lfL4'),consent:document.getElementById('lfCons').checked};
+  if(f.idPhoto&&!worker.idType){ lbErr('Pick the ID type for the ID photo.'); return; }
+  if(f.idPhoto&&worker.idType==='Aadhaar'&&!document.getElementById('lfMask').checked){ lbErr('Cover the first 8 digits of the Aadhaar in the photo, then tick that they are covered.'); return; }
+  const sign=lbPadData('lfPad');
+  loading(true,'Saving…');
+  try{
+    const r=await api('labWorkerSave',{empId:currentEmp.id,worker,photo:f.photo||''});
+    if(sign) await api('labWorkerSign',{empId:currentEmp.id,workerId:r.id,sign});
+    if(f.idPhoto) await api('labIdPut',{empId:currentEmp.id,workerId:r.id,masked:document.getElementById('lfMask').checked,mime:'image/jpeg',data:f.idPhoto.split(',')[1]});
+    loading(false); await labRefresh(false);
+    if(isNew) lbForm('crew',r.id); else { _lb.form=null; labDraw(); }
+  }catch(e){ loading(false); lbErr(e.message); }
+}
+async function lbSaveCrew(){
+  const f=_lb.form, t=lbChipVal('lfType'), v=id=>(document.getElementById(id)||{}).value||'';
+  loading(true,'Saving…');
+  try{ await api('labCrewSet',{empId:currentEmp.id,siteId:_lb.site,workerId:f.id,rateType:t,rate:v('lfRate'),otRate:v('lfOt'),from:v('lfFrom'),contractAmt:v('lfAmt'),gangMode:lbChipVal('lfGang')});
+    _lb.form=null; _lb.tab='workers'; loading(false); await labRefresh(false); }
+  catch(e){ loading(false); lbErr(e.message); }
+}
+async function lbRemoveCrew(){ if(!confirm('Remove this worker from the site? The hisaab stays.')) return; loading(true,'Saving…');
+  try{ await api('labCrewRemove',{empId:currentEmp.id,siteId:_lb.site,workerId:_lb.form.id}); _lb.form=null; loading(false); await labRefresh(false); }catch(e){ loading(false); lbErr(e.message); } }
+/* photos: worker face, ID proof, team */
+let _lbPhotoFor='';
+function lbPhoto(kind){ _lbPhotoFor=kind; const el=document.getElementById('lbFile'); el.value=''; el.click(); }
+async function labFilePicked(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  try{ const d=await lvImageData(f);
+    if(_lbPhotoFor==='team') { _lb.photo=d; labDraw(); }
+    else if(_lb.form){ if(_lbPhotoFor==='id') _lb.form.idPhoto=d; else _lb.form.photo=d; const keep=lbFormSnap(); labDraw(); lbFormRestore(keep); }
+  }catch(e){ alert('That photo could not be read. Please take it again.'); }
+}
+function lbFormSnap(){ const o={}; document.querySelectorAll('#lbBody input,#lbBody select,#lbBody textarea').forEach(x=>{ if(x.id) o[x.id]=x.type==='checkbox'?x.checked:x.value; }); o._chips={}; document.querySelectorAll('#lbBody .lb-chips').forEach(c=>{ const b=c.querySelector('button.on'); if(c.id&&b) o._chips[c.id]=b.dataset.v; }); return o; }
+function lbFormRestore(o){ Object.keys(o).forEach(k=>{ if(k==='_chips') return; const x=document.getElementById(k); if(!x) return; if(x.type==='checkbox') x.checked=o[k]; else x.value=o[k]; }); Object.keys(o._chips||{}).forEach(id=>{ const b=document.querySelector('#'+id+' button[data-v="'+o._chips[id]+'"]'); if(b) b.click(); }); const it=document.getElementById('lfIt'); if(it&&it.onchange) it.onchange(); }
+/* signature pad */
+function lbPadInit(id){
+  const c=document.getElementById(id); if(!c) return; const r=c.getBoundingClientRect(), k=window.devicePixelRatio||1;
+  c.width=Math.round(r.width*k); c.height=Math.round(r.height*k); const x=c.getContext('2d'); x.scale(k,k); x.lineWidth=2.6; x.lineCap='round'; x.lineJoin='round'; x.strokeStyle='#10211F';
+  c._ink=false; let down=false;
+  const pt=e=>{ const b=c.getBoundingClientRect(); return [e.clientX-b.left,e.clientY-b.top]; };
+  c.onpointerdown=e=>{ down=true; c.setPointerCapture(e.pointerId); const p=pt(e); x.beginPath(); x.moveTo(p[0],p[1]); };
+  c.onpointermove=e=>{ if(!down) return; const p=pt(e); x.lineTo(p[0],p[1]); x.stroke(); c._ink=true; };
+  c.onpointerup=c.onpointercancel=()=>{ down=false; };
+}
+function lbPadClear(id){ const c=document.getElementById(id); if(!c) return; c.getContext('2d').clearRect(0,0,c.width,c.height); c._ink=false; }
+function lbPadData(id){ const c=document.getElementById(id); if(!c||!c._ink) return ''; const o=document.createElement('canvas'); o.width=c.width; o.height=c.height; const x=o.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,o.width,o.height); x.drawImage(c,0,0); return o.toDataURL('image/jpeg',0.8); }
+/* ── Payments and hisaab ── */
+async function lbLoadLedger(){
+  if(_lb.ledger&&_lb.ledger.site===_lb.site) return;
+  if(_lb._ldg===_lb.site) return; _lb._ldg=_lb.site;
+  try{ const L=await api('labLedger',{empId:currentEmp.id,siteId:_lb.site}); _lb.ledger={site:_lb.site,rows:L||[]}; _lb._ldg=''; if(document.getElementById('lbPane')&&(_lb.tab==='ledger'||_lb.tab==='pay')&&!_lb.form) document.getElementById('lbPane').innerHTML=_lb.tab==='ledger'?lbLedgerHtml():lbPayHtml(); }catch(e){ _lb._ldg=''; }
+}
+function lbPayees(){ const L=(_lb.ledger&&_lb.ledger.site===_lb.site)?_lb.ledger.rows:null; return L; }
+function lbPayHtml(){
+  const can=lbCanWork(), pays=((_lb.data&&_lb.data.pays)||[]).filter(p=>p.siteId===_lb.site).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  let h=can?`<button class="btn btn-primary" style="margin-top:0" onclick="lbForm('pay')">＋ New payment / advance</button>`:lbNotActive();
+  h+=`<div class="hm-h2" style="margin-top:14px">Payments on this site</div>`;
+  h+=pays.length?pays.map(p=>{ const w=lbW(p.payeeId); return `<div class="lb-row">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}</b><small>${hx(p.date)} · ${p.kind==='advance'?'Advance':'Payment'} · ${p.mode==='upi'?'UPI':'Cash'}${p.note?' · '+hx(p.note):''}</small></div><div class="lb-money"><b>${lbMoney(p.amount)}</b><span class="lb-tag ${p.status==='approved'?'ok':p.status==='rejected'?'no':'pend'}">${p.status==='approved'?'Approved':p.status==='rejected'?'Rejected':'Waiting'}</span></div></div>`; }).join(''):'<div class="empty">No payments yet.</div>';
+  return h;
+}
+function lbLedgerHtml(){
+  const L=lbPayees();
+  if(!L) return '<div class="empty">⏳ Working out the hisaab…</div>';
+  const tot=k=>L.reduce((a,r)=>a+(Number(r[k])||0),0);
+  let h=`<div class="lb-sum"><div><b>${lbMoney(tot('earned'))}</b><span>Earned</span></div><div><b>${lbMoney(tot('paid'))}</b><span>Paid${tot('pending')?' · <i class="lb-pend">'+lbMoney(tot('pending'))+' waiting</i>':''}</span></div><div><b>${lbMoney(tot('balance'))}</b><span>Still to pay</span></div></div>`;
+  h+=L.length?L.map(r=>`<div class="lb-row" style="flex-wrap:wrap">${lbAv(lbW(r.payeeId))}<div class="lb-who"><b>${hx(r.name||r.payeeId)}${r.members?' <span class="lb-tag">Gang</span>':''}</b><small>${r.rateType==='contract'?'Contract':r.days+' day'+(r.days===1?'':'s')+(r.half?' · '+r.half+' half':'')+(r.otHrs?' · OT '+r.otHrs+' h':'')} · earned ${lbMoney(r.earned)} · paid ${lbMoney(r.paid)}</small>${r.pending?`<small class="lb-pend">${lbMoney(r.pending)} waiting for approval</small>`:''}</div><div class="lb-money"><b>${lbMoney(r.balance)}</b>to pay</div>
+    ${r.members?`<div class="lb-gang" style="flex-basis:100%">${r.members.map(m=>`<div>↳ ${hx(m.name)} · ${m.days} d${m.half?' + '+m.half+' half':''}${m.otHrs?' · OT '+m.otHrs+' h':''} · ${lbMoney(m.earned)}</div>`).join('')}</div>`:''}</div>`).join(''):'<div class="empty">No hisaab yet.</div>';
+  h+=`<button class="btn btn-outline" onclick="lbCsv()">⬇ Download hisaab (CSV)</button>`;
+  return h;
+}
+function lbCsv(){
+  const L=lbPayees()||[], q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"', s=lbSite()||{};
+  const rows=L.map(r=>[r.payeeId,r.name,r.role,r.rateType,r.days,r.half,r.otHrs,r.earned,r.paid,r.pending,r.balance].map(q).join(','));
+  saveTextFile('labour-'+String(s.name||'site').replace(/[^\w-]+/g,'-')+'-'+todayStr()+'.csv',[q(s.name),'ID,Name,Role,Pay type,Days,Half days,OT hours,Earned,Paid,Waiting,Balance',...rows].join('\n'));
 }
 /* Field staff weekly offs, for the admin (Leaves tab) and the supervisor (their team): approve what is waiting,
    set a day yourself (also a day that has passed — the correction for a Sunday that was missed), or remove one. The server keeps the month's count. */
