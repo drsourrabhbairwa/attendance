@@ -1925,6 +1925,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   <!-- REPORTS TAB -->
   <div id="tabReports" class="tab-pane">
     <div class="add-form" id="perBox_rpt" style="margin-bottom:18px"></div>
+    <div class="add-form" id="lbMgr_adm" style="margin-bottom:18px;display:none"></div>
     <div class="wl" id="wrBox"></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <div><div style="font-weight:700;font-size:15px">Monthly report</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Attendance trend, visits, travel and honesty score per employee</div></div>
@@ -2120,6 +2121,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 <div class="card" id="supSafetyCard"><div id="supSafety"></div></div>
 <div class="card" id="supOtCard" style="display:none"><div id="supOt"></div></div>
 <div class="card" id="supWoCard" style="display:none"><div id="woBox_sup"></div></div>
+<div class="card" id="supLabCard" style="display:none"><div id="lbMgr_sup"></div></div>
 <div class="card">
   <div class="topbar" style="border:none;padding:0;margin-bottom:16px;background:transparent">
     <div><h2>🗺️ Site Monitor</h2><div style="font-size:12px;color:var(--soft);margin-top:2px" id="supDateLbl"></div>
@@ -5609,7 +5611,7 @@ function switchTab(tab){
   if(tab==='places')     { renderPlaces(); if(canEditPlaces()) plInitMap(); }
   if(tab==='holidays')   renderHolList();
   if(tab==='policies')   renderPolicies();
-  if(tab==='reports') initReports();
+  if(tab==='reports'){ initReports(); lbMgrLoad('adm'); }
   if(tab==='corrections') loadCorrectionsTab();
   if(tab==='leads') ldLoad();
   if(tab==='tasks') tkLoad();
@@ -6851,6 +6853,56 @@ function lbCsv(){
   const rows=L.map(r=>[r.payeeId,r.name,r.role,r.rateType,r.days,r.half,r.otHrs,r.earned,r.paid,r.pending,r.balance].map(q).join(','));
   saveTextFile('labour-'+String(s.name||'site').replace(/[^\w-]+/g,'-')+'-'+todayStr()+'.csv',[q(s.name),'ID,Name,Role,Pay type,Days,Half days,OT hours,Earned,Paid,Waiting,Balance',...rows].join('\n'));
 }
+
+/* ── Site labour for the admin (Reports tab) and the supervisor (their team): cost per site, payments to approve, In-charge, ID photos, CSV ── */
+const _lbm={};
+function lbmRange(mode){ const f=document.getElementById('lbmFrom_'+mode), t=document.getElementById('lbmTo_'+mode); return {from:(f&&f.value)||todayStr().slice(0,8)+'01',to:(t&&t.value)||todayStr()}; }
+async function lbMgrLoad(mode){
+  const box=document.getElementById('lbMgr_'+mode), card=mode==='sup'?document.getElementById('supLabCard'):box; if(!box) return;
+  try{
+    const R=lbmRange(mode);
+    const [rep,data,emps]=await Promise.all([api('labReport',R),api('labData',{}),mode==='sup'?api('getEmployees',{}):getEmployees()]);
+    if(!rep.sites.length){ card.style.display='none'; return; }
+    const team=mode==='sup'&&currentSupervisor?String(currentSupervisor.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean):null;
+    const field=(emps||[]).filter(e=>String(e.category||'')==='field'&&(!team||team.includes(String(e.id).toUpperCase())));
+    _lbm[mode]={rep,data,field,R,open:(_lbm[mode]&&_lbm[mode].open)||''};
+    lbmDraw(mode); card.style.display='block';
+  }catch(e){ card.style.display='none'; }
+}
+function lbmDraw(mode){
+  const st=_lbm[mode], box=document.getElementById('lbMgr_'+mode); if(!st||!box) return;
+  const W=id=>(st.data.workers||[]).find(w=>w.id===id)||{name:id}, S=id=>(st.data.sites||[]).find(x=>x.id===id)||{name:id};
+  const wait=(st.data.pays||[]).filter(p=>p.status==='pending').sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+  const tot=k=>st.rep.sites.reduce((a,x)=>a+(Number(x[k])||0),0);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px"><div><div style="font-weight:700;font-size:15px">👷 Site labour</div><div style="font-size:12px;color:var(--soft);margin-top:2px">Workers' cost on each site, payments waiting for you, and who runs each site</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="date" id="lbmFrom_${mode}" value="${st.R.from}" style="width:150px;margin:0" onchange="lbMgrLoad('${mode}')"><span style="color:var(--soft)">to</span><input type="date" id="lbmTo_${mode}" value="${st.R.to}" style="width:150px;margin:0" onchange="lbMgrLoad('${mode}')"><button class="btn btn-outline btn-sm" onclick="lbmCsv('${mode}')">⬇ CSV</button></div></div>
+    <div class="lb-sum" style="margin-top:12px"><div><b>${lbMoney(tot('cost'))}</b><span>Labour cost · ${st.rep.sites.length} site${st.rep.sites.length>1?'s':''}</span></div><div><b>${lbMoney(tot('paid'))}</b><span>Paid (approved)</span></div><div><b class="${wait.length?'lb-pend':''}">${wait.length}</b><span>Payments waiting</span></div></div>`;
+  if(wait.length) h+=`<div style="font-size:12px;font-weight:800;color:var(--amber);margin-top:4px">Waiting for you</div>`+wait.map(p=>{ const w=W(p.payeeId); return `<div class="lb-row" style="flex-wrap:wrap">${p.sign?`<img src="${hx(p.sign)}" alt="Signature" style="width:64px;height:40px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:#fff">`:''}<div class="lb-who"><b>${hx(w.name)} · ${lbMoney(p.amount)}</b><small>${hx(S(p.siteId).name)} · ${p.kind==='advance'?'Advance':'Payment'} · ${p.mode==='upi'?'UPI':'Cash'} · ${hx(p.date)} · by ${hx(empNameOf?empNameOf(p.by):p.by)}${p.note?' · '+hx(p.note):''}</small></div><button class="btn-approve" style="flex:0 0 auto" onclick="lbmDecide('${mode}','${esc(p.id)}','approved')">✅</button><button class="btn-reject" style="flex:0 0 auto" onclick="lbmDecide('${mode}','${esc(p.id)}','rejected')">✕</button></div>`; }).join('');
+  h+=`<div style="font-size:12px;font-weight:800;margin-top:12px">Sites</div>`+st.rep.sites.map(x=>{ const site=S(x.siteId), on=st.open===x.siteId, crew=(st.data.crew||[]).filter(c=>c.siteId===x.siteId);
+    return `<div class="lb-row" style="flex-wrap:wrap"><div class="lb-who"><b>${x.status==='open'?'':'🔒 '}${hx(x.name)}</b><small>In-charge ${hx(x.incharge)}${x.client?' · '+hx(x.client):''}${x.vertical?' · '+hx(x.vertical):''}</small></div><div class="lb-money"><b>${lbMoney(x.cost)}</b>${x.pending?`<span class="lb-pend">${lbMoney(x.pending)} waiting</span>`:'paid '+lbMoney(x.paid)}</div><button class="btn btn-outline btn-sm" onclick="_lbm['${mode}'].open=_lbm['${mode}'].open==='${esc(x.siteId)}'?'':'${esc(x.siteId)}';lbmDraw('${mode}')">${on?'Close':'Open'}</button>
+      ${on?`<div style="flex-basis:100%;padding:8px 0 0">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:var(--soft)">In-charge</span><select id="lbmIc_${mode}" style="flex:1 1 160px;margin:0">${st.field.map(e=>`<option value="${hx(e.id)}"${String(e.id).toUpperCase()===String(site.inchargeId).toUpperCase()?' selected':''}>${hx(e.name)} · ${hx(e.id)}</option>`).join('')}</select><button class="btn btn-outline btn-sm" onclick="lbmIncharge('${mode}','${esc(x.siteId)}')">Change</button><button class="btn btn-outline btn-sm" onclick="lbmClose('${mode}','${esc(x.siteId)}',${x.status==='open'?'false':'true'})">${x.status==='open'?'Close site':'Reopen'}</button></div>
+        ${crew.map(c=>{ const w=W(c.workerId), L=(st.rep.ledger||[]).find(r=>r.siteId===x.siteId&&r.payeeId===c.workerId); return `<div class="lb-row">${lbAv(w)}<div class="lb-who"><b>${hx(w.name)}${c.active==='yes'?'':' <span class="lb-tag">removed</span>'}</b><small>${hx(w.id)} · ${hx(lbTradeTxt(w))} · ${hx(lbRateTxt(c))}${w.age?' · age '+w.age:''}${w.idType?' · '+hx(w.idType)+' ••'+hx(w.idLast4||''):''}${L?' · to pay '+lbMoney(L.balance):''}</small></div>${w.hasIdPhoto?`<button class="btn btn-outline btn-sm" onclick="lbmId('${esc(w.id)}')">🪪 ID</button>`:''}</div>`; }).join('')||'<div class="empty">No workers yet.</div>'}
+      </div>`:''}</div>`; }).join('');
+  box.innerHTML=h;
+}
+async function lbmDecide(mode,id,status){ loading(true,'Saving…'); try{ await api('labPayDecide',{id,status}); loading(false); lbMgrLoad(mode); }catch(e){ loading(false); alert(e.message); } }
+async function lbmIncharge(mode,siteId){ const to=document.getElementById('lbmIc_'+mode).value; if(!confirm('Hand this site to '+to+'? Everything entered so far stays.')) return; loading(true,'Saving…'); try{ await api('labSiteIncharge',{siteId,inchargeId:to}); loading(false); lbMgrLoad(mode); }catch(e){ loading(false); alert(e.message); } }
+async function lbmClose(mode,siteId,reopen){ loading(true,'Saving…'); try{ await api('labSiteClose',{siteId,reopen}); loading(false); lbMgrLoad(mode); }catch(e){ loading(false); alert(e.message); } }
+async function lbmId(workerId){
+  loading(true,'Opening…');
+  try{ const r=await api('labIdGet',{workerId}); loading(false);
+    const ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(4,20,22,.82);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px'; ov.onclick=()=>ov.remove();
+    ov.innerHTML=`<div style="max-width:100%;max-height:100%;text-align:center"><img alt="ID photo" style="max-width:100%;max-height:80vh;border-radius:12px" src="data:${hx(r.mime)};base64,${r.data}"><div style="color:#fff;margin-top:10px;font-size:13px">ID photo · ${hx(workerId)} · tap to close. Opening it is written in the Log.</div></div>`;
+    document.body.appendChild(ov);
+  }catch(e){ loading(false); alert(e.message); }
+}
+function lbmCsv(mode){
+  const st=_lbm[mode]; if(!st) return; const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const a=['Site,Client,Vertical,Status,In-charge,Labour cost,Paid,Waiting',...st.rep.sites.map(x=>[x.name,x.client,x.vertical,x.status,x.incharge,x.cost,x.paid,x.pending].map(q).join(','))];
+  const b=['Site,Worker ID,Name,Role,Pay type,Days,Half days,OT hours,Earned,Paid,Waiting,Balance',...(st.rep.ledger||[]).map(r=>[r.siteName,r.payeeId,r.name,r.role,r.rateType,r.days,r.half,r.otHrs,r.earned,r.paid,r.pending,r.balance].map(q).join(','))];
+  saveTextFile('site-labour-'+st.R.from+'_to_'+st.R.to+'.csv',[q('Site labour '+st.R.from+' to '+st.R.to),...a,'',...b].join('\n'));
+}
 /* Field staff weekly offs, for the admin (Leaves tab) and the supervisor (their team): approve what is waiting,
    set a day yourself (also a day that has passed — the correction for a Sunday that was missed), or remove one. The server keeps the month's count. */
 const _wo={};
@@ -7311,7 +7363,7 @@ async function refreshSiteMonitor(role){
   const elId=role==='sup'?'supContent':'siteContent';
   const el=document.getElementById(elId);
   if(!el) return;
-  if(role==='sup'){ loadOtSup(); woLoad('sup'); }
+  if(role==='sup'){ loadOtSup(); woLoad('sup'); lbMgrLoad('sup'); }
   const date=role==='sup'?todayStr():(document.getElementById('siteDate')?.value||todayStr());
   el.innerHTML='<div class="empty"><div class="eicon">⏳</div>Loading…</div>';
   try{
