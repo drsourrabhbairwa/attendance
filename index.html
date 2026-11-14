@@ -6051,7 +6051,9 @@ async function renderEmpList(){
     const depts=deptList();
     list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
       const sel=isDeptAdmin()?`<select class="dept-sel" title="Department" onchange="setEmpDept('${esc(e.id)}',this.value)">${myDepts().map(d=>`<option value="${d.replace(/"/g,'&quot;')}"${String(e.department||'').toLowerCase()===d.toLowerCase()?' selected':''}>${d}</option>`).join('')}</select>`:depts.length||e.department?`<select class="dept-sel" title="Department (office hours)" onchange="setEmpDept('${esc(e.id)}',this.value)"><option value="">Company hours</option>${depts.map(d=>`<option value="${d.name.replace(/"/g,'&quot;')}"${e.department===d.name?' selected':''}>${d.name}</option>`).join('')}${e.department&&!depts.some(d=>d.name===e.department)?`<option value="${e.department.replace(/"/g,'&quot;')}" selected>${e.department} (no hours set)</option>`:''}</select>`:'';
-      return `<div class="list-item"><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select><select class="dept-sel" title="Category for leave rules: Field staff work Sundays and earn a comp-off for each" onchange="setEmpCat('${esc(e.id)}',this.value)">${[['','Office / Factory'],['field','Field'],['wfh','Work From Home']].map(o=>`<option value="${o[0]}"${String(e.category||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button><button class="del-btn" onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
+      const resigned=String(e.status||'')==='resigned';
+      const badge=resigned?`<span class="tag tag-off" style="margin-left:6px" title="${e.lastWorkingDay?'Last working day '+e.lastWorkingDay:''}">Resigned${e.lastWorkingDay?' · LWD '+e.lastWorkingDay:''}</span>`:'';
+      return `<div class="list-item"${resigned?' style="opacity:.72"':''}><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}${badge}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empDash('${esc(e.id)}')">👤 Dashboard</button><button class="org-act" onclick="empAccess('${esc(e.id)}')">🔐 Access</button>${sel}<select class="dept-sel" title="What this person does: decides the buttons on their home screen" onchange="setEmpWT('${esc(e.id)}',this.value)">${[['office','Office'],['sales','Sales'],['site','Site tech'],['','Everything']].map(o=>`<option value="${o[0]}"${String(e.workType||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select><select class="dept-sel" title="Category for leave rules: Field staff work Sundays and earn a comp-off for each" onchange="setEmpCat('${esc(e.id)}',this.value)">${[['','Office / Factory'],['field','Field'],['wfh','Work From Home']].map(o=>`<option value="${o[0]}"${String(e.category||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>${placesNow().length?`<button class="key-btn" title="Offices / factories this person punches at" onclick="openEmpPlaces('${esc(e.id)}')">📍${placesFor(e).length||''}</button>`:''}${e.photo?`<button class="key-btn" title="Remove profile photo" onclick="adminClearPhoto('${esc(e.id)}')">🖼 ✕</button>`:''}${USE_SHEETS?`<button class="key-btn" title="Sign out every phone signed in as this person (the password stays)" onclick="signOutPhones('${esc(e.id)}')">Sign out phones</button>`:''}<button class="key-btn" title="Reset password to Employee ID" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset</button>${resigned?`<button class="key-btn" title="Bring this person back on the rolls" onclick="rehireOpen('${esc(e.id)}')">↩ Rehire</button>`:`<button class="key-btn" title="Mark this person as having left: their history stays, sign-in and manage access stop" onclick="resignOpen('${esc(e.id)}')">🚪 Resign</button>`}<button class="del-btn" title="Delete this record outright — only for a wrong entry, not for someone who left. Use Resign for that." onclick="removeEmployee('${esc(e.id)}')">✕</button></div></div>`; }).join('');
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -6112,6 +6114,69 @@ async function acMark(mode){
   const date=document.getElementById('mkDate').value, time=document.getElementById('mkTime').value; if(!date||!time) return acMsg('Choose a date and a time.',true);
   if(!confirm('Mark Work '+mode.toUpperCase()+' for '+AC.name+' on '+date+' at '+time+'?')) return;
   if(await acApi('markForStaff',{empId:AC.id,mode,date,time})) acMsg('Marked Work '+mode.toUpperCase()+' at '+time+'.');
+}
+
+/* ── Employee 360 dashboard: everything about one person on one screen ── */
+async function empDash(id){
+  loading(true,'Loading…');
+  try{ const d=await api('empDashboard',{empId:id}); loading(false); edDraw(d); }
+  catch(e){ loading(false); alert(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message); }
+}
+function edBal(lbl,b){ if(!b) return ''; const left=Math.max(0,(b.entitled||0)-(b.used||0)); return `<div class="stat" style="padding:10px"><div class="n" style="font-size:20px">${left}</div><div class="l">${lbl} left · ${b.used} used / ${b.entitled}</div></div>`; }
+function edDraw(d){
+  const roleLbl={supervisor:'👷 Supervisor',dept_admin:'🏢 Department Admin',super:'👑 Owner (Super Admin)'};
+  const roles=(d.roles||[]).map(r=>`<span class="ld-pill">${roleLbl[r]||r}</span>`).join(' ')||'<span style="color:var(--soft)">Staff only — no manage role</span>';
+  const resigned=d.status==='resigned';
+  const status=resigned?`<div class="msg msg-error show" style="margin-bottom:10px">🚪 <b>Resigned</b> — last working day ${hx(d.lastWorkingDay||'—')}${d.resignedBy?' · marked by '+hx(d.resignedBy):''}${d.resignReason?'<br>Reason: '+hx(d.resignReason):''}</div>`:'';
+  const bal=d.balance||{};
+  const sup=(d.supervises||[]).length?`<div class="ld-glass" style="margin-top:10px"><b>Supervises ${d.supervises.length} ${d.supervises.length===1?'person':'people'}</b><div style="font-size:12px;color:var(--soft);margin-top:4px">${d.supervises.map(s=>hx(s.name)+' ('+hx(s.id)+')').join(', ')}</div></div>`:'';
+  const sites=(d.labSites||[]).length?`<div class="ld-glass" style="margin-top:10px"><b>👷 Site Labour — in-charge of</b><div style="font-size:12px;color:var(--soft);margin-top:4px">${d.labSites.map(s=>hx(s.name)+' ('+(s.status==='open'?'open':s.status)+')').join(', ')}</div></div>`:'';
+  const att=d.attendance30||{};
+  acBox({title:'👤 '+hx(d.name)+' · '+hx(d.id),body:`
+    ${status}
+    <div style="font-size:12px;color:var(--soft);margin-bottom:10px">${[d.designation,d.department,d.phone,d.email].filter(Boolean).map(hx).join(' · ')||'No profile details yet'}${d.joined?' · Joined '+hx(d.joined):''}</div>
+    <div style="margin-bottom:10px">${roles}</div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:6px">${edBal('CL',bal.CL)}${edBal('VL',bal.VL)}${edBal('ML',bal.ML)}</div>
+    ${bal.WO?`<div style="font-size:12px;color:var(--soft);margin-bottom:10px">Weekly off this month: ${bal.WO.used} used / ${bal.WO.entitled}</div>`:''}
+    <div style="font-size:12px;color:var(--soft);margin-bottom:10px">Last 30 days: present ${att.present||0} of ${att.days||0} recorded day(s)${att.missedPunchOut?', '+att.missedPunchOut+' missed punch-out':''}. Last signed in: ${d.lastSignIn?hx(d.lastSignIn):'never'}.</div>
+    ${sup}${sites}
+    <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="fmClose();empAccess('${esc(d.id)}')">🔐 Access</button>
+      ${resigned?`<button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="fmClose();rehireOpen('${esc(d.id)}')">↩ Rehire</button>`
+                :`<button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px;color:var(--red);border-color:var(--red)" onclick="fmClose();resignOpen('${esc(d.id)}')">🚪 Resign</button>`}
+    </div>`},true);
+}
+
+/* ── Resignation / offboarding ── */
+const RS={};
+function resignOpen(id){ const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); Object.assign(RS,{id,name:e?e.name:id,warnings:null,reason:''}); rsDraw(); }
+function rsDraw(msg,bad){
+  const warn=RS.warnings&&RS.warnings.length?`<div class="msg msg-error show" style="margin-bottom:10px">This person still has open responsibilities:<ul style="margin:6px 0 0 18px;padding:0">${RS.warnings.map(w=>'<li>'+hx(w)+'</li>').join('')}</ul>You can reassign those first (Access, or the Site Labour in-charge), or resign anyway and sort it out after.</div>`:'';
+  acBox({title:'🚪 Resign · '+hx(RS.name),body:`<div class="msg ${msg?(bad?'msg-error':'msg-success')+' show':''}" id="acMsg">${hx(msg||'')}</div>
+    <p style="font-size:13px;color:var(--soft);margin-bottom:8px">Nothing is deleted — all attendance, leave and payment history stays. Sign-in and any manage role stop automatically from the day after the last working day (manage access stops at once).</p>
+    <label>Last working day</label><input type="date" id="rsLwd" value="${RS.lwd||todayStr()}">
+    <label style="margin-top:8px">Reason (optional, for your own record)</label><input type="text" id="rsReason" placeholder="e.g. Resigned, better opportunity" value="${hx(RS.reason||'')}">
+    ${warn}
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="rsSubmit(${RS.warnings&&RS.warnings.length?'true':'false'})">${RS.warnings&&RS.warnings.length?'Resign anyway':'Confirm resignation'}</button>
+    </div>`},true);
+}
+async function rsSubmit(confirmAnyway){
+  const lwd=document.getElementById('rsLwd').value, reason=document.getElementById('rsReason').value; if(!lwd) return rsDraw('Pick the last working day.',true);
+  RS.reason=reason;
+  loading(true,'Saving…');
+  try{
+    const r=await api('resignEmployee',{id:RS.id,lastWorkingDay:lwd,reason,confirmAnyway:!!confirmAnyway});
+    loading(false);
+    if(r&&r.applied===false){ RS.warnings=r.warnings||[]; RS.lwd=lwd; rsDraw(); return; }
+    renderEmpList(); fmClose();
+  }catch(e){ loading(false); rsDraw(e.message,true); }
+}
+function rehireOpen(id){
+  const e=(_D.employees||[]).find(x=>String(x.id)===String(id)), name=e?e.name:id;
+  if(!confirm('Bring back '+name+'? Sign-in works again at once; you can set up roles again under Access if needed.')) return;
+  loading(true,'Saving…');
+  api('rehireEmployee',{id}).then(()=>{ loading(false); renderEmpList(); }).catch(e=>{ loading(false); alert('Error: '+e.message); });
 }
 /* Old manager / supervisor logins → one person, one login */
 const LG={rows:[],retired:false};
@@ -7652,10 +7717,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-12.3';</script>
-<script src="notify.js?v=2026-11-12.3"></script>
-<script src="appstore.js?v=2026-11-12.3"></script>
-<script src="policy-lib.js?v=2026-11-12.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-14.1';</script>
+<script src="notify.js?v=2026-11-14.1"></script>
+<script src="appstore.js?v=2026-11-14.1"></script>
+<script src="policy-lib.js?v=2026-11-14.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
