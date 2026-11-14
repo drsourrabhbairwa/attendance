@@ -1,1 +1,1 @@
-{"web": "2026-11-14.2", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Employee card: clean one-line look, all admin controls (Access, department, work type, category, places, photo, sign-out, reset, resign/rehire, delete) moved inside the Dashboard"}
+{"web": "2026-11-14.3", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Today screen: Work OFF button now matches the app's teal accent instead of a leftover blue"}
