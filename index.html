@@ -1405,6 +1405,18 @@ body.tk-tab .hm-nav button[data-go="tasks"]{background:#E6F4F1!important;color:#
 body.tk-tab #tkxOv{bottom:0!important;height:100%!important;background:#F4F6F8}
 body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
 
+/* Me page: one clean profile card + a grouped list of rows */
+#homeScreen #hmPaneMe .hm-me{margin:0 0 14px!important;padding:18px!important;box-shadow:none!important;position:static!important}
+#hmPaneMe .hm-me-av{width:64px;height:64px;border-radius:50%!important;font-size:26px}
+#hmPaneMe .hm-me-row b{font-size:18px;font-weight:700;color:#101828}
+#hmPaneMe .hm-me-row span{font-size:13px;color:#667085}
+#homeScreen #hmPaneMe .hm-links{display:flex!important;flex-direction:column;gap:0;margin:0 0 14px!important;background:#fff;border:1px solid #E4E7EC;border-radius:12px;overflow:hidden}
+#hmPaneMe .hm-links button{flex:none!important;width:100%;min-height:52px;justify-content:flex-start!important;gap:12px!important;padding:12px 16px!important;border:0!important;border-bottom:1px solid #EAECF0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;text-align:left;font-size:14px!important;font-weight:600;color:#101828!important}
+#hmPaneMe .hm-links button:hover{background:#F9FAFB!important}
+#hmPaneMe .hm-links button>span{flex:1;min-width:0}
+#hmPaneMe .hm-links button small{margin-left:auto;font-size:12px;font-weight:500;color:#667085!important;text-align:right}
+#hmPaneMe .hm-links button small[id="hmTlSub"],#hmPaneMe .hm-links button small[id="hmLeaveSub"],#hmPaneMe .hm-links button small[id="hmFixSub"]{color:#B54708!important;font-weight:600}
+#hmPaneMe .hm-links button.hm-lo{border-bottom:0!important;color:#B42318!important;justify-content:flex-start!important;background:#FEF3F2!important}
 .tk-av[style*="gradient"]{background:#0F766E!important}
 </style>
 </head>
@@ -7843,10 +7855,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.3';</script>
-<script src="notify.js?v=2026-11-15.3"></script>
-<script src="appstore.js?v=2026-11-15.3"></script>
-<script src="policy-lib.js?v=2026-11-15.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.4';</script>
+<script src="notify.js?v=2026-11-15.4"></script>
+<script src="appstore.js?v=2026-11-15.4"></script>
+<script src="policy-lib.js?v=2026-11-15.4"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
