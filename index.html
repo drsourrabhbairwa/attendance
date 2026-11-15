@@ -1417,6 +1417,22 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 #hmPaneMe .hm-links button small{margin-left:auto;font-size:12px;font-weight:500;color:#667085!important;text-align:right}
 #hmPaneMe .hm-links button small[id="hmTlSub"],#hmPaneMe .hm-links button small[id="hmLeaveSub"],#hmPaneMe .hm-links button small[id="hmFixSub"]{color:#B54708!important;font-weight:600}
 #hmPaneMe .hm-links button.hm-lo{border-bottom:0!important;color:#B42318!important;justify-content:flex-start!important;background:#FEF3F2!important}
+/* Task form: people picker (selected pills, search, one scrolling checklist) */
+.tk-pk .tk-sel{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.tk-pk .tk-sel:empty{display:none}
+.tk-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:#E6F4F1!important;color:#0F766E!important;border:1px solid #BFE3DD;font-size:13px;font-weight:600}
+.tk-pill .tk-av,.tk-pill .tk-av.sm{width:24px!important;height:24px!important;font-size:10px!important;box-shadow:none!important;border-radius:50%!important}.tk-pill{box-shadow:none!important}.tk-pill i{font-style:normal;font-size:11px;opacity:.7}
+.tk-srch{display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid #D0D5DD;border-radius:10px;background:#fff}
+.tk-srch:focus-within{border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.14)}
+.tk-srch input{flex:1;border:0!important;background:transparent!important;box-shadow:none!important;padding:11px 0!important;outline:0;font-size:15px;min-width:0}
+.tk-plist{margin-top:8px;max-height:230px;overflow-y:auto;border:1px solid #E4E7EC;border-radius:10px;background:#fff;-webkit-overflow-scrolling:touch}
+.tk-prow{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border:0;border-bottom:1px solid #F2F4F7;background:#fff;text-align:left;color:#101828}
+.tk-prow:last-child{border-bottom:0}.tk-prow.on{background:#F0FAF8}
+.tk-prow .tk-av,.tk-prow .tk-av.sm{width:34px!important;height:34px!important;font-size:12px!important;flex-shrink:0;box-shadow:none!important;border-radius:50%!important}
+.tk-pn{flex:1;min-width:0;display:flex;flex-direction:column}.tk-pn b{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tk-pn small{font-size:11.5px;color:#667085}
+.tk-ck2{width:22px;height:22px;border-radius:6px;border:1.5px solid #D0D5DD;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.tk-prow.on .tk-ck2{background:#0F766E;border-color:#0F766E}
+.tk-pnone{padding:16px;text-align:center;color:#667085;font-size:14px}
+.tk-pk label b{font-weight:600;color:#0F766E;margin-left:4px}
 .tk-av[style*="gradient"]{background:#0F766E!important}
 </style>
 </head>
@@ -7862,10 +7878,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.5';</script>
-<script src="notify.js?v=2026-11-15.5"></script>
-<script src="appstore.js?v=2026-11-15.5"></script>
-<script src="policy-lib.js?v=2026-11-15.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.6';</script>
+<script src="notify.js?v=2026-11-15.6"></script>
+<script src="appstore.js?v=2026-11-15.6"></script>
+<script src="policy-lib.js?v=2026-11-15.6"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -9052,7 +9068,7 @@ async function tkForm(id){
   tkSheet(`<h3>${t?'Edit task':'New task'}</h3>
     <div class="tk-field"><label>Task</label><input id="tkT" maxlength="120" placeholder="What needs to be done?" value="${hx(t?t.title:'')}"></div>
     <div class="tk-field"><label>Details (optional)</label><textarea id="tkD" rows="2" maxlength="500">${hx(t?t.detail:'')}</textarea></div>
-    <div class="tk-field"><label>Give to — one or more</label><input id="tkQ" placeholder="Search name" oninput="tkPeople()"></div><div class="tk-chips" id="tkPpl"></div>
+    <div class="tk-field tk-pk"><label>Give to — one or more <b id="tkPCnt"></b></label><div class="tk-sel" id="tkSel"></div><div class="tk-srch"><span aria-hidden="true">🔍</span><input id="tkQ" placeholder="Search name or ID" autocomplete="off" oninput="tkPeople()" onkeydown="if(event.key==='Enter'){event.preventDefault();tkPickFirst();}"></div><div class="tk-plist" id="tkPpl"></div></div>
     <div class="tk-field"><label>Deadline</label><input id="tkDue" type="date" value="${hx(t?t.due:'')}"></div>
     <div class="tk-seg" id="tkPri" style="margin-bottom:10px"></div>
     ${_tk.admin?`<div class="tk-field"><label>Amitek Coins for this task</label><input id="tkC" inputmode="numeric" value="${t?t.coins:1}"></div>`:''}
@@ -9062,9 +9078,19 @@ async function tkForm(id){
   tkPeople(); tkPriPaint();
 }
 function tkPeople(){
-  const q=((document.getElementById('tkQ')||{}).value||'').toLowerCase(), el=document.getElementById('tkPpl'); if(!el) return;
-  el.innerHTML=(_tk.dir||[]).filter(e=>!q||(e.name+' '+e.id).toLowerCase().includes(q)).map(e=>{ const on=_tk.ppl.some(i=>tkSame(i,e.id)); return `<button type="button" class="tk-chip${on?' on':''}" onclick="tkTog('${esc(e.id)}')">${tkAv(e.name)}${hx(e.name)}${tkSame(e.id,tkMe())?' (me)':''}</button>`; }).join('');
+  const qi=document.getElementById('tkQ'), el=document.getElementById('tkPpl'); if(!el) return;
+  const q=((qi||{}).value||'').trim().toLowerCase(), dir=_tk.dir||[], me=tkMe();
+  const isOn=id=>_tk.ppl.some(i=>tkSame(i,id));
+  // selected people: removable chips, always visible whatever the search says
+  const sel=document.getElementById('tkSel'), cnt=document.getElementById('tkPCnt');
+  if(sel) sel.innerHTML=_tk.ppl.map(i=>`<button type="button" class="tk-pill" onclick="tkTog('${esc(i)}')" aria-label="Remove ${hx(tkNm(i))}">${tkAv(tkNm(i),'sm')}<span>${hx(tkNm(i))}${tkSame(i,me)?' (me)':''}</span><i>✕</i></button>`).join('');
+  if(cnt) cnt.textContent=_tk.ppl.length?'· '+_tk.ppl.length+' selected':'';
+  let rows=dir.filter(e=>!q||(e.name+' '+e.id).toLowerCase().includes(q));
+  rows.sort((a,b)=>(tkSame(b.id,me)-tkSame(a.id,me))||String(a.name).localeCompare(String(b.name)));   // me first, then A–Z
+  window._tkFirst=rows.length?rows[0].id:null;
+  el.innerHTML=rows.length?rows.map(e=>{ const on=isOn(e.id); return `<button type="button" class="tk-prow${on?' on':''}" onclick="tkTog('${esc(e.id)}')" role="checkbox" aria-checked="${on}">${tkAv(e.name,'sm')}<span class="tk-pn"><b>${hx(e.name)}${tkSame(e.id,me)?' (me)':''}</b><small>${hx(e.id)}</small></span><span class="tk-ck2">${on?'✓':''}</span></button>`; }).join(''):`<div class="tk-pnone">No one matches “${hx(qi?qi.value.trim():'')}”</div>`;
 }
+function tkPickFirst(){ if(window._tkFirst) { tkTog(window._tkFirst); const q=document.getElementById('tkQ'); if(q){ q.value=''; tkPeople(); q.focus(); } } }
 function tkTog(id){ const i=_tk.ppl.findIndex(x=>tkSame(x,id)); if(i>=0) _tk.ppl.splice(i,1); else _tk.ppl.push(id); tkPeople(); }
 function tkPriPaint(){ const el=document.getElementById('tkPri'); if(el) el.innerHTML=['Low','Normal','High'].map(p=>`<button type="button" class="${_tk.pri===p?'on':''}" onclick="_tk.pri='${p}';tkPriPaint()">${p}</button>`).join(''); }
 async function tkSaveForm(id){
