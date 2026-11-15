@@ -3994,6 +3994,7 @@ function renderHomeActs(){
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   try{ if(_pol.list.length) L.push(`<button type="button" data-pol-link onclick="polOpenList()">📜 <span>Policies</span></button>`); }catch(e){}
+  L.push(`<button onclick="openHelpVideos()">🎬 <span>Help videos</span><small>how to use the app</small></button>`);
   L.push(`<button onclick="openPhoneHelp()">📱 <span>Phone settings</span><small style="color:var(--soft)">location &amp; camera</small></button>`);
   try{ if(window.AmkStore&&AmkStore.has()) L.push(AmkStore.row()); }catch(e){}   // the app's own store (Android app only)
   L.push(`<button onclick="checkAppUpdate(this)">🔄 <span>Check for update</span><small id="hmVer" style="color:var(--soft)">${hx(window.AMK_PAGE_VERSION||'')}</small></button>`);
@@ -5356,6 +5357,12 @@ const PHONE_HELP={
     'When this page asks for your location or camera, tap <b>Allow</b>.',
     'Keep Low Power Mode off while on site, and don’t use Incognito.']],
 };
+const HELP_VIDEOS=[['Guide-1-Employee','👤 Employee — punch in/out & daily use','1.5 min'],['Guide-2-Field-staff','🚗 Field staff — visits & site work','2.5 min'],['Guide-3-Supervisor','👥 Supervisor — team & approvals','1.5 min'],['Guide-4-Admin','⚙️ Admin — setup & reports','1.5 min']];
+function openHelpVideos(){
+  document.getElementById('modalTitle').textContent='🎬 Help videos';
+  document.getElementById('modalBody').innerHTML='<div class="help">'+HELP_VIDEOS.map(v=>`<details><summary>${v[1]} <small style="color:var(--soft)">· ${v[2]}</small></summary><video controls playsinline preload="none" style="width:100%;max-height:70vh;border-radius:10px;background:#000;margin-top:8px" src="videos/${v[0]}.mp4"></video></details>`).join('')+'</div>';
+  document.getElementById('detailModal').classList.add('open');
+}
 async function openPhoneHelp(){
   const kind=NATIVE?'app':phoneKind(), all=NATIVE?['app']:['android','ios-safari','ios-chrome'];
   const order=kind==='other'?all:[kind].concat(all.filter(k=>k!==kind));
@@ -7855,10 +7862,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.4';</script>
-<script src="notify.js?v=2026-11-15.4"></script>
-<script src="appstore.js?v=2026-11-15.4"></script>
-<script src="policy-lib.js?v=2026-11-15.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.5';</script>
+<script src="notify.js?v=2026-11-15.5"></script>
+<script src="appstore.js?v=2026-11-15.5"></script>
+<script src="policy-lib.js?v=2026-11-15.5"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
