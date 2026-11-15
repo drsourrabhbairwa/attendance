@@ -1213,7 +1213,7 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 .hm-smart{display:flex;align-items:center;gap:11px;width:calc(100% - 20px);margin:0 10px 14px;padding:12px 14px;border-radius:18px;border:1px solid rgba(27,127,107,.25);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(229,246,241,.96));color:var(--ink);font:inherit;font-size:13.5px;text-align:left;line-height:1.4;box-shadow:0 8px 22px rgba(4,26,30,.12);animation:hmIn .35s ease}
 .hm-smart[hidden]{display:none}
 #homeScreen .hm-smart{margin:-32px 10px 12px;position:relative;z-index:3}
-#homeScreen .hm-smart:not([hidden])+.hm-today{margin-top:0}
+#homeScreen .hm-smart:not([hidden])+.hm-cols .hm-today{margin-top:0}
 .hm-smart.warn{border-color:rgba(214,140,0,.35);background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(255,243,214,.97))}
 .hm-smart.good{border-color:rgba(31,107,69,.3);background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(223,241,230,.97))}
 .hm-si{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.06)}
@@ -1259,6 +1259,24 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   .hm-nav{bottom:18px}
 }
 @media(min-width:1500px){ body[data-screen="homeScreen"] #app{max-width:860px} }
+/* Desktop: use the whole screen. Today = main card left, shortcuts right; My month = card grid */
+@media(min-width:1000px){
+  body[data-screen="homeScreen"] #app{max-width:none;width:100%;padding-left:clamp(20px,3vw,56px);padding-right:clamp(20px,3vw,56px)}
+  #homeScreen .hm-hero{margin-left:0;margin-right:0}
+  #homeScreen .hm-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:0 24px;align-items:start}
+  #homeScreen .hm-colA,#homeScreen .hm-colB{min-width:0}
+  #homeScreen .hm-colA .hm-today{margin-left:0;margin-right:0}
+  #homeScreen .hm-smart{max-width:none}
+  #homeScreen .hm-colB{margin-top:-32px}
+  #homeScreen .hm-smart:not([hidden])+.hm-cols .hm-colB{margin-top:0}
+  #hmPaneMonth.on{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px;align-items:start}
+  #hmPaneMe.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;align-items:start}
+  .hm-nav{width:min(560px,calc(100% - 40px))}
+}
+@media(min-width:1700px){
+  #homeScreen .hm-cols{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) }
+  #hmPaneMonth.on{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 @media(prefers-reduced-motion:reduce){#homeScreen .hm-pane.on,.hm-smart{animation:none}.hm-bar i,.hm-ring-fg{transition:none}}
 
 
@@ -1304,6 +1322,72 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
 .pol-prev{display:none;background:#fff;border:1px solid var(--border);border-radius:var(--rs);padding:6px 14px 10px;margin-top:10px;max-height:420px;overflow:auto}.pol-prev.show{display:block}
 #polBody,#polBodyHi{min-height:240px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.5}
 
+</style>
+<style id="proUI">
+/* ═══ PRO UI — calm, flat, business-app look. Loaded last; replaces the aurora/glass styling.
+   Solid white surfaces, 1px hairlines, small radii, one flat teal accent, one sans typeface. ═══ */
+:root{
+  --bg:#F4F6F8;--surface:#fff;--surface2:#F8FAFB;
+  --ink:#101828;--ink2:#344054;--soft:#667085;--border:#E4E7EC;--border2:#D0D5DD;
+  --accent:#0F766E;--accent2:#0B5F58;--accentBg:#E6F4F1;
+  --ag-panel:#fff;--ag-panel2:#fff;--ag-edge:#E4E7EC;--ag-line:#E4E7EC;
+  --ag-shadow:0 1px 2px rgba(16,24,40,.05);--ag-radius:12px;--ag-r:8px;--ag-blur:none;
+  --ag-primary:#0F766E;--ag-primary-shadow:0 1px 2px rgba(16,24,40,.12);
+  --ag-serif:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;--ag-ink:#101828;
+  --r:12px;--rs:8px;
+}
+html,body{background:var(--bg);font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;font-feature-settings:'tnum' 1,'cv11' 1}
+body[data-screen]::before{display:none!important;background:none!important}
+*{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+/* surfaces */
+.card,.modal-box,.hm-today,.add-form,.leave-card,.sup-card,.bal-item,.org-node,.hol-item,.site-wrap,.list-item,.ld-glass,.hm-tile,.hm-stat,.stat,.wl,.tbl,#adminScreen .tab-row,#adminScreen>.card,#supervisorScreen>.card{background:#fff!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important}
+.fm-sheet{background:#fff!important;border-radius:16px 16px 0 0!important;box-shadow:0 -8px 30px rgba(16,24,40,.18)!important}
+.list-item{border-radius:10px!important}
+/* type: no serif, calmer weights */
+.hm-nm,.hm-tt,.topbar h2,.logo h1,.state-box h3,.modal-box h3,.add-form h3,.card h3,.card h4,.stat .n{font-family:inherit!important;letter-spacing:-.01em;color:var(--ink)}
+.stat .n{font-weight:700;font-size:26px}
+.hm-h,.hm-h2,.hm-card,.hm-tile b,.hm-tile span{font-family:inherit!important}
+.sos-open.sos-mini{box-shadow:none!important;border-radius:8px!important}
+/* buttons */
+.btn-primary,.filter-row button,.modal-close,.btn-approve,.btn-teal,.hm-off{background:#0F766E!important;color:#fff!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important;border-radius:8px!important}
+.btn-primary:hover,.hm-off:hover{background:#0B5F58!important}
+.btn-green{background:#16803C!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.btn-blue{background:#175CD3!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.btn-orange{background:#C4620B!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.btn-purple{background:#6941C6!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.btn-danger,.btn-reject{background:#D92D20!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.btn,.btn-sm,.filter-row button,.modal-close,.org-act,.hm-out,.pl-btn,.key-btn{border-radius:8px!important;letter-spacing:0;font-weight:600}
+.btn-outline,.btn-sm.btn-outline,.org-act,.hm-out,.key-btn,.hm-links button,.chip{background:#fff!important;color:var(--ink)!important;border:1px solid var(--border2)!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important}
+.btn-outline:hover,.org-act:hover,.hm-out:hover,.key-btn:hover{background:#F9FAFB!important}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=month],input[type=number],input[type=email],input[type=tel],select,textarea{background:#fff!important;border:1px solid var(--border2)!important;border-radius:8px!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important}
+input:focus,select:focus,textarea:focus{border-color:#0F766E!important;box-shadow:0 0 0 3px rgba(15,118,110,.15)!important}
+.fm-chip,.wm-opt{background:#fff!important;border:1px solid var(--border2)!important;box-shadow:none!important;border-radius:8px!important;font-weight:600}
+.fm-chip.on{background:#0F766E!important;color:#fff!important;border-color:#0F766E!important}
+.wm-opt.on{background:#E6F4F1!important;border-color:#0F766E!important;box-shadow:none!important;color:#0B5F58}
+.tbl th{background:#F9FAFB!important;color:var(--soft)!important;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+#adminScreen .tab-btn.active{background:#E6F4F1!important;color:#0B5F58!important;box-shadow:none!important}
+/* home header: flat bar, no photo, no overlap */
+.hm-hero{background:#fff!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;padding:14px 18px!important;color:var(--ink)!important}
+#homeScreen .hm-today{margin:14px 0 14px!important;border-radius:12px!important}
+#homeScreen .hm-smart{margin:14px 0 0!important;border-radius:10px!important;background:#F0FAF8!important;box-shadow:none!important;border:1px solid #BFE3DD!important}
+#homeScreen .hm-smart:not([hidden])+.hm-cols .hm-today{margin-top:14px!important}
+#homeScreen .hm-colB{margin-top:14px!important}
+#homeScreen .hm-smart:not([hidden])+.hm-cols .hm-colB{margin-top:14px!important}
+.hm-hero .hm-av,.hm-me-av{background:#E6F4F1!important;color:#0F766E!important;border:1px solid #BFE3DD!important}
+/* bottom dock: flat bar */
+.hm-nav{background:#fff!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:0 4px 16px rgba(16,24,40,.12)!important}
+.hm-orb{display:none!important}
+.hm-nav button{border-radius:10px!important;color:var(--soft)!important}
+.hm-nav button.on{background:#E6F4F1!important;color:#0F766E!important;box-shadow:none!important}
+body.tk-tab .hm-nav button.on{background:transparent!important;color:var(--soft)!important}
+body.tk-tab .hm-nav button[data-go="tasks"]{background:#E6F4F1!important;color:#0F766E!important;box-shadow:none!important}
+.hm-tile{transition:border-color .15s,box-shadow .15s}.hm-tile:hover{border-color:#0F766E!important}
+@media(min-width:1000px){
+  body{padding:20px clamp(20px,2.5vw,48px)}
+  body[data-screen="homeScreen"] #app{padding:0!important;padding-bottom:110px!important}
+  #homeScreen .hm-cols{gap:0 20px}
+  #hmPaneMonth.on,#hmPaneMe.on{gap:0 20px}
+}
 </style>
 </head>
 <body>
@@ -1391,15 +1475,21 @@ body[data-screen="homeScreen"] .hm-nav{display:grid}
   </div>
   <section class="hm-pane on" id="hmPaneToday" data-pane="today">
   <button type="button" class="hm-smart" id="hmSmart" hidden></button>
+  <div class="hm-cols">
+  <div class="hm-colA">
   <div class="hm-today" id="hmToday"><div class="empty">⏳ Loading…</div></div>
   <div id="hmWhere"></div>
+  <div id="hmTrack"></div>
+  </div>
+  <div class="hm-colB">
   <div class="hm-quick" id="hmQuick"></div>
   <div id="hmSite"></div>
   <div id="hmNote"></div>
   <div id="hmBday"></div>
   <div class="hm-grid" id="hmActs"></div>
-  <div id="hmTrack"></div>
   <div id="hmSafety"></div>
+  </div>
+  </div>
   </section>
   <section class="hm-pane" id="hmPaneMonth" data-pane="month">
   <div class="card hm-card" id="mmCard"><div class="mm-head"><button type="button" class="mm-nav" onclick="mmShift(-1)" aria-label="Previous month">◀</button><b id="mmTitle">This month</b><button type="button" class="mm-nav" id="mmNext" onclick="mmShift(1)" aria-label="Next month">▶</button><button type="button" class="mm-pdf" onclick="mmPdf()">⬇ PDF</button></div>
@@ -7735,10 +7825,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-14.3';</script>
-<script src="notify.js?v=2026-11-14.3"></script>
-<script src="appstore.js?v=2026-11-14.3"></script>
-<script src="policy-lib.js?v=2026-11-14.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.1';</script>
+<script src="notify.js?v=2026-11-15.1"></script>
+<script src="appstore.js?v=2026-11-15.1"></script>
+<script src="policy-lib.js?v=2026-11-15.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
