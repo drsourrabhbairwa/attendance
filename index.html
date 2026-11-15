@@ -1419,8 +1419,8 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 #hmPaneMe .hm-links button.hm-lo{border-bottom:0!important;color:#B42318!important;justify-content:flex-start!important;background:#FEF3F2!important}
 /* Task form: people picker (selected pills, search, one scrolling checklist) */
 .tk-pk .tk-sel{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.tk-pk .tk-sel:empty{display:none}
-.tk-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:#E6F4F1!important;color:#0F766E!important;border:1px solid #BFE3DD;font-size:13px;font-weight:600}
-.tk-pill .tk-av,.tk-pill .tk-av.sm{width:24px!important;height:24px!important;font-size:10px!important;box-shadow:none!important;border-radius:50%!important}.tk-pill{box-shadow:none!important}.tk-pill i{font-style:normal;font-size:11px;opacity:.7}
+.tk-sp{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:#E6F4F1!important;color:#0F766E!important;border:1px solid #BFE3DD;font-size:13px;font-weight:600}
+.tk-sp .tk-av,.tk-sp .tk-av.sm{width:24px!important;height:24px!important;font-size:10px!important;box-shadow:none!important;border-radius:50%!important}.tk-sp{box-shadow:none!important}.tk-sp i{font-style:normal;font-size:11px;opacity:.7}
 .tk-srch{display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid #D0D5DD;border-radius:10px;background:#fff}
 .tk-srch:focus-within{border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.14)}
 .tk-srch input{flex:1;border:0!important;background:transparent!important;box-shadow:none!important;padding:11px 0!important;outline:0;font-size:15px;min-width:0}
@@ -1433,6 +1433,13 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 .tk-prow.on .tk-ck2{background:#0F766E;border-color:#0F766E}
 .tk-pnone{padding:16px;text-align:center;color:#667085;font-size:14px}
 .tk-pk label b{font-weight:600;color:#0F766E;margin-left:4px}
+/* priority picker */
+.tk-pri3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tk-po{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1.5px solid #D0D5DD!important;border-radius:12px;background:#fff!important;color:#101828;text-align:center}
+.tk-po i{font-style:normal;font-size:18px;line-height:1}.tk-po b{font-size:14px;font-weight:700}.tk-po small{font-size:11px;color:#667085;font-weight:500}
+.tk-po.low.on{border-color:#16803C!important;background:#ECFDF3!important}.tk-po.normal.on{border-color:#175CD3!important;background:#EFF4FF!important}.tk-po.high.on{border-color:#D92D20!important;background:#FEF3F2!important}
+.tk-prih{margin-top:8px;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.4;background:#F2F4F7;color:#344054}
+.tk-prih.low{background:#ECFDF3;color:#05603A}.tk-prih.normal{background:#EFF4FF;color:#1849A9}.tk-prih.high{background:#FEF3F2;color:#B42318}
 .tk-av[style*="gradient"]{background:#0F766E!important}
 </style>
 </head>
@@ -7878,10 +7885,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.6';</script>
-<script src="notify.js?v=2026-11-15.6"></script>
-<script src="appstore.js?v=2026-11-15.6"></script>
-<script src="policy-lib.js?v=2026-11-15.6"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.7';</script>
+<script src="notify.js?v=2026-11-15.7"></script>
+<script src="appstore.js?v=2026-11-15.7"></script>
+<script src="policy-lib.js?v=2026-11-15.7"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -9069,8 +9076,8 @@ async function tkForm(id){
     <div class="tk-field"><label>Task</label><input id="tkT" maxlength="120" placeholder="What needs to be done?" value="${hx(t?t.title:'')}"></div>
     <div class="tk-field"><label>Details (optional)</label><textarea id="tkD" rows="2" maxlength="500">${hx(t?t.detail:'')}</textarea></div>
     <div class="tk-field tk-pk"><label>Give to — one or more <b id="tkPCnt"></b></label><div class="tk-sel" id="tkSel"></div><div class="tk-srch"><span aria-hidden="true">🔍</span><input id="tkQ" placeholder="Search name or ID" autocomplete="off" oninput="tkPeople()" onkeydown="if(event.key==='Enter'){event.preventDefault();tkPickFirst();}"></div><div class="tk-plist" id="tkPpl"></div></div>
-    <div class="tk-field"><label>Deadline</label><input id="tkDue" type="date" value="${hx(t?t.due:'')}"></div>
-    <div class="tk-seg" id="tkPri" style="margin-bottom:10px"></div>
+    <div class="tk-field"><label>Deadline</label><input id="tkDue" type="date" value="${hx(t?t.due:'')}" onchange="tkPriPaint()"></div>
+    <div class="tk-field tk-prio"><label>How urgent is it?</label><div class="tk-pri3" id="tkPri" role="radiogroup"></div><div class="tk-prih" id="tkPriH"></div></div>
     ${_tk.admin?`<div class="tk-field"><label>Amitek Coins for this task</label><input id="tkC" inputmode="numeric" value="${t?t.coins:1}"></div>`:''}
     <div class="tk-field"><label>Place (optional)</label><input id="tkPl" maxlength="150" value="${hx(t?t.place:'')}"></div>
     <div class="tk-field"><label>Checklist — one step per line (optional)</label><textarea id="tkL" rows="3">${hx(t?t.checklist.map(c=>c.t).join('\n'):'')}</textarea></div>
@@ -9083,7 +9090,7 @@ function tkPeople(){
   const isOn=id=>_tk.ppl.some(i=>tkSame(i,id));
   // selected people: removable chips, always visible whatever the search says
   const sel=document.getElementById('tkSel'), cnt=document.getElementById('tkPCnt');
-  if(sel) sel.innerHTML=_tk.ppl.map(i=>`<button type="button" class="tk-pill" onclick="tkTog('${esc(i)}')" aria-label="Remove ${hx(tkNm(i))}">${tkAv(tkNm(i),'sm')}<span>${hx(tkNm(i))}${tkSame(i,me)?' (me)':''}</span><i>✕</i></button>`).join('');
+  if(sel) sel.innerHTML=_tk.ppl.map(i=>`<button type="button" class="tk-sp" onclick="tkTog('${esc(i)}')" aria-label="Remove ${hx(tkNm(i))}">${tkAv(tkNm(i),'sm')}<span>${hx(tkNm(i))}${tkSame(i,me)?' (me)':''}</span><i>✕</i></button>`).join('');
   if(cnt) cnt.textContent=_tk.ppl.length?'· '+_tk.ppl.length+' selected':'';
   let rows=dir.filter(e=>!q||(e.name+' '+e.id).toLowerCase().includes(q));
   rows.sort((a,b)=>(tkSame(b.id,me)-tkSame(a.id,me))||String(a.name).localeCompare(String(b.name)));   // me first, then A–Z
@@ -9092,7 +9099,11 @@ function tkPeople(){
 }
 function tkPickFirst(){ if(window._tkFirst) { tkTog(window._tkFirst); const q=document.getElementById('tkQ'); if(q){ q.value=''; tkPeople(); q.focus(); } } }
 function tkTog(id){ const i=_tk.ppl.findIndex(x=>tkSame(x,id)); if(i>=0) _tk.ppl.splice(i,1); else _tk.ppl.push(id); tkPeople(); }
-function tkPriPaint(){ const el=document.getElementById('tkPri'); if(el) el.innerHTML=['Low','Normal','High'].map(p=>`<button type="button" class="${_tk.pri===p?'on':''}" onclick="_tk.pri='${p}';tkPriPaint()">${p}</button>`).join(''); }
+const TK_PRI={Low:['🟢','Low','Whenever free','No rush. They can do it after their other work.'],Normal:['🔵','Normal','Regular work','A regular task. They should finish it by the deadline.'],High:['🔴','High','Urgent','Urgent. A red “High” tag is shown on the task, so they know to start it first.']};
+function tkPriPaint(){ const el=document.getElementById('tkPri'); if(!el) return;
+  el.innerHTML=Object.keys(TK_PRI).map(k=>{ const v=TK_PRI[k], on=_tk.pri===k; return `<button type="button" role="radio" aria-checked="${on}" class="tk-po ${k.toLowerCase()}${on?' on':''}" onclick="_tk.pri='${k}';tkPriPaint()"><i>${v[0]}</i><b>${v[1]}</b><small>${v[2]}</small></button>`; }).join('');
+  const h=document.getElementById('tkPriH'); if(h){ const due=((document.getElementById('tkDue')||{}).value||''); let t=TK_PRI[_tk.pri||'Normal'][3];
+    if(_tk.pri==='High'&&!due) t+=' Set a deadline above so they know by when.'; h.className='tk-prih '+String(_tk.pri||'Normal').toLowerCase(); h.textContent=t; } }
 async function tkSaveForm(id){
   const v=k=>(document.getElementById(k)||{}).value||'', e=document.getElementById('tkFErr');
   try{ const r=await tkApi('saveTask',{id:id,title:v('tkT'),detail:v('tkD'),assignees:_tk.ppl,due:v('tkDue'),priority:_tk.pri,coins:v('tkC'),place:v('tkPl'),checklist:v('tkL').split('\n')});
