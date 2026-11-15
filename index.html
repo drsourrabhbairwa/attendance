@@ -1388,6 +1388,20 @@ body.tk-tab .hm-nav button[data-go="tasks"]{background:#E6F4F1!important;color:#
   #homeScreen .hm-cols{gap:0 20px}
   #hmPaneMonth.on,#hmPaneMe.on{gap:0 20px}
 }
+/* Tasks screen: no gradient background, flat white panels */
+.tkx{background:#F4F6F8!important}
+.tkx::before,.tkx::after{display:none!important;background:none!important}
+.tkx .g1,.tkx .g2,.tk-row,.tk-ann,.tk-sheet,.tk-empty .eic,.tk-btn{background:#fff!important;border:1px solid #E4E7EC!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important}
+.tkx .g1{border-radius:0!important;border-width:0 0 1px 0!important}
+.tk-row,.tk-ann{border-radius:12px!important}
+.tk-sheet{border-radius:16px 16px 0 0!important}
+.tk-row.on{background:#F0FAF8!important;box-shadow:0 0 0 2px #0F766E!important}
+.tk-hero{background:#0F766E!important;border:0!important;border-radius:12px!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important}
+.tk-hero::after{display:none!important}
+.tk-cta,.tk-btn.pri,.tk-rb.pri,.tk-b.me{background:#0F766E!important;color:#fff!important;box-shadow:0 1px 2px rgba(16,24,40,.12)!important;border-color:transparent!important}
+.tk-msgs{background-image:none!important;background:#F4F6F8!important}
+.tkx-list{border-right-color:#E4E7EC!important}
+.tk-av[style*="gradient"]{background:#0F766E!important}
 </style>
 </head>
 <body>
@@ -7825,10 +7839,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.1';</script>
-<script src="notify.js?v=2026-11-15.1"></script>
-<script src="appstore.js?v=2026-11-15.1"></script>
-<script src="policy-lib.js?v=2026-11-15.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-15.2';</script>
+<script src="notify.js?v=2026-11-15.2"></script>
+<script src="appstore.js?v=2026-11-15.2"></script>
+<script src="policy-lib.js?v=2026-11-15.2"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
