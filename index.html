@@ -4013,6 +4013,7 @@ function renderHomeActs(){
     L.push(`<button onclick="showFix()">✏️ <span>Fix a punch</span><small id="hmFixSub"></small></button>`);
   }
   L.push(`<button onclick="showTeamLeave()">👥 <span>Team leave</span><small id="hmTlSub"></small></button>`);
+  if(qtAllowed()) L.push(`<button onclick="openQuotationTool(this)">📄 <span>Quotation Tool</span><small>Quotations &amp; proforma invoices</small></button>`);
   if(empCat(currentEmp&&currentEmp.id)==='field') L.push(`<button onclick="labOpen()">👷 <span>My sites · labour</span><small>${labActiveHere()?'Fill today\'s labour':'Workers, payments, hisaab'}</small></button>`);
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
@@ -4270,6 +4271,19 @@ async function homeLeave(emp,tok){
    EMPLOYEE PROFILE + PASSWORD
 ══════════════════════════════════════════════════════════════ */
 const PF_MAP={pfName:'name',pfPhone:'phone',pfEmail:'email',pfDesig:'designation',pfAddr:'address',pfEmerg:'emergency',pfDob:'dob',pfJoined:'joined'};
+/* ── Quotation Tool: a separate web app; the owner switches it on per person (Access → Quotation Tool) ── */
+const QT_URL='https://amitek-quotation-tool.onrender.com/';
+function qtAllowed(){ if(COMPANY) return false; const r=curRec()||{}; return String(r.quoteAccess||(currentEmp&&currentEmp.quoteAccess)||'')==='1'; }
+async function openQuotationTool(btn){
+  const inApp=/AmitekApp\//.test(navigator.userAgent), win=inApp?null:window.open('about:blank','_blank');   // a browser tab is opened now (a pop-up made after a wait is blocked); the Android app hands the link to the phone's browser
+  if(btn) btn.disabled=true;
+  try{
+    const r=await api('quoteHandoff',{});
+    const url=QT_URL+'#from-attendance='+encodeURIComponent(r.code);   // after # : never sent to any server or written in its logs
+    if(win&&!win.closed) win.location.href=url; else location.href=url;
+  }catch(e){ if(win) win.close(); alert(/^Unknown action/i.test(e.message)?'The server is older than this app. Ask for the backend update.':e.message); }
+  finally{ if(btn) btn.disabled=false; }
+}
 function curRec(){ return currentEmp?((_D.employees||[]).find(e=>String(e.id)===String(currentEmp.id))||currentEmp):null; }
 function pfMsg(id,txt,good){ ['pfErr','pfOk','pwErr','pwOk'].forEach(i=>{ if(i.slice(0,2)===id.slice(0,2)&&i!==id) document.getElementById(i).classList.remove('show'); }); const el=document.getElementById(id); el.textContent=txt; el.classList.add('show'); }
 function showProfile(){
@@ -6216,7 +6230,7 @@ function acChips(list,sel,fn){ return '<div class="fm-chips">'+list.map(x=>`<but
 function empAccess(id){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(id)); if(!e) return;
   const roles=String(e.roles||'').split(',').map(x=>x.trim());
-  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,own:roles.indexOf('super')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||''});
+  Object.assign(AC,{id:e.id,name:e.name,sup:roles.indexOf('supervisor')>=0,dep:roles.indexOf('dept_admin')>=0,own:roles.indexOf('super')>=0,depts:new Set(String(e.mgrDepts||'').split(',').map(x=>x.trim()).filter(Boolean)),assigned:new Set(String(e.assignedEmp||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)),active:String(e.manageActive)!=='0',email:e.email||'',quote:String(e.quoteAccess||'')==='1'});
   acDraw();
 }
 function acDraw(){
@@ -6233,6 +6247,8 @@ function acDraw(){
       <label style="margin-top:10px">Your owner password (to confirm)</label><input type="password" id="acPw" autocomplete="current-password" placeholder="Your password">
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="acSaveRoles()">Save roles</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="acActive(${AC.active?'false':'true'})">${AC.active?'Switch off access':'Switch on access'}</button></div>
       ${AC.active?'':'<div style="font-size:12px;color:var(--red);margin-top:4px">Manage access is switched off for this person.</div>'}</div>
+    <div class="ld-glass" style="margin-bottom:10px"><b>📄 Quotation Tool</b><div style="font-size:12px;color:var(--soft);margin:2px 0 6px">${AC.quote?'On: '+hx(AC.name)+' sees a Quotation Tool link in the app and opens it with this sign-in. Switching off stops it the next time they open the tool.':'Off: '+hx(AC.name)+' does not see the Quotation Tool. Needs an email above.'}</div>
+      <button class="btn ${AC.quote?'btn-outline':'btn-primary'}" style="width:auto;margin:0;padding:0 16px" onclick="acQuote(${AC.quote?'false':'true'})">${AC.quote?'Switch off':'Give access'}</button></div>
     <div class="ld-glass" style="margin-bottom:10px"><b>Mark Work ON / OFF for ${hx(AC.name)}</b><div style="font-size:12px;color:var(--soft);margin:2px 0 6px">Only a time is saved (no photo or place). The row says it was marked by the owner.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><input type="date" id="mkDate" value="${todayStr()}"><input type="time" id="mkTime" value="${new Date().toTimeString().slice(0,5)}"><button class="btn btn-primary" style="width:auto;margin:0;padding:0 14px" onclick="acMark('on')">Work ON</button><button class="btn btn-outline" style="width:auto;margin:0;padding:0 14px" onclick="acMark('off')">Work OFF</button></div></div>`;
   }
@@ -6256,6 +6272,7 @@ async function acSaveRoles(){
     :await acApi('setEmployeeRoles',{id:AC.id,supervisor:AC.sup,deptAdmin:AC.dep,departments:[...AC.depts],assigned:[...AC.assigned],confirmPass:await hashPass(pw)},acRefresh);
   if(ok) acMsg('Roles saved. They apply the next time this person opens Manage.');
 }
+async function acQuote(on){ acKeep(); if(await acApi('setQuoteAccess',{id:AC.id,on},acRefresh)) acMsg(on?'Quotation Tool access is on.':'Quotation Tool access is switched off.'); }
 async function acActive(on){
   const pw=document.getElementById('acPw').value; if(!pw) return acMsg('Type your owner password to confirm.',true);
   if(await acApi('setManageActive',{id:AC.id,active:on,confirmPass:await hashPass(pw)},acRefresh)) acMsg(on?'Manage access is on.':'Manage access is switched off.');
@@ -7885,10 +7902,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-15.7';</script>
-<script src="notify.js?v=2026-11-15.7"></script>
-<script src="appstore.js?v=2026-11-15.7"></script>
-<script src="policy-lib.js?v=2026-11-15.7"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-16.1';</script>
+<script src="notify.js?v=2026-11-16.1"></script>
+<script src="appstore.js?v=2026-11-16.1"></script>
+<script src="policy-lib.js?v=2026-11-16.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
