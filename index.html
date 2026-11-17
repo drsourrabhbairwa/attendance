@@ -1489,6 +1489,8 @@ body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transp
 .st-c a+.st-mail:before{content:"·";margin-right:6px}
 .st-pend{margin-top:3px;font-size:12px;font-weight:600;color:#B45309}
 .st-res{opacity:.7}
+.st-more{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 4px;font-size:12.5px;color:var(--soft)}
+.st-more button{min-height:44px;padding:0 22px;border-radius:12px;border:1px solid var(--accent);background:none;color:var(--accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .st-row{display:flex;flex-wrap:nowrap;align-items:center;gap:10px}
 .st-row .ph-row{flex:1;min-width:0;align-items:center}
 .st-row .emp-acts{flex:0 0 auto}
@@ -6578,12 +6580,14 @@ function empFilter(){
   if(fe) fe.innerHTML=[['all','All',all.length],['active','Active',nAct],['resigned','Resigned',nRes]].filter(x=>x[0]!=='resigned'||nRes).map(x=>`<button type="button" class="${f===x[0]?'on':''}" onclick="window._empF='${x[0]}';empFilter()">${x[1]} <b>${x[2]}</b></button>`).join('');
   const rows=all.filter(e=>(f==='all'||(f==='resigned')===isRes(e))&&(!q||[e.name,e.id,e.phone,e.designation,e.email].join(' ').toLowerCase().indexOf(q)>=0));
   const box=document.getElementById('empRows'); if(!box) return;
-  box.innerHTML=rows.length?rows.map(e=>{
+  const sig=q+'|'+f; if(window._empSig!==sig){ window._empSig=sig; window._empN=10; }
+  const shown=rows.slice(0,window._empN||10);
+  box.innerHTML=rows.length?shown.map(e=>{
     const res=isRes(e), pend=trackOn()&&!e.trackConsent;
     const l1=[hx(e.id),e.designation?hx(e.designation):''].filter(Boolean).join(' · ');
     const l2=[e.phone?`<a href="tel:${hx(e.phone)}">${hx(e.phone)}</a>`:'',e.email?`<span class="st-mail">${hx(e.email)}</span>`:''].filter(Boolean).join('');
     const badge=res?`<span class="tag tag-off" style="margin-left:6px" title="${e.lastWorkingDay?'Last working day '+e.lastWorkingDay:''}">Resigned${e.lastWorkingDay?' · LWD '+e.lastWorkingDay:''}</span>`:'';
-    return `<div class="list-item st-row${res?' st-res':''}"><div class="ph-row">${avSm(e)}<div class="st-b"><div class="st-n">${hx(e.name)}${badge}${trackOn()&&!pend?'<span class="st-ok" title="Location notice accepted">📍</span>':''}</div><div class="st-s">${l1}</div>${l2?`<div class="st-s st-c">${l2}</div>`:''}${pend?'<div class="st-pend">⏳ Location notice not accepted yet</div>':''}</div></div><div class="emp-acts"><button class="org-act" onclick="empDash('${esc(e.id)}')">Open ›</button></div></div>`; }).join(''):'<div class="saf-none">No staff match.</div>';
+    return `<div class="list-item st-row${res?' st-res':''}"><div class="ph-row">${avSm(e)}<div class="st-b"><div class="st-n">${hx(e.name)}${badge}${trackOn()&&!pend?'<span class="st-ok" title="Location notice accepted">📍</span>':''}</div><div class="st-s">${l1}</div>${l2?`<div class="st-s st-c">${l2}</div>`:''}${pend?'<div class="st-pend">⏳ Location notice not accepted yet</div>':''}</div></div><div class="emp-acts"><button class="org-act" onclick="empDash('${esc(e.id)}')">Open ›</button></div></div>`; }).join('')+(rows.length>shown.length?`<div class="st-more"><span>Showing ${shown.length} of ${rows.length}</span><button type="button" onclick="window._empN=(window._empN||10)+15;empFilter()">Show ${Math.min(15,rows.length-shown.length)} more</button></div>`:(rows.length>10?`<div class="st-more"><span>All ${rows.length} shown</span></div>`:'')):'<div class="saf-none">No staff match.</div>';
 }
 async function renderEmpList(){
   renderBdayAdmin(); loadStaffSignIn();
@@ -8281,10 +8285,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.9';</script>
-<script src="notify.js?v=2026-11-17.9"></script>
-<script src="appstore.js?v=2026-11-17.9"></script>
-<script src="policy-lib.js?v=2026-11-17.9"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-17.10';</script>
+<script src="notify.js?v=2026-11-17.10"></script>
+<script src="appstore.js?v=2026-11-17.10"></script>
+<script src="policy-lib.js?v=2026-11-17.10"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
