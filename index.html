@@ -1442,12 +1442,14 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 .tk-prih.low{background:#ECFDF3;color:#05603A}.tk-prih.normal{background:#EFF4FF;color:#1849A9}.tk-prih.high{background:#FEF3F2;color:#B42318}
 .tk-av[style*="gradient"]{background:#0F766E!important}
 
+#loginScreen .help-link{font-size:13px;margin-top:0;min-height:40px}
+#loginScreen #coLink{min-height:30px;margin-bottom:0!important}
 /* ── interaction polish (ease curves, press feedback, sheet motion, steady numbers) ── */
 :root{--ease-out:cubic-bezier(.23,1,.32,1);--ease-drawer:cubic-bezier(.32,.72,0,1)}
 .stat,.tl-time,.total-hrs,.wm-hrs,.rt-num,.num,.hm-stat,#hmTimer,#officeTimer,.tk-time{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:no-preference){
-  .btn,.btn-sm,.key-btn,.fm-chip,.tab-btn,.role-btn,.tk-btn,.pl-btn,.site-btn,.pol-chip,.chip,.rc-btn,.rc-play,.rc-pp,.rc-x{transition:transform 150ms var(--ease-out),opacity 150ms ease,background-color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}
-  .btn:not(:disabled):active,.btn-sm:active,.key-btn:active,.fm-chip:active,.tab-btn:active,.role-btn:active,.tk-btn:active,.pl-btn:active,.site-btn:active,.pol-chip:active,.chip:active,.rc-btn:active,.rc-play:not([disabled]):active,.rc-pp:active,.rc-x:active{transform:scale(.97)}
+  .btn,.btn-sm,.key-btn,.fm-chip,.tab-btn,.role-btn,.tk-btn,.pl-btn,.site-btn,.pol-chip,.chip,.rc-btn,.rc-play,.rc-pp,.rc-x,.wm-opt,.hm-q,.sos-mini,#hmSmart,.hm-where{transition:transform 150ms var(--ease-out),opacity 150ms ease,background-color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}
+  .btn:not(:disabled):active,.btn-sm:active,.key-btn:active,.fm-chip:active,.tab-btn:active,.role-btn:active,.tk-btn:active,.pl-btn:active,.site-btn:active,.pol-chip:active,.chip:active,.rc-btn:active,.rc-play:not([disabled]):active,.rc-pp:active,.rc-x:active,.wm-opt:active,.hm-q:active,.sos-mini:active,#hmSmart:active,.hm-where:active{transform:scale(.97)}
   .card,.hm-card{transition:box-shadow 200ms ease,transform 200ms var(--ease-out)}
   .fm-back.fm-in{animation:fmFade 200ms ease-out}
   .fm-back.fm-in .fm-sheet{animation:fmUp 300ms var(--ease-drawer)}
@@ -8209,10 +8211,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.2';</script>
-<script src="notify.js?v=2026-11-17.2"></script>
-<script src="appstore.js?v=2026-11-17.2"></script>
-<script src="policy-lib.js?v=2026-11-17.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-17.3';</script>
+<script src="notify.js?v=2026-11-17.3"></script>
+<script src="appstore.js?v=2026-11-17.3"></script>
+<script src="policy-lib.js?v=2026-11-17.3"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
