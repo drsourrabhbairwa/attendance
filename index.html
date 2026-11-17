@@ -1465,6 +1465,22 @@ body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transp
 @keyframes fmFade{from{opacity:0}to{opacity:1}}
 @keyframes fmUp{from{transform:translateY(28px);opacity:.6}to{transform:none;opacity:1}}
 
+.saf-all{display:block;width:100%;min-height:44px;margin-top:10px;border:1px dashed var(--border2);border-radius:12px;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent);cursor:pointer}
+.saf-emp .saf-meta .map-link{display:inline;padding:0;background:none;border:0;min-height:0;font-size:12px;font-weight:600;color:var(--accent);margin-left:4px}
+/* work report pickers */
+.wr-pk{position:relative}
+.wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.wr-sel button{min-height:32px;padding:4px 10px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.wr-sel button b{opacity:.75;margin-left:4px;font-weight:700}
+.wr-sel a{font-size:12.5px;font-weight:600;color:var(--soft);padding:6px 4px;cursor:pointer}
+.wr-dd{margin-top:6px;max-height:240px;overflow:auto;border:1px solid var(--border2);border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.12);overscroll-behavior:contain}
+.wr-dd[hidden]{display:none}
+.wr-dd button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 12px;border:0;border-bottom:1px solid rgba(15,23,42,.06);background:none;font:inherit;font-size:14px;text-align:left;cursor:pointer;color:var(--ink,#0F172A)}
+.wr-dd button:last-child{border-bottom:0}
+.wr-dd button i{flex:0 0 20px;height:20px;border:1.5px solid var(--border2);border-radius:6px;font-style:normal;font-size:12px;line-height:17px;text-align:center;color:#fff}
+.wr-dd button.on i{background:var(--accent);border-color:var(--accent)}
+.wr-dd button.on{font-weight:600}
+.wr-more{padding:12px;font-size:12.5px;color:var(--soft);text-align:center}
 /* ── meeting recording ── */
 #recBar{position:fixed;left:0;right:0;top:0;z-index:100000;background:#0F172A;color:#fff;display:flex;align-items:center;gap:10px;padding:calc(7px + env(safe-area-inset-top,0px)) 10px 7px 14px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer;box-shadow:0 6px 18px rgba(15,23,42,.28)}
 #recBar i{position:relative;width:8px;height:8px;border-radius:50%;background:#F04438;flex:none}
@@ -3447,8 +3463,12 @@ function renderSafety(elId,role){
       ${isLive?`<input type="text" id="an_${id}" class="saf-in" placeholder="Note (e.g. ambulance called, taking to hospital)">
       <div class="saf-btns">${a.status==='open'?`<button class="sb ack" onclick="alertAct('${esc(id)}','ack')">✋ I am on it</button>`:''}<button class="sb aid" onclick="alertAct('${esc(id)}','aid')">🚑 Aid sent</button><button class="sb res" onclick="alertAct('${esc(id)}','resolved')">✅ Resolved</button>${a.phone?`<a class="sb call" href="tel:${hx(a.phone)}">📞 Call</a>`:''}</div>`:''}</div>`;
   };
-  const emps=safEmps(role).filter(e=>!flt||(e.name+' '+e.id).toLowerCase().includes(flt.toLowerCase()));
   const last={}; (_saf.checks||[]).forEach(c=>{ const k=String(c.empId).toUpperCase(); if(!last[k]) last[k]=c; });
+  const empsAll=safEmps(role).filter(e=>!flt||(e.name+' '+e.id).toLowerCase().includes(flt.toLowerCase()));
+  // people with a recent check first; the rest stay a search away unless "Show all" is tapped
+  const rank=e=>{ const c=last[String(e.id).toUpperCase()]; return c?(c.status==='pending'?0:1):2; };
+  empsAll.sort((x,y)=>rank(x)-rank(y));
+  const showAll=!!(window._safAll&&window._safAll[role])||!!flt, emps=showAll?empsAll:empsAll.slice(0,6);
   const keepV={}, ae=document.activeElement; el.querySelectorAll('input.saf-in').forEach(i=>{ if(i.id.startsWith('an_')&&i.value) keepV[i.id]=i.value; });
   const focusId=ae&&el.contains(ae)?ae.id:'';
   el.innerHTML=`<h3 style="margin:0 0 8px;font-size:15px">🚨 Emergencies ${live.length?'<span class="viol-badge">'+live.length+' open</span>':''}</h3>
@@ -3458,7 +3478,8 @@ function renderSafety(elId,role){
     <div style="font-size:12px;color:var(--soft);margin-bottom:8px">Ask someone to confirm where they are. Their phone beeps and asks for a location; you see the answer here. No answer in 10 minutes → you are e-mailed.</div>
     <input type="text" id="safFilter_${role}" class="saf-in" placeholder="Search name or ID…" value="${hx(flt)}" oninput="renderSafety('${esc(elId)}','${esc(role)}');var f=document.getElementById('safFilter_${role}');f.focus();f.setSelectionRange(f.value.length,f.value.length)">
     ${emps.length?emps.map(e=>{ const c=last[String(e.id).toUpperCase()], pend=c&&c.status==='pending';
-      return `<div class="saf-emp"><div><b>${hx(e.name)}</b> <small>${hx(e.id)}</small><div class="saf-meta">${c?checkLine(c):'Never asked'}</div></div><button class="sb chk" ${pend?'disabled':''} onclick="askCheck('${esc(e.id)}')">${pend?'⏳ Asked':'📍 Check now'}</button></div>`; }).join(''):'<div class="saf-none">No staff found.</div>'}`;
+      return `<div class="saf-emp"><div><b>${hx(e.name)}</b> <small>${hx(e.id)}</small><div class="saf-meta">${c?checkLine(c):'Never asked'}</div></div><button class="sb chk" ${pend?'disabled':''} onclick="askCheck('${esc(e.id)}')">${pend?'⏳ Asked':'📍 Check now'}</button></div>`; }).join(''):'<div class="saf-none">No staff found.</div>'}
+    ${!showAll&&empsAll.length>emps.length?`<button type="button" class="saf-all" onclick="(window._safAll=window._safAll||{})['${esc(role)}']=1;renderSafety('${esc(elId)}','${esc(role)}')">Show all ${empsAll.length} staff</button>`:''}`;
   Object.keys(keepV).forEach(k=>{ const i=document.getElementById(k); if(i) i.value=keepV[k]; });
   if(focusId&&focusId.startsWith('an_')){ const i=document.getElementById(focusId); if(i) i.focus(); }
 }
@@ -8220,10 +8241,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.6';</script>
-<script src="notify.js?v=2026-11-17.6"></script>
-<script src="appstore.js?v=2026-11-17.6"></script>
-<script src="policy-lib.js?v=2026-11-17.6"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-17.7';</script>
+<script src="notify.js?v=2026-11-17.7"></script>
+<script src="appstore.js?v=2026-11-17.7"></script>
+<script src="policy-lib.js?v=2026-11-17.7"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -9989,6 +10010,35 @@ let _wr={emps:[],modes:[],kinds:[],status:[],range:'today',data:null};
 const wrAddDays=(d,n)=>{ const t=new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
 const wrMin=m=>{ m=Math.round(m||0); return Math.floor(m/60)+'h '+(m%60)+'m'; };
 function wrChips(g,list){ return '<div class="wr-ch">'+list.map(x=>{ const v=Array.isArray(x)?x[0]:x, l=Array.isArray(x)?x[1]:x; return `<button type="button" class="${_wr[g].indexOf(v)>=0?'on':''}" onclick="wrTog('${g}','${esc(v)}')">${hx(l)}</button>`; }).join('')+'</div>'; }
+/* searchable multi-select: selected chips on top, a live-filtered list below (opens on focus, closes on outside tap) */
+const _wrList={};
+function wrPick(g,list,ph){
+  _wrList[g]=list.map(x=>Array.isArray(x)?x:[x,x]);
+  const sel=_wr[g], nm=v=>(_wrList[g].find(x=>x[0]===v)||[v,v])[1];
+  const keep=(document.getElementById('wrS_'+g)||{}).value||'';
+  return (sel.length?`<div class="wr-sel">${sel.map(v=>`<button type="button" onclick="wrPickTog('${g}','${esc(v)}')">${hx(nm(v))} <b>✕</b></button>`).join('')}<a onclick="wrPickClear('${g}')">Clear</a></div>`:'')
+   +`<input class="wr-q" id="wrS_${g}" autocomplete="off" placeholder="${hx(ph)}" value="${hx(keep)}" oninput="wrPickFilter('${g}')" onfocus="wrPickOpen('${g}')">`
+   +`<div class="wr-dd" id="wrL_${g}" hidden></div>`;
+}
+function wrPickFilter(g){
+  const q=((document.getElementById('wrS_'+g)||{}).value||'').trim().toLowerCase(), box=document.getElementById('wrL_'+g); if(!box) return;
+  const rows=(_wrList[g]||[]).filter(x=>!q||x[1].toLowerCase().indexOf(q)>=0);
+  box.hidden=false;
+  box.innerHTML=rows.length?rows.slice(0,60).map(x=>`<button type="button" class="${_wr[g].indexOf(x[0])>=0?'on':''}" onclick="wrPickTog('${g}','${esc(x[0])}',1)"><i>${_wr[g].indexOf(x[0])>=0?'✓':''}</i>${hx(x[1])}</button>`).join('')+(rows.length>60?`<div class="wr-more">${rows.length-60} more — keep typing</div>`:'')
+    :'<div class="wr-more">No match</div>';
+}
+function wrPickOpen(g){ ['emps','kinds'].forEach(o=>{ if(o!==g){ const b=document.getElementById('wrL_'+o); if(b) b.hidden=true; } }); wrPickFilter(g); }
+function wrPickTog(g,v,stay){
+  const a=_wr[g], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); _wr.data=null;
+  const q=((document.getElementById('wrS_'+g)||{}).value||'');
+  const host=document.getElementById('wrP_'+g); if(!host) return;
+  host.innerHTML=wrPick(g,_wrList[g],g==='emps'?'Search name or ID':'Search purpose');
+  const inp=document.getElementById('wrS_'+g); inp.value=q;
+  if(stay){ inp.focus({preventScroll:true}); wrPickFilter(g); }
+  const o=document.getElementById('wrOut'); if(o) o.innerHTML='';
+}
+function wrPickClear(g){ _wr[g]=[]; _wr.data=null; const host=document.getElementById('wrP_'+g); if(host) host.innerHTML=wrPick(g,_wrList[g],g==='emps'?'Search name or ID':'Search purpose'); const o=document.getElementById('wrOut'); if(o) o.innerHTML=''; }
+document.addEventListener('click',e=>{ const pth=e.composedPath?e.composedPath():[]; if(pth.some(n=>n.classList&&n.classList.contains('wr-pk'))) return; document.querySelectorAll('.wr-dd').forEach(b=>b.hidden=true); });
 function wrDraw(){
   const el=document.getElementById('wrBox'); if(!el) return;
   const emps=(_D.employees||[]).map(e=>[String(e.id).toUpperCase(),e.name+' ('+e.id+')']);
@@ -9996,9 +10046,9 @@ function wrDraw(){
   el.innerHTML=`<h4>Work report <small>by mode, purpose and person</small></h4>
     <div class="wr-g">Period</div><div class="wr-ch">${[['today','Today'],['week','Last 7 days'],['custom','Custom']].map(x=>`<button type="button" class="${_wr.range===x[0]?'on':''}" onclick="wrRange('${x[0]}')">${x[1]}</button>`).join('')}</div>
     ${_wr.range==='custom'?`<div class="wr-d" style="margin-top:8px"><input type="date" id="wrFrom" value="${hx(c1||todayStr())}"><span>to</span><input type="date" id="wrTo" value="${hx(c2||todayStr())}"></div>`:''}
-    <div class="wr-g">Employees <span style="font-weight:400">(none selected = all)</span></div>${wrChips('emps',emps)}
+    <div class="wr-g">Employees <span style="font-weight:400">(none selected = all)</span></div><div class="wr-pk" id="wrP_emps">${wrPick('emps',emps,'Search name or ID')}</div>
     <div class="wr-g">Mode</div>${wrChips('modes',WR_MODES)}
-    <div class="wr-g">Purpose / task</div>${wrChips('kinds',wrKinds())}
+    <div class="wr-g">Purpose / task <span style="font-weight:400">(none selected = all)</span></div><div class="wr-pk" id="wrP_kinds">${wrPick('kinds',wrKinds(),'Search purpose')}</div>
     <div class="wr-g">Status</div>${wrChips('status',['Active','Paused','Done','Travelling'])}
     <div class="wr-g">Client name or phone</div><input class="wr-q" id="wrQ" placeholder="Search client" value="${hx(keep)}">
     <div class="wr-a"><button style="background:var(--accent)" onclick="wrShow()">Show</button><button style="background:var(--green)" onclick="wrCsv()">⬇ CSV</button><button style="background:#B45309" onclick="wrPdf()">PDF</button></div>
