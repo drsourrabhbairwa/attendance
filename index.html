@@ -1445,6 +1445,12 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 #loginScreen .help-link{font-size:13px;margin-top:0;min-height:40px}
 #loginScreen #coLink{min-height:30px;margin-bottom:0!important}
 .sos-open.sos-mini{min-height:44px;padding:8px 16px;font-size:13px}
+body .amk-bar{flex-direction:column;align-items:stretch;gap:10px;border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(15,23,42,.35)}
+body[data-screen="homeScreen"] .amk-bar{bottom:calc(env(safe-area-inset-bottom,0px) + 98px)}
+body .amk-bar>span:last-child{display:flex;gap:8px;justify-content:flex-end}
+body .amk-bar .amk-btn{min-height:40px;padding:0 16px;border-radius:12px;font-weight:600}
+body .amk-bar .amk-btn:first-child{background:#fff;color:#0F172A;border-color:#fff}
+body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transparent;color:#CBD5E1}
 /* ── interaction polish (ease curves, press feedback, sheet motion, steady numbers) ── */
 :root{--ease-out:cubic-bezier(.23,1,.32,1);--ease-drawer:cubic-bezier(.32,.72,0,1)}
 .stat,.tl-time,.total-hrs,.wm-hrs,.rt-num,.num,.hm-stat,#hmTimer,#officeTimer,.tk-time{font-variant-numeric:tabular-nums}
@@ -2816,6 +2822,7 @@ function fmt12(t){
     return String(h%12||12).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sc||0).padStart(2,'0')+' '+(h>=12?'PM':'AM');
   }catch(e){return t;}
 }
+function fmt12m(t){ return fmt12(t).replace(/:\d\d( [AP]M)$/,'$1'); }   // same as fmt12 without the seconds, for what staff read on Home
 function safeDateStr(v){
   try{ const d=new Date(v); if(!isNaN(d)) return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }catch(e){}
   return String(v||'—');
@@ -3968,7 +3975,7 @@ function renderHomeToday(rec,dayOff,noLoad){
   else if(!(rec&&rec.punchIn)&&leaveOn(curRec().id,todayStr())){ const lv=leaveOn(curRec().id,todayStr()); ico='🌴'; title='On approved leave'; sub=lv.type+' · '+leaveSpan(lv); b=btn('Open attendance','btn-outline'); }
   else if(rec&&rec.punchIn&&rec.punchOut){
     const th=calcTotalHrs(rec); ico='✅'; title='Day complete';
-    sub='In '+fmt12(rec.punchIn.time)+' · Out '+fmt12(rec.punchOut.time)+autoPill(rec);
+    sub='In '+fmt12m(rec.punchIn.time)+' · Out '+fmt12m(rec.punchOut.time)+autoPill(rec);
     if(W) extra=wmHoursHtml(); else if(th) extra=`<div class="hm-big">${th}</div><div class="hm-cap">total in office</div>`;
     b=btn('View today','btn-outline')+`<button class="btn btn-purple" style="margin-top:8px" onclick="openPunch('resume')">${W?'↩ Came back? Work ON again':'↩ Came back? Resume work'}</button>`;
   } else if(rec&&rec.punchIn){
@@ -4051,7 +4058,7 @@ function hmStatus(rec){   // {ico,title,sub,steps} for someone who is punched in
     const ends=(_wm.items||[]).map(i=>i.endAt).filter(Boolean).sort(), from=ends.length?hmStampM(ends[ends.length-1]):Math.round(parseTimeMins(rec.punchIn.time)), idle=from===null?0:nowMins()-from;
     return {ico:'🟢',title:'Work ON'+(_wm.mode?' · '+hx(wmTitle(_wm.mode)):''),sub:(_wm.mode?'Tap what you are doing below':'Choose where you are working below')+(idle>=5?' · idle '+hmDur(idle):''),steps:''};
   }
-  return {ico:'🟢',title:'You are punched in',sub:'Since '+fmt12(rec.punchIn.time),steps:''};
+  return {ico:'🟢',title:'You are punched in',sub:'Since '+fmt12m(rec.punchIn.time),steps:''};
 }
 /* one line of the day's real work: meetings done, quotations / orders, tasks done, time worked */
 function hmProgHtml(rec){
@@ -4106,7 +4113,7 @@ function renderHomeActs(){
   if(!am&&(_otMine.length||_otShown)){ const w=_otMine.filter(x=>x.status==='pending').length; L.push(`<button onclick="showMyOvertime()">⏱ <span>My overtime</span><small>${w?w+' waiting':''}</small></button>`); }
   L.push(`<button onclick="showProfile()">👤 <span>My profile</span></button>`);
   try{ if(_pol.list.length) L.push(`<button type="button" data-pol-link onclick="polOpenList()">📜 <span>Policies</span></button>`); }catch(e){}
-  L.push(`<button onclick="recOpen()">🎙 <span>Record a meeting</span><small>${_rec&&_rec.on?'recording now':'for the minutes'}</small></button>`);
+  L.push(`<button onclick="recOpen()">🎤 <span>Record a meeting</span><small>${_rec&&_rec.on?'recording now':'for the minutes'}</small></button>`);
   L.push(`<button onclick="openHelpVideos()">🎬 <span>Help videos</span><small>how to use the app</small></button>`);
   L.push(`<button onclick="openPhoneHelp()">📱 <span>Phone settings</span><small style="color:var(--soft)">location &amp; camera</small></button>`);
   try{ if(window.AmkStore&&AmkStore.has()) L.push(AmkStore.row()); }catch(e){}   // the app's own store (Android app only)
@@ -8212,10 +8219,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.4';</script>
-<script src="notify.js?v=2026-11-17.4"></script>
-<script src="appstore.js?v=2026-11-17.4"></script>
-<script src="policy-lib.js?v=2026-11-17.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-17.5';</script>
+<script src="notify.js?v=2026-11-17.5"></script>
+<script src="appstore.js?v=2026-11-17.5"></script>
+<script src="policy-lib.js?v=2026-11-17.5"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
