@@ -1473,6 +1473,26 @@ body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transp
 
 .saf-all{display:block;width:100%;min-height:44px;margin-top:10px;border:1px dashed var(--border2);border-radius:12px;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent);cursor:pointer}
 .saf-emp .saf-meta .map-link{display:inline;padding:0;background:none;border:0;min-height:0;font-size:12px;font-weight:600;color:var(--accent);margin-left:4px}
+.st-tools{margin-bottom:10px}
+.st-f{display:flex;gap:6px;margin-top:8px}
+.st-f button{min-height:34px;padding:4px 12px;border-radius:999px;border:1px solid var(--border2);background:rgba(255,255,255,.8);font:inherit;font-size:13px;cursor:pointer;color:var(--ink,#0F172A)}
+.st-f button b{opacity:.6;margin-left:3px}
+.st-f button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.st-row .st-b{min-width:0}
+.st-n{font-weight:700;font-size:15px}
+.st-n .tag{display:block;width:fit-content;max-width:100%;margin:3px 0 2px!important;white-space:normal}
+.st-ok{margin-left:6px;font-size:12px}
+.st-s{font-size:12.5px;color:var(--soft);margin-top:1px}
+.st-c{display:flex;gap:6px;align-items:center;min-width:0}
+.st-c a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
+.st-mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.st-c a+.st-mail:before{content:"·";margin-right:6px}
+.st-pend{margin-top:3px;font-size:12px;font-weight:600;color:#B45309}
+.st-res{opacity:.7}
+.st-row{display:flex;flex-wrap:nowrap;align-items:center;gap:10px}
+.st-row .ph-row{flex:1;min-width:0;align-items:center}
+.st-row .emp-acts{flex:0 0 auto}
+.st-row .org-act{min-height:40px;padding:0 14px;white-space:nowrap}
 /* work report pickers */
 .wr-pk{position:relative}
 .wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
@@ -6550,6 +6570,21 @@ async function signOutPhones(id){
   try{ await api('signOutStaff',{id}); loading(false); loadStaffSignIn(); const ok=document.getElementById('empOk'); if(ok){ ok.textContent=nm+' is signed out on every phone. The password is unchanged.'; ok.classList.add('show'); } }
   catch(err){ loading(false); alert('Error: '+err.message); }
 }
+function empFilter(){
+  const all=window._empView||[], qEl=document.getElementById('empQ'); if(qEl) window._empQ=qEl.value;
+  const q=(window._empQ||'').trim().toLowerCase(), f=window._empF||'all', isRes=e=>String(e.status||'')==='resigned';
+  const nAct=all.filter(e=>!isRes(e)).length, nRes=all.length-nAct;
+  const fe=document.getElementById('empF');
+  if(fe) fe.innerHTML=[['all','All',all.length],['active','Active',nAct],['resigned','Resigned',nRes]].filter(x=>x[0]!=='resigned'||nRes).map(x=>`<button type="button" class="${f===x[0]?'on':''}" onclick="window._empF='${x[0]}';empFilter()">${x[1]} <b>${x[2]}</b></button>`).join('');
+  const rows=all.filter(e=>(f==='all'||(f==='resigned')===isRes(e))&&(!q||[e.name,e.id,e.phone,e.designation,e.email].join(' ').toLowerCase().indexOf(q)>=0));
+  const box=document.getElementById('empRows'); if(!box) return;
+  box.innerHTML=rows.length?rows.map(e=>{
+    const res=isRes(e), pend=trackOn()&&!e.trackConsent;
+    const l1=[hx(e.id),e.designation?hx(e.designation):''].filter(Boolean).join(' · ');
+    const l2=[e.phone?`<a href="tel:${hx(e.phone)}">${hx(e.phone)}</a>`:'',e.email?`<span class="st-mail">${hx(e.email)}</span>`:''].filter(Boolean).join('');
+    const badge=res?`<span class="tag tag-off" style="margin-left:6px" title="${e.lastWorkingDay?'Last working day '+e.lastWorkingDay:''}">Resigned${e.lastWorkingDay?' · LWD '+e.lastWorkingDay:''}</span>`:'';
+    return `<div class="list-item st-row${res?' st-res':''}"><div class="ph-row">${avSm(e)}<div class="st-b"><div class="st-n">${hx(e.name)}${badge}${trackOn()&&!pend?'<span class="st-ok" title="Location notice accepted">📍</span>':''}</div><div class="st-s">${l1}</div>${l2?`<div class="st-s st-c">${l2}</div>`:''}${pend?'<div class="st-pend">⏳ Location notice not accepted yet</div>':''}</div></div><div class="emp-acts"><button class="org-act" onclick="empDash('${esc(e.id)}')">Open ›</button></div></div>`; }).join(''):'<div class="saf-none">No staff match.</div>';
+}
 async function renderEmpList(){
   renderBdayAdmin(); loadStaffSignIn();
   loading(true,'Loading…');
@@ -6557,10 +6592,9 @@ async function renderEmpList(){
     const emps=await getEmployees();loading(false);
     const list=document.getElementById('empList');
     if(!emps.length){list.innerHTML='<div class="empty"><img class="eimg" src="img/empty-clipboard.webp" alt="" loading="lazy">No employees yet.</div>';return;}
-    list.innerHTML=emps.map(e=>{ const info=[e.designation,e.phone,e.email].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ');
-      const resigned=String(e.status||'')==='resigned';
-      const badge=resigned?`<span class="tag tag-off" style="margin-left:6px" title="${e.lastWorkingDay?'Last working day '+e.lastWorkingDay:''}">Resigned${e.lastWorkingDay?' · LWD '+e.lastWorkingDay:''}</span>`:'';
-      return `<div class="list-item"${resigned?' style="opacity:.72"':''}><div class="ph-row">${avSm(e)}<div><div style="font-weight:600">${hx(e.name)}${badge}</div><div style="font-size:12px;color:var(--soft)">${hx(e.id)}${info?' · '+info:''}${trkLabel(e)}</div></div></div><div class="emp-acts"><button class="org-act" onclick="empDash('${esc(e.id)}')">👤 Dashboard</button></div></div>`; }).join('');
+    window._empView=emps; window._empQ=window._empQ||''; window._empF=window._empF||'all';
+    list.innerHTML=`<div class="st-tools"><input type="search" id="empQ" class="wr-q" autocomplete="off" placeholder="Search name, ID, phone or role" value="${hx(window._empQ)}" oninput="empFilter()"><div class="st-f" id="empF"></div></div><div id="empRows"></div>`;
+    empFilter();
   }catch(e){loading(false);alert('Error: '+e.message);}
 }
 
@@ -8247,10 +8281,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.8';</script>
-<script src="notify.js?v=2026-11-17.8"></script>
-<script src="appstore.js?v=2026-11-17.8"></script>
-<script src="policy-lib.js?v=2026-11-17.8"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-17.9';</script>
+<script src="notify.js?v=2026-11-17.9"></script>
+<script src="appstore.js?v=2026-11-17.9"></script>
+<script src="policy-lib.js?v=2026-11-17.9"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
