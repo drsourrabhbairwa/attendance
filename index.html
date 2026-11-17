@@ -1443,22 +1443,75 @@ body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:calc(92
 .tk-av[style*="gradient"]{background:#0F766E!important}
 
 /* ── meeting recording ── */
-#recBar{position:fixed;left:0;right:0;top:0;z-index:100000;background:#B42318;color:#fff;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;font:600 14px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-#recBar i{width:10px;height:10px;border-radius:50%;background:#fff;animation:recPulse 1.2s ease-in-out infinite}
-#recBar span{flex:1;min-width:0}
-#recBar b{font-variant-numeric:tabular-nums}
-#recBar button{background:#fff;color:#B42318;border:0;border-radius:8px;padding:7px 14px;font:700 13px/1 system-ui,sans-serif;cursor:pointer}
-@keyframes recPulse{0%,100%{opacity:1}50%{opacity:.25}}
-@media (prefers-reduced-motion:reduce){#recBar i{animation:none}}
-body.rec-on{padding-top:calc(44px + env(safe-area-inset-top,0px))}
-.rec-sheet p{margin:0 0 10px;font-size:14px;line-height:1.5;color:var(--ink,#1f2937)}
-.rec-sheet .rec-say{background:#F0FDFA;border:1px solid #99F6E4;border-radius:10px;padding:10px 12px;font-size:13px;color:#115E59;margin-bottom:12px}
-.rec-sheet .rec-btns{display:flex;gap:8px;margin-top:6px}
-.rec-sheet .rec-btns button{flex:1;border-radius:10px;padding:12px;font:700 14px/1 system-ui,sans-serif;border:1px solid #D1D5DB;background:#fff;color:#111827;cursor:pointer}
-.rec-sheet .rec-btns button.go{background:#B42318;border-color:#B42318;color:#fff}
-.rec-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #EEF0F2;font-size:13px}
-.rec-row b{font-weight:600}.rec-row small{color:#6B7280;display:block}
-.rec-row audio{width:100%;margin-top:6px}
+#recBar{position:fixed;left:0;right:0;top:0;z-index:100000;background:#0F172A;color:#fff;display:flex;align-items:center;gap:10px;padding:calc(7px + env(safe-area-inset-top,0px)) 10px 7px 14px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer;box-shadow:0 6px 18px rgba(15,23,42,.28)}
+#recBar i{position:relative;width:8px;height:8px;border-radius:50%;background:#F04438;flex:none}
+#recBar i:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #F04438;animation:rcRing 1.6s ease-out infinite}
+#recBar span{flex:1;min-width:0;letter-spacing:.01em}
+#recBar b{font-variant-numeric:tabular-nums;font-weight:700;margin-left:4px;color:#FDA29B}
+#recBar button{background:#F04438;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+body.rec-on{padding-top:calc(40px + env(safe-area-inset-top,0px))}
+@keyframes rcRing{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+@keyframes rcSpin{to{transform:rotate(360deg)}}
+@keyframes rcBlink{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){#recBar i:after,.rc-badge i,.rc-spin{animation:none}}
+.rc{color:#0F172A;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.rc svg{display:block}
+.rc-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.rc-hd>div:not(.rc-ic){flex:1;min-width:0}
+.rc-ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:#FEF3F2;color:#B42318;flex:none}
+.rc-ic svg{width:22px;height:22px}
+.rc-ic.ok{background:#ECFDF3;color:#067647}.rc-ic.info{background:#EFF8FF;color:#175CD3}.rc-ic.teal{background:#F0FDFA;color:#0F766E}.rc-ic.big{width:60px;height:60px;border-radius:20px;margin:0 auto 12px}.rc-ic.big svg{width:28px;height:28px}
+.rc .rc-hd h3,.rc>h3{padding:0;text-align:left;text-indent:0}
+.rc-c h3{text-align:center!important}
+.rc h3{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.rc .rc-sub{text-align:left;padding:0;margin:3px 0 0;font-size:13px;color:#64748B;line-height:1.5}
+.rc-x{width:34px;height:34px;border-radius:50%;border:0;background:#F1F5F9;color:#475569;display:grid;place-items:center;cursor:pointer;flex:none}
+.rc-x svg{width:16px;height:16px}
+.rc-list{margin:2px 0 16px;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;background:#fff}
+.rc-li{display:flex;gap:12px;padding:12px 14px;align-items:flex-start}
+.rc-li+.rc-li{border-top:1px solid #EEF2F6}
+.rc-li svg{width:18px;height:18px;flex:none;margin-top:1px;color:#0F766E}
+.rc-li b{display:block;font-size:13.5px;font-weight:650}
+.rc-li span{display:block;font-size:12.5px;color:#64748B;line-height:1.45;margin-top:1px}
+.rc-btns{display:flex;gap:10px}
+.rc-btn{flex:1;min-height:50px;border-radius:15px;border:1px solid #E2E8F0;background:#fff;color:#0F172A;font-family:inherit;font-size:14.5px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.rc-btn svg{width:18px;height:18px}
+.rc-btn.rec{background:#B42318;border-color:#B42318;color:#fff;box-shadow:0 8px 18px rgba(180,35,24,.26)}
+.rc-btn.pri{background:#0F766E;border-color:#0F766E;color:#fff;box-shadow:0 8px 18px rgba(15,118,110,.22)}
+.rc-btn.dark{background:#0F172A;border-color:#0F172A;color:#fff}
+.rc-btn.sm{flex:none;min-height:40px;padding:0 16px;font-size:13px;border-radius:12px}
+.rc-c{text-align:center}
+.rc-c .rc-sub{text-align:center}
+.rc-live{text-align:center}
+.rc-badge{display:inline-flex;gap:7px;align-items:center;padding:5px 12px;border-radius:999px;background:#FEF3F2;color:#B42318;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.rc-badge i{width:7px;height:7px;border-radius:50%;background:#D92D20;animation:rcBlink 1.2s ease-in-out infinite}
+.rc-time{font-size:56px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1;margin:16px 0 4px}
+.rc-lv{display:flex;align-items:center;justify-content:center;gap:3px;height:60px;margin:10px 0 8px}
+.rc-lv b{width:4px;border-radius:2px;background:#D92D20;height:4px;opacity:.85;transition:height .12s}
+.rc-st{font-size:12.5px;color:#64748B;margin-bottom:16px}
+.rc-hint{font-size:12px;color:#94A3B8;margin:12px 0 0;line-height:1.5}
+.rc-spin{width:34px;height:34px;border-radius:50%;border:3px solid #E2E8F0;border-top-color:#0F766E;margin:6px auto 14px;animation:rcSpin .8s linear infinite}
+.rc .rc-field{margin:4px 0 16px!important;width:100%;box-sizing:border-box;padding:13px 14px;border:1.5px solid #E2E8F0;border-radius:14px;font-family:inherit;font-size:14.5px;color:#0F172A;background:#F8FAFC;margin:4px 0 14px;outline:0}
+.rc-field:focus{border-color:#0F766E;background:#fff}
+.rc-card{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px;border:1px solid #E2E8F0;border-radius:18px;background:#fff;margin-top:10px}
+.rc-date{width:48px;height:52px;border-radius:13px;background:#F1F5F9;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.rc-date b{font-size:19px;line-height:1;font-weight:700}
+.rc-date small{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#64748B;margin-top:4px;font-weight:600}
+.rc-info{flex:1;min-width:0}
+.rc-info b{display:block;font-size:14.5px;font-weight:650}
+.rc-info span{display:block;font-size:12.5px;color:#64748B;margin-top:2px}
+.rc-tag{display:inline-block;padding:1px 8px;border-radius:999px;background:#FFFAEB;color:#B54708;font-size:11px;font-weight:650;margin-left:6px;vertical-align:1px}
+.rc-play{width:44px;height:44px;border-radius:50%;border:0;background:#0F766E;color:#fff;display:grid;place-items:center;flex:none;cursor:pointer;box-shadow:0 6px 14px rgba(15,118,110,.25)}
+.rc-play svg{width:18px;height:18px}
+.rc-play[disabled]{background:#E2E8F0;color:#94A3B8;box-shadow:none}
+.rc-pl{flex-basis:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;background:#F0FDFA;border-radius:14px}
+.rc-pp{width:36px;height:36px;border-radius:50%;border:0;background:#0F766E;color:#fff;display:grid;place-items:center;flex:none;cursor:pointer}
+.rc-pp svg{width:15px;height:15px}
+.rc-pm{flex:1;min-width:0}
+.rc-bar{height:6px;border-radius:3px;background:#CCFBF1;overflow:hidden}
+.rc-bar i{display:block;height:100%;width:0;background:#0F766E;border-radius:3px}
+.rc-pt{display:flex;justify-content:space-between;font-size:11.5px;color:#475569;margin-top:6px;font-variant-numeric:tabular-nums}
+.rc-empty{text-align:center;padding:26px 8px 12px;color:#64748B;font-size:13.5px}
 
 </style>
 </head>
@@ -5423,23 +5476,43 @@ function openHelpVideos(){
 
 /* ── Meeting recording (phase 1): the employee starts and stops it; audio goes up in 15-minute parts ── */
 const REC_PART_MS=15*60*1000, REC_MAX_PARTS=6;
-let _rec=null;
+let _rec=null, _pl=null;
+const RC_IC={
+  mic:'<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  ear:'<path d="M7 9a5 5 0 0 1 10 0c0 3-3 3.5-3 6a2.5 2.5 0 0 1-5 0"/><path d="M10.5 9a1.5 1.5 0 0 1 3 0"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',
+  pause:'<path d="M8 5v14M16 5v14" stroke-width="3.2"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  alert:'<path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/>',
+  send:'<path d="M4 12l16-8-6 16-3-6.5z"/>',
+  headset:'<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>'
+};
+function rcI(n){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(RC_IC[n]||'')+'</svg>'; }
+function rcFmt(s){ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=String(s%60).padStart(2,'0'); return h?h+':'+String(m).padStart(2,'0')+':'+x:m+':'+x; }
 function recSupported(){ return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder); }
 function recKey(){ return 'amk_rec_ok_'+((currentEmp&&currentEmp.id)||''); }
 function recConsentOk(){ try{ return localStorage.getItem(recKey())==='1'; }catch(e){ return false; } }
-function recMsg(t){ fmSheet('<div class="rec-sheet"><h3 style="margin:0 0 8px">🎙 Record a meeting</h3><p>'+t+'</p><div class="rec-btns"><button onclick="fmClose()">OK</button></div></div>'); }
+function recMsg(t,title,kind){   // a small result sheet: kind 'err' (default), 'ok' or 'info'
+  const k=kind||'info', ic=k==='ok'?'check':k==='err'?'alert':'mic', cl=k==='ok'?'ok':k==='err'?'':'info';
+  fmSheet('<div class="rc rc-c"><div class="rc-ic big '+cl+'">'+rcI(ic)+'</div><h3>'+hx(title||'Recording')+'</h3><p class="rc-sub" style="margin:6px 0 18px">'+t+'</p><div class="rc-btns"><button class="rc-btn dark" onclick="fmClose()">OK</button></div></div>');
+}
 function recOpen(){
-  if(_rec&&_rec.on) return recStopAsk();
+  if(_rec&&_rec.on) return recPanel();
   if(!currentEmp) return;
-  if(!recSupported()) return recMsg('Recording is not supported on this phone or browser. Update the Amitek app and try again.');
-  if(_rec&&_rec.busy) return recMsg('The last recording is still being saved. Keep the app open and try again in a moment.');
+  if(!recSupported()) return recMsg('Recording is not supported on this phone or browser. Update the Amitek app and try again.','Not supported','err');
+  if(_rec&&_rec.busy) return recSaving();
   if(!recConsentOk()){
-    fmSheet('<div class="rec-sheet"><h3 style="margin:0 0 8px">🎙 Record this meeting?</h3>'
-      +'<p>The sound of this meeting is recorded on your phone and saved on the Amitek server, so the minutes of meeting can be written later.</p>'
-      +'<p>Who can listen: you, and the admin or supervisor you report to. Nobody else.</p>'
-      +'<div class="rec-say"><b>Tell the client first:</b> “We are recording this meeting for the minutes.”</div>'
-      +'<p style="font-size:12px;color:#6B7280">Keep the screen on while recording; it stops if the phone locks. A red bar shows at the top the whole time. You can stop any time.</p>'
-      +'<div class="rec-btns"><button onclick="fmClose()">Not now</button><button class="go" onclick="recAccept()">Start recording</button></div></div>');
+    fmSheet('<div class="rc"><div class="rc-hd"><div class="rc-ic">'+rcI('mic')+'</div><div><h3>Record this meeting?</h3><p class="rc-sub">The sound is saved on the Amitek server so the minutes can be written later.</p></div></div>'
+      +'<div class="rc-list">'
+      +'<div class="rc-li">'+rcI('ear')+'<div><b>Who can listen</b><span>You, and the admin or supervisor you report to. Nobody else.</span></div></div>'
+      +'<div class="rc-li">'+rcI('chat')+'<div><b>Tell the client first</b><span>“We are recording this meeting for the minutes.”</span></div></div>'
+      +'<div class="rc-li">'+rcI('phone')+'<div><b>Keep the screen on</b><span>It stops if the phone locks. A bar shows at the top the whole time; stop any time.</span></div></div>'
+      +'</div><div class="rc-btns"><button class="rc-btn" onclick="fmClose()">Not now</button><button class="rc-btn rec" onclick="recAccept()">'+rcI('mic')+'Start recording</button></div></div>');
     return;
   }
   recStartNow();
@@ -5447,20 +5520,21 @@ function recOpen(){
 function recAccept(){ try{ localStorage.setItem(recKey(),'1'); }catch(e){} recStartNow(); }
 function recErr(e){
   const n=(e&&e.name)||'', m=(e&&e.message)||'';
-  if(/Unknown action/i.test(m)) return recMsg('The server is older than this app. Ask for the backend update.');
-  recMsg(n==='NotAllowedError'||n==='PermissionDeniedError'?'The microphone is blocked. Open Phone settings → Apps → Amitek → Permissions → Microphone → Allow, then try again.'
-    :n==='NotFoundError'?'No microphone was found on this phone.'
-    :n==='NotReadableError'||n==='TrackStartError'?'The microphone is being used by another app or a call. Close it and try again.'
-    :hx(m||'Could not start the recording. Try again.'));
+  if(/Unknown action/i.test(m)) return recMsg('The server is older than this app. Ask for the backend update.','Server update needed','err');
+  if(n==='NotAllowedError'||n==='PermissionDeniedError') return recMsg('Open Phone settings → Apps → Amitek → Permissions → Microphone → Allow, then try again.','Microphone is blocked','err');
+  if(n==='NotFoundError') return recMsg('No microphone was found on this phone.','No microphone','err');
+  if(n==='NotReadableError'||n==='TrackStartError') return recMsg('Another app or a call is using it. Close that and try again.','Microphone is busy','err');
+  recMsg(hx(m||'Could not start the recording. Try again.'),'Could not record','err');
 }
 async function recStartNow(){
   fmClose();
   let st; try{ st=await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ return recErr(e); }
   let id; try{ const r=await api('recStart',{empId:currentEmp.id,date:todayStr(),meetingSeq:Number(activeMeetingSeq)||0,consent:true}); id=r&&r.id; if(!id) throw new Error('Could not start the recording.'); }
   catch(e){ st.getTracks().forEach(t=>t.stop()); return recErr(e); }
-  _rec={on:true,id:id,empId:currentEmp.id,st:st,n:0,parts:[],t0:Date.now(),stopping:false,busy:false,mr:null,roll:0,tick:0,retry:0,wl:null};
-  recPart(); recBar(true); recLock();
-  _rec.tick=setInterval(recTick,500);
+  _rec={on:true,id:id,empId:currentEmp.id,st:st,n:0,parts:[],t0:Date.now(),stopping:false,busy:false,mr:null,roll:0,tick:0,retry:0,wl:null,ac:null,an:null,buf:null,hist:[]};
+  try{ const AC=window.AudioContext||window.webkitAudioContext; if(AC){ const r=_rec; r.ac=new AC(); const src=r.ac.createMediaStreamSource(st); r.an=r.ac.createAnalyser(); r.an.fftSize=256; src.connect(r.an); r.buf=new Uint8Array(r.an.fftSize); } }catch(e){}
+  recPart(); recBar(true); recLock(); recPanel();
+  _rec.tick=setInterval(recTick,120);
 }
 function recPart(){   // one MediaRecorder per ~15 minutes: each finished part is uploaded at once, so a crash loses at most the last part
   const r=_rec; if(!r) return;
@@ -5475,33 +5549,55 @@ function recPart(){   // one MediaRecorder per ~15 minutes: each finished part i
   };
   r.mr=mr; r.roll=Date.now()+REC_PART_MS; mr.start(1000);
 }
+function recLevel(r){
+  if(!r.an) return 0.08;
+  try{ r.an.getByteTimeDomainData(r.buf); let s=0; for(let i=0;i<r.buf.length;i++){ const v=(r.buf[i]-128)/128; s+=v*v; } return Math.min(1,Math.sqrt(s/r.buf.length)*3.4); }catch(e){ return 0.08; }
+}
+function recStatus(r){
+  const sent=r.parts.filter(p=>p.sent).length, up=r.parts.length-sent;
+  return r.parts.length?sent+' part'+(sent===1?'':'s')+' saved'+(up?' · '+up+' uploading':''):'Saved to the server every 15 minutes';
+}
 function recTick(){
-  const r=_rec; if(!r) return;
-  const s=Math.round((Date.now()-r.t0)/1000), el=document.getElementById('recT'); if(el) el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
-  if(r.on&&!r.stopping&&Date.now()>=r.roll){ try{ r.mr.stop(); }catch(e){} }   // the part ended: onstop uploads it and starts the next
+  const r=_rec; if(!r||!r.on) return;
+  const s=Math.round((Date.now()-r.t0)/1000), t=rcFmt(s);
+  r.hist.push(recLevel(r)); if(r.hist.length>32) r.hist.shift();
+  let el=document.getElementById('recBarT'); if(el) el.textContent=t;
+  el=document.getElementById('rcT'); if(el) el.textContent=t;
+  el=document.getElementById('rcSt'); if(el) el.textContent=recStatus(r);
+  const lv=document.getElementById('rcLv'); if(lv){ const bs=lv.children, off=32-r.hist.length; for(let i=0;i<bs.length;i++){ const v=i<off?0:r.hist[i-off]; bs[i].style.height=(4+Math.round(v*52))+'px'; } }
+  if(!r.stopping&&Date.now()>=r.roll){ try{ r.mr.stop(); }catch(e){} }   // the part ended: onstop uploads it and starts the next
 }
 function recBar(on){
   let b=document.getElementById('recBar');
   if(!on){ if(b) b.remove(); document.body.classList.remove('rec-on'); return; }
-  if(!b){ b=document.createElement('div'); b.id='recBar'; b.setAttribute('role','status'); document.body.appendChild(b); }
-  b.innerHTML='<i aria-hidden="true"></i><span>Recording meeting · <b id="recT">0:00</b></span><button type="button" onclick="recStopAsk()">Stop</button>';
+  if(!b){ b=document.createElement('div'); b.id='recBar'; b.setAttribute('role','status'); b.onclick=()=>recPanel(); document.body.appendChild(b); }
+  b.innerHTML='<i aria-hidden="true"></i><span>Recording<b id="recBarT">0:00</b></span><button type="button" onclick="event.stopPropagation();recPanel()">Stop</button>';
   document.body.classList.add('rec-on');
+}
+function recPanel(){   // the live screen: timer, sound level, stop. Tapping outside only minimises it; recording goes on
+  const r=_rec; if(!r||!r.on) return;
+  let bars=''; for(let i=0;i<32;i++) bars+='<b></b>';
+  fmSheet('<div class="rc rc-live"><span class="rc-badge"><i></i>Recording</span><div class="rc-time" id="rcT">0:00</div><div class="rc-lv" id="rcLv">'+bars+'</div><div class="rc-st" id="rcSt">'+hx(recStatus(r))+'</div>'
+    +'<div class="rc-btns"><button class="rc-btn" onclick="fmClose()">'+rcI('down')+'Minimise</button><button class="rc-btn rec" onclick="recStop()">'+rcI('stop')+'Stop &amp; save</button></div>'
+    +'<p class="rc-hint">Keep the screen on while recording. You can minimise and keep using the app.</p></div>');
+  recTick();
 }
 async function recLock(){ try{ if(navigator.wakeLock&&_rec&&_rec.on) _rec.wl=await navigator.wakeLock.request('screen'); }catch(e){} }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&_rec&&_rec.on) recLock(); });
 window.addEventListener('beforeunload',e=>{ if(_rec&&(_rec.on||_rec.busy)){ e.preventDefault(); e.returnValue=''; } });
-function recStopAsk(){
-  fmSheet('<div class="rec-sheet"><h3 style="margin:0 0 8px">Stop the recording?</h3><p>The audio is saved and kept for your admin.</p><div class="rec-btns"><button onclick="fmClose()">Keep recording</button><button class="go" onclick="recStop()">Stop &amp; save</button></div></div>');
+function recSaving(){
+  fmSheet('<div class="rc rc-c"><div class="rc-spin"></div><h3>Saving your recording</h3><p class="rc-sub" id="rcDs" style="margin:6px 0 4px">Uploading the audio. Keep the app open.</p></div>');
 }
 function recStop(){
-  fmClose(); const r=_rec; if(!r||!r.on) return;
-  r.stopping=true;
+  const r=_rec; if(!r||!r.on) return;
+  recSaving(); r.stopping=true;
   try{ r.mr.stop(); }catch(e){ recEnd(); recFlush(); }
 }
 function recEnd(){   // the microphone is released; what is left is only uploading
   const r=_rec; if(!r||!r.on) return;
   r.on=false; r.busy=true; clearInterval(r.tick);
   try{ r.st.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ if(r.ac) r.ac.close(); }catch(e){}
   try{ if(r.wl) r.wl.release(); }catch(e){}
   recBar(false);
 }
@@ -5519,51 +5615,83 @@ async function recFlush(){   // upload every part that is not up yet, in order; 
       await api('recFinish',{empId:r.empId,id:r.id,parts:r.parts.map(p=>({n:p.n,size:p.size,dur:p.dur}))});
       r.busy=false; if(_rec===r) _rec=null; recDone(r);
     }
-  }catch(e){ clearTimeout(r.retry); r.retry=setTimeout(()=>{ r.flushing=false; recFlush(); },20000); r.flushing=false; return; }
+  }catch(e){
+    clearTimeout(r.retry); r.retry=setTimeout(()=>{ r.flushing=false; recFlush(); },20000); r.flushing=false;
+    const d=document.getElementById('rcDs'); if(d) d.textContent='No network right now. Retrying automatically. Keep the app open.';
+    return;
+  }
   r.flushing=false;
 }
 function recDone(r){
-  const mins=Math.max(1,Math.round(r.parts.reduce((t,p)=>t+p.dur,0)/60));
-  recMsg('Saved: '+mins+' min of audio. Your admin can listen to it.');
+  const mins=Math.max(1,Math.round(r.parts.reduce((t,p)=>t+p.dur,0)/60)), n=r.parts.length;
+  fmSheet('<div class="rc rc-c"><div class="rc-ic big ok">'+rcI('check')+'</div><h3>Recording saved</h3><p class="rc-sub" style="margin:6px 0 18px">'+mins+' min · '+n+' part'+(n===1?'':'s')+'. Your admin can listen to it.</p><div class="rc-btns"><button class="rc-btn dark" onclick="fmClose()">Done</button></div></div>');
 }
 
 /* admin side: ask somebody to record, and listen to what was recorded */
 function recAsk(id){
   const e=(_D.employees||[]).find(x=>String(x.id)===String(id))||{id:id,name:id};
-  fmSheet('<div class="rec-sheet"><h3 style="margin:0 0 8px">🎙 Ask '+hx(e.name||id)+' to record</h3><p>They get a notice on their phone and decide on their own. Nothing starts without their tap.</p>'
-    +'<input id="recAskNote" maxlength="140" placeholder="e.g. Client meeting at 3 pm" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #D1D5DB;border-radius:10px;font:inherit;margin-bottom:8px">'
-    +'<div class="rec-btns"><button onclick="fmClose()">Cancel</button><button class="go" onclick="recAskSend(\''+esc(id)+'\')">Send request</button></div></div>');
+  fmSheet('<div class="rc"><div class="rc-hd"><div class="rc-ic teal">'+rcI('mic')+'</div><div><h3>Ask '+hx(e.name||id)+' to record</h3><p class="rc-sub">They get a notice on their phone and decide on their own. Nothing starts without their tap.</p></div></div>'
+    +'<input id="recAskNote" class="rc-field" maxlength="140" placeholder="Add a note, e.g. Client meeting at 3 pm">'
+    +'<div class="rc-btns"><button class="rc-btn" onclick="fmClose()">Cancel</button><button class="rc-btn pri" onclick="recAskSend(\''+esc(id)+'\')">'+rcI('send')+'Send request</button></div></div>');
 }
 async function recAskSend(id){
   const note=(document.getElementById('recAskNote')||{}).value||'';
-  try{ await api('recAsk',{empId:id,note:note}); recMsg('Request sent.'); }catch(e){ recErr(e); }
+  try{ await api('recAsk',{empId:id,note:note}); recMsg('They will see it on their phone and can start recording when ready.','Request sent','ok'); }catch(e){ recErr(e); }
 }
 async function recListOpen(id){
-  fmSheet('<div class="rec-sheet"><h3 style="margin:0 0 8px">🎧 Recordings</h3><p>Loading…</p></div>');
+  recStopPlayer();
+  const e=(_D.employees||[]).find(x=>String(x.id)===String(id))||{id:id,name:id};
+  const head=(extra)=>'<div class="rc-hd"><div class="rc-ic teal">'+rcI('headset')+'</div><div><h3>Recordings</h3><p class="rc-sub">'+hx(e.name||id)+(extra||'')+'</p></div><button class="rc-x" onclick="recStopPlayer();fmClose()" aria-label="Close">'+rcI('x')+'</button></div>';
+  fmSheet('<div class="rc">'+head()+'<div class="rc-empty"><div class="rc-spin"></div>Loading…</div></div>',true);
   try{
-    const l=await api('recList',{empId:id});
-    const rows=(l||[]).map(r=>'<div class="rec-row"><div style="flex:1"><b>'+hx(r.date)+(r.meetingSeq?' · meeting '+hx(r.meetingSeq):'')+'</b><small>'+Math.max(1,Math.round((r.dur||0)/60))+' min · '+(r.status==='done'?'saved':'not finished')+'</small><div id="recP_'+hx(r.id)+'"></div></div>'+(r.status==='done'&&(r.parts||[]).length?'<button class="fm-chip" onclick="recPlay(\''+hx(r.id)+'\','+(r.parts||[]).length+')">▶ Play</button>':'')+'</div>').join('');
-    fmSheet('<div class="rec-sheet"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🎧 Recordings</h3><button class="fm-chip" onclick="fmClose()">Close</button></div>'+(rows||'<p style="margin-top:10px">No recordings yet.</p>')+'</div>',true);
-    window._recL=l;
-  }catch(e){ recErr(e); }
+    const l=await api('recList',{empId:id}); window._recL=l||[];
+    const cards=window._recL.map(r=>{
+      const d=new Date(String(r.date)+'T00:00:00'), ok=!isNaN(d), n=(r.parts||[]).length, done=r.status==='done'&&n;
+      return '<div class="rc-card"><div class="rc-date"><b>'+(ok?d.getDate():'–')+'</b><small>'+(ok?d.toLocaleString('en',{month:'short'}):'')+'</small></div>'
+        +'<div class="rc-info"><b>'+(r.meetingSeq?'Meeting '+hx(r.meetingSeq):'Recording')+(r.status==='done'?'':'<em class="rc-tag" style="font-style:normal">Not finished</em>')+'</b><span>'+Math.max(1,Math.round((r.dur||0)/60))+' min'+(n?' · '+n+' part'+(n===1?'':'s'):'')+'</span></div>'
+        +'<button class="rc-play" '+(done?'':'disabled ')+'onclick="recPlay(\''+hx(r.id)+'\')" aria-label="Play">'+rcI('play')+'</button><div id="recP_'+hx(r.id)+'" style="flex-basis:100%;display:contents"></div></div>';
+    }).join('');
+    fmSheet('<div class="rc">'+head(' · '+window._recL.length+' recording'+(window._recL.length===1?'':'s'))+(cards||'<div class="rc-empty"><div class="rc-ic big info">'+rcI('mic')+'</div>No recordings yet.</div>')+'</div>',true);
+  }catch(x){ recErr(x); }
 }
-async function recPlay(rid,total){
+function recStopPlayer(){ if(_pl){ try{ _pl.au.pause(); _pl.au.src=''; }catch(e){} try{ if(_pl.url) URL.revokeObjectURL(_pl.url); }catch(e){} _pl=null; } }
+function recToggle(){ if(!_pl) return; if(_pl.au.paused) _pl.au.play().catch(()=>{}); else _pl.au.pause(); }
+function recPlayPaint(){
+  const p=_pl; if(!p) return;
+  const cur=p.before[p.i]+(p.au.currentTime||0), tot=p.total||1;
+  const f=document.getElementById('rcPf'); if(f) f.style.width=Math.min(100,cur/tot*100)+'%';
+  const c=document.getElementById('rcPc'); if(c) c.textContent=rcFmt(cur)+' / '+rcFmt(tot);
+  const b=document.getElementById('rcPb'); if(b) b.innerHTML=rcI(p.au.paused?'play':'pause');
+}
+async function recPlay(rid){
+  if(_pl&&_pl.rid===rid) return recToggle();
+  const rec=(window._recL||[]).find(x=>x.id===rid); if(!rec) return;
+  recStopPlayer();
+  Array.prototype.forEach.call(document.querySelectorAll('[id^="recP_"]'),b=>{ b.innerHTML=''; });
   const box=document.getElementById('recP_'+rid); if(!box) return;
-  const rec=(window._recL||[]).find(x=>x.id===rid), ns=((rec&&rec.parts)||[]).map(p=>p.n).sort((a,b)=>a-b);
-  box.innerHTML='<audio controls autoplay></audio><small id="recPN_'+rid+'"></small>';
-  const au=box.querySelector('audio'), lab=document.getElementById('recPN_'+rid); let i=0;
+  const ps=(rec.parts||[]).slice().sort((a,b)=>a.n-b.n); if(!ps.length) return;
+  const durs=ps.map(p=>Number(p.dur)||Math.round((rec.dur||0)/ps.length)), before=[]; let acc=0; durs.forEach(d=>{ before.push(acc); acc+=d; });
+  const au=new Audio(); _pl={rid:rid,au:au,i:0,ps:ps,before:before,total:acc,url:null};
+  box.style.display='block'; box.style.flexBasis='100%';
+  box.innerHTML='<div class="rc-pl"><button class="rc-pp" id="rcPb" onclick="recToggle()" aria-label="Play or pause">'+rcI('pause')+'</button><div class="rc-pm"><div class="rc-bar"><i id="rcPf"></i></div><div class="rc-pt"><span id="rcPn">'+(ps.length>1?'Part 1 of '+ps.length:'')+'</span><span id="rcPc">0:00 / '+rcFmt(acc)+'</span></div></div></div>';
+  const me=_pl;
   async function load(){
-    if(i>=ns.length) return;
-    if(lab) lab.textContent=ns.length>1?'Part '+(i+1)+' of '+ns.length:'';
+    if(_pl!==me) return;
+    if(me.i>=ps.length){ me.i=ps.length-1; recPlayPaint(); return; }
+    const lab=document.getElementById('rcPn'); if(lab&&ps.length>1) lab.textContent='Part '+(me.i+1)+' of '+ps.length;
     try{
-      const f=await api('recGet',{id:rid,n:ns[i]},{timeout:120000});
+      const f=await api('recGet',{id:rid,n:ps[me.i].n},{timeout:120000});
+      if(_pl!==me) return;
       const bin=atob(f.data), a=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) a[k]=bin.charCodeAt(k);
-      au.src=URL.createObjectURL(new Blob([a],{type:f.mime||'audio/webm'})); au.play().catch(()=>{});
-    }catch(e){ if(lab) lab.textContent=e.message; }
+      if(me.url) URL.revokeObjectURL(me.url);
+      me.url=URL.createObjectURL(new Blob([a],{type:f.mime||'audio/webm'})); au.src=me.url; au.play().catch(()=>{});
+    }catch(e){ const l=document.getElementById('rcPn'); if(l) l.textContent=e.message||'Could not load this part'; }
   }
-  au.onended=()=>{ i++; load(); };
+  au.ontimeupdate=recPlayPaint; au.onplay=recPlayPaint; au.onpause=recPlayPaint;
+  au.onended=()=>{ me.i++; if(me.i<ps.length) load(); else { me.i=ps.length-1; recPlayPaint(); } };
   load();
 }
+
 async function openPhoneHelp(){
   const kind=NATIVE?'app':phoneKind(), all=NATIVE?['app']:['android','ios-safari','ios-chrome'];
   const order=kind==='other'?all:[kind].concat(all.filter(k=>k!==kind));
