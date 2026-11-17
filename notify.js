@@ -139,7 +139,7 @@
   function itemHtml(n) {
     var m = meta(n), go = goOf(n);
     return '<div class="amk-item' + (n.readAt ? '' : ' unread') + '" data-id="' + hx(n.id) + '" data-k="' + hx(n.kind) + '"' + (go ? ' data-go="' + go + '"' : '') + ' role="button" tabindex="0">' +
-      '<i class="amk-ic amk-k-' + m.c + '" aria-hidden="true">' + m.i + '</i><div class="amk-tx"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' + leaveHtml(n) +
+      '<i class="amk-ic amk-k-' + m.c + '" aria-hidden="true">' + m.i + '</i><div class="amk-tx"><b>' + hx(n.title) + '</b><span>' + hx(n.body) + '</span>' + leaveHtml(n) + recHtml(n) +
       '<small>' + hx(ago(n)) + ' · ' + hx(m.l) + (go ? ' · <span class="amk-go">Open ›</span>' : '') + '</small></div><em class="amk-dot" aria-label="Unread"></em></div>';
   }
   function paintSheet() {
@@ -167,11 +167,13 @@
       el.onclick = act;
       el.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); act(); } };
     });
+    Array.prototype.forEach.call(S.sheet.querySelectorAll('[data-rec]'), function (b) { b.onclick = function (ev) { ev.stopPropagation(); closeSheet(); try { if (typeof recOpen === 'function') recOpen(); } catch (e) { } }; });
     Array.prototype.forEach.call(S.sheet.querySelectorAll('[data-leave]'), function (b) { b.onclick = function (ev) { ev.stopPropagation(); leaveAnswer(b.getAttribute('data-id'), b.getAttribute('data-leave') === 'yes'); }; });
   }
   /* "You seem to have left at 06:42 PM": two buttons while the prompt is today's and still open */
   function isToday(n) { var t = ''; try { t = typeof todayStr === 'function' ? todayStr() : ''; } catch (e) { } return !t || (String(n.id || '').split('|')[2] || String(n.createdAt || '').slice(0, 10)) === t; }
   function leaveOpen(n) { return n.kind === 'leftOffice' && !n.state && isToday(n); }
+  function recHtml(n) { return n.kind === 'rec' && isToday(n) ? '<div class="amk-act"><button type="button" class="amk-btn pri" data-rec="1">🎙 Record now</button></div>' : ''; }
   function leaveHtml(n) {
     if (n.kind !== 'leftOffice') return '';
     var st = String(n.state || ''), err = n._err ? '<div class="amk-note err">' + hx(n._err) + '</div>' : '';
