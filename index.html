@@ -1497,6 +1497,12 @@ body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transp
 .st-row .org-act{min-height:40px;padding:0 14px;white-space:nowrap}
 .fm-card .fm-rec{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:10px;border:1.5px solid var(--accent);border-radius:12px;background:rgba(15,118,110,.06);color:var(--accent);font-size:14px;font-weight:700;text-decoration:none}
 .fm-card .fm-rec.on{color:#B91C1C;border-color:#B91C1C;background:rgba(185,28,28,.06)}
+/* empty announcements: one slim row instead of a big banner, so the first task is higher up */
+body .tk-hero.slim{padding:8px 12px;gap:10px;margin-bottom:2px;background:rgba(15,118,110,.08)!important;color:var(--ink,#0F172A);border:1px solid rgba(15,118,110,.18)!important;box-shadow:none!important}
+body .tk-hero.slim .ic{width:34px;height:34px;border-radius:11px;background:rgba(15,118,110,.14);border:0;color:#0F766E}
+body .tk-hero.slim .ic svg{width:18px;height:18px}
+body .tk-hero.slim .t1{font-size:14px}
+body .tk-hero.slim .t2{font-size:12.5px;opacity:.7;margin-top:0}
 /* work report pickers */
 .wr-pk{position:relative}
 .wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
@@ -8305,10 +8311,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-18.4';</script>
-<script src="notify.js?v=2026-11-18.4"></script>
-<script src="appstore.js?v=2026-11-18.4"></script>
-<script src="policy-lib.js?v=2026-11-18.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-18.5';</script>
+<script src="notify.js?v=2026-11-18.5"></script>
+<script src="appstore.js?v=2026-11-18.5"></script>
+<script src="policy-lib.js?v=2026-11-18.5"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -9236,7 +9242,7 @@ function tkRows(){
   const sm=document.getElementById('tkSum'); if(sm){ const c=k=>tkFiltered(k,'').length, card=(k,n,l,cl)=>`<button type="button" class="tk-sc ${cl}${_tk.tab===k?' on':''}" onclick="_tk.tab=_tk.tab==='${k}'?'all':'${k}';tkListPaint()"><b>${n}</b><span>${l}</span></button>`;
     sm.innerHTML=card('me',c('me'),'For me','me')+card('today',c('today'),'Due today','td')+card('late',c('late'),'Late','lt')+card('given',c('given'),'Given by me','gv'); }
   const ann=_tk.ann, unseen=ann.filter(a=>!a.seen).length, last=ann[0], list=tkFiltered();
-  const hero=`<button class="tk-hero${_tk.cur==='ann'?' on':''}" onclick="tkOpenAnn()"><span class="ic">${ti('mega',24)}</span><span class="mid"><div class="t1">Announcements</div><div class="t2 ell">${last?hx((last.title||last.text||'Attachment').slice(0,80)):(_tk.admin?'Post news for everyone':'Nothing posted yet')}</div></span>${unseen?`<span class="tk-bd">${unseen}</span>`:''}</button>`;
+  const hero=`<button class="tk-hero${_tk.cur==='ann'?' on':''}${last||unseen?'':' slim'}" onclick="tkOpenAnn()"><span class="ic">${ti('mega',24)}</span><span class="mid"><div class="t1">Announcements</div><div class="t2 ell">${last?hx((last.title||last.text||'Attachment').slice(0,80)):(_tk.admin?'Post news for everyone':'Nothing posted yet')}</div></span>${unseen?`<span class="tk-bd">${unseen}</span>`:''}</button>`;
   let body='';
   const rowOf=t=>{ try{ return tkRow(t); }catch(e){ return ''; } };
   if(!list.length&&_tk.loading&&!_tk.q) body=`<div class="tk-empty"><div class="eic">${ti('chat')}</div><b>Loading your tasks…</b></div>`;
