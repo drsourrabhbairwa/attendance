@@ -5611,6 +5611,12 @@ async function recMic(){
     try{ return await navigator.mediaDevices.getUserMedia(tries[i]); }
     catch(e){ last=e; const n=(e&&e.name)||''; if(!(n==='NotReadableError'||n==='TrackStartError'||n==='AbortError')) throw e; }
   }
+  // last resort: ask for each microphone by id, phone's own mic first (a Bluetooth headset without a mic can block the default one)
+  try{
+    const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput'&&d.deviceId&&d.deviceId!=='default'&&d.deviceId!=='communications');
+    devs.sort((x,y)=>(/blue|bt|headset|hands/i.test(x.label)?1:0)-(/blue|bt|headset|hands/i.test(y.label)?1:0));
+    for(const d of devs){ try{ return await navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:d.deviceId}}}); }catch(e){ last=e; } }
+  }catch(e){}
   throw last;
 }
 async function recStartNow(){
@@ -8299,10 +8305,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-18.3';</script>
-<script src="notify.js?v=2026-11-18.3"></script>
-<script src="appstore.js?v=2026-11-18.3"></script>
-<script src="policy-lib.js?v=2026-11-18.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-18.4';</script>
+<script src="notify.js?v=2026-11-18.4"></script>
+<script src="appstore.js?v=2026-11-18.4"></script>
+<script src="policy-lib.js?v=2026-11-18.4"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
