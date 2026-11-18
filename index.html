@@ -1495,6 +1495,8 @@ body .amk-bar .amk-btn:first-child:not(:last-child)+.amk-btn{border-color:transp
 .st-row .ph-row{flex:1;min-width:0;align-items:center}
 .st-row .emp-acts{flex:0 0 auto}
 .st-row .org-act{min-height:40px;padding:0 14px;white-space:nowrap}
+.fm-card .fm-rec{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:10px;border:1.5px solid var(--accent);border-radius:12px;background:rgba(15,118,110,.06);color:var(--accent);font-size:14px;font-weight:700;text-decoration:none}
+.fm-card .fm-rec.on{color:#B91C1C;border-color:#B91C1C;background:rgba(185,28,28,.06)}
 /* work report pickers */
 .wr-pk{position:relative}
 .wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
@@ -8285,10 +8287,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-17.10';</script>
-<script src="notify.js?v=2026-11-17.10"></script>
-<script src="appstore.js?v=2026-11-17.10"></script>
-<script src="policy-lib.js?v=2026-11-17.10"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-18.1';</script>
+<script src="notify.js?v=2026-11-18.1"></script>
+<script src="appstore.js?v=2026-11-18.1"></script>
+<script src="policy-lib.js?v=2026-11-18.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
@@ -8776,7 +8778,8 @@ const FM_VERTICALS=['Seamless Floorings','Waterproofing','Road Marking Paint','H
 let _fm={seq:0,id:'',reason:'',result:'',vertical:'',busy:false,t:null,arrived:{}};
 let _fmW={id:null,seq:0};
 function fmCust(m){ return m.customerName?`<div class="fm-cust"><div><b>${hx(m.customerName)}</b><span>${hx(m.reason||'')}${m.address?' · '+hx(m.address):''}</span></div>${m.phone?`<a href="tel:${hx(m.phone)}" title="Call">📞</a>`:''}</div>`:''; }
-const fmQ=m=>m.customerId?`<button class="fm-link" onclick="fmQuote('${esc(m.customerId)}','${esc(m.customerName)}')">🧾 Record a quotation</button>`:'';
+const fmRecBtn=()=>`<button class="fm-link fm-rec${_rec&&_rec.on?' on':''}" onclick="recOpen()">${_rec&&_rec.on?'⏺ Recording · tap to open':'🎤 Record this meeting'}</button>`;
+const fmQ=m=>(m.customerId?`<button class="fm-link" onclick="fmQuote('${esc(m.customerId)}','${esc(m.customerName)}')">🧾 Record a quotation</button>`:'')+fmRecBtn();
 function fmCardHtml(m){
   const n=m.seq, st=m.state==='done'?'done':m.state==='in_meeting'?'in':'go';
   const noCust=!m.customerId&&wmOn()&&m.purpose&&!wtClient('field',m.purpose);   // the chosen type does not ask for a customer: it is ready to start
