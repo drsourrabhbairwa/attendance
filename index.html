@@ -5598,7 +5598,7 @@ function recErr(e){
   if(/Unknown action/i.test(m)) return recMsg('The server is older than this app. Ask for the backend update.','Server update needed','err');
   if(n==='NotAllowedError'||n==='PermissionDeniedError') return recMsg('Open Phone settings → Apps → Amitek → Permissions → Microphone → Allow, then try again.','Microphone is blocked','err');
   if(n==='NotFoundError') return recMsg('No microphone was found on this phone.','No microphone','err');
-  if(n==='NotReadableError'||n==='TrackStartError') return recMsg('Something else is holding the microphone — a call, Google Assistant, a screen recorder, or a volume / sound-effect app. Close it, wait a few seconds and tap Record again. If it keeps happening, close the Amitek app fully and reopen it.','Microphone is busy','err');
+  if(n==='NotReadableError'||n==='TrackStartError') return recMsg('Something else is holding the microphone — a call, Google Assistant, a screen recorder, or a volume / sound-effect app. Close it, wait a few seconds and tap Record again. If it keeps happening, close the Amitek app fully and reopen it.<div style="margin-top:8px;font-size:11px;color:#94A3B8">Technical: '+hx(n+(m?' — '+m.slice(0,90):''))+'</div>','Microphone is busy','err');
   recMsg(hx(m||'Could not start the recording. Try again.'),'Could not record','err');
 }
 /* Android often reports "microphone busy" for a moment (call, assistant, audio-effect apps): wait and retry, with plainer settings the second time */
@@ -8299,10 +8299,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-18.2';</script>
-<script src="notify.js?v=2026-11-18.2"></script>
-<script src="appstore.js?v=2026-11-18.2"></script>
-<script src="policy-lib.js?v=2026-11-18.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-18.3';</script>
+<script src="notify.js?v=2026-11-18.3"></script>
+<script src="appstore.js?v=2026-11-18.3"></script>
+<script src="policy-lib.js?v=2026-11-18.3"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
