@@ -5598,12 +5598,24 @@ function recErr(e){
   if(/Unknown action/i.test(m)) return recMsg('The server is older than this app. Ask for the backend update.','Server update needed','err');
   if(n==='NotAllowedError'||n==='PermissionDeniedError') return recMsg('Open Phone settings → Apps → Amitek → Permissions → Microphone → Allow, then try again.','Microphone is blocked','err');
   if(n==='NotFoundError') return recMsg('No microphone was found on this phone.','No microphone','err');
-  if(n==='NotReadableError'||n==='TrackStartError') return recMsg('Another app or a call is using it. Close that and try again.','Microphone is busy','err');
+  if(n==='NotReadableError'||n==='TrackStartError') return recMsg('Something else is holding the microphone — a call, Google Assistant, a screen recorder, or a volume / sound-effect app. Close it, wait a few seconds and tap Record again. If it keeps happening, close the Amitek app fully and reopen it.','Microphone is busy','err');
   recMsg(hx(m||'Could not start the recording. Try again.'),'Could not record','err');
+}
+/* Android often reports "microphone busy" for a moment (call, assistant, audio-effect apps): wait and retry, with plainer settings the second time */
+async function recMic(){
+  if(_rec&&!_rec.on&&_rec.st){ try{ _rec.st.getTracks().forEach(t=>t.stop()); }catch(e){} }
+  const tries=[{audio:true},{audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}},{audio:true}], waits=[0,700,1500];
+  let last;
+  for(let i=0;i<tries.length;i++){
+    if(waits[i]) await new Promise(r=>setTimeout(r,waits[i]));
+    try{ return await navigator.mediaDevices.getUserMedia(tries[i]); }
+    catch(e){ last=e; const n=(e&&e.name)||''; if(!(n==='NotReadableError'||n==='TrackStartError'||n==='AbortError')) throw e; }
+  }
+  throw last;
 }
 async function recStartNow(){
   fmClose();
-  let st; try{ st=await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ return recErr(e); }
+  let st; try{ st=await recMic(); }catch(e){ return recErr(e); }
   let id; try{ const r=await api('recStart',{empId:currentEmp.id,date:todayStr(),meetingSeq:Number(activeMeetingSeq)||0,consent:true}); id=r&&r.id; if(!id) throw new Error('Could not start the recording.'); }
   catch(e){ st.getTracks().forEach(t=>t.stop()); return recErr(e); }
   _rec={on:true,id:id,empId:currentEmp.id,st:st,n:0,parts:[],t0:Date.now(),stopping:false,busy:false,mr:null,roll:0,tick:0,retry:0,wl:null,ac:null,an:null,buf:null,hist:[]};
@@ -8287,10 +8299,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-18.1';</script>
-<script src="notify.js?v=2026-11-18.1"></script>
-<script src="appstore.js?v=2026-11-18.1"></script>
-<script src="policy-lib.js?v=2026-11-18.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-18.2';</script>
+<script src="notify.js?v=2026-11-18.2"></script>
+<script src="appstore.js?v=2026-11-18.2"></script>
+<script src="policy-lib.js?v=2026-11-18.2"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
