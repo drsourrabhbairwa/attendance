@@ -1388,6 +1388,21 @@ body.tk-tab .hm-nav button[data-go="tasks"]{background:#E6F4F1!important;color:#
   #homeScreen .hm-cols{gap:0 20px}
   #hmPaneMonth.on,#hmPaneMe.on{gap:0 20px}
 }
+/* ═══ Desktop Home: header + tab strip on top, content below — whole screen at a glance, no floating bottom bar ═══ */
+@media(min-width:1000px){
+  body[data-screen="homeScreen"] #app{padding-bottom:20px!important}
+  #homeScreen.active{display:grid!important;grid-template-columns:minmax(0,1fr);align-content:start;row-gap:0;padding-bottom:0!important}
+  #homeScreen>.hm-hero{order:-2;padding:14px 24px 12px 28px!important}
+  #homeScreen>.hm-hero .hm-date{margin-top:0!important}
+  #hmPaneMonth #mmCal .mm-day,#hmPaneMonth #mmCal>div>div{min-height:0}
+  #homeScreen>.hm-nav{order:-1;position:static!important;transform:none!important;width:auto!important;justify-self:start;margin:12px 0 4px;display:flex!important;gap:4px;padding:4px!important;background:#fff!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:none!important}
+  #homeScreen>.hm-nav button{flex-direction:row;gap:8px;padding:9px 20px!important;font-size:13.5px;border-radius:9px!important;min-width:128px;justify-content:center}
+  #homeScreen>.hm-nav svg{width:18px;height:18px}
+  #homeScreen .hm-score,#homeScreen .hm-me{margin-top:0}
+  #homeScreen .hm-colB,#homeScreen .hm-smart:not([hidden])+.hm-cols .hm-colB,#homeScreen .hm-smart:not([hidden])+.hm-cols .hm-today,#homeScreen .hm-today{margin-top:12px!important}
+  #homeScreen .hm-smart{margin:12px 0 0!important}
+  #homeScreen .hm-where,#homeScreen .hm-colA>*{margin-left:0!important;margin-right:0!important}
+}
 /* Tasks screen: no gradient background, flat white panels */
 .tkx{background:#F4F6F8!important}
 .tkx::before,.tkx::after{display:none!important;background:none!important}
@@ -4395,7 +4410,7 @@ function hmTab(t,silent){
   hmNavShow();
   if(['today','month','me'].indexOf(t)<0) t='today'; _hmTab=t;
   if(!silent&&document.body.classList.contains('tk-tab')&&_tk.close) _tk.close();   // leaving Tasks for another tab
-  { const nav=document.getElementById('hmNav'); if(nav&&nav.parentNode!==document.body) document.body.appendChild(nav); }   // fixed to the screen, not to a moving parent
+  { const nav=document.getElementById('hmNav'), hs=document.getElementById('homeScreen'); if(nav){ if(window.matchMedia('(min-width:1000px)').matches&&hs){ if(nav.parentNode!==hs) hs.appendChild(nav); } else if(nav.parentNode!==document.body) document.body.appendChild(nav); } }   // fixed to the screen, not to a moving parent
   document.querySelectorAll('#homeScreen .hm-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===t));
   if(t==='month') try{ mmLoad(); }catch(e){}
   document.querySelectorAll('#hmNav button[data-go]').forEach(b=>{ const on=b.dataset.go===t; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
@@ -8387,10 +8402,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.6';</script>
-<script src="notify.js?v=2026-11-19.6"></script>
-<script src="appstore.js?v=2026-11-19.6"></script>
-<script src="policy-lib.js?v=2026-11-19.6"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.7';</script>
+<script src="notify.js?v=2026-11-19.7"></script>
+<script src="appstore.js?v=2026-11-19.7"></script>
+<script src="policy-lib.js?v=2026-11-19.7"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
