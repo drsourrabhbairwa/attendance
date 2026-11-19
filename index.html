@@ -6186,9 +6186,10 @@ async function loadAttTab(){
   const fn=(document.getElementById('filterName').value||'').toLowerCase();
   loading(true,'Loading attendance…');
   try{
-    const[dayRecs,emps]=await Promise.all([getAttRange(fd,fd),getEmployees(),syncLeaves()]);
+    const[dayRecs,emps0]=await Promise.all([getAttRange(fd,fd),getEmployees(),syncLeaves()]);
     loading(false);
     const presIds=dayRecs.map(r=>String(r.empId).toUpperCase());
+    const emps=emps0.filter(e=>!(String(e.status||'')==='resigned'&&(!e.lastWorkingDay||fd>String(e.lastWorkingDay).slice(0,10))));   // someone who has resigned is not on the roll after the last working day
     let present=0,partial=0,meetOut=0;
     dayRecs.forEach(r=>{const am=getActiveMeeting(r);if(r.punchIn&&r.punchOut)present++;else if(r.punchIn&&am)meetOut++;else if(r.punchIn)partial++;});
     document.getElementById('sTotal').textContent=emps.length;
@@ -8311,10 +8312,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-18.5';</script>
-<script src="notify.js?v=2026-11-18.5"></script>
-<script src="appstore.js?v=2026-11-18.5"></script>
-<script src="policy-lib.js?v=2026-11-18.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.1';</script>
+<script src="notify.js?v=2026-11-19.1"></script>
+<script src="appstore.js?v=2026-11-19.1"></script>
+<script src="policy-lib.js?v=2026-11-19.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
