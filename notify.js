@@ -356,7 +356,8 @@
     if (!manual && Date.now() - lastVer < 120000) return Promise.resolve(); lastVer = Date.now();
     return fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
       if (!v || !v.web) return manual ? 'error' : undefined;
-      if (v.web === PAGE_VERSION) return manual ? 'current' : undefined;
+      var vk = function (x) { var m = String(x).match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m ? ((+m[1]) * 10000 + (+m[2]) * 100 + (+m[3])) * 1000 + (+m[4]) : 0; };
+      if (v.web === PAGE_VERSION || (vk(v.web) && vk(PAGE_VERSION) && vk(v.web) < vk(PAGE_VERSION))) return manual ? 'current' : undefined;   // same or older → never ask
       if (!manual && !v.force && Number(ls('amk_ver_snooze') || 0) > Date.now()) return;
       showUpdate(v); return 'new';
     }).catch(function () { return manual ? 'error' : undefined; });
