@@ -1571,6 +1571,7 @@ body .tk-comp textarea#tkIn{border:0!important;box-shadow:none!important;outline
   .ld-top>.btn,.ld-top>div>.btn{font-size:13px!important;min-height:40px!important;padding:6px 14px!important}
   #tabTravel .ld-top .btn{font-size:13px!important;min-height:40px!important;padding:6px 14px!important}
 }
+@media (max-width:700px){ .org-node .org-kids{margin-left:4px!important;padding-left:8px!important;border-left-width:2px!important} }
 /* work report pickers */
 .wr-pk{position:relative}
 .wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
@@ -6810,8 +6811,8 @@ function edDraw(d,e){
       <button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="resetEmpPass('${esc(e.id)}')">🔑 Reset password</button>
       ${resigned?`<button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="fmClose();rehireOpen('${esc(d.id)}')">↩ Rehire</button>`
                 :`<button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px;color:var(--red);border-color:var(--red)" onclick="fmClose();resignOpen('${esc(d.id)}')">🚪 Resign</button>`}
-      <button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px;color:var(--red);border-color:var(--red)" title="Delete this record outright — only for a wrong entry, not for someone who left. Use Resign for that." onclick="fmClose();removeEmployee('${esc(e.id)}')">✕ Delete record</button>
-    </div>`},true);
+    </div>
+    <div style="margin-top:22px;padding-top:12px;border-top:1px dashed var(--border2);font-size:12px;color:var(--soft)">Entered by mistake? <button type="button" style="background:none;border:0;padding:6px 2px;font:inherit;font-weight:700;color:var(--red);text-decoration:underline;cursor:pointer" title="Delete this record outright — only for a wrong entry, not for someone who left. Use Resign for that." onclick="fmClose();removeEmployee('${esc(e.id)}')">Delete this record</button> · for someone who left, use Resign.</div>`},true);
 }
 
 /* ── Resignation / offboarding ── */
@@ -8386,10 +8387,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.5';</script>
-<script src="notify.js?v=2026-11-19.5"></script>
-<script src="appstore.js?v=2026-11-19.5"></script>
-<script src="policy-lib.js?v=2026-11-19.5"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.6';</script>
+<script src="notify.js?v=2026-11-19.6"></script>
+<script src="appstore.js?v=2026-11-19.6"></script>
+<script src="policy-lib.js?v=2026-11-19.6"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
