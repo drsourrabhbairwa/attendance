@@ -2013,9 +2013,9 @@ body.rec-on{padding-top:calc(40px + env(safe-area-inset-top,0px))}
     <div style="font-size:12px;color:var(--soft);margin-bottom:4px">Forgot to punch, or the time is wrong? Send a request — your admin approves it and the record is corrected.</div>
     <label>Day</label><input type="date" id="fxDate" onchange="fixShowCurrent()">
     <label>What needs fixing</label>
-    <select id="fxField"><option value="in">Punch-in time (missed or wrong)</option><option value="out">Punch-out time (missed or wrong)</option></select>
+    <select id="fxField" onchange="fixHint()"><option value="in">Punch-in time (missed or wrong)</option><option value="out">Punch-out time (missed or wrong)</option></select>
     <div id="fxCurrent" style="font-size:12px;color:var(--soft);margin-top:6px"></div>
-    <label>Correct time</label><input type="time" id="fxTime">
+    <label>Correct time</label><input type="time" id="fxTime" oninput="fixHint()"><div id="fxHint" style="font-size:12.5px;margin-top:4px;line-height:1.5"></div>
     <label>Reason</label><textarea id="fxReason" rows="3" placeholder="e.g. Phone battery died at the site"></textarea>
     <div class="msg msg-error" id="fxErr"></div><div class="msg msg-success" id="fxOk"></div>
     <button class="btn btn-primary" onclick="submitFix()">Send request</button>
@@ -3270,6 +3270,32 @@ async function renderLeaveCal(){
    FIX A PUNCH (employee) + CORRECTIONS (admin)
 ══════════════════════════════════════════════════════════════ */
 function needSheet(msg){ if(USE_SHEETS) return false; alert((msg||'This')+' needs the Google Sheet connection.'); return true; }
+/* Does this punch time make sense for a human working day? Used by Fix punch, and to warn the admin who approves it.
+   m = minutes since midnight. cur = {in,out} minutes already recorded that day (or null). Returns '' when fine, else a plain sentence. */
+function punchTimeCheckM(date,field,m,cur){
+  cur=cur||{}; const now=new Date(), nowM=now.getHours()*60+now.getMinutes(), t12=x=>fmt12m(String(Math.floor(x/60)).padStart(2,'0')+':'+String(Math.round(x%60)).padStart(2,'0')+':00');
+  const alt=m>=12*60?' Did you mean '+t12(m-12*60)+'?':'';
+  if(!date||isNaN(m)) return '';
+  if(date>todayStr()) return 'That day has not come yet.';
+  if(date<isoAdd(todayStr(),-31)) return 'A correction can go back 31 days at most.';
+  if(date===todayStr()&&m>nowM) return 'It is only '+t12(nowM)+' now, so '+t12(m)+' has not happened yet.'+(field==='in'?alt:'');
+  if(field==='in'){
+    if(m<5*60) return 'Work does not start before 5:00 AM. Check AM / PM.';
+    if(m>=21*60) return 'A punch-in at '+t12(m)+' is not a working-day time.'+alt;
+    if(cur.out!=null&&m>=cur.out) return 'Punch-in must be before the punch-out ('+t12(cur.out)+').';
+  }else{
+    if(m<6*60) return 'A punch-out at '+t12(m)+' is not a working-day time. Check AM / PM.';
+    if(cur.in!=null&&m<=cur.in+10) return 'Punch-out must be after the punch-in ('+t12(cur.in)+').';
+    if(cur.in!=null&&m-cur.in>16*60) return 'That is more than 16 hours after the punch-in.';
+  }
+  return '';
+}
+function fixHint(){
+  const el=document.getElementById('fxHint'); if(!el) return;
+  const tv=document.getElementById('fxTime').value; if(!/^\d{1,2}:\d{2}$/.test(tv)){ el.textContent=''; return; }
+  const [h,mi]=tv.split(':').map(Number), m=h*60+mi, msg=punchTimeCheckM(document.getElementById('fxDate').value,document.getElementById('fxField').value,m,window._fxCur);
+  el.innerHTML='<b>= '+fmt12m(tv+':00')+'</b>'+(msg?'<br><span style="color:var(--red)">⚠️ '+msg+'</span>':'');
+}
 async function showFix(){
   if(!currentEmp||needSheet('Punch corrections')) return;
   stopCamera(); stopLocWatch(); clearInterval(officeTimerInt); homeTok++;
@@ -3285,6 +3311,7 @@ async function fixShowCurrent(){
   try{
     const recs=await api('getAttendance',{startDate:d,endDate:d,photos:false}), eid=String(currentEmp.id).toUpperCase();
     const r=(recs||[]).find(x=>String(x.empId).toUpperCase()===eid);
+    window._fxCur=r&&r.punchIn?{in:parseTimeMins(r.punchIn.time),out:r.punchOut?parseTimeMins(r.punchOut.time):null}:null; fixHint();
     el.textContent=r&&r.punchIn?'Recorded: In '+fmt12(r.punchIn.time)+' · Out '+(r.punchOut?fmt12(r.punchOut.time):'— (no punch-out)'):(checkDayOff(d)?'That day is a '+checkDayOff(d).type+'.':'Nothing recorded for that day.');
   }catch(e){ el.textContent=''; }
 }
@@ -3294,6 +3321,7 @@ async function submitFix(){
   const bad=m=>{ err.textContent=m; err.classList.add('show'); };
   if(!date||date>todayStr()) return bad('Pick a day that has already happened.');
   if(!/^\d{1,2}:\d{2}$/.test(tv)) return bad('Enter the correct time.');
+  { const [fh,fm]=tv.split(':').map(Number), why=punchTimeCheckM(date,field,fh*60+fm,window._fxCur); if(why) return bad(why); }
   if(!reason) return bad('Please add a reason.');
   loading(true,'Sending…');
   try{
@@ -3325,16 +3353,19 @@ async function loadCorrectionsTab(){
   el.innerHTML='<div class="empty">⏳ Loading…</div>';
   try{
     const all=(await api('getCorrections',{})||[]).sort((a,b)=>String(b.requestedAt).localeCompare(String(a.requestedAt)));
-    setTabBadge('corrections',all.filter(x=>x.status==='pending').length);
+    window._fxAll=all; setTabBadge('corrections',all.filter(x=>x.status==='pending').length);
     const l=f==='all'?all:all.filter(x=>x.status===f);
     el.innerHTML=l.length?l.map(r=>`<div class="fx-card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>${String(r.name||r.empId).replace(/</g,'&lt;')}</b> <span style="color:var(--soft);font-size:12px">${r.empId}</span></div><span class="badge" style="background:${FX_ST[r.status][0]};color:${FX_ST[r.status][1]}">${r.status}</span></div>
       <div style="font-size:13px;margin-top:5px">${fxWhat(r)}</div>
       <div style="font-size:13px;margin-top:4px">“${String(r.reason||'').replace(/</g,'&lt;')}”</div>
       <div style="font-size:11px;color:var(--soft);margin-top:4px">asked ${safeDateStr(r.requestedAt)}${r.decidedBy?' · decided by '+String(r.decidedBy).replace(/</g,'&lt;'):''}</div>
+      ${r.status==='pending'&&fxWhy(r)?`<div class="msg msg-error show" style="margin-top:6px">⚠️ ${fxWhy(r)}</div>`:''}
       ${r.status==='pending'?`<div class="leave-actions"><button class="btn-approve" onclick="decideFix('${esc(r.id)}','approved')">✅ Approve &amp; correct</button><button class="btn-reject" onclick="decideFix('${esc(r.id)}','rejected')">❌ Reject</button></div>`:''}</div>`).join(''):'<div class="empty"><div class="eicon">✏️</div>'+(f==='pending'?'No pending requests.':'No records.')+'</div>';
   }catch(e){ el.innerHTML='<div class="msg msg-error show">⚠️ '+e.message+'</div>'; }
 }
+function fxWhy(r){ try{ return punchTimeCheckM(String(r.date).slice(0,10),r.field==='out'?'out':'in',parseTimeMins(r.time),null); }catch(e){ return ''; } }
 async function decideFix(id,status){
+  if(status==='approved'){ const r=(window._fxAll||[]).find(x=>String(x.id)===String(id)), w=r&&fxWhy(r); if(w&&!confirm('This time looks wrong:\n'+w+'\n\nApprove it anyway?')) return; }
   loading(true,'Updating…');
   try{ await api('decideCorrection',{id,status,decidedAt:new Date().toISOString()}); _D.attendance=[]; loading(false); loadCorrectionsTab(); }
   catch(e){ loading(false); alert(e.message); }
@@ -8410,10 +8441,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.10';</script>
-<script src="notify.js?v=2026-11-19.10"></script>
-<script src="appstore.js?v=2026-11-19.10"></script>
-<script src="policy-lib.js?v=2026-11-19.10"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.11';</script>
+<script src="notify.js?v=2026-11-19.11"></script>
+<script src="appstore.js?v=2026-11-19.11"></script>
+<script src="policy-lib.js?v=2026-11-19.11"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
