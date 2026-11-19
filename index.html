@@ -1535,6 +1535,34 @@ body .tk-comp textarea#tkIn{border:0!important;box-shadow:none!important;outline
   #tabAttendance .filter-row input[type=date]{flex:1 1 100%}
   #tabAttendance .filter-row input[type=text]{flex:1 1 0;min-width:0}
 }
+/* admin Monthly: on a phone each person is one card */
+@media (max-width:700px){
+  #monthTable,#monthTable tbody{display:block;border:0!important;background:transparent!important;box-shadow:none!important}
+  #monthTable thead{display:none}
+  #monthBody tr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 6px;background:#fff;border:1px solid rgba(16,70,74,.12);border-radius:16px;padding:12px;margin:0 0 10px;box-shadow:0 2px 10px rgba(4,26,30,.05)}
+  #monthBody tr td{display:block;padding:0!important;border:0!important;background:transparent!important;min-width:0;font-variant-numeric:tabular-nums}
+  #monthBody td:nth-child(1){grid-column:1/4;grid-row:1;font-size:15px}
+  #monthBody td:nth-child(2){grid-column:1/4;grid-row:2;font-size:11.5px;margin-top:-6px}
+  #monthBody td:nth-child(9){grid-column:4;grid-row:1/3;align-self:center;justify-self:end;font-size:20px;font-weight:800}
+  #monthBody td:nth-child(3){grid-row:3;grid-column:1}#monthBody td:nth-child(4){grid-row:3;grid-column:2}
+  #monthBody td:nth-child(5){grid-row:3;grid-column:3}#monthBody td:nth-child(6){grid-row:3;grid-column:4}
+  #monthBody td:nth-child(7){grid-row:4;grid-column:1}#monthBody td:nth-child(8){grid-row:4;grid-column:2}#monthBody td:nth-child(10){grid-row:4;grid-column:3}
+  #monthBody td:nth-child(n+3):not(:nth-child(9)){font-size:16px;font-weight:700;line-height:1.2}
+  #monthBody td:nth-child(n+3):not(:nth-child(9))::before{display:block;font-size:10px;font-weight:600;color:var(--soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+  #monthBody td:nth-child(3)::before{content:'Work days'}#monthBody td:nth-child(4)::before{content:'Present'}
+  #monthBody td:nth-child(5)::before{content:'Absent'}#monthBody td:nth-child(6)::before{content:'On leave'}
+  #monthBody td:nth-child(7)::before{content:'Missed out'}#monthBody td:nth-child(8)::before{content:'Meetings'}
+  #monthBody td:nth-child(10)::before{content:'Avg hrs/day'}
+}
+@media (max-width:700px){
+  #tabLive .lv-top{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+  #tabLive .lv-top .lv-sum{flex:1 1 100%}
+  #tabLive .lv-top .lv-day{flex:1 1 0;min-width:0}
+  #tabLive .lv-top>.lv-rf,#tabLive .lv-day .lv-rf{flex:0 0 auto;width:44px;min-height:44px;padding:0;border-radius:14px;background:#fff!important;border:1px solid rgba(16,70,74,.2)!important;box-shadow:none!important;font-size:18px;color:var(--accent)}
+  #tabLive .lv-top .lv-day{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+  #tabLive .lv-top .lv-day input[type=date]{flex:1 1 0;min-width:0;padding-left:10px;padding-right:6px}
+  #tabLive .lv-top .lv-day button{flex:0 0 auto;min-width:44px;padding-left:10px;padding-right:10px}
+}
 /* work report pickers */
 .wr-pk{position:relative}
 .wr-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
@@ -2381,7 +2409,7 @@ body.rec-on{padding-top:calc(40px + env(safe-area-inset-top,0px))}
     <section id="lvSecPeople" class="lv-anchor">
       <div class="lv-top"><div class="lv-sum" id="lvSum"></div>
         <div class="lv-day"><button type="button" data-lvd="prev" onclick="lvShift(-1)" aria-label="Previous day">◀</button><input type="date" id="lvDate" aria-label="Date" onchange="lvSetDate(this.value)"><button type="button" data-lvd="next" onclick="lvShift(1)" aria-label="Next day">▶</button><button type="button" class="lv-today" onclick="lvSetDate('')">Today</button></div>
-        <button class="btn-sm" onclick="lvRefreshAll()" aria-label="Refresh">↻ Refresh</button></div>
+        <button class="btn-sm lv-rf" onclick="lvRefreshAll()" aria-label="Refresh" title="Refresh">↻</button></div>
       <input type="search" id="lvQ" class="lv-q" placeholder="Search name, ID or department" oninput="_lv.q=this.value;liveDraw()" autocomplete="off">
       <div class="lv-chips" id="lvChips"></div>
       <div class="lv-chips" id="lvDepts"></div>
@@ -6305,9 +6333,13 @@ async function generateReport(){
     let wDays=0,oDays=0;const counted=[];
     for(let d=1;d<=dim;d++){const ds=mStr+'-'+pad(d);if(checkDayOff(ds))oDays++;else if(ds<=today){wDays++;counted.push(ds);}}
     const byKey={};allRecs.forEach(r=>{byKey[String(r.empId).toUpperCase()+'|'+r.date]=r;});
-    const stats=emps.map(emp=>{
+    const D10=v=>String(v||'').slice(0,10), isD=v=>/^\d{4}-\d{2}-\d{2}$/.test(v);
+    const roll=emps.filter(e=>!(String(e.status||'')==='resigned'&&(!isD(D10(e.lastWorkingDay))||D10(e.lastWorkingDay)<mStr+'-01')));   // someone who resigned before this month is not in it
+    const stats=roll.map(emp=>{
       let present=0,missed=0,complete=0,totalMins=0,totalMeet=0,leave=0;
-      counted.forEach(ds=>{
+      const jd=D10(emp.joined), lw=String(emp.status||'')==='resigned'?D10(emp.lastWorkingDay):'';
+      const myDays=counted.filter(ds=>(!isD(jd)||ds>=jd)&&(!isD(lw)||ds<=lw)), wDays=myDays.length;   // no one is absent before joining or after leaving
+      myDays.forEach(ds=>{
         const rec=byKey[String(emp.id).toUpperCase()+'|'+ds];
         if(!rec||!rec.punchIn){ if(leaveOn(emp.id,ds)) leave++; return; }
         present++;totalMeet+=(rec.meetings||[]).filter(x=>x.kind!=='personal').length;
@@ -6315,19 +6347,19 @@ async function generateReport(){
         else if(ds<today) missed++;
       });
       // Average only over days with both punches, so a forgotten punch-out doesn't count as a 0-hour day
-      return{name:emp.name,id:emp.id,present,leave,absent:Math.max(0,wDays-present-leave),missed,pct:wDays-leave>0?Math.round(present/(wDays-leave)*100):0,avgH:complete>0?(totalMins/60/complete).toFixed(1):'0',totalMeet};
+      return{name:emp.name,id:emp.id,wd:wDays,present,leave,absent:Math.max(0,wDays-present-leave),missed,pct:wDays-leave>0?Math.round(present/(wDays-leave)*100):0,avgH:complete>0?(totalMins/60/complete).toFixed(1):'0',totalMeet};
     });
     const inProgress=mStr===today.slice(0,7);
     document.getElementById('mDays').textContent=wDays;
     document.getElementById('mDaysLbl').textContent=inProgress?'Working days so far':'Working Days';
     document.getElementById('mHols').textContent=oDays;
-    document.getElementById('mEmp').textContent=emps.length;
+    document.getElementById('mEmp').textContent=stats.length;
     document.getElementById('monthSum').style.display='';
     document.getElementById('monthEmpty').style.display='none';
     document.getElementById('monthTable').style.display='';
     document.getElementById('monthBody').innerHTML=stats.map(e=>{
       const col=e.pct>=90?'var(--green)':e.pct>=75?'var(--amber)':'var(--red)';
-      return`<tr><td style="font-weight:600">${hx(e.name)}</td><td style="color:var(--soft)">${hx(e.id)}</td><td>${wDays}</td><td style="color:var(--green)">${e.present}</td><td style="color:var(--red)">${e.absent}</td><td style="color:var(--purple)">${e.leave||0}</td><td${e.missed?' style="color:var(--amber);font-weight:700"':''}>${e.missed}</td><td>${e.totalMeet}</td><td><strong style="color:${col}">${e.pct}%</strong></td><td>${e.avgH}h</td></tr>`;
+      return`<tr><td style="font-weight:600">${hx(e.name)}</td><td style="color:var(--soft)">${hx(e.id)}</td><td>${e.wd}</td><td style="color:var(--green)">${e.present}</td><td style="color:var(--red)">${e.absent}</td><td style="color:var(--purple)">${e.leave||0}</td><td${e.missed?' style="color:var(--amber);font-weight:700"':''}>${e.missed}</td><td>${e.totalMeet}</td><td><strong style="color:${col}">${e.pct}%</strong></td><td>${e.avgH}h</td></tr>`;
     }).join('');
     window._lastReport={wDays,oDays,stats,month,year,inProgress,today};
   }catch(e){loading(false);alert('Error: '+e.message);}
@@ -6338,7 +6370,7 @@ function exportMonthlyCSV(){
   const mName=new Date(r.year,r.month-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
   const hdr=['Name','ID','Working Days','Present','Absent','On leave','Missed Punch-out','Meetings','Attendance%','Avg Hrs/Day'];
   const q=csvCell;
-  const rows=r.stats.map(e=>[e.name,e.id,r.wDays,e.present,e.absent,e.leave||0,e.missed,e.totalMeet,e.pct+'%',e.avgH+'h'].map(q).join(','));
+  const rows=r.stats.map(e=>[e.name,e.id,e.wd,e.present,e.absent,e.leave||0,e.missed,e.totalMeet,e.pct+'%',e.avgH+'h'].map(q).join(','));
   const title='Month: '+mName+(r.inProgress?' (up to '+r.today+')':'');
   saveTextFile('monthly-'+r.year+'-'+String(r.month).padStart(2,'0')+'.csv',[q(title),hdr.join(','),...rows].join('\n'));
 }
@@ -8344,10 +8376,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.2';</script>
-<script src="notify.js?v=2026-11-19.2"></script>
-<script src="appstore.js?v=2026-11-19.2"></script>
-<script src="policy-lib.js?v=2026-11-19.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.3';</script>
+<script src="notify.js?v=2026-11-19.3"></script>
+<script src="appstore.js?v=2026-11-19.3"></script>
+<script src="policy-lib.js?v=2026-11-19.3"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
