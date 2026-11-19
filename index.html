@@ -1403,6 +1403,13 @@ body.tk-tab .hm-nav button[data-go="tasks"]{background:#E6F4F1!important;color:#
   #homeScreen .hm-smart{margin:12px 0 0!important}
   #homeScreen .hm-where,#homeScreen .hm-colA>*{margin-left:0!important;margin-right:0!important}
 }
+/* Desktop + Tasks open: tab strip pinned on top, Tasks panel sits below it (no overlap) */
+@media(min-width:1000px){
+  body.tk-tab #homeScreen>.hm-nav{position:fixed!important;top:12px;bottom:auto!important;height:auto!important;width:auto!important;left:clamp(20px,3vw,56px);margin:0!important;z-index:9100;transform:none!important}
+  body.tk-tab #homeScreen>.hm-hero{visibility:hidden}
+  body.tk-tab #tkxOv{top:68px!important;bottom:0!important;height:auto!important}
+  body.tk-tab #tkxOv .tkx-list,body.tk-tab #tkxOv .tkx-main{padding-bottom:16px!important}
+}
 /* Tasks screen: no gradient background, flat white panels */
 .tkx{background:#F4F6F8!important}
 .tkx::before,.tkx::after{display:none!important;background:none!important}
@@ -8402,10 +8409,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.7';</script>
-<script src="notify.js?v=2026-11-19.7"></script>
-<script src="appstore.js?v=2026-11-19.7"></script>
-<script src="policy-lib.js?v=2026-11-19.7"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.8';</script>
+<script src="notify.js?v=2026-11-19.8"></script>
+<script src="appstore.js?v=2026-11-19.8"></script>
+<script src="policy-lib.js?v=2026-11-19.8"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
