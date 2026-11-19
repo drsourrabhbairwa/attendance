@@ -6915,12 +6915,14 @@ async function renderHolList(){
     const custom=await getCustomHols(), cx=_D.cancelledHolidays||{};loading(false);
     const N=natHols(), live=Object.assign({},N); Object.keys(cx).forEach(d=>{ delete live[d]; });
     const all=Object.entries(Object.assign(live,custom)).sort((a,b)=>a[0].localeCompare(b[0]));
-    let html=all.map(([date,name])=>{
+    const row=([date,name])=>{
       const isCust=!!custom[date], isNat=!!N[date];
       const btn=isNat?`<button class="del-btn" title="Cancel this holiday: the company works that day" aria-label="Cancel holiday ${hx(name)}" onclick="cancelHoliday('${esc(date)}')">✕</button>`
                       :`<button class="del-btn" title="Remove this holiday" aria-label="Remove holiday ${hx(name)}" onclick="removeHoliday('${esc(date)}')">✕</button>`;
       return`<div class="hol-item"><div><span style="font-weight:600">${hx(name)}</span><span class="tag ${isCust?'tag-cust':'tag-nat'}">${isCust?'Custom':'National'}</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div>${btn}</div>`;
-    }).join('');
+    };
+    const td=todayStr(), coming=all.filter(x=>x[0]>=td), past=all.filter(x=>x[0]<td).reverse();   // what is still ahead comes first; days that have gone sit in one fold
+    let html=(coming.length?coming.map(row).join(''):'<div class="empty" style="padding:14px 0">No holidays coming up.</div>')+(past.length?`<details class="hol-past" style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--soft);padding:10px 2px">Past holidays (${past.length})</summary>${past.map(row).join('')}</details>`:'');
     const gone=Object.keys(cx).filter(d=>N[d]).sort();
     if(gone.length) html=`<div class="hol-head" style="margin-top:2px">Cancelled · the company works these days</div>`+gone.map(date=>`<div class="hol-item"><div><span style="font-weight:600;text-decoration:line-through;color:var(--soft)">${hx(N[date])}</span><span class="tag tag-off">Cancelled</span><div style="font-size:11px;color:var(--soft);margin-top:2px">${date} · ${HOL_DL(date)}</div></div><button class="restore-btn" onclick="restoreHoliday('${esc(date)}')">Restore</button></div>`).join('')+`<div class="hol-head">Holidays</div>`+html;   // cancelled ones go on top so the admin sees at once where a cancelled holiday went
     const box=document.getElementById('holList'); box.innerHTML=html; box.scrollTop=0;
@@ -8384,10 +8386,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.4';</script>
-<script src="notify.js?v=2026-11-19.4"></script>
-<script src="appstore.js?v=2026-11-19.4"></script>
-<script src="policy-lib.js?v=2026-11-19.4"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-19.5';</script>
+<script src="notify.js?v=2026-11-19.5"></script>
+<script src="appstore.js?v=2026-11-19.5"></script>
+<script src="policy-lib.js?v=2026-11-19.5"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
