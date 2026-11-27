@@ -1,1 +1,1 @@
-{"web": "2026-11-19.11", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Fix punch: impossible times (future, 10 PM punch-in, out before in) are blocked with a clear hint"}
+{"web": "2026-11-27.1", "latestBuild": 0, "apkUrl": "", "minBuild": 0, "notes": "Super Admin can set, change or re-open anyone's punch directly (Attendance tab \u2192 Set punch)"}

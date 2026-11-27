@@ -2080,7 +2080,7 @@ body.rec-on{padding-top:calc(40px + env(safe-area-inset-top,0px))}
     </div>
     <div style="overflow-x:auto">
       <table class="tbl">
-        <thead><tr><th>Photo</th><th>Name</th><th>ID</th><th>Status</th><th>Punch In</th><th>Punch Out</th><th>Meetings</th><th>Hours</th><th>Location</th><th>Day route</th></tr></thead>
+        <thead><tr><th>Photo</th><th>Name</th><th>ID</th><th>Status</th><th>Punch In</th><th>Punch Out</th><th>Meetings</th><th>Hours</th><th>Location</th><th>Day route</th><th class="sa-only" style="display:none">Set punch</th></tr></thead>
         <tbody id="attBody"></tbody>
       </table>
     </div>
@@ -6339,8 +6339,9 @@ async function loadAttTab(){
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'<span class="nil">—</span>';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'<span class="nil">—</span>';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'<span class="nil">—</span>';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn)+faceFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+autoPill(r)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut)+faceFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td></tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn)+faceFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+autoPill(r)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut)+faceFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td>${isSuper()?`<td><button class="map-link" style="border:none;cursor:pointer" onclick="spOpen('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">✏️ Set</button></td>`:''}</tr>`;
     }).join('');
+    document.querySelectorAll('.sa-only').forEach(x=>x.style.display=isSuper()?'':'none');
     window._lastAtt=rows;
   }catch(e){loading(false);alert('Error loading attendance: '+e.message);}
 }
@@ -6816,6 +6817,38 @@ async function acMark(mode){
   const date=document.getElementById('mkDate').value, time=document.getElementById('mkTime').value; if(!date||!time) return acMsg('Choose a date and a time.',true);
   if(!confirm('Mark Work '+mode.toUpperCase()+' for '+AC.name+' on '+date+' at '+time+'?')) return;
   if(await acApi('markForStaff',{empId:AC.id,mode,date,time})) acMsg('Marked Work '+mode.toUpperCase()+' at '+time+'.');
+}
+
+/* ── Super Admin: set, change or re-open a punch directly (no request from the person) ── */
+const SP={};
+async function spOpen(empId,name,date){
+  if(!isSuper()) return;
+  Object.assign(SP,{empId,name,date});
+  let rec=null;
+  try{ const l=await api('getAttendance',{startDate:date,endDate:date,photos:false}); rec=(l||[]).find(x=>String(x.empId).toUpperCase()===String(empId).toUpperCase())||null; }catch(e){}
+  const t24=v=>{ const m=parseTimeMins(v); return m>=0?String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'):''; };
+  const pi=rec&&rec.punchIn&&rec.punchIn.time?rec.punchIn.time:'', po=rec&&rec.punchOut&&rec.punchOut.time?rec.punchOut.time:'';
+  const auto=rec&&po?' '+autoPill(rec):'';
+  const body=`<div class="msg" id="acMsg"></div>
+    <div class="ld-glass" style="margin-bottom:10px"><b>${hx(name)}</b> · ${hx(date)}<div style="font-size:13px;margin-top:4px">Recorded: In <b>${pi?fmt12(pi):'—'}</b> · Out <b>${po?fmt12(po):'—'}</b>${auto}</div></div>
+    <label>Reason (kept in the audit log, the person is told)</label><input type="text" id="spReason" maxlength="120" placeholder="e.g. Phone was off, punched in on time">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end">
+      <div><label>Punch-in</label><input type="time" id="spIn" value="${t24(pi)}"></div>
+      <button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="spSave('in')">Save punch-in</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end">
+      <div><label>Punch-out</label><input type="time" id="spOut" value="${t24(po)}"></div>
+      <button class="btn btn-primary" style="width:auto;margin:0;padding:0 16px" onclick="spSave('out')">Save punch-out</button>
+      ${po?`<button class="btn btn-outline" style="width:auto;margin:0;padding:0 16px" onclick="spSave('reopen')">Remove punch-out (re-open day)</button>`:''}</div>
+    <div style="font-size:12px;color:var(--soft);margin-top:10px">The row shows it was set by you, and a ✏️ marks the edited time. Only the Super Admin can do this.</div>`;
+  acBox({title:'✏️ Set punch',body},true);
+}
+async function spSave(mode){
+  const reason=(document.getElementById('spReason').value||'').trim(), time=mode==='in'?document.getElementById('spIn').value:mode==='out'?document.getElementById('spOut').value:'';
+  if(reason.length<3) return acMsg('Add a reason first.',true);
+  if(mode!=='reopen'&&!time) return acMsg('Choose the time.',true);
+  const what=mode==='reopen'?'Remove the punch-out and re-open the day':'Set the punch-'+mode+' to '+fmt12(time+':00');
+  if(!confirm(what+' for '+SP.name+' on '+SP.date+'?')) return;
+  if(await acApi('setPunch',{empId:SP.empId,date:SP.date,mode,time,reason})){ _D.attendance=[]; await loadAttTab(); await spOpen(SP.empId,SP.name,SP.date); acMsg('Saved. '+SP.name+' has been told.'); }
 }
 
 /* ── Employee 360 dashboard: everything about one person on one screen ── */
@@ -8441,10 +8474,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-19.11';</script>
-<script src="notify.js?v=2026-11-19.11"></script>
-<script src="appstore.js?v=2026-11-19.11"></script>
-<script src="policy-lib.js?v=2026-11-19.11"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-27.1';</script>
+<script src="notify.js?v=2026-11-27.1"></script>
+<script src="appstore.js?v=2026-11-27.1"></script>
+<script src="policy-lib.js?v=2026-11-27.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
