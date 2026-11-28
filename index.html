@@ -6332,7 +6332,7 @@ async function loadAttTab(){
     tbody.innerHTML=rows.map(r=>{
       const hasPi=r.punchIn&&r.punchIn.time,hasPo=r.punchOut&&r.punchOut.time;
       const am=getActiveMeeting(r),mCnt=(r.meetings||[]).length;
-      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':leaveOn(r.empId,fd,['pending'])?'<span class="badge b-partial" title="Leave applied, waiting for approval">Leave pending</span>':dayOff?'<span class="badge b-leave" style="background:var(--surface2);color:var(--soft)">'+dayOff.type+'</span>':'<span class="badge b-absent">Absent</span>'+(r.date<todayStr()&&_me&&_me.role!=='V'?' <button class="map-link" style="border:none;cursor:pointer;margin-left:4px" title="Adjust this absence as a Casual Leave day" onclick="clAdjOpen(\''+esc(String(r.empId))+'\',\''+esc(r.name)+'\',\''+esc(r.date)+'\')">Adjust as CL</button>':'');
+      const status=hasPi&&hasPo?'<span class="badge b-present">Present</span>':hasPi&&am?'<span class="badge b-meeting">'+(am.kind==='personal'?'Out · personal':'Out/Meeting')+'</span>':hasPi?'<span class="badge b-partial">In Progress</span>':leaveOn(r.empId,fd)?'<span class="badge b-leave">On leave ('+leaveOn(r.empId,fd).type+')</span>':leaveOn(r.empId,fd,['pending'])?'<span class="badge b-partial" title="Leave applied, waiting for approval">Leave pending</span>':dayOff?'<span class="badge b-leave" style="background:var(--surface2);color:var(--soft)">'+dayOff.type+'</span>':'<span class="badge b-absent">Absent</span>'+(r.date<todayStr()&&_me&&_me.role!=='V'?' <button class="map-link" style="border:none;cursor:pointer;margin-left:4px" title="Adjust this absence as a Casual Leave day" onclick="clAdjOpen(\''+esc(String(r.empId))+'\',\''+esc(r.name)+'\',\''+esc(r.date)+'\')">Adjust with leave</button>':'');
       const hrs=(hasPi&&hasPo)?(calcTotalHrs(r)||'<span class="nil">—</span>'):'<span class="nil">—</span>';
       const photo=r.punchIn&&r.punchIn.photo?`<img class="photo-th" src="${hx(r.punchIn.photo)}" onclick="openModal('${esc(r.name)}','Punch In','${esc(String(r.punchIn.photo))}','${esc(String(r.punchIn.lat||''))}','${esc(String(r.punchIn.lng||''))}','${esc(r.punchIn.area||'')}')">`:
         `<div class="photo-th" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--soft)">${initials(r.name)}</div>`;
@@ -6855,15 +6855,16 @@ async function spSave(mode){
 const CLA={};
 function clAdjOpen(empId,name,date){
   Object.assign(CLA,{empId,name,date});
-  acBox({title:'Adjust absence as CL',body:`<div class="msg" id="acMsg"></div>
-    <div class="ld-glass" style="margin-bottom:10px"><b>${hx(name)}</b> · ${hx(date)}<div style="font-size:13px;margin-top:4px">This day becomes an approved Casual Leave (1 day) and is deducted from the CL balance. It only works while CL days are left.</div></div>
-    <label>Note (optional)</label><input type="text" id="claNote" maxlength="120" placeholder="e.g. Family emergency">
-    <button class="btn btn-primary" style="margin-top:12px" onclick="clAdjSave()">Adjust as CL</button>`},true);
+  acBox({title:'Adjust absence with leave',body:`<div class="msg" id="acMsg"></div>
+    <div class="ld-glass" style="margin-bottom:10px"><b>${hx(name)}</b> · ${hx(date)}<div style="font-size:13px;margin-top:4px">This day becomes an approved leave day (1 day) and is deducted from the balance of the leave type you pick. It only works while days are left in that balance.</div></div>
+    <label>Adjust with</label><select id="claType"><option value="CL">Casual Leave (CL)</option><option value="VL">VL</option><option value="ML">ML</option></select>
+    <label style="margin-top:8px">Note (optional)</label><input type="text" id="claNote" maxlength="120" placeholder="e.g. Family emergency">
+    <button class="btn btn-primary" style="margin-top:12px" onclick="clAdjSave()">Adjust with leave</button>`},true);
 }
 async function clAdjSave(){
-  const note=(document.getElementById('claNote').value||'').trim();
-  if(!confirm('Adjust '+CLA.name+"'s absence on "+CLA.date+' as 1 CL day?')) return;
-  if(await acApi('adjustAbsentCL',{empId:CLA.empId,date:CLA.date,note})){ _D.attendance=[]; _D.leaves=[]; await loadAttTab(); acMsg('Done. '+CLA.name+' has been told.'); }
+  const note=(document.getElementById('claNote').value||'').trim(), type=document.getElementById('claType').value;
+  if(!confirm('Adjust '+CLA.name+"'s absence on "+CLA.date+' as 1 '+type+' day?')) return;
+  if(await acApi('adjustAbsentCL',{empId:CLA.empId,date:CLA.date,note,type})){ _D.attendance=[]; _D.leaves=[]; await loadAttTab(); acMsg('Done. '+CLA.name+' has been told.'); }
 }
 
 /* ── Employee 360 dashboard: everything about one person on one screen ── */
@@ -8489,10 +8490,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-28.2';</script>
-<script src="notify.js?v=2026-11-28.2"></script>
-<script src="appstore.js?v=2026-11-28.2"></script>
-<script src="policy-lib.js?v=2026-11-28.2"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-28.3';</script>
+<script src="notify.js?v=2026-11-28.3"></script>
+<script src="appstore.js?v=2026-11-28.3"></script>
+<script src="policy-lib.js?v=2026-11-28.3"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
