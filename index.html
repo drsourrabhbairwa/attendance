@@ -4174,7 +4174,7 @@ function renderHomeToday(rec,dayOff,noLoad){
   const ph=rec&&rec.punchIn&&rec.punchIn.photo&&/^(data:image|https?:)/.test(rec.punchIn.photo)?`<img src="${rec.punchIn.photo}" alt="">`:ico;
   if(!window._fmSeen) fmWatchStop();
   _hmRec=rec; _hmOff=dayOff; renderHomeActs();
-  _hmMark=rec&&rec.markedBy?' · Marked by '+hx(rec.markedBy):'';
+  _hmMark='';
   sub+=_hmMark;
   setHtml('hmToday',`<div class="hm-trow"><div class="hm-ic">${ph}</div><div class="hm-tx"><div class="hm-tt" id="hmTt">${title}</div><div class="hm-ts" id="hmTs">${sub}</div></div>${offBtn}</div>${head}${extra}${b}<div id="hmPlan"></div>`);
   planLoad();
@@ -8490,10 +8490,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-28.3';</script>
-<script src="notify.js?v=2026-11-28.3"></script>
-<script src="appstore.js?v=2026-11-28.3"></script>
-<script src="policy-lib.js?v=2026-11-28.3"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-28.4';</script>
+<script src="notify.js?v=2026-11-28.4"></script>
+<script src="appstore.js?v=2026-11-28.4"></script>
+<script src="policy-lib.js?v=2026-11-28.4"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
