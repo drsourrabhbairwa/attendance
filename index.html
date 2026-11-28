@@ -6339,7 +6339,7 @@ async function loadAttTab(){
       const loc=r.punchIn&&r.punchIn.lat?`<a class="map-link" href="${mapsUrl(r.punchIn.lat,r.punchIn.lng)}" target="_blank">📍 Map</a>`:hasPi?'<span style="font-size:10px;color:var(--soft)">No GPS</span>':'<span class="nil">—</span>';
       const meet=mCnt>0?`<button class="badge b-meeting" onclick="showAttDetail('${esc(r.name)}','${esc(r.date)}')" style="border:none;cursor:pointer">${(()=>{const p=(r.meetings||[]).filter(x=>x.kind==='personal').length;return (mCnt-p?'🚗 '+(mCnt-p):'')+(p?(mCnt-p?' ':'')+'🏃 '+p:'');})()}</button>`:'<span class="nil">—</span>';
       const route=hasPi?`<button class="map-link" style="border:none;cursor:pointer" onclick="openRoute('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">🗺️ Route</button>`:'<span class="nil">—</span>';
-      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}${r.markedBy?`<div style="font-size:11px;font-weight:600;color:var(--soft)">Marked by ${hx(r.markedBy)}</div>`:''}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn)+faceFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+autoPill(r)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut)+faceFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td>${isSuper()?`<td><button class="map-link" style="border:none;cursor:pointer" onclick="spOpen('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">✏️ Set</button></td>`:''}</tr>`;
+      return`<tr><td>${photo}</td><td style="font-weight:600">${hx(r.name)}</td><td style="color:var(--soft)">${hx(r.empId)}</td><td>${status}</td><td>${hasPi?fmt12(r.punchIn.time)+((r.edited||'').includes('in')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchIn)+faceFlag(r.punchIn):'—'}</td><td>${hasPo?fmt12(r.punchOut.time)+autoPill(r)+((r.edited||'').includes('out')?' <span title="Corrected by admin">✏️</span>':'')+geoFlag(r.punchOut)+faceFlag(r.punchOut):'—'}</td><td>${meet}</td><td>${hrs}</td><td>${loc}</td><td>${route}</td>${isSuper()?`<td><button class="map-link" style="border:none;cursor:pointer" onclick="spOpen('${esc(String(r.empId))}','${esc(r.name)}','${esc(r.date)}')">✏️ Set</button></td>`:''}</tr>`;
     }).join('');
     document.querySelectorAll('.sa-only').forEach(x=>x.style.display=isSuper()?'':'none');
     window._lastAtt=rows;
@@ -8474,10 +8474,10 @@ document.addEventListener('keydown',e=>{
 init();
 </script>
 <script src="firebase-config.js"></script>
-<script>window.AMK_PAGE_VERSION='2026-11-27.1';</script>
-<script src="notify.js?v=2026-11-27.1"></script>
-<script src="appstore.js?v=2026-11-27.1"></script>
-<script src="policy-lib.js?v=2026-11-27.1"></script>
+<script>window.AMK_PAGE_VERSION='2026-11-28.1';</script>
+<script src="notify.js?v=2026-11-28.1"></script>
+<script src="appstore.js?v=2026-11-28.1"></script>
+<script src="policy-lib.js?v=2026-11-28.1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    POLICIES — legal pages and HR rules.
